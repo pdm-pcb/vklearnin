@@ -153,7 +153,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         ::vkQueuePresentKHR(_queues.present_queue(), &present_info);
     }
 
-    ::vkWaitForFences(_device, 1u, &_display_fence, VK_TRUE, UI64MAX);
+    ::vkDeviceWaitIdle(_device);
 
     return false;
 }
