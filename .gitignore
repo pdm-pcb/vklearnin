@@ -1,0 +1,9 @@
+.vscode/
+*.code-workspace
+.vs/
+.idea/
+
+CMakeSettings.json
+compile_commands.json
+
+build/

@@ -1,0 +1,93 @@
+#include "common.hpp"
+#include "Instance.hpp"
+#include "CommandQueues.hpp"
+#include "Swapchain.hpp"
+#include "Pipeline.hpp"
+#include "Framebuffers.hpp"
+#include "RenderLoop.hpp"
+
+#if defined(__linux__)
+    #include "X11Window.hpp"
+#elif defined(_WIN32)
+    #include "Win32Window.hpp"
+#endif
+
+int main() {
+    ConsoleLog::init();
+
+    Instance instance;
+    instance.init_instance();
+    instance.init_instance_procs();
+    instance.init_physical_device();
+
+#if defined(__linux__)
+    X11Window window(1024u, 768u, instance.vulkan_instance());
+#elif defined(_WIN32)
+    Win32Window window(1024u, 768u, instance.vulkan_instance());
+#endif
+
+    // both the window itself and the window's surface are required for
+    // establishing a command queue family for the Vulkan instance
+    window.init_window();
+    window.init_surface();
+    
+    // track down the desired queue families
+    CommandQueues command_queues(instance.physical_device(),
+                                 instance.logical_device(),
+                                 window.surface());
+    command_queues.init_families(instance);
+    command_queues.init_queue_info();
+
+    // with the physical device set up and queue family chosen, the logical
+    // devuce can be created
+    instance.init_logical_device(command_queues);
+    instance.init_logical_device_procs();
+
+    // now that there's a logical device in place, go a head and initialize a
+    // command pool, queue, and command buffer
+    command_queues.init_pools();
+    command_queues.init_queues();
+    command_queues.init_buffers();
+    
+    // the swapchain will use the function pointers gathered by the instance,
+    // as well as details of the window's surface
+    Swapchain swapchain(instance, window);
+
+    swapchain.init_color_format();  // presumably 32-bit SRGB
+    swapchain.init_present_modes(); // presumably FIFO/v-sync
+    swapchain.init_extent();        // presumably the window's resolution
+    swapchain.init_swapchain(command_queues); // presumably all of the above. =)
+
+    swapchain.init_swapchain_images(); // should give us two images for writing
+    swapchain.init_image_views();      // views to interface with the images
+
+    Pipeline pipeline(instance.logical_device());
+    // pipeline.vertex_from_source("../../shaders/shader.vert");
+    // pipeline.fragment_from_source("../../shaders/shader.frag");
+    pipeline.vertex_from_binary("../../shaders/vert.spv");
+    pipeline.fragment_from_binary("../../shaders/frag.spv");
+
+    pipeline.init_render_passes(swapchain); // only one render pass for now
+    pipeline.init_layout();            // the bare minimum for now
+    pipeline.init_pipeline(swapchain); // set it all up with the right values
+
+    Framebuffers framebuffers(instance.logical_device());
+    framebuffers.init_buffers(swapchain, pipeline);
+
+    RenderLoop render_loop(instance.logical_device(), window, command_queues);
+    render_loop.init_synchronization();
+
+    bool carry_on = true;
+    while(carry_on) {
+        carry_on = render_loop.run(
+            instance,
+            swapchain,
+            pipeline,
+            framebuffers
+        );
+
+        // ...!
+    }
+
+    return 0;
+}
