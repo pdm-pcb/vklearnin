@@ -1,18 +1,17 @@
 #ifndef VKL_COMMANDQUEUES_HPP
 #define VKL_COMMANDQUEUES_HPP
 
-#include <vulkan/vulkan.h>
-
-#include <cstdint>
-#include <optional>
+#include "common.hpp"
 
 class Instance;
 
 // =============================================================================
 class CommandQueues {
 public:
-    inline void reset_command_buffer(::VkCommandBufferResetFlagBits flags) {
-        ::vkResetCommandBuffer(_command_buffer, flags);
+    inline void reset_command_buffer(const size_t index,
+                                     ::VkCommandBufferResetFlagBits flags)
+    {
+        ::vkResetCommandBuffer(_command_buffers[index], flags);
     }
 
     // -------------------------------------------------------------------------
@@ -42,8 +41,8 @@ public:
     inline const ::VkDeviceQueueCreateInfo * const queues() const {
         return _queue_info_structs.data();
     }
-    inline const ::VkCommandBuffer & command_buffer() const {
-        return _command_buffer;
+    inline const ::VkCommandBuffer & command_buffer(const size_t index) const {
+        return _command_buffers[index];
     }
     inline const ::VkQueue & graphics_queue() const {
         return _graphics_queue;
@@ -68,9 +67,8 @@ private:
     ::VkQueue  _graphics_queue;
     ::VkQueue  _present_queue;
 
-    std::vector<::VkCommandPool> _command_pools;
-
-    ::VkCommandBuffer _command_buffer;
+    ::VkCommandPool _command_pool;
+    std::array<::VkCommandBuffer, MAX_FRAMES> _command_buffers;
 
     const ::VkPhysicalDevice &_physical_device;
     const ::VkDevice         &_device;

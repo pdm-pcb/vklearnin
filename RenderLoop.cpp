@@ -18,22 +18,29 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
                      const Pipeline &pipeline, const Framebuffers &framebuffers)
 {
     ::VkResult result = ::VK_RESULT_MAX_ENUM;
+    uint32_t frame = 0u;
+    uint32_t image_index = 0u;
 
     while(_window.message_loop() == true) {
-        ::vkWaitForFences(_device, 1u, &_display_fence, VK_TRUE, UI64MAX);
-        ::vkResetFences(_device, 1u, &_display_fence);
+        // flip between zero and one, without a mod operation
+        // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
+        frame = 1 - frame;
 
-        uint32_t image_index = 0u;
+        ::vkWaitForFences(_device, 1u, &_display_fences[frame], VK_TRUE,
+                          UI64MAX);
+        ::vkResetFences(_device, 1u, &_display_fences[frame]);
+
         instance._AcquireNextImageKHR(
             _device,
             swapchain.swapchain(),
             UI64MAX,
-            _image_available_sem,
+            _image_available_sems[frame],
             nullptr,
             &image_index
         );
 
         _queues.reset_command_buffer(
+            image_index,
             static_cast<::VkCommandBufferResetFlagBits>(0u)
         );
 
@@ -42,7 +49,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         buffer_info.flags = 0u;
         buffer_info.pInheritanceInfo = nullptr;
 
-        auto buffer = _queues.command_buffer();
+        auto buffer = _queues.command_buffer(image_index);
         result = ::vkBeginCommandBuffer(buffer, &buffer_info);
 
         if(result != ::VK_SUCCESS) {
@@ -101,7 +108,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         }
 
         ::VkSemaphore wait_sems[] = {
-            _image_available_sem
+            _image_available_sems[frame]
         };
 
         ::VkPipelineStageFlags wait_stage_masks[] {
@@ -109,7 +116,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         };
 
         ::VkSemaphore signal_sems[] = {
-            _draw_complete_sem
+            _draw_complete_sems[frame]
         };
 
         ::VkSubmitInfo submit_info { };
@@ -119,7 +126,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         submit_info.pWaitSemaphores = wait_sems;
         submit_info.pWaitDstStageMask = wait_stage_masks;
         submit_info.commandBufferCount = 1u;
-        submit_info.pCommandBuffers = &_queues.command_buffer();
+        submit_info.pCommandBuffers = &_queues.command_buffer(image_index);
         submit_info.signalSemaphoreCount =
             static_cast<uint32_t>(std::size(signal_sems));
         submit_info.pSignalSemaphores = signal_sems;
@@ -128,7 +135,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
             _queues.graphics_queue(),
             1u,
             &submit_info,
-            _display_fence
+            _display_fences[frame]
         );
 
         if(result != ::VK_SUCCESS) {
@@ -163,41 +170,31 @@ void RenderLoop::init_synchronization() {
     ::VkSemaphoreCreateInfo sem_info { };
     sem_info.sType = ::VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    ::VkResult result = ::vkCreateSemaphore(
-        _device,
-        &sem_info,
-        nullptr,
-        &_image_available_sem
-    );
+    ::VkResult result = ::VK_RESULT_MAX_ENUM;
 
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create image available semaphore");
+    for(auto &sem : _image_available_sems) {
+        result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
+        if(result != ::VK_SUCCESS) {
+            CONSOLE_CRITICAL("Could not create image available semaphore");
+        }
     }
 
-    result = ::vkCreateSemaphore(
-        _device,
-        &sem_info,
-        nullptr,
-        &_draw_complete_sem
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create draw complete semaphore");
+    for(auto &sem : _draw_complete_sems) {
+        result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
+        if(result != ::VK_SUCCESS) {
+            CONSOLE_CRITICAL("Could not create draw complete semaphore");
+        }
     }
 
     ::VkFenceCreateInfo fence_info { };
     fence_info.sType = ::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_info.flags = ::VK_FENCE_CREATE_SIGNALED_BIT;
 
-    result = ::vkCreateFence(
-        _device,
-        &fence_info,
-        nullptr,
-        &_display_fence
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create display fence");
+    for(auto &fence : _display_fences) {
+        result = ::vkCreateFence(_device, &fence_info, nullptr, &fence);
+        if(result != ::VK_SUCCESS) {
+            CONSOLE_CRITICAL("Could not create display fence");
+        }
     }
 
     CONSOLE_TRACE("Created synchronization primitives");
@@ -206,38 +203,23 @@ void RenderLoop::init_synchronization() {
 // =============================================================================
 RenderLoop::RenderLoop(const ::VkDevice &device, Window &window,
                        CommandQueues &queues) :
-    _image_available_sem { nullptr  },
-    _draw_complete_sem   { nullptr  },
-    _display_fence       { nullptr  },
-    _device { device },
-    _window { window },
-    _queues { queues }
+    _device        { device },
+    _window        { window },
+    _queues        { queues }
 {
     CONSOLE_INFO("");
 }
 
 RenderLoop::~RenderLoop() {
-    if(_image_available_sem != nullptr) {
-        ::vkDestroySemaphore(
-            _device,
-            _image_available_sem,
-            nullptr
-        );
+    for(auto &sem : _image_available_sems) {
+        ::vkDestroySemaphore(_device, sem, nullptr);
     }
     
-    if(_draw_complete_sem != nullptr) {
-        ::vkDestroySemaphore(
-            _device,
-            _draw_complete_sem,
-            nullptr
-        );
+    for(auto &sem : _draw_complete_sems) {
+        ::vkDestroySemaphore(_device, sem, nullptr);
     }
     
-    if(_display_fence != nullptr) {
-        ::vkDestroyFence(
-            _device,
-            _display_fence,
-            nullptr
-        );
+    for(auto &fence : _display_fences) {
+        ::vkDestroyFence(_device, fence, nullptr);
     }
 }

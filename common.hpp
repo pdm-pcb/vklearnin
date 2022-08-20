@@ -49,8 +49,10 @@ static constexpr char APPLICATION_NAME[] { "Learnin'"        };
 #include <vector>
 #include <limits>
 #include <utility>
+#include <array>
 
 static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
+static constexpr uint32_t MAX_FRAMES = 2;
 
 #endif // VKL_COMMON_HPP

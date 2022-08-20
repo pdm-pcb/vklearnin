@@ -98,10 +98,9 @@ void CommandQueues::init_queue_info() {
 void CommandQueues::init_pools() {
     CONSOLE_INFO("");
 
-    // it seems likely there'll be more than one of these at some point in the
-    // not-too-distant future.
-    _command_pools.emplace_back(::VkCommandPool { });
-
+    // As I've just learned, a command pool is the memory from which any given
+    // number of command buffers may be allocated. However, they are not
+    // synchronized at all, so each thread must have separate pools.
     ::VkCommandPoolCreateInfo pool_info { };
     pool_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     pool_info.flags = ::VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -111,7 +110,7 @@ void CommandQueues::init_pools() {
         _device,
         &pool_info,
         nullptr,
-        &_command_pools.back()
+        &_command_pool
     );
 
     if(result != ::VK_SUCCESS) {
@@ -157,10 +156,10 @@ void CommandQueues::init_buffers() {
 
     ::VkCommandBufferAllocateInfo buffer_info { };
     buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    buffer_info.commandPool = _command_pools[0];
+    buffer_info.commandPool = _command_pool;
     buffer_info.level = ::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     buffer_info.commandBufferCount =
-        static_cast<uint32_t>(std::size(_command_pools));
+        static_cast<uint32_t>(std::size(_command_buffers));
 
     CONSOLE_TRACE(
         "Allocating {} command {}",
@@ -171,7 +170,7 @@ void CommandQueues::init_buffers() {
     ::VkResult result = ::vkAllocateCommandBuffers(
         _device,
         &buffer_info,
-        &_command_buffer
+        _command_buffers.data()
     );
 
     if(result != ::VK_SUCCESS) {
@@ -183,9 +182,10 @@ void CommandQueues::init_buffers() {
 CommandQueues::CommandQueues(const ::VkPhysicalDevice &physical_device,
                              const ::VkDevice         &device,
                              const ::VkSurfaceKHR     &surface) :
-    _graphics_queue  { nullptr  },
-    _present_queue   { nullptr  },
-    _command_buffer  { nullptr  },
+    _graphics_queue  { nullptr },
+    _present_queue   { nullptr },
+    _command_pool    { nullptr },
+    _command_buffers { nullptr },
     _physical_device { physical_device },
     _device          { device  },
     _surface         { surface }
@@ -194,7 +194,7 @@ CommandQueues::CommandQueues(const ::VkPhysicalDevice &physical_device,
 }
 
 CommandQueues::~CommandQueues() {
-    for(auto pool : _command_pools) {
-        ::vkDestroyCommandPool(_device, pool, nullptr);
+    if(_command_pool != nullptr) {
+        ::vkDestroyCommandPool(_device, _command_pool, nullptr);
     }
 }

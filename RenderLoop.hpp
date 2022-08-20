@@ -1,7 +1,7 @@
 #ifndef VKL_RENDERLOOP_HPP
 #define VKL_RENDERLOOP_HPP
 
-#include <vulkan/vulkan.h>
+#include "common.hpp"
 
 class Instance;
 class CommandQueues;
@@ -37,9 +37,9 @@ public:
     ~RenderLoop();
 
 private:
-    ::VkSemaphore _image_available_sem;
-    ::VkSemaphore _draw_complete_sem;
-    ::VkFence     _display_fence;
+    std::array<::VkSemaphore, MAX_FRAMES> _image_available_sems;
+    std::array<::VkSemaphore, MAX_FRAMES> _draw_complete_sems;
+    std::array<::VkFence, MAX_FRAMES>     _display_fences;
 
     const ::VkDevice &_device;
     Window           &_window;
