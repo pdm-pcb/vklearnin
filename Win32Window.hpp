@@ -34,9 +34,12 @@ private:
     ::VkSurfaceKHR _surface;
     ::VkOffset2D   _offset;
     ::VkExtent2D   _extent;
-    
+
     bool _running;
     bool _resized;
+    
+    uint32_t _display_x;
+    uint32_t _display_y;
 
     const ::VkInstance &_instance;
 

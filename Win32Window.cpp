@@ -52,40 +52,23 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
                                         ::WPARAM wparam, ::LPARAM lparam)
 {
     switch(message) {
-        case WM_KEYUP:
-            switch(wparam) {
-                case VK_ESCAPE:
-                    ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
-                    break;
-                case 0x41: // 'a'
-                    if(_extent.width == 1280u) {
-                        break;
-                    }
-                    CONSOLE_TRACE("bumping up resolution");
-                    _build_window(1280u, 1024u);
-                    break;
-                case 0x5A: // 'z'
-                    if(_extent.width == 1024u) {
-                        break;
-                    }
-                    CONSOLE_TRACE("toning down resolution");
-                    _build_window(1024u, 768u);
-                    break;
-                case 0x46: { // 'f'
-                    uint32_t display_x =
-                        static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN));
-                    uint32_t display_y =
-                        static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN));
-                    if(_extent.width == display_x) {
-                        CONSOLE_TRACE("Exiting fullscreen");
+        case WM_KEYDOWN:
+            if(wparam == VK_ESCAPE) {
+                ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+            }
+            break;
+
+        case WM_SYSKEYDOWN:
+            if(HIWORD(lparam) && KF_ALTDOWN) {
+                if(LOWORD(wparam) == VK_RETURN) {
+                    if(_extent.width  == _display_x ||
+                       _extent.height == _display_y)
+                    {
                         _build_window(1024u, 768u);
                     }
                     else {
-                        CONSOLE_TRACE("FULLSCREEN YOU SAY?!?!");
-                        _build_window(display_x, display_y);
+                        _build_window(_display_x, _display_y);
                     }
-
-                    break;
                 }
             }
             break;
@@ -172,11 +155,9 @@ void Win32Window::init_surface() {
 
 void Win32Window::_build_window(const uint32_t x_res, const uint32_t y_res) {
     _extent = { x_res, y_res };
-    int display_x = ::GetSystemMetrics(SM_CXSCREEN);
-    int display_y = ::GetSystemMetrics(SM_CYSCREEN);
 
-    int pos_x = display_x / 2 - (_extent.width  / 2);
-    int pos_y = display_y / 2 - (_extent.height / 2);
+    int pos_x = _display_x / 2 - (_extent.width  / 2);
+    int pos_y = _display_y / 2 - (_extent.height / 2);
 
     ::SetWindowPos(
         _hwindow, nullptr,
@@ -197,6 +178,8 @@ Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
     _resized   { false    },
     _offset    { x_offset, y_offset },
     _extent    { x_res, y_res },
+    _display_x { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
+    _display_y { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
     _instance  { instance }
 {
     CONSOLE_INFO("");
