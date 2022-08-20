@@ -64,7 +64,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
                     if(_extent.width  == _display_x ||
                        _extent.height == _display_y)
                     {
-                        _build_window(1024u, 768u);
+                        _build_window(_launch_x, _launch_y);
                     }
                     else {
                         _build_window(_display_x, _display_y);
@@ -96,13 +96,13 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
 void Win32Window::init_window() {
     CONSOLE_INFO("");
     ::WNDCLASSEXA wcex { };
-    wcex.cbSize = sizeof(::WNDCLASSEXA);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = _message_dispatch;
-    wcex.hInstance = _hinstance;
-    wcex.hIcon = ::LoadIcon(_hinstance, IDI_APPLICATION);
-    wcex.hIconSm = ::LoadIcon(_hinstance, IDI_APPLICATION);
-    wcex.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
+    wcex.cbSize        = sizeof(::WNDCLASSEXA);
+    wcex.style         = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc   = _message_dispatch;
+    wcex.hInstance     = _hinstance;
+    wcex.hIcon         = ::LoadIcon(_hinstance, IDI_APPLICATION);
+    wcex.hIconSm       = ::LoadIcon(_hinstance, IDI_APPLICATION);
+    wcex.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = static_cast<::HBRUSH>(::GetStockObject(BLACK_BRUSH));
     wcex.lpszClassName = APPLICATION_NAME;
 
@@ -180,6 +180,8 @@ Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
     _extent    { x_res, y_res },
     _display_x { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
     _display_y { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
+    _launch_x  { x_res    },
+    _launch_y  { y_res    },
     _instance  { instance }
 {
     CONSOLE_INFO("");

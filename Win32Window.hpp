@@ -40,6 +40,8 @@ private:
     
     uint32_t _display_x;
     uint32_t _display_y;
+    uint32_t _launch_x;
+    uint32_t _launch_y;
 
     const ::VkInstance &_instance;
 
