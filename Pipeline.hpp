@@ -32,7 +32,7 @@ public:
         auto [width, height] = swapchain.extent(); 
         auto [x, y]          = swapchain.offset();
 
-        _viewports.back() = {
+        _viewport = {
             .x = static_cast<float>(x),
             .y = static_cast<float>(y),
             .width  = static_cast<float>(width),
@@ -41,7 +41,7 @@ public:
             .maxDepth = 1.0f,
         };
 
-        _scissors.back() = {
+        _scissor = {
             .offset = { x, y },
             .extent = { width, height },
         };
@@ -52,8 +52,8 @@ public:
 
     inline const ::VkRenderPass & renderpass() const { return _renderpass; }
     inline const ::VkPipeline   & pipeline()   const { return _pipeline;   }
-    inline const ::VkViewport * viewports() const { return _viewports.data(); }
-    inline const ::VkRect2D   * scissors()  const { return _scissors.data();  }
+    inline const ::VkViewport   & viewport()   const { return _viewport;   }
+    inline const ::VkRect2D     & scissor()    const { return _scissor;    }
 
     Pipeline(const ::VkDevice &device);
     ~Pipeline();
@@ -65,8 +65,8 @@ private:
     ::VkShaderModule _frag;
     std::vector<::VkPipelineShaderStageCreateInfo> _shader_stages;
 
-    std::vector<::VkViewport> _viewports;
-    std::vector<::VkRect2D>   _scissors;
+    ::VkViewport _viewport;
+    ::VkRect2D   _scissor;
 
     ::VkRenderPass     _renderpass;
     ::VkPipelineLayout _layout;

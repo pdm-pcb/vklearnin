@@ -197,33 +197,15 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
     assembly_info.topology = ::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     assembly_info.primitiveRestartEnable = VK_FALSE;
 
-    // viewports and scissor rectangles should share dimensions with the
-    // surface, since there's only one of each at the moment
-    auto [width, height] = swapchain.extent(); 
-    auto [x, y]          = swapchain.offset(); 
-    _viewports.emplace_back(
-        ::VkViewport {
-            .x = static_cast<float>(x),
-            .y = static_cast<float>(y),
-            .width  = static_cast<float>(width),
-            .height = static_cast<float>(height),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        }
-    );
-
-    _scissors.emplace_back(
-        ::VkRect2D {
-            .offset = { x, y },
-            .extent = { width, height },
-        }
-    );
+    // viewports and scissor rectangles are all sized the same as the surface
+    // at present
+    update_dimensions(swapchain);
 
     ::VkPipelineViewportStateCreateInfo viewport_info { };
     viewport_info.sType =
         ::VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewport_info.viewportCount = static_cast<uint32_t>(_viewports.size());
-    viewport_info.scissorCount  = static_cast<uint32_t>(_scissors.size());
+    viewport_info.viewportCount = 1u;
+    viewport_info.scissorCount  = 1u;
 
     CONSOLE_TRACE("Viewport count: {}", viewport_info.viewportCount);
     CONSOLE_TRACE("Scissor count:  {}", viewport_info.scissorCount);
@@ -328,6 +310,8 @@ Pipeline::Pipeline(const ::VkDevice &device) :
     _device     { device  },
     _vert       { nullptr },
     _frag       { nullptr },
+    _viewport   { },
+    _scissor    { },
     _renderpass { nullptr },
     _layout     { nullptr },
     _pipeline   { nullptr }

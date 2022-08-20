@@ -58,7 +58,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
             }
             break;
 
-        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
             if(HIWORD(lparam) && KF_ALTDOWN) {
                 if(LOWORD(wparam) == VK_RETURN) {
                     if(_extent.width  == _display_x ||
@@ -112,7 +112,7 @@ void Win32Window::init_window() {
     }
 
     _hwindow = ::CreateWindowExA(
-        0,
+        0u,
         APPLICATION_NAME,
         APPLICATION_NAME,
         WS_POPUP | WS_VISIBLE,
@@ -120,7 +120,8 @@ void Win32Window::init_window() {
         CW_USEDEFAULT,
         static_cast<int>(_extent.width),
         static_cast<int>(_extent.height),
-        nullptr, nullptr, 0, this
+        nullptr, nullptr, nullptr,
+        this
     );
 
     if(_hwindow == nullptr) {

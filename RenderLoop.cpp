@@ -17,6 +17,8 @@
 bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                      Pipeline &pipeline, Framebuffers &framebuffers)
 {
+    CONSOLE_INFO("");
+
     ::VkResult result    = ::VK_RESULT_MAX_ENUM;
     uint32_t frame       = 0u;
     uint32_t image_index = 0u;
@@ -26,9 +28,11 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
         frame = 1 - frame;
 
+        // wait your turn
         ::vkWaitForFences(_device, 1u, &_display_fences[frame], VK_TRUE,
                           UI64MAX);
 
+        // grab the next swapchain image and check it...
         result = instance._AcquireNextImageKHR(
             _device,
             swapchain.swapchain(),
@@ -38,18 +42,21 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             &image_index
         );
 
+        // if we need to resize everything, let's do it
         if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized) {
             _image_resized(instance, swapchain, pipeline, framebuffers);
-            continue;
+            continue;   // be sure to continue so eveything updates
         }
 
+        // clear out what needs clearing
         ::vkResetFences(_device, 1u, &_display_fences[frame]);
-
         _queues.reset_command_buffer(
             image_index,
             static_cast<::VkCommandBufferResetFlagBits>(0u)
         );
 
+        // something tells me this could go outside the loop, as it never
+        // changes, but it's fine for now
         ::VkCommandBufferBeginInfo buffer_info { };
         buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         buffer_info.flags = 0u;
@@ -62,6 +69,11 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             CONSOLE_CRITICAL("Unable to begin command buffer recording.");
         }
 
+        // initial setup for the pass
+        ::VkClearValue clear_values[] = {{
+            .color = { 0.1f, 0.1f, 0.1f, 1.0f }
+        }};
+
         ::VkRenderPassBeginInfo pass_info { };
         pass_info.sType = ::VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         pass_info.renderPass = pipeline.renderpass();
@@ -71,28 +83,26 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         auto [x, y]          = swapchain.offset();
         pass_info.renderArea.extent = { width, height };
         pass_info.renderArea.offset = { x, y };
-
-        ::VkClearValue clear_values[] = {{
-            .color = { 0.1f, 0.1f, 0.1f, 1.0f }
-        }};
-
         pass_info.clearValueCount =
             static_cast<uint32_t>(std::size(clear_values));
         pass_info.pClearValues = clear_values;
 
+        // go time!
         ::vkCmdBeginRenderPass(
             buffer,
             &pass_info,
             ::VK_SUBPASS_CONTENTS_INLINE
         );
-
+                // bind the pipeline so everything's current
                 ::vkCmdBindPipeline(
                     buffer,
                     ::VK_PIPELINE_BIND_POINT_GRAPHICS,
                     pipeline.pipeline()
                 );
-                ::vkCmdSetViewport(buffer, 0u, 1u, pipeline.viewports());
-                ::vkCmdSetScissor(buffer,0u, 1u, pipeline.scissors());
+                // update the dynamic traits of the pipeline
+                ::vkCmdSetViewport(buffer, 0u, 1u, &pipeline.viewport());
+                ::vkCmdSetScissor(buffer,0u, 1u, &pipeline.scissor());
+                // boom, draw.
                 ::vkCmdDraw(
                     buffer,
                     3u, 1u,
@@ -106,6 +116,8 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             CONSOLE_CRITICAL("Failed to record to command buffer.");
         }
 
+        // now wait again, but this time the signal and wait semephores are
+        // reversed
         ::VkSemaphore wait_sems[] = {
             _image_available_sems[frame]
         };
@@ -130,6 +142,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             static_cast<uint32_t>(std::size(signal_sems));
         submit_info.pSignalSemaphores = signal_sems;
 
+        // submit the graphics command buffer
         result = ::vkQueueSubmit(
             _queues.graphics_queue(),
             1u,
@@ -145,6 +158,8 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             swapchain.swapchain()
         };
 
+        // notify the present buffer that we're going to wait for the current
+        // frame to finsh/for the next vertical refresh
         ::VkPresentInfoKHR present_info { };
         present_info.sType = ::VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         present_info.waitSemaphoreCount = 
@@ -156,9 +171,11 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         present_info.pImageIndices = &image_index;
         present_info.pResults = nullptr;
 
+        // once more, do the thing and check to see if anything funky happened
+        // along the way
         result = ::vkQueuePresentKHR(_queues.present_queue(), &present_info);
         if(result == ::VK_ERROR_OUT_OF_DATE_KHR ||
-           result == ::VK_SUBOPTIMAL_KHR || _resized)
+           result == ::VK_SUBOPTIMAL_KHR)
         {
             _image_resized(instance, swapchain, pipeline, framebuffers);
         }
@@ -174,11 +191,15 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
 // =============================================================================
 void RenderLoop::init_synchronization() {
+    CONSOLE_INFO("");
+
     ::VkSemaphoreCreateInfo sem_info { };
     sem_info.sType = ::VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
     ::VkResult result = ::VK_RESULT_MAX_ENUM;
 
+    // the semephores which will let us know when the swapchain has finished
+    // whatever it was doing with one of the images
     for(auto &sem : _image_available_sems) {
         result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
         if(result != ::VK_SUCCESS) {
@@ -186,6 +207,8 @@ void RenderLoop::init_synchronization() {
         }
     }
 
+    // the semephores letting us know when a draw has completed to the back
+    // buffer/image
     for(auto &sem : _draw_complete_sems) {
         result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
         if(result != ::VK_SUCCESS) {
@@ -193,6 +216,9 @@ void RenderLoop::init_synchronization() {
         }
     }
 
+    // the crudest of the three - the vertical refresh fences; once there's a
+    // frame being written to the monitor and a frame on the back buffer, just
+    // hold your horses
     ::VkFenceCreateInfo fence_info { };
     fence_info.sType = ::VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_info.flags = ::VK_FENCE_CREATE_SIGNALED_BIT;
@@ -211,9 +237,15 @@ void RenderLoop::init_synchronization() {
 void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
                                 Pipeline &pipeline, Framebuffers &framebuffers)
 {
+    CONSOLE_WARN("Image dimensions changed");
+
+    // wait for current commands to run their course
     ::vkDeviceWaitIdle(instance.logical_device());
+    // reset the local flag
     _resized = false;
 
+    // demolish it all, then recreate it per the dependencies established
+    // initially
     framebuffers.destroy();
     swapchain.destroy();
     swapchain.create(_window.extent(), _queues);
@@ -233,6 +265,8 @@ RenderLoop::RenderLoop(const ::VkDevice &device, Window &window,
 }
 
 RenderLoop::~RenderLoop() {
+    CONSOLE_INFO("");
+
     for(auto &sem : _image_available_sems) {
         ::vkDestroySemaphore(_device, sem, nullptr);
     }
