@@ -10,22 +10,24 @@
 class Instance;
 class CommandQueues;
 
-#if defined(__linux__)
-    class X11Window;
-#elif defined(_WIN32)
-    class Win32Window;
-#endif
-
 //==============================================================================
 class Swapchain {
 public:
+    // -------------------------------------------------------------------------
+    // Setup
+
     void init_color_format();  // first up, color space/image format
     void init_present_modes(); // next, choosing a presentation mode
-    void init_extent();        // finally, the images' physical dimensions
-    void init_swapchain(const CommandQueues &queue); // make the thing real
-
+    // finally, the images' physical dimensions
+    void init_extent(const ::VkExtent2D &extent);
+    void init_swapchain(const CommandQueues &queues); // make the thing real
     void init_swapchain_images(); // grab the image/buffer data
     void init_image_views();      // create the views for the images we've got
+
+    // -------------------------------------------------------------------------
+    // Recovery
+    void destroy();
+    void create(const ::VkExtent2D  &extent, const CommandQueues &queues);
 
     // -------------------------------------------------------------------------
     // For those concerned with swapchain atributes
@@ -46,31 +48,20 @@ public:
         return _swapchain;
     }
 
-#if defined(__linux__)
-    Swapchain(const Instance &instance, const X11Window &window);
-#elif defined (_WIN32)
-    Swapchain(const Instance &instance, const Win32Window &window);
-#endif
+
+    Swapchain(const Instance &instance, const ::VkSurfaceKHR &surface);
     ~Swapchain();
 
     Swapchain() = delete;
 
 private:
-    const Instance &_instance;
-
-#if defined(__linux__)
-    const X11Window &_window; 
-#elif defined(_WIN32)
-    const Win32Window &_window; 
-#endif
-
     ::VkFormat        _color_format;
     ::VkColorSpaceKHR _color_space;
 
     uint32_t           _image_count;
     uint32_t           _image_array_layers;
-    ::VkExtent2D       _extent;
     ::VkOffset2D       _offset;
+    ::VkExtent2D       _extent;
     ::VkPresentModeKHR _present_mode;
 
     ::VkSurfaceTransformFlagBitsKHR _transform;
@@ -79,6 +70,9 @@ private:
 
     std::vector<::VkImage>     _images;
     std::vector<::VkImageView> _image_views;
+
+    const Instance       &_instance;
+    const ::VkSurfaceKHR &_surface;
 };
 
 #endif // VKL_SWAPCHAIN_HPP

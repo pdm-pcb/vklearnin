@@ -2,21 +2,26 @@
 #define VKL_WIN32WINDOW_HPP
 
 #include <vulkan/vulkan.h>
-#include <cstdint>
 #include <Windows.h>
+
+#include <cstdint>
+#include <utility>
+
+class RenderLoop;
 
 class Win32Window {
 public:
-    bool message_loop();
+    bool message_loop(RenderLoop &render_loop);
 
     void init_window();
     void init_surface();
 
-    const ::VkSurfaceKHR & surface() const { return _surface; }
-    uint32_t x_res() const { return _x_res; }
-    uint32_t y_res() const { return _y_res; }
+    inline const ::VkSurfaceKHR & surface() const { return _surface; }
+    inline const ::VkOffset2D   & offset()  const { return _offset;  }
+    inline const ::VkExtent2D   & extent()  const { return _extent;  }
 
     Win32Window(const uint32_t x_res, const uint32_t y_res,
+                const int32_t x_offset, const int32_t y_offset,
                 const ::VkInstance &instance);
     ~Win32Window();
 
@@ -27,11 +32,11 @@ private:
     ::HWND      _hwindow;
 
     ::VkSurfaceKHR _surface;
+    ::VkOffset2D   _offset;
+    ::VkExtent2D   _extent;
     
     bool _running;
-
-    uint32_t _x_res;
-    uint32_t _y_res;
+    bool _resized;
 
     const ::VkInstance &_instance;
 
@@ -41,6 +46,8 @@ private:
     ::LRESULT
     _message_handler(::HWND window, ::UINT msg, ::WPARAM wparam,
                      ::LPARAM lparam);
+
+    void _build_window(const uint32_t x_res, const uint32_t y_res);
 };
 
 #endif // VKL_WIN32WINDOW_HPP

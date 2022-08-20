@@ -14,6 +14,9 @@ class Framebuffers {
 public:
     void init_buffers(const Swapchain &swapchain, const Pipeline &pipeline);
 
+    void destroy();
+    void create(const Swapchain &swapchain, const Pipeline &pipeline);
+
     inline const ::VkFramebuffer & buffer(const size_t index) const {
         return _buffers[index];
     }

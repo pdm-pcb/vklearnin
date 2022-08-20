@@ -4,12 +4,6 @@
 #include "Instance.hpp"
 #include "CommandQueues.hpp"
 
-#if defined(__linux__)
-    #include "X11Window.hpp"
-#elif defined(_WIN32)
-    #include "Win32Window.hpp"
-#endif
-
 //==============================================================================
 void Swapchain::init_color_format() {
     CONSOLE_INFO("");
@@ -18,7 +12,7 @@ void Swapchain::init_color_format() {
     uint32_t format_count = 0u;
     ::VkResult result = _instance._GetPhysicalDeviceSurfaceFormatsKHR(
         _instance.physical_device(),
-        _window.surface(),
+        _surface,
         &format_count,
         nullptr
     );
@@ -32,7 +26,7 @@ void Swapchain::init_color_format() {
     std::vector<::VkSurfaceFormatKHR> formats(format_count);
     result = _instance._GetPhysicalDeviceSurfaceFormatsKHR(
         _instance.physical_device(),
-        _window.surface(),
+        _surface,
         &format_count,
         formats.data()
     );
@@ -67,7 +61,7 @@ void Swapchain::init_present_modes() {
     uint32_t mode_count = 0;
     ::VkResult result = _instance._GetPhysicalDeviceSurfacePresentModesKHR(
         _instance.physical_device(),
-        _window.surface(),
+        _surface,
         &mode_count,
         nullptr
     );
@@ -81,7 +75,7 @@ void Swapchain::init_present_modes() {
     std::vector<::VkPresentModeKHR> modes(mode_count);
     result = _instance._GetPhysicalDeviceSurfacePresentModesKHR(
         _instance.physical_device(),
-        _window.surface(),
+        _surface,
         &mode_count,
         modes.data()
     );
@@ -138,14 +132,14 @@ void Swapchain::init_present_modes() {
 }
 
 //==============================================================================
-void Swapchain::init_extent() {
+void Swapchain::init_extent(const ::VkExtent2D &extent) {
     CONSOLE_INFO("");
 
     ::VkSurfaceCapabilitiesKHR surface_capabilities { };
 
     ::VkResult result = _instance._GetPhysicalDeviceSurfaceCapabilitiesKHR(
         _instance.physical_device(),
-        _window.surface(),
+        _surface,
         &surface_capabilities
     );
 
@@ -195,8 +189,7 @@ void Swapchain::init_extent() {
     if(surface_capabilities.currentExtent.width == UI32MAX ||
        surface_capabilities.currentExtent.height == UI32MAX)
     {
-        _extent.width  = _window.x_res();
-        _extent.height = _window.y_res();
+        _extent = extent;
     }
     else {
         _extent = surface_capabilities.currentExtent;
@@ -213,13 +206,13 @@ void Swapchain::init_extent() {
 }
 
 //==============================================================================
-void Swapchain::init_swapchain(const CommandQueues &queue) {
+void Swapchain::init_swapchain(const CommandQueues &queues) {
     CONSOLE_INFO("");
 
     // now we've got everything we need to actually create the swapchain
     ::VkSwapchainCreateInfoKHR swapchain_info { };
     swapchain_info.sType = ::VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchain_info.surface          = _window.surface();
+    swapchain_info.surface          = _surface;
     swapchain_info.minImageCount    = _image_count;
     swapchain_info.imageFormat      = _color_format;
     swapchain_info.imageColorSpace  = _color_space;
@@ -229,14 +222,14 @@ void Swapchain::init_swapchain(const CommandQueues &queue) {
     swapchain_info.presentMode      = _present_mode;
 
     uint32_t indices[] = {
-        queue.graphics_index(),
-        queue.present_index()
+        queues.graphics_index(),
+        queues.present_index()
     };
 
     // the queue families should be the same, but if they're not, then the
     // difference must be explicitly noted and a concurrent image sharing mode
     // used
-    if(queue.graphics_index() != queue.present_index())
+    if(queues.graphics_index() != queues.present_index())
     {
         swapchain_info.imageSharingMode = ::VK_SHARING_MODE_CONCURRENT;
         swapchain_info.queueFamilyIndexCount = 2;
@@ -350,32 +343,53 @@ void Swapchain::init_image_views() {
     }
 }
 
+void Swapchain::destroy() {
+    CONSOLE_INFO("");
+
+    for(auto view : _image_views) {
+        ::vkDestroyImageView(_instance.logical_device(), view, nullptr);
+    }
+    
+    if(_swapchain != nullptr) {
+        _instance._DestroySwapchainKHR(
+            _instance.logical_device(),
+            _swapchain,
+            nullptr
+        );
+    }
+}
+
+void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues)
+{
+    CONSOLE_INFO("");
+
+    init_color_format();
+    init_present_modes();
+    init_extent(extent);
+    init_swapchain(queues);
+    init_swapchain_images();
+    init_image_views();
+}
+
 //==============================================================================
-#if defined(__linux__)
-    Swapchain::Swapchain(const Instance &instance, const X11Window &window) :
-#elif defined(_WIN32)
-    Swapchain::Swapchain(const Instance &instance, const Win32Window &window) :
-#endif
-    _instance           { instance },
-    _window             { window },
+Swapchain::Swapchain(const Instance &instance, const ::VkSurfaceKHR &surface) :
     _color_format       { ::VK_FORMAT_MAX_ENUM },
     _color_space        { ::VK_COLOR_SPACE_MAX_ENUM_KHR },
     _image_count        { 0u },
-    _image_array_layers { 1u }, // layers > 1 is for stereoscopic 3D
+    _image_array_layers { 1u }, // layers > 1 are for stereoscopic 3D
     _extent             { UI32MAX, UI32MAX },
     _offset             { 0, 0 },
     _present_mode       { ::VK_PRESENT_MODE_MAX_ENUM_KHR },
     _transform          { ::VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR },
-    _swapchain          { nullptr }
+    _swapchain          { nullptr  },
+    _instance           { instance },
+    _surface            { surface  }
 {
     CONSOLE_INFO("");
 }
 
 Swapchain::~Swapchain() {
     CONSOLE_INFO("");
-    for(auto view : _image_views) {
-        ::vkDestroyImageView(_instance.logical_device(), view, nullptr);
-    }
 
-    _instance._DestroySwapchainKHR(_instance.logical_device(), _swapchain, nullptr);
+    destroy();
 }

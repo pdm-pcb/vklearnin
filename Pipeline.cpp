@@ -2,7 +2,6 @@
 #include "Pipeline.hpp"
 
 #include "Instance.hpp"
-#include "Swapchain.hpp"
 #include "Shader.hpp"
 
 // =============================================================================

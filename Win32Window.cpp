@@ -2,14 +2,16 @@
 #include "Win32Window.hpp"
 
 #include "Instance.hpp"
+#include "RenderLoop.hpp"
 
-bool Win32Window::message_loop() {
+bool Win32Window::message_loop(RenderLoop &render_loop) {
     ::MSG message { };
     while(::PeekMessageA(&message, _hwindow, 0u, 0u, PM_REMOVE)) {
         ::TranslateMessage(&message);
         ::DispatchMessageA(&message);
     }
-
+    
+    render_loop.resized(_resized);
     return _running;
 }
 
@@ -50,10 +52,30 @@ bool Win32Window::message_loop() {
                                         ::WPARAM wparam, ::LPARAM lparam)
 {
     switch(message) {
-        case WM_KEYDOWN:
-            if(wparam == VK_ESCAPE) {
-                ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+        case WM_KEYUP:
+            switch(wparam) {
+                case VK_ESCAPE:
+                    ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+                    break;
+                case 0x41: // 'a'
+                    if(_extent.width == 1280u) {
+                        break;
+                    }
+                    CONSOLE_TRACE("bumping up resolution");
+                    _build_window(1280u, 1024u);
+                    break;
+                case 0x5A: // 'z'
+                    if(_extent.width == 1024u) {
+                        break;
+                    }
+                    CONSOLE_TRACE("toning down resolution");
+                    _build_window(1024u, 768u);
+                    break;
             }
+            break;
+
+        case WM_SIZE:
+            _resized = true;
             break;
 
         case WM_CLOSE:
@@ -97,8 +119,8 @@ void Win32Window::init_window() {
         WS_POPUP | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        static_cast<int>(_x_res),
-        static_cast<int>(_y_res),
+        static_cast<int>(_extent.width),
+        static_cast<int>(_extent.height),
         nullptr, nullptr, 0, this
     );
 
@@ -106,25 +128,13 @@ void Win32Window::init_window() {
         CONSOLE_CRITICAL("Unable to create win32 window.");
     }
 
-    int display_x = ::GetSystemMetrics(SM_CXSCREEN);
-    int display_y = ::GetSystemMetrics(SM_CYSCREEN);
-
-    int pos_x = display_x / 2 - (_x_res / 2);
-    int pos_y = display_y / 2 - (_y_res / 2);
-
-    ::SetWindowPos(
-        _hwindow, nullptr,
-        pos_x, pos_y,
-        static_cast<int>(_x_res),
-        static_cast<int>(_y_res),
-        0
-    );
-
+    _build_window(_extent.width, _extent.height);
     _running = true;
 }
 
 void Win32Window::init_surface() {
     CONSOLE_INFO("");
+
     ::VkWin32SurfaceCreateInfoKHR surface_info { };
     surface_info.sType = ::VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_info.pNext = nullptr;
@@ -144,14 +154,33 @@ void Win32Window::init_surface() {
     }
 }
 
+void Win32Window::_build_window(const uint32_t x_res, const uint32_t y_res) {
+    _extent = { x_res, y_res };
+    int display_x = ::GetSystemMetrics(SM_CXSCREEN);
+    int display_y = ::GetSystemMetrics(SM_CYSCREEN);
+
+    int pos_x = display_x / 2 - (_extent.width  / 2);
+    int pos_y = display_y / 2 - (_extent.height / 2);
+
+    ::SetWindowPos(
+        _hwindow, nullptr,
+        pos_x, pos_y,
+        static_cast<int>(_extent.width),
+        static_cast<int>(_extent.height),
+        0
+    );
+}
+
 Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
+                         const int32_t x_offset, const int32_t y_offset,
                          const ::VkInstance &instance) :
     _hinstance { nullptr  },
     _hwindow   { nullptr  },
     _surface   { nullptr  },
     _running   { false    },
-    _x_res     { x_res    },
-    _y_res     { y_res    },
+    _resized   { false    },
+    _offset    { x_offset, y_offset },
+    _extent    { x_res, y_res },
     _instance  { instance }
 {
     CONSOLE_INFO("");
@@ -159,5 +188,6 @@ Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
 
 Win32Window::~Win32Window() {
     CONSOLE_INFO("");
+
     ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
 }

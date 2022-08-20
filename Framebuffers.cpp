@@ -51,9 +51,22 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
     );
 }
 
+void Framebuffers::destroy() {
+    CONSOLE_INFO("");
+
+    for(auto buffer : _buffers) {
+        ::vkDestroyFramebuffer(_device, buffer, nullptr);
+    }
+}
+
+void Framebuffers::create(const Swapchain &swapchain, const Pipeline &pipeline)
+{
+    init_buffers(swapchain, pipeline);
+}
+
 // =============================================================================
 Framebuffers::Framebuffers(const ::VkDevice &device) :
-    _device  { device }
+    _device { device }
 {
     CONSOLE_INFO("");
 }
@@ -61,7 +74,5 @@ Framebuffers::Framebuffers(const ::VkDevice &device) :
 Framebuffers::~Framebuffers() {
     CONSOLE_INFO("");
 
-    for(auto buffer : _buffers) {
-        ::vkDestroyFramebuffer(_device, buffer, nullptr);
-    }
+    destroy();
 }

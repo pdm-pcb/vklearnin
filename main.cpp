@@ -8,8 +8,10 @@
 
 #if defined(__linux__)
     #include "X11Window.hpp"
+    using Window = X11Window;
 #elif defined(_WIN32)
     #include "Win32Window.hpp"
+    using Window = Win32Window;
 #endif
 
 int main() {
@@ -20,11 +22,7 @@ int main() {
     instance.init_instance_procs();
     instance.init_physical_device();
 
-#if defined(__linux__)
-    X11Window window(1024u, 768u, instance.vulkan_instance());
-#elif defined(_WIN32)
-    Win32Window window(1024u, 768u, instance.vulkan_instance());
-#endif
+    Window window(1024u, 768u, 0, 0, instance.vulkan_instance());
 
     // both the window itself and the window's surface are required for
     // establishing a command queue family for the Vulkan instance
@@ -51,11 +49,11 @@ int main() {
     
     // the swapchain will use the function pointers gathered by the instance,
     // as well as details of the window's surface
-    Swapchain swapchain(instance, window);
+    Swapchain swapchain(instance, window.surface());
 
-    swapchain.init_color_format();  // presumably 32-bit SRGB
-    swapchain.init_present_modes(); // presumably FIFO/v-sync
-    swapchain.init_extent();        // presumably the window's resolution
+    swapchain.init_color_format();            // presumably 32-bit SRGB
+    swapchain.init_present_modes();           // presumably FIFO/v-sync
+    swapchain.init_extent(window.extent());   // presumably the resolution
     swapchain.init_swapchain(command_queues); // presumably all of the above. =)
 
     swapchain.init_swapchain_images(); // should give us two images for writing

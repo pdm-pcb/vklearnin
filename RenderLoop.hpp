@@ -26,8 +26,13 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance, const Swapchain &swapchain,
-             const Pipeline &pipeline, const Framebuffers &framebuffers);
+    bool run(const Instance &instance, Swapchain &swapchain,
+             Pipeline &pipeline, Framebuffers &framebuffers);
+
+    inline void resized(bool &resized) {
+        _resized = resized;
+        resized = false;
+    }
 
     // -------------------------------------------------------------------------
     // Setup
@@ -40,6 +45,8 @@ private:
     std::array<::VkSemaphore, MAX_FRAMES> _image_available_sems;
     std::array<::VkSemaphore, MAX_FRAMES> _draw_complete_sems;
     std::array<::VkFence, MAX_FRAMES>     _display_fences;
+
+    bool _resized;
 
     const ::VkDevice &_device;
     Window           &_window;

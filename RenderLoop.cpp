@@ -14,23 +14,22 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
-                     const Pipeline &pipeline, const Framebuffers &framebuffers)
+bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
+                     Pipeline &pipeline, Framebuffers &framebuffers)
 {
-    ::VkResult result = ::VK_RESULT_MAX_ENUM;
-    uint32_t frame = 0u;
+    ::VkResult result    = ::VK_RESULT_MAX_ENUM;
+    uint32_t frame       = 0u;
     uint32_t image_index = 0u;
 
-    while(_window.message_loop() == true) {
+    while(_window.message_loop(*this) == true) {
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
         frame = 1 - frame;
 
         ::vkWaitForFences(_device, 1u, &_display_fences[frame], VK_TRUE,
                           UI64MAX);
-        ::vkResetFences(_device, 1u, &_display_fences[frame]);
 
-        instance._AcquireNextImageKHR(
+        result = instance._AcquireNextImageKHR(
             _device,
             swapchain.swapchain(),
             UI64MAX,
@@ -38,6 +37,21 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
             nullptr,
             &image_index
         );
+
+        if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized) {
+            ::vkDeviceWaitIdle(instance.logical_device());
+            _resized = false;
+
+            framebuffers.destroy();
+            swapchain.destroy();
+            swapchain.create(_window.extent(), _queues);
+            framebuffers.create(swapchain, pipeline);
+            pipeline.update_dimensions(swapchain);
+
+            continue;
+        }
+
+        ::vkResetFences(_device, 1u, &_display_fences[frame]);
 
         _queues.reset_command_buffer(
             image_index,
@@ -69,6 +83,7 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         ::VkClearValue clear_values[] = {{
             .color = { 0.1f, 0.1f, 0.1f, 1.0f }
         }};
+
         pass_info.clearValueCount =
             static_cast<uint32_t>(std::size(clear_values));
         pass_info.pClearValues = clear_values;
@@ -158,6 +173,9 @@ bool RenderLoop::run(const Instance &instance, const Swapchain &swapchain,
         present_info.pResults = nullptr;
 
         ::vkQueuePresentKHR(_queues.present_queue(), &present_info);
+
+        // static uint32_t frame_count = 0u;
+        // CONSOLE_TRACE("Frame {}", ++frame_count);
     }
 
     ::vkDeviceWaitIdle(_device);
@@ -203,9 +221,10 @@ void RenderLoop::init_synchronization() {
 // =============================================================================
 RenderLoop::RenderLoop(const ::VkDevice &device, Window &window,
                        CommandQueues &queues) :
-    _device        { device },
-    _window        { window },
-    _queues        { queues }
+    _resized { false  },
+    _device  { device },
+    _window  { window },
+    _queues  { queues }
 {
     CONSOLE_INFO("");
 }
