@@ -13,3 +13,12 @@ set_target_properties(
     INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
     $<TARGET_PROPERTY:spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
+# get_target_property(
+#     IID spdlog
+#     INTERFACE_INCLUDE_DIRECTORIES
+# )
+# set_target_properties(
+#     spdlog PROPERTIES
+#     INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${IID}"
+# )

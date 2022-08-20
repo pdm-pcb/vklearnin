@@ -37,6 +37,21 @@ void * operator new[](size_t bytes) {
     return &(static_cast<size_t *>(new_alloc)[1]);
 }
 
+void * operator new(size_t bytes, const std::nothrow_t& nothrow) noexcept {
+    MemTracker::total_bytes += bytes;
+#ifdef MEMLOG
+    printf(
+        "%zu bytes allocated; %zu total, %zu / %zu\n",
+        bytes, MemTracker::total_bytes, ++MemTracker::alloc_count,
+        MemTracker::free_count
+    );
+#endif
+
+    void *new_alloc = malloc(bytes + sizeof(size_t));
+    static_cast<size_t *>(new_alloc)[0] = bytes;
+    return &(static_cast<size_t *>(new_alloc)[1]);
+}
+
 void operator delete(void *memory) {
     if(memory == nullptr) {
         printf("Tried to delete nullptr!\n");
@@ -68,6 +83,35 @@ void operator delete(void *memory) {
 void operator delete[](void *memory) {
     if(memory == nullptr) {
         printf("Tried to delete[] nullptr!\n");
+        return;
+    }
+
+    size_t bytes = static_cast<size_t *>(memory)[-1];
+    MemTracker::total_bytes -= bytes;
+
+#ifdef MEMLOG
+    printf(
+        "%zu bytes []freed; %zu total, %zu / %zu\n",
+        bytes, MemTracker::total_bytes, MemTracker::alloc_count,
+        ++MemTracker::free_count
+    );
+#endif
+    free(&(static_cast<size_t *>(memory)[-1]));
+    if(MemTracker::total_bytes == 0) {
+        printf(
+            "\n~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ "
+            "~ ~ ~ ~ ~ ~ ~ ~"
+            "\nMission accomplished.\n"
+            "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ "
+            "~ ~ ~ ~ ~ ~ ~\n\n"
+        );
+    }
+}
+
+
+void operator delete(void *memory, const std::nothrow_t& nothrow) noexcept {
+    if(memory == nullptr) {
+        printf("Tried to delete noexcept nullptr!\n");
         return;
     }
 

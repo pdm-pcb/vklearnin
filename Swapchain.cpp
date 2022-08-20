@@ -166,10 +166,8 @@ void Swapchain::init_extent(const ::VkExtent2D &extent) {
         surface_capabilities.maxImageArrayLayers
     );
 
-    // establish one more than the minimum required images so it's less likely
-    // we'll have to wait on the driver in order to have a fresh image to which
-    // we can write
-    _image_count = surface_capabilities.minImageCount + 1u;
+    // default to double buffering
+    _image_count = MAX_IMAGES;
 
     // Don't exceed the maximum image count, however. Zero is a special maximum
     // indicating unlimiated images

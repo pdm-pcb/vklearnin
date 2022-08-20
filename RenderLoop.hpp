@@ -42,9 +42,9 @@ public:
     ~RenderLoop();
 
 private:
-    std::array<::VkSemaphore, MAX_FRAMES> _image_available_sems;
-    std::array<::VkSemaphore, MAX_FRAMES> _draw_complete_sems;
-    std::array<::VkFence, MAX_FRAMES>     _display_fences;
+    std::array<::VkSemaphore, MAX_IMAGES> _image_available_sems;
+    std::array<::VkSemaphore, MAX_IMAGES> _draw_complete_sems;
+    std::array<::VkFence, MAX_IMAGES>     _display_fences;
 
     bool _resized;
 

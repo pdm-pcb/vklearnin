@@ -97,6 +97,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
 
 void Win32Window::init_window() {
     CONSOLE_INFO("");
+
     ::WNDCLASSEXA wcex { };
     wcex.cbSize        = sizeof(::WNDCLASSEXA);
     wcex.style         = CS_HREDRAW | CS_VREDRAW;

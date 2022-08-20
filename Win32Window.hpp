@@ -1,3 +1,4 @@
+#ifdef WIN32
 #ifndef VKL_WIN32WINDOW_HPP
 #define VKL_WIN32WINDOW_HPP
 
@@ -56,3 +57,4 @@ private:
 };
 
 #endif // VKL_WIN32WINDOW_HPP
+#endif // WIN32

@@ -62,6 +62,9 @@ int main() {
     Pipeline pipeline(instance.logical_device());
     // pipeline.vertex_from_source("../../shaders/shader.vert");
     // pipeline.fragment_from_source("../../shaders/shader.frag");
+
+    // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
+    // so no online compiling for now.
     pipeline.vertex_from_binary("../../shaders/vert.spv");
     pipeline.fragment_from_binary("../../shaders/frag.spv");
 

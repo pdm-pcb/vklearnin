@@ -19,7 +19,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 {
     CONSOLE_INFO("");
 
-    ::VkResult result    = ::VK_RESULT_MAX_ENUM;
+    ::VkResult result = ::VK_RESULT_MAX_ENUM;
     uint32_t frame       = 0u;
     uint32_t image_index = 0u;
 

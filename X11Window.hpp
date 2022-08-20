@@ -1,3 +1,4 @@
+#ifdef __linux__
 #ifndef VKL_X11WINDOW_HPP
 #define VKL_X11WINDOW_HPP
 
@@ -5,31 +6,27 @@
 #include <xcb/xcb.h>
 #include <vulkan/vulkan.h>
 
-class Instance;
+class RenderLoop;
 
 class X11Window {
 public:
-    void render_loop();
+    bool message_loop(RenderLoop &render_loop);
 
     void init_window();
     void init_surface();
 
-    const ::VkSurfaceKHR & surface() const { return _surface; }
-    uint32_t x_res() const { return _x_res; }
-    uint32_t y_res() const { return _y_res; }
+    inline const ::VkSurfaceKHR & surface() const { return _surface; }
+    inline const ::VkOffset2D   & offset()  const { return _offset;  }
+    inline const ::VkExtent2D   & extent()  const { return _extent;  }
 
     X11Window(const uint32_t x_res, const uint32_t y_res,
-              const Instance &instance);
+              const int32_t x_offset, const int32_t y_offset,
+              const ::VkInstance &instance);
     ~X11Window();
 
     X11Window() = delete;
 
 private:
-    const Instance &_instance;
-
-    uint32_t _x_res;
-    uint32_t _y_res;
-
     ::xcb_connection_t *_connection;
     ::xcb_window_t      _window;
     ::xcb_screen_t     *_screen;
@@ -37,6 +34,22 @@ private:
     ::xcb_atom_t        _wm_proto;
 
     ::VkSurfaceKHR _surface;
+    ::VkOffset2D   _offset;
+    ::VkExtent2D   _extent;
+
+    bool _running;
+    bool _resized;
+    
+    uint32_t _display_x;
+    uint32_t _display_y;
+    uint32_t _launch_x;
+    uint32_t _launch_y;
+
+    const ::VkInstance &_instance;
+
+    void _query_randr();
+    void _build_window(const uint32_t x_res, const uint32_t y_res);
 };
 
 #endif // VKL_X11WINDOW_HPP
+#endif // __liunx__

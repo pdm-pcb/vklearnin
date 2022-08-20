@@ -68,7 +68,7 @@ private:
     ::VkQueue  _present_queue;
 
     ::VkCommandPool _command_pool;
-    std::array<::VkCommandBuffer, MAX_FRAMES> _command_buffers;
+    std::array<::VkCommandBuffer, MAX_IMAGES> _command_buffers;
 
     const ::VkPhysicalDevice &_physical_device;
     const ::VkDevice         &_device;

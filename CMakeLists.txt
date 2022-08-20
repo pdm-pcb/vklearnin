@@ -38,6 +38,11 @@ target_link_libraries(
     spdlog
 )
 
+target_include_directories(
+    vulkan-learnin PUBLIC
+    "${spdlog_SOURCE_DIR}"
+)
+
 # -----------------------------------------------------------------------------
 # Linux build details
 if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
@@ -49,7 +54,7 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
 	target_link_libraries(
 		vulkan-learnin PUBLIC
 		"xcb"
-		"X11"
+        "xcb-randr"
 	)
 
 	target_compile_options(

@@ -12,6 +12,7 @@ static constexpr char APPLICATION_NAME[] { "Learnin'"        };
 
 #if defined(__linux__)
     #include <xcb/xcb.h>
+    #include <xcb/randr.h>
     #include <vulkan/vulkan_xcb.h>
 #elif defined(_WIN32)
     #include <winsdkver.h>
@@ -50,9 +51,10 @@ static constexpr char APPLICATION_NAME[] { "Learnin'"        };
 #include <limits>
 #include <utility>
 #include <array>
+#include <optional>
 
 static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
-static constexpr uint32_t MAX_FRAMES = 2;
+static constexpr uint32_t MAX_IMAGES = 2;
 
 #endif // VKL_COMMON_HPP
