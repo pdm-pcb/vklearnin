@@ -59,6 +59,8 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
             break;
 
         case WM_SYSKEYUP:
+        // courtesey jonrhythmic:
+        // https://www.reddit.com/r/learnprogramming/comments/nqrt4o/comment/h0d1te9/
             if(HIWORD(lparam) && KF_ALTDOWN) {
                 if(LOWORD(wparam) == VK_RETURN) {
                     if(_extent.width  == _display_x ||
