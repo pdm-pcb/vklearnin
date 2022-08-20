@@ -39,15 +39,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         );
 
         if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized) {
-            ::vkDeviceWaitIdle(instance.logical_device());
-            _resized = false;
-
-            framebuffers.destroy();
-            swapchain.destroy();
-            swapchain.create(_window.extent(), _queues);
-            framebuffers.create(swapchain, pipeline);
-            pipeline.update_dimensions(swapchain);
-
+            _image_resized(instance, swapchain, pipeline, framebuffers);
             continue;
         }
 
@@ -99,16 +91,8 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                     ::VK_PIPELINE_BIND_POINT_GRAPHICS,
                     pipeline.pipeline()
                 );
-                ::vkCmdSetViewport(
-                    buffer,
-                    0u, 1u,
-                    pipeline.viewports()
-                );
-                ::vkCmdSetScissor(
-                    buffer,
-                    0u, 1u,
-                    pipeline.scissors()
-                );
+                ::vkCmdSetViewport(buffer, 0u, 1u, pipeline.viewports());
+                ::vkCmdSetScissor(buffer,0u, 1u, pipeline.scissors());
                 ::vkCmdDraw(
                     buffer,
                     3u, 1u,
@@ -172,7 +156,12 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         present_info.pImageIndices = &image_index;
         present_info.pResults = nullptr;
 
-        ::vkQueuePresentKHR(_queues.present_queue(), &present_info);
+        result = ::vkQueuePresentKHR(_queues.present_queue(), &present_info);
+        if(result == ::VK_ERROR_OUT_OF_DATE_KHR ||
+           result == ::VK_SUBOPTIMAL_KHR || _resized)
+        {
+            _image_resized(instance, swapchain, pipeline, framebuffers);
+        }
 
         // static uint32_t frame_count = 0u;
         // CONSOLE_TRACE("Frame {}", ++frame_count);
@@ -216,6 +205,20 @@ void RenderLoop::init_synchronization() {
     }
 
     CONSOLE_TRACE("Created synchronization primitives");
+}
+
+// =============================================================================
+void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
+                                Pipeline &pipeline, Framebuffers &framebuffers)
+{
+    ::vkDeviceWaitIdle(instance.logical_device());
+    _resized = false;
+
+    framebuffers.destroy();
+    swapchain.destroy();
+    swapchain.create(_window.extent(), _queues);
+    framebuffers.create(swapchain, pipeline);
+    pipeline.update_dimensions(swapchain);
 }
 
 // =============================================================================

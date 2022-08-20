@@ -51,6 +51,9 @@ private:
     const ::VkDevice &_device;
     Window           &_window;
     CommandQueues    &_queues;
+
+    void _image_resized(const Instance &instance, Swapchain &swapchain,
+                        Pipeline &pipeline, Framebuffers &framebuffers);
 };
 
 #endif // VKL_RENDERLOOP_HPP

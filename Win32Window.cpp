@@ -71,6 +71,22 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
                     CONSOLE_TRACE("toning down resolution");
                     _build_window(1024u, 768u);
                     break;
+                case 0x46: { // 'f'
+                    uint32_t display_x =
+                        static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN));
+                    uint32_t display_y =
+                        static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN));
+                    if(_extent.width == display_x) {
+                        CONSOLE_TRACE("Exiting fullscreen");
+                        _build_window(1024u, 768u);
+                    }
+                    else {
+                        CONSOLE_TRACE("FULLSCREEN YOU SAY?!?!");
+                        _build_window(display_x, display_y);
+                    }
+
+                    break;
+                }
             }
             break;
 
