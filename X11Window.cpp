@@ -8,7 +8,8 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
-        switch(event->response_type & ~0x80) {
+        // switch(event->response_type & ~0x80) {
+        switch(event->response_type & 0x7f) {
             case XCB_CLIENT_MESSAGE: {
                 auto *msg =
                     reinterpret_cast<::xcb_client_message_event_t *>(event);
@@ -96,12 +97,13 @@ void X11Window::init_window() {
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL | ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
         _screen->black_pixel,
-        ::XCB_EVENT_MASK_EXPOSURE |
-        ::XCB_EVENT_MASK_KEY_PRESS |
-        ::XCB_EVENT_MASK_KEY_RELEASE |
-        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
-        ::XCB_EVENT_MASK_RESIZE_REDIRECT,
-
+		::XCB_EVENT_MASK_KEY_RELEASE |
+		::XCB_EVENT_MASK_KEY_PRESS |
+		::XCB_EVENT_MASK_EXPOSURE |
+		::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
+		::XCB_EVENT_MASK_POINTER_MOTION |
+		::XCB_EVENT_MASK_BUTTON_PRESS |
+		::XCB_EVENT_MASK_BUTTON_RELEASE
     };
 
     ::xcb_create_window(
@@ -151,6 +153,15 @@ void X11Window::init_window() {
 
     _wm_delete = delete_reply->atom;
     _wm_proto  = protocols_reply->atom;
+
+    ::xcb_change_property(
+        _connection,
+        ::XCB_PROP_MODE_REPLACE,
+        _window,
+        _wm_proto,
+        4, 32, 1,
+        &_wm_delete
+    );
 
     ::xcb_map_window(_connection, _window);
     ::xcb_flush(_connection);
