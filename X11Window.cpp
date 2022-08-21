@@ -12,20 +12,7 @@ using keyrelease_notify = ::xcb_key_release_event_t *;
 static constexpr int XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80;
 static constexpr ::xcb_mod_mask_t altmask = ::XCB_MOD_MASK_5;
 
-void print_modifiers(uint32_t mask) {
-    const char **mod, *mods[] = {
-        "Shift", "Lock", "Ctrl", "Alt",
-        "Mod2", "Mod3", "Mod4", "Mod5",
-        "Button1", "Button2", "Button3", "Button4", "Button5"
-    };
-
-    printf("%u: ", mask);
-    for (mod = mods; mask; mask >>= 1, mod++)
-        if (mask & 1)
-            printf(*mod);
-    putchar ('\n');
-}
-
+//==============================================================================
 bool X11Window::message_loop(RenderLoop &render_loop) {
     ::xcb_generic_event_t *event = nullptr;
 
@@ -45,11 +32,16 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
 
             case XCB_CONFIGURE_NOTIFY: {
                 auto *config = reinterpret_cast<config_notify>(event);
-                CONSOLE_WARN(
-                    "config notify: offset: {}x{} size: {}x{}",
-                    config->x, config->y,
-                    config->width, config->height
-                );
+                if(((config->width  != _extent.width) ||
+                    (config->height != _extent.height)))
+                {
+                    CONSOLE_WARN(
+                        "config: {}x{}, offset {}x{}",
+                        config->width, config->height,
+                        config->x, config->y
+                    );
+                    _resized = true;
+                }
                 break;
             }
             
@@ -60,6 +52,7 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                     press->detail,
                     0
                 );
+
                 switch(key) {
                     case XK_Escape:
                         _running = false;
@@ -76,21 +69,26 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                     0
                 );
 
-                CONSOLE_ERROR("{:b} / {} released", key, key);
-                print_modifiers(release->state);
                 switch(key) {
                     case XK_Return: {
                         if(release->state & altmask) {
-                            if(_extent.width  == _display_xres ||
-                               _extent.height == _display_yres)
-                            {
-                                _build_window(_launch_width, _launch_height);
+                            static uint32_t prev_width;
+                            static uint32_t prev_height;
+
+                            if(_fullscreen) {
+                                _width  = prev_width;
+                                _height = prev_height;
                             }
                             else {
-                                _build_window(_display_xres, _display_yres);
+                                prev_width  = _width;
+                                prev_height = _height;
+
+                                _width  = _display_xres;
+                                _height = _display_yres;
                             }
 
-                            _resized = true;
+                            _fullscreen = !_fullscreen;
+                            _size_window(_width, _height);
                         }
                         break;
                     }
@@ -106,27 +104,7 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
     return _running;
 }
 
-// void atom_name(xcb_connection_t *connection, xcb_atom_t atom) {
-//     if(!atom) return;
-
-//     xcb_generic_error_t *error = nullptr;
-//     auto cookie = xcb_get_atom_name(connection, atom);
-//     auto *reply = xcb_get_atom_name_reply(connection, cookie, &error);
-
-//     if(error) return;
-
-//     if(reply) {
-//         auto namesize = xcb_get_atom_name_name_length(reply) + 1;
-//         char *name = new char[namesize];
-//         memset(name, '\0', namesize);
-//         strcpy(name, xcb_get_atom_name_name(reply));
-//         ???DO SOMETHING
-//         delete[] name;
-//         free(reply);
-//     }
-//     return;
-// }
-
+//==============================================================================
 void X11Window::init_window() {
     CONSOLE_INFO("");
 
@@ -155,8 +133,6 @@ void X11Window::init_window() {
         _screen->black_pixel,
 		::XCB_EVENT_MASK_KEY_RELEASE |
 		::XCB_EVENT_MASK_KEY_PRESS |
-		::XCB_EVENT_MASK_EXPOSURE |
-		::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
 		::XCB_EVENT_MASK_POINTER_MOTION |
 		::XCB_EVENT_MASK_BUTTON_PRESS |
 		::XCB_EVENT_MASK_BUTTON_RELEASE
@@ -220,57 +196,52 @@ void X11Window::init_window() {
     free(delete_reply);
     free(protocols_reply);
 
-    auto motif_cookie = xcb_intern_atom(
-        _connection,
-        0,
-        strlen("_MOTIF_WM_HINTS"),
-        "_MOTIF_WM_HINTS"
-    );
-    auto *motif_reply = xcb_intern_atom_reply(
-        _connection,
-        motif_cookie,
-        NULL
-    );
+    // auto motif_cookie = xcb_intern_atom(
+    //     _connection,
+    //     0,
+    //     strlen("_MOTIF_WM_HINTS"),
+    //     "_MOTIF_WM_HINTS"
+    // );
+    // auto *motif_reply = xcb_intern_atom_reply(
+    //     _connection,
+    //     motif_cookie,
+    //     NULL
+    // );
 
-    MotifHints hints {
-        .flags = 2u,
-        .functions = 0u,
-        .decorations = 0u,
-        .input_mode = 0,
-        .status = 0u,
-    };
+    // MotifHints hints {
+    //     .flags = 2u,
+    //     .functions = 0u,
+    //     .decorations = 0u,
+    //     .input_mode = 0,
+    //     .status = 0u,
+    // };
 
-    ::xcb_change_property(
-        _connection,
-        XCB_PROP_MODE_REPLACE,
-        _window,
-        motif_reply->atom,
-        XCB_ATOM_INTEGER,
-        32,
-        5,
-        &hints
-    );
+    // ::xcb_change_property(
+    //     _connection,
+    //     XCB_PROP_MODE_REPLACE,
+    //     _window,
+    //     motif_reply->atom,
+    //     XCB_ATOM_INTEGER,
+    //     32,
+    //     5,
+    //     &hints
+    // );
 
-    free(motif_reply);
-
-    ::xcb_grab_key(
-        _connection,
-        0u,
-        _window,
-        ::XCB_MOD_MASK_ANY,
-        ::XCB_GRAB_ANY,
-        ::XCB_GRAB_MODE_ASYNC,
-        ::XCB_GRAB_MODE_ASYNC
-    );
+    // free(motif_reply);
 
     ::xcb_map_window(_connection, _window);
-    ::xcb_flush(_connection);
 
-    _build_window(_extent.width, _extent.height);
+    _size_window(_extent.width, _extent.height);
     _running = true;
 }
 
+//==============================================================================
 void X11Window::init_surface() {
+    if(_surface != nullptr) {
+        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        _surface = nullptr;
+    }
+
     ::VkXcbSurfaceCreateInfoKHR surface_info { };
     surface_info.sType = ::VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
     surface_info.connection = _connection;
@@ -288,7 +259,8 @@ void X11Window::init_surface() {
     }
 }
 
-void X11Window::_build_window(const uint32_t width, const uint32_t height) {
+//==============================================================================
+void X11Window::_size_window(const uint32_t width, const uint32_t height) {
     _query_randr();
 
     _extent = { width, height };
@@ -315,8 +287,11 @@ void X11Window::_build_window(const uint32_t width, const uint32_t height) {
         value_mask,
         value_list
     );
+
+    ::xcb_flush(_connection);
 }
 
+//==============================================================================
 void X11Window::_query_randr() {
     auto *reply = xcb_randr_get_screen_resources_current_reply(
         _connection,
@@ -376,6 +351,7 @@ void X11Window::_query_randr() {
     );
 }
 
+//==============================================================================
 X11Window::X11Window(const uint32_t width, const uint32_t height,
                      const int32_t x_offset, const int32_t y_offset,
                      const ::VkInstance &instance) :
@@ -388,14 +364,15 @@ X11Window::X11Window(const uint32_t width, const uint32_t height,
     _surface       { 0u },
     _offset        { x_offset, y_offset },
     _extent        { width, height },
-    _launch_width  { width  },
-    _launch_height { height },
+    _width         { width  },
+    _height        { height },
     _display_xres  { 0u },
     _display_yres  { 0u },
     _display_xoff  { 0 },
     _display_yoff  { 0 },
     _running       { false },
     _resized       { false },
+    _fullscreen    { false },
     _instance      { instance }
 {
     CONSOLE_INFO("");
@@ -409,3 +386,40 @@ X11Window::~X11Window() {
     ::xcb_destroy_window(_connection, _window);
     ::xcb_disconnect(_connection);
 }
+
+/* these are handy "introspection" functions I've stumbled upon along the way
+void print_modifiers(uint32_t mask) {
+    const char **mod, *mods[] = {
+        "Shift", "Lock", "Ctrl", "Alt",
+        "Mod2", "Mod3", "Mod4", "Mod5",
+        "Button1", "Button2", "Button3", "Button4", "Button5"
+    };
+
+    printf("%u: ", mask);
+    for (mod = mods; mask; mask >>= 1, mod++)
+        if (mask & 1)
+            printf(*mod);
+    putchar ('\n');
+}
+
+void atom_name(xcb_connection_t *connection, xcb_atom_t atom) {
+    if(!atom) return;
+
+    xcb_generic_error_t *error = nullptr;
+    auto cookie = xcb_get_atom_name(connection, atom);
+    auto *reply = xcb_get_atom_name_reply(connection, cookie, &error);
+
+    if(error) return;
+
+    if(reply) {
+        auto namesize = xcb_get_atom_name_name_length(reply) + 1;
+        char *name = new char[namesize];
+        memset(name, '\0', namesize);
+        strcpy(name, xcb_get_atom_name_name(reply));
+        // ???DO SOMETHING
+        delete[] name;
+        free(reply);
+    }
+    return;
+}
+*/

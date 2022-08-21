@@ -341,6 +341,7 @@ void Swapchain::init_image_views() {
     }
 }
 
+//==============================================================================
 void Swapchain::destroy() {
     CONSOLE_INFO("");
 
@@ -349,14 +350,17 @@ void Swapchain::destroy() {
     }
     
     if(_swapchain != nullptr) {
+        _old_swapchain = _swapchain;
         _instance._DestroySwapchainKHR(
             _instance.logical_device(),
             _swapchain,
             nullptr
         );
+        _swapchain = nullptr;
     }
 }
 
+//==============================================================================
 void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues)
 {
     CONSOLE_INFO("");
@@ -375,11 +379,12 @@ Swapchain::Swapchain(const Instance &instance, const ::VkSurfaceKHR &surface) :
     _color_space        { ::VK_COLOR_SPACE_MAX_ENUM_KHR },
     _image_count        { 0u },
     _image_array_layers { 1u }, // layers > 1 are for stereoscopic 3D
-    _extent             { UI32MAX, UI32MAX },
     _offset             { 0, 0 },
+    _extent             { UI32MAX, UI32MAX },
     _present_mode       { ::VK_PRESENT_MODE_MAX_ENUM_KHR },
     _transform          { ::VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR },
     _swapchain          { nullptr  },
+    _old_swapchain      { nullptr  },
     _instance           { instance },
     _surface            { surface  }
 {

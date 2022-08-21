@@ -46,8 +46,8 @@ private:
     ::VkOffset2D   _offset;
     ::VkExtent2D   _extent;
     
-    uint32_t _launch_width;
-    uint32_t _launch_height;
+    uint32_t _width;
+    uint32_t _height;
 
     uint32_t _display_xres;
     uint32_t _display_yres;
@@ -56,11 +56,12 @@ private:
 
     bool _running;
     bool _resized;
+    bool _fullscreen;
 
     const ::VkInstance &_instance;
 
     void _query_randr();
-    void _build_window(const uint32_t width, const uint32_t height);
+    void _size_window(const uint32_t width, const uint32_t height);
 };
 
 #endif // VKL_X11WINDOW_HPP

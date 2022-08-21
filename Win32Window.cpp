@@ -4,6 +4,7 @@
 #include "Instance.hpp"
 #include "RenderLoop.hpp"
 
+//==============================================================================
 bool Win32Window::message_loop(RenderLoop &render_loop) {
     ::MSG message { };
     while(::PeekMessageA(&message, _hwindow, 0u, 0u, PM_REMOVE)) {
@@ -15,6 +16,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
     return _running;
 }
 
+//==============================================================================
 ::LRESULT CALLBACK Win32Window::_message_dispatch(::HWND window,
                                                   ::UINT message,
                                                   ::WPARAM wparam,
@@ -48,6 +50,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
     }
 }
 
+//==============================================================================
 ::LRESULT Win32Window::_message_handler(::HWND window, ::UINT message,
                                         ::WPARAM wparam, ::LPARAM lparam)
 {
@@ -95,6 +98,7 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
     return ::DefWindowProc(window, message, wparam, lparam);
 }
 
+//==============================================================================
 void Win32Window::init_window() {
     CONSOLE_INFO("");
 
@@ -135,6 +139,7 @@ void Win32Window::init_window() {
     _running = true;
 }
 
+//==============================================================================
 void Win32Window::init_surface() {
     CONSOLE_INFO("");
 
@@ -157,6 +162,7 @@ void Win32Window::init_surface() {
     }
 }
 
+//==============================================================================
 void Win32Window::_build_window(const uint32_t width, const uint32_t height) {
     _extent = { width, height };
 
@@ -172,21 +178,23 @@ void Win32Window::_build_window(const uint32_t width, const uint32_t height) {
     );
 }
 
+//==============================================================================
 Win32Window::Win32Window(const uint32_t width, const uint32_t height,
                          const int32_t x_offset, const int32_t y_offset,
                          const ::VkInstance &instance) :
-    _hinstance { nullptr  },
-    _hwindow   { nullptr  },
-    _surface   { nullptr  },
-    _running   { false    },
-    _resized   { false    },
-    _offset    { x_offset, y_offset },
-    _extent    { width, height },
-    _display_xres { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
-    _display_yres { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
-    _launch_width  { width    },
-    _launch_height  { height    },
-    _instance  { instance }
+    _hinstance     { nullptr },
+    _hwindow       { nullptr },
+    _surface       { nullptr },
+    _running       { false },
+    _resized       { false },
+    _fullscreen    { false },
+    _offset        { x_offset, y_offset },
+    _extent        { width, height },
+    _display_xres  { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
+    _display_yres  { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
+    _launch_width  { width  },
+    _launch_height { height },
+    _instance      { instance }
 {
     CONSOLE_INFO("");
 }

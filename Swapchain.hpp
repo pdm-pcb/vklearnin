@@ -67,6 +67,7 @@ private:
     ::VkSurfaceTransformFlagBitsKHR _transform;
 
     ::VkSwapchainKHR _swapchain;
+    ::VkSwapchainKHR _old_swapchain;
 
     std::vector<::VkImage>     _images;
     std::vector<::VkImageView> _image_views;

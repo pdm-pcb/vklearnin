@@ -38,6 +38,7 @@ private:
 
     bool _running;
     bool _resized;
+    bool _fullscreen;
     
     uint32_t _display_xres;
     uint32_t _display_yres;
