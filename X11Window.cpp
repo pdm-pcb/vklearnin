@@ -17,35 +17,9 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
-        switch(event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
-            case XCB_CLIENT_MESSAGE: {
-                auto *msg = reinterpret_cast<client_msg>(event);
-                if(msg->data.data32[0] == _wm_delete) {
-                    _running = false;
-                }
-                break;
-            }
-
-            case XCB_DESTROY_NOTIFY:
-                _running = false;
-                break;
-
-            case XCB_CONFIGURE_NOTIFY: {
-                auto *config = reinterpret_cast<config_notify>(event);
-                if(((config->width  != _extent.width) ||
-                    (config->height != _extent.height)))
-                {
-                    CONSOLE_WARN(
-                        "config: {}x{}, offset {}x{}",
-                        config->width, config->height,
-                        config->x, config->y
-                    );
-                    _resized = true;
-                }
-                break;
-            }
-            
-            case XCB_KEY_PRESS: {
+        switch(event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {            
+            case XCB_KEY_PRESS: CONSOLE_WARN("{}", "XCB_KEY_PRESS");
+            {
                 auto *press = reinterpret_cast<keypress_notify>(event);
                 auto key = ::xcb_key_symbols_get_keysym(
                     _key_symbols,
@@ -61,7 +35,8 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                 break;
             }
 
-            case XCB_KEY_RELEASE: {
+            case XCB_KEY_RELEASE: CONSOLE_WARN("{}", "XCB_KEY_RELEASE");
+            {
                 auto *release = reinterpret_cast<keyrelease_notify>(event);
                 auto key = ::xcb_key_symbols_get_keysym(
                     _key_symbols,
@@ -95,6 +70,69 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                 }
                 break;
             }
+
+            case XCB_BUTTON_PRESS:      CONSOLE_WARN("{}", "XCB_BUTTON_PRESS");      break;
+            case XCB_BUTTON_RELEASE:    CONSOLE_WARN("{}", "XCB_BUTTON_RELEASE");    break;
+            case XCB_MOTION_NOTIFY:     CONSOLE_WARN("{}", "XCB_MOTION_NOTIFY");     break;
+            case XCB_ENTER_NOTIFY:      CONSOLE_WARN("{}", "XCB_ENTER_NOTIFY");      break;
+            case XCB_LEAVE_NOTIFY:      CONSOLE_WARN("{}", "XCB_LEAVE_NOTIFY");      break;
+            case XCB_FOCUS_IN:          CONSOLE_WARN("{}", "XCB_FOCUS_IN");          break;
+            case XCB_FOCUS_OUT:         CONSOLE_WARN("{}", "XCB_FOCUS_OUT");         break;
+            case XCB_KEYMAP_NOTIFY:     CONSOLE_WARN("{}", "XCB_KEYMAP_NOTIFY");     break;
+            case XCB_EXPOSE:            CONSOLE_WARN("{}", "XCB_EXPOSE");            break;
+            case XCB_GRAPHICS_EXPOSURE: CONSOLE_WARN("{}", "XCB_GRAPHICS_EXPOSURE"); break;
+            case XCB_NO_EXPOSURE:       CONSOLE_WARN("{}", "XCB_NO_EXPOSURE");       break;
+            case XCB_VISIBILITY_NOTIFY: CONSOLE_WARN("{}", "XCB_VISIBILITY_NOTIFY"); break;
+
+            case XCB_CREATE_NOTIFY: CONSOLE_WARN("{}", "XCB_CREATE_NOTIFY");
+                _running = true;
+                break;
+
+            case XCB_DESTROY_NOTIFY: CONSOLE_WARN("{}", "XCB_DESTROY_NOTIFY");
+                _running = false;
+                break;
+
+            case XCB_UNMAP_NOTIFY:    CONSOLE_WARN("{}", "XCB_UNMAP_NOTIFY");    break;
+            case XCB_MAP_NOTIFY:      CONSOLE_WARN("{}", "XCB_MAP_NOTIFY");      break;
+            case XCB_MAP_REQUEST:     CONSOLE_WARN("{}", "XCB_MAP_REQUEST");     break;
+            case XCB_REPARENT_NOTIFY: CONSOLE_WARN("{}", "XCB_REPARENT_NOTIFY"); break;
+
+            case XCB_CONFIGURE_NOTIFY: CONSOLE_WARN("{}", "XCB_CONFIGURE_NOTIFY");
+            {
+                auto *config = reinterpret_cast<config_notify>(event);
+                if(((config->width  != _extent.width) ||
+                    (config->height != _extent.height)))
+                {
+                    CONSOLE_WARN(
+                        "config: {}x{}, offset {}x{}",
+                        config->width, config->height,
+                        config->x, config->y
+                    );
+                    _resized = true;
+                }
+                break;
+            }
+
+            case XCB_CONFIGURE_REQUEST: CONSOLE_WARN("{}", "XCB_CONFIGURE_REQUEST"); break;
+            case XCB_GRAVITY_NOTIFY:    CONSOLE_WARN("{}", "XCB_GRAVITY_NOTIFY");    break;
+            case XCB_RESIZE_REQUEST:    CONSOLE_WARN("{}", "XCB_RESIZE_REQUEST");    break;
+            case XCB_CIRCULATE_NOTIFY:  CONSOLE_WARN("{}", "XCB_CIRCULATE_NOTIFY");  break;
+            case XCB_PROPERTY_NOTIFY:   CONSOLE_WARN("{}", "XCB_PROPERTY_NOTIFY");   break;
+            case XCB_SELECTION_CLEAR:   CONSOLE_WARN("{}", "XCB_SELECTION_CLEAR");   break;
+            case XCB_SELECTION_REQUEST: CONSOLE_WARN("{}", "XCB_SELECTION_REQUEST"); break;
+            case XCB_SELECTION_NOTIFY:  CONSOLE_WARN("{}", "XCB_SELECTION_NOTIFY");  break;
+            case XCB_COLORMAP_NOTIFY:   CONSOLE_WARN("{}", "XCB_COLORMAP_NOTIFY");   break;
+
+            case XCB_CLIENT_MESSAGE: {
+                auto *msg = reinterpret_cast<client_msg>(event);
+                if(msg->data.data32[0] == _wm_delete) {
+                    _running = false;
+                }
+                break;
+            }
+            
+            case XCB_GE_GENERIC:
+                break;
         }
 
         free(event);
@@ -131,11 +169,32 @@ void X11Window::init_window() {
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL | ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
         _screen->black_pixel,
-		::XCB_EVENT_MASK_KEY_RELEASE |
-		::XCB_EVENT_MASK_KEY_PRESS |
-		::XCB_EVENT_MASK_POINTER_MOTION |
-		::XCB_EVENT_MASK_BUTTON_PRESS |
-		::XCB_EVENT_MASK_BUTTON_RELEASE
+        ::XCB_EVENT_MASK_KEY_PRESS |
+        ::XCB_EVENT_MASK_KEY_RELEASE |
+        ::XCB_EVENT_MASK_BUTTON_PRESS |
+        ::XCB_EVENT_MASK_BUTTON_RELEASE |
+        ::XCB_EVENT_MASK_ENTER_WINDOW |
+        ::XCB_EVENT_MASK_LEAVE_WINDOW |
+        ::XCB_EVENT_MASK_POINTER_MOTION |
+        ::XCB_EVENT_MASK_POINTER_MOTION_HINT |
+        ::XCB_EVENT_MASK_BUTTON_1_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_2_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_3_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_4_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_5_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_MOTION |
+        ::XCB_EVENT_MASK_KEYMAP_STATE |
+        ::XCB_EVENT_MASK_EXPOSURE |
+        ::XCB_EVENT_MASK_VISIBILITY_CHANGE |
+        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
+        // ::XCB_EVENT_MASK_RESIZE_REDIRECT |
+        ::XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
+        ::XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT |
+        ::XCB_EVENT_MASK_FOCUS_CHANGE |
+        ::XCB_EVENT_MASK_PROPERTY_CHANGE |
+        ::XCB_EVENT_MASK_COLOR_MAP_CHANGE |
+        ::XCB_EVENT_MASK_OWNER_GRAB_BUTTON |
+        ::XCB_EVENT_MASK_NO_EVENT
     };
 
     ::xcb_create_window(
