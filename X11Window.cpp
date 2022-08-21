@@ -10,14 +10,7 @@ using keypress_notify   = ::xcb_key_press_event_t *;
 using keyrelease_notify = ::xcb_key_release_event_t *;
 
 static constexpr int XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80;
-
-auto modmasks = ::XCB_MOD_MASK_1 |
-                ::XCB_MOD_MASK_2 |
-                ::XCB_MOD_MASK_3 |
-                ::XCB_MOD_MASK_4 |
-                ::XCB_MOD_MASK_5;
-
-auto altmask = ::XCB_MOD_MASK_5;
+static constexpr ::xcb_mod_mask_t altmask = ::XCB_MOD_MASK_5;
 
 void print_modifiers(uint32_t mask) {
     const char **mod, *mods[] = {
@@ -83,11 +76,11 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                     0
                 );
 
-                printf("  '%u' released: ", key);
+                CONSOLE_ERROR("{:b} / {} released", key, key);
                 print_modifiers(release->state);
                 switch(key) {
                     case XK_Return: {
-                        if((release->state & modmasks) == altmask) {
+                        if(release->state & altmask) {
                             if(_extent.width  == _display_xres ||
                                _extent.height == _display_yres)
                             {
@@ -96,6 +89,7 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                             else {
                                 _build_window(_display_xres, _display_yres);
                             }
+
                             _resized = true;
                         }
                         break;
