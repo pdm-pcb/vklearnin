@@ -21,7 +21,7 @@ public:
     inline const ::VkOffset2D   & offset()  const { return _offset;  }
     inline const ::VkExtent2D   & extent()  const { return _extent;  }
 
-    Win32Window(const uint32_t x_res, const uint32_t y_res,
+    Win32Window(const uint32_t width, const uint32_t height,
                 const int32_t x_offset, const int32_t y_offset,
                 const ::VkInstance &instance);
     ~Win32Window();
@@ -39,10 +39,10 @@ private:
     bool _running;
     bool _resized;
     
-    uint32_t _display_x;
-    uint32_t _display_y;
-    uint32_t _launch_x;
-    uint32_t _launch_y;
+    uint32_t _display_xres;
+    uint32_t _display_yres;
+    uint32_t _launch_width;
+    uint32_t _launch_height;
 
     const ::VkInstance &_instance;
 
@@ -53,7 +53,7 @@ private:
     _message_handler(::HWND window, ::UINT msg, ::WPARAM wparam,
                      ::LPARAM lparam);
 
-    void _build_window(const uint32_t x_res, const uint32_t y_res);
+    void _build_window(const uint32_t width, const uint32_t height);
 };
 
 #endif // VKL_WIN32WINDOW_HPP

@@ -19,7 +19,7 @@ public:
     inline const ::VkOffset2D   & offset()  const { return _offset;  }
     inline const ::VkExtent2D   & extent()  const { return _extent;  }
 
-    X11Window(const uint32_t x_res, const uint32_t y_res,
+    X11Window(const uint32_t width, const uint32_t height,
               const int32_t x_offset, const int32_t y_offset,
               const ::VkInstance &instance);
     ~X11Window();
@@ -36,19 +36,22 @@ private:
     ::VkSurfaceKHR _surface;
     ::VkOffset2D   _offset;
     ::VkExtent2D   _extent;
+    
+    uint32_t _launch_width;
+    uint32_t _launch_height;
+
+    uint32_t _display_xres;
+    uint32_t _display_yres;
+    int32_t  _display_xoff;
+    int32_t  _display_yoff;
 
     bool _running;
     bool _resized;
-    
-    uint32_t _display_x;
-    uint32_t _display_y;
-    uint32_t _launch_x;
-    uint32_t _launch_y;
 
     const ::VkInstance &_instance;
 
     void _query_randr();
-    void _build_window(const uint32_t x_res, const uint32_t y_res);
+    void _build_window(const uint32_t width, const uint32_t height);
 };
 
 #endif // VKL_X11WINDOW_HPP

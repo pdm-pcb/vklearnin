@@ -63,13 +63,13 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
         // https://www.reddit.com/r/learnprogramming/comments/nqrt4o/comment/h0d1te9/
             if(HIWORD(lparam) && KF_ALTDOWN) {
                 if(LOWORD(wparam) == VK_RETURN) {
-                    if(_extent.width  == _display_x ||
-                       _extent.height == _display_y)
+                    if(_extent.width  == _display_xres ||
+                       _extent.height == _display_yres)
                     {
-                        _build_window(_launch_x, _launch_y);
+                        _build_window(_launch_width, _launch_height);
                     }
                     else {
-                        _build_window(_display_x, _display_y);
+                        _build_window(_display_xres, _display_yres);
                     }
                 }
             }
@@ -157,11 +157,11 @@ void Win32Window::init_surface() {
     }
 }
 
-void Win32Window::_build_window(const uint32_t x_res, const uint32_t y_res) {
-    _extent = { x_res, y_res };
+void Win32Window::_build_window(const uint32_t width, const uint32_t height) {
+    _extent = { width, height };
 
-    int pos_x = _display_x / 2 - (_extent.width  / 2);
-    int pos_y = _display_y / 2 - (_extent.height / 2);
+    int pos_x = _display_xres / 2 - (_extent.width  / 2);
+    int pos_y = _display_yres / 2 - (_extent.height / 2);
 
     ::SetWindowPos(
         _hwindow, nullptr,
@@ -172,7 +172,7 @@ void Win32Window::_build_window(const uint32_t x_res, const uint32_t y_res) {
     );
 }
 
-Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
+Win32Window::Win32Window(const uint32_t width, const uint32_t height,
                          const int32_t x_offset, const int32_t y_offset,
                          const ::VkInstance &instance) :
     _hinstance { nullptr  },
@@ -181,11 +181,11 @@ Win32Window::Win32Window(const uint32_t x_res, const uint32_t y_res,
     _running   { false    },
     _resized   { false    },
     _offset    { x_offset, y_offset },
-    _extent    { x_res, y_res },
-    _display_x { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
-    _display_y { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
-    _launch_x  { x_res    },
-    _launch_y  { y_res    },
+    _extent    { width, height },
+    _display_xres { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
+    _display_yres { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
+    _launch_width  { width    },
+    _launch_height  { height    },
     _instance  { instance }
 {
     CONSOLE_INFO("");
