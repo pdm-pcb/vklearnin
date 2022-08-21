@@ -8,7 +8,7 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
-        switch(event->response_type & 0x7f) {
+        switch(event->response_type & ~0x80) {
             case XCB_CLIENT_MESSAGE: {
                 auto *msg =
                     reinterpret_cast<::xcb_client_message_event_t *>(event);
@@ -32,6 +32,7 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                     config->x, config->y,
                     config->width, config->height
                 );
+                break;
             }
             
             case XCB_KEY_PRESS: {
@@ -50,10 +51,14 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                     reinterpret_cast<::xcb_key_press_event_t *>(event);
                 switch(release->detail) {
                     case 0x26: // 'A'
+                        _resized = true;
+
                         if(_extent.width == 1024)
                             _build_window(1280, 1024);
                         else
                             _build_window(1024, 768);
+
+                        ::xcb_flush(_connection);
                         break;
                 }
                 break;
@@ -91,7 +96,6 @@ void X11Window::init_window() {
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL | ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
         _screen->black_pixel,
-        XCB_CONFIGURE_NOTIFY |
         ::XCB_EVENT_MASK_EXPOSURE |
         ::XCB_EVENT_MASK_KEY_PRESS |
         ::XCB_EVENT_MASK_KEY_RELEASE |
