@@ -1,18 +1,27 @@
 #ifndef VKL_COMMON_HPP
 #define VKL_COMMON_HPP
 
-static constexpr char ENGINE_NAME[]      { "Vulkan Learnin'" };
-static constexpr char APPLICATION_NAME[] { "Learnin'"        };
-
+// #define MEMLOG
 #include "MemTracker.hpp"
+
+#ifdef DEBUG
+    #define VK_VALIDATION_LAYER
+    #include "VKDebugger.hpp"
+#endif // DEBUG
+
 #include "ConsoleLog.hpp"
 
 #include <vulkan/vulkan.h>
-#include <shaderc/shaderc.hpp>
 
 #if defined(__linux__)
     #include <xcb/xcb.h>
+    #include <xcb/xcb_keysyms.h>
     #include <xcb/randr.h>
+
+    #define XK_MISCELLANY
+    #define XK_LATIN1
+    #include <X11/keysymdef.h>
+
     #include <vulkan/vulkan_xcb.h>
 #elif defined(_WIN32)
     #include <winsdkver.h>
@@ -52,6 +61,9 @@ static constexpr char APPLICATION_NAME[] { "Learnin'"        };
 #include <utility>
 #include <array>
 #include <optional>
+
+static constexpr char ENGINE_NAME[]      { "Vulkan Learnin'" };
+static constexpr char APPLICATION_NAME[] { "Learnin'"        };
 
 static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();

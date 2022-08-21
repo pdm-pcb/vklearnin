@@ -2,7 +2,6 @@
 #include "MemTracker.hpp"
 
 #ifdef DEBUG
-// #define MEMLOG
 
 size_t MemTracker::total_bytes = 0;
 size_t MemTracker::alloc_count = 0;

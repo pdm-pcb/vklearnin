@@ -1,7 +1,6 @@
 #include "common.hpp"
 #include "Instance.hpp"
 
-#include "VKDebugger.hpp"
 #include "CommandQueues.hpp"
 
 #if defined(__linux__)
@@ -37,10 +36,9 @@ void Instance::init_instance() {
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #endif
 
-// validation layer support
-#ifdef DEBUG
+#ifdef VK_VALIDATION_LAYER
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-#endif // DEBUG
+#endif // VK_VALIDATION_LAYER
     };
 
     // -------------------------------------------------------------------------
@@ -53,12 +51,11 @@ void Instance::init_instance() {
         static_cast<uint32_t>(std::size(instance_extensions));
     create_info.ppEnabledExtensionNames = instance_extensions;
 
-// validation layer
-#ifdef DEBUG
+#ifdef VK_VALIDATION_LAYER
     const char *layers[] { "VK_LAYER_KHRONOS_validation" };
     create_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
     create_info.ppEnabledLayerNames = layers;
-#endif // DEBUG
+#endif // VK_VALIDATION_LAYER
 
     ::VkResult result = vkCreateInstance(&create_info, nullptr, &_instance);
 
@@ -72,11 +69,11 @@ void Instance::init_instance() {
     }
 
 // grab the function addresses for the debug utility
-#ifdef DEBUG
+#ifdef VK_VALIDATION_LAYER
     GET_INSTANCE_PROC_ADDR(_instance, CreateDebugUtilsMessengerEXT);
     GET_INSTANCE_PROC_ADDR(_instance, DestroyDebugUtilsMessengerEXT);
     VKDebugger::init(*this);
-#endif // DEBUG
+#endif // VK_VALIDATION_LAYER
 
     // -------------------------------------------------------------------------
     // Query and populate the list of instance extensions
@@ -260,11 +257,11 @@ void Instance::init_logical_device(const CommandQueues &queues) {
 // enable the validation layer if we're in a debug build
 // TODO: should probably change to permit multiple layers, but we'll cross
 //       that bridge when we come to it
-#ifdef DEBUG
+#ifdef VK_VALIDATION_LAYER
     const char *layers[] { "VK_LAYER_KHRONOS_validation" };
     device_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
     device_info.ppEnabledLayerNames = layers;    
-#endif // DEBUG
+#endif // VK_VALIDATION_LAYER
 
     ::VkResult result = ::vkCreateDevice(
         _physical_device,
@@ -329,9 +326,9 @@ Instance::Instance() :
 Instance::~Instance() {
     CONSOLE_INFO("");
 
-#ifdef DEBUG
+#ifdef VK_VALIDATION_LAYER
     VKDebugger::shutdown(*this);
-#endif // DEBUG
+#endif // VK_VALIDATION_LAYER
 
     ::vkDestroyDevice(_logical_device, nullptr);
     ::vkDestroyInstance(_instance, nullptr);

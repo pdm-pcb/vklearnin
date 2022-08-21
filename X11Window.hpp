@@ -9,6 +9,14 @@
 class RenderLoop;
 
 class X11Window {
+    struct MotifHints {
+        uint32_t   flags;
+        uint32_t   functions;
+        uint32_t   decorations;
+        int32_t    input_mode;
+        uint32_t   status;
+    };
+
 public:
     bool message_loop(RenderLoop &render_loop);
 
@@ -27,11 +35,12 @@ public:
     X11Window() = delete;
 
 private:
-    ::xcb_connection_t *_connection;
-    ::xcb_window_t      _window;
-    ::xcb_screen_t     *_screen;
-    ::xcb_atom_t        _wm_delete;
-    ::xcb_atom_t        _wm_proto;
+    ::xcb_connection_t  *_connection;
+    ::xcb_window_t       _window;
+    ::xcb_screen_t      *_screen;
+    ::xcb_atom_t         _wm_delete;
+    ::xcb_atom_t         _wm_proto;
+    ::xcb_key_symbols_t *_key_symbols;
 
     ::VkSurfaceKHR _surface;
     ::VkOffset2D   _offset;

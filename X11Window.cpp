@@ -4,17 +4,43 @@
 #include "Instance.hpp"
 #include "RenderLoop.hpp"
 
+using client_msg        = ::xcb_client_message_event_t *;
+using config_notify     = ::xcb_configure_notify_event_t *;
+using keypress_notify   = ::xcb_key_press_event_t *;
+using keyrelease_notify = ::xcb_key_release_event_t *;
+
+static constexpr int XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80;
+
+auto modmasks = ::XCB_MOD_MASK_1 |
+                ::XCB_MOD_MASK_2 |
+                ::XCB_MOD_MASK_3 |
+                ::XCB_MOD_MASK_4 |
+                ::XCB_MOD_MASK_5;
+
+auto altmask = ::XCB_MOD_MASK_5;
+
+void print_modifiers(uint32_t mask) {
+    const char **mod, *mods[] = {
+        "Shift", "Lock", "Ctrl", "Alt",
+        "Mod2", "Mod3", "Mod4", "Mod5",
+        "Button1", "Button2", "Button3", "Button4", "Button5"
+    };
+
+    printf("%u: ", mask);
+    for (mod = mods; mask; mask >>= 1, mod++)
+        if (mask & 1)
+            printf(*mod);
+    putchar ('\n');
+}
+
 bool X11Window::message_loop(RenderLoop &render_loop) {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
-        // switch(event->response_type & ~0x80) {
-        switch(event->response_type & 0x7f) {
+        switch(event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
             case XCB_CLIENT_MESSAGE: {
-                auto *msg =
-                    reinterpret_cast<::xcb_client_message_event_t *>(event);
+                auto *msg = reinterpret_cast<client_msg>(event);
                 if(msg->data.data32[0] == _wm_delete) {
-                    CONSOLE_WARN("Well, looks like we made it.");
                     _running = false;
                 }
                 break;
@@ -25,11 +51,9 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                 break;
 
             case XCB_CONFIGURE_NOTIFY: {
-                auto *config =
-                    reinterpret_cast<::xcb_configure_notify_event_t *>(event);
-
+                auto *config = reinterpret_cast<config_notify>(event);
                 CONSOLE_WARN(
-                    "offset: {}x{} size: {}x{}",
+                    "config notify: offset: {}x{} size: {}x{}",
                     config->x, config->y,
                     config->width, config->height
                 );
@@ -37,10 +61,14 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
             }
             
             case XCB_KEY_PRESS: {
-                auto *press =
-                    reinterpret_cast<::xcb_key_press_event_t *>(event);
-                switch(press->detail) {
-                    case 0x9: // Escape
+                auto *press = reinterpret_cast<keypress_notify>(event);
+                auto key = ::xcb_key_symbols_get_keysym(
+                    _key_symbols,
+                    press->detail,
+                    0
+                );
+                switch(key) {
+                    case XK_Escape:
                         _running = false;
                         break;
                 }
@@ -48,19 +76,30 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
             }
 
             case XCB_KEY_RELEASE: {
-                auto *release =
-                    reinterpret_cast<::xcb_key_press_event_t *>(event);
-                switch(release->detail) {
-                    case 0x26: // 'A'
-                        _resized = true;
+                auto *release = reinterpret_cast<keyrelease_notify>(event);
+                auto key = ::xcb_key_symbols_get_keysym(
+                    _key_symbols,
+                    release->detail,
+                    0
+                );
 
-                        if(_extent.width == 1024)
-                            _build_window(1280, 1024);
-                        else
-                            _build_window(1024, 768);
-
-                        ::xcb_flush(_connection);
+                printf("  '%u' released: ", key);
+                print_modifiers(release->state);
+                switch(key) {
+                    case XK_Return: {
+                        if((release->state & modmasks) == altmask) {
+                            if(_extent.width  == _display_xres ||
+                               _extent.height == _display_yres)
+                            {
+                                _build_window(_launch_width, _launch_height);
+                            }
+                            else {
+                                _build_window(_display_xres, _display_yres);
+                            }
+                            _resized = true;
+                        }
                         break;
+                    }
                 }
                 break;
             }
@@ -73,6 +112,27 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
     return _running;
 }
 
+// void atom_name(xcb_connection_t *connection, xcb_atom_t atom) {
+//     if(!atom) return;
+
+//     xcb_generic_error_t *error = nullptr;
+//     auto cookie = xcb_get_atom_name(connection, atom);
+//     auto *reply = xcb_get_atom_name_reply(connection, cookie, &error);
+
+//     if(error) return;
+
+//     if(reply) {
+//         auto namesize = xcb_get_atom_name_name_length(reply) + 1;
+//         char *name = new char[namesize];
+//         memset(name, '\0', namesize);
+//         strcpy(name, xcb_get_atom_name_name(reply));
+//         ???DO SOMETHING
+//         delete[] name;
+//         free(reply);
+//     }
+//     return;
+// }
+
 void X11Window::init_window() {
     CONSOLE_INFO("");
 
@@ -82,6 +142,8 @@ void X11Window::init_window() {
     if(::xcb_connection_has_error(_connection)) {
         CONSOLE_CRITICAL("Could not connect to X server.");
     }
+
+    _key_symbols = xcb_key_symbols_alloc(_connection);
 
     ::xcb_screen_iterator_t screen_iter =
         ::xcb_setup_roots_iterator(::xcb_get_setup(_connection));
@@ -121,35 +183,31 @@ void X11Window::init_window() {
         value_list
     );
 
-    ::xcb_intern_atom_cookie_t wm_delete_cookie =
-        ::xcb_intern_atom(
-            _connection,
-            0,
-            strlen("WM_DELETE_WINDOW"),
-            "WM_DELETE_WINDOW"
-        );
+    ::xcb_intern_atom_cookie_t wm_delete_cookie = ::xcb_intern_atom(
+        _connection,
+        0,
+        strlen("WM_DELETE_WINDOW"),
+        "WM_DELETE_WINDOW"
+    );
 
-    ::xcb_intern_atom_cookie_t wm_protocols_cookie =
-        ::xcb_intern_atom(
-            _connection,
-            0,
-            strlen("WM_PROTOCOLS"),
-            "WM_PROTOCOLS"
-        );
+    ::xcb_intern_atom_cookie_t wm_protocols_cookie = ::xcb_intern_atom(
+        _connection,
+        0,
+        strlen("WM_PROTOCOLS"),
+        "WM_PROTOCOLS"
+    );
 
-    ::xcb_intern_atom_reply_t *delete_reply =
-        ::xcb_intern_atom_reply(
-            _connection,
-            wm_delete_cookie,
-            nullptr
-        );
+    ::xcb_intern_atom_reply_t *delete_reply = ::xcb_intern_atom_reply(
+        _connection,
+        wm_delete_cookie,
+        nullptr
+    );
 
-    ::xcb_intern_atom_reply_t *protocols_reply =
-        ::xcb_intern_atom_reply(
-            _connection,
-            wm_protocols_cookie,
-            nullptr
-        );
+    ::xcb_intern_atom_reply_t *protocols_reply = ::xcb_intern_atom_reply(
+        _connection,
+        wm_protocols_cookie,
+        nullptr
+    );
 
     _wm_delete = delete_reply->atom;
     _wm_proto  = protocols_reply->atom;
@@ -159,8 +217,56 @@ void X11Window::init_window() {
         ::XCB_PROP_MODE_REPLACE,
         _window,
         _wm_proto,
-        4, 32, 1,
+        ::XCB_ATOM_ATOM,
+        32u,    // data format
+        1u,     // data length (?)
         &_wm_delete
+    );
+
+    free(delete_reply);
+    free(protocols_reply);
+
+    auto motif_cookie = xcb_intern_atom(
+        _connection,
+        0,
+        strlen("_MOTIF_WM_HINTS"),
+        "_MOTIF_WM_HINTS"
+    );
+    auto *motif_reply = xcb_intern_atom_reply(
+        _connection,
+        motif_cookie,
+        NULL
+    );
+
+    MotifHints hints {
+        .flags = 2u,
+        .functions = 0u,
+        .decorations = 0u,
+        .input_mode = 0,
+        .status = 0u,
+    };
+
+    ::xcb_change_property(
+        _connection,
+        XCB_PROP_MODE_REPLACE,
+        _window,
+        motif_reply->atom,
+        XCB_ATOM_INTEGER,
+        32,
+        5,
+        &hints
+    );
+
+    free(motif_reply);
+
+    ::xcb_grab_key(
+        _connection,
+        0u,
+        _window,
+        ::XCB_MOD_MASK_ANY,
+        ::XCB_GRAB_ANY,
+        ::XCB_GRAB_MODE_ASYNC,
+        ::XCB_GRAB_MODE_ASYNC
     );
 
     ::xcb_map_window(_connection, _window);
@@ -284,6 +390,7 @@ X11Window::X11Window(const uint32_t width, const uint32_t height,
     _screen        { nullptr },
     _wm_delete     { 0u },
     _wm_proto      { 0u },
+    _key_symbols   { nullptr },
     _surface       { 0u },
     _offset        { x_offset, y_offset },
     _extent        { width, height },
@@ -304,6 +411,7 @@ X11Window::~X11Window() {
     CONSOLE_INFO("");
     ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
 
+    ::xcb_key_symbols_free(_key_symbols);
     ::xcb_destroy_window(_connection, _window);
     ::xcb_disconnect(_connection);
 }

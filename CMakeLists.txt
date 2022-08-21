@@ -54,7 +54,7 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
 	target_link_libraries(
 		vulkan-learnin PUBLIC
 		"xcb"
-        "xcb-util"
+        "xcb-keysyms"
         "xcb-randr"
 	)
 
