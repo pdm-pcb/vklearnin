@@ -5,7 +5,7 @@
 #include "Vertex.hpp"
 
 void StagedVertexBuffer::populate_buffer(const ::VkCommandPool &pool,
-                                          const ::VkQueue &queue)
+                                         const ::VkQueue &queue)
 {
     ::VkCommandBufferAllocateInfo alloc_info { };
     alloc_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -14,17 +14,22 @@ void StagedVertexBuffer::populate_buffer(const ::VkCommandPool &pool,
     alloc_info.commandBufferCount = 1u;
 
     ::VkCommandBuffer command_buffer;
-    ::vkAllocateCommandBuffers(
+    auto result = ::vkAllocateCommandBuffers(
         _instance.logical_device(),
         &alloc_info,
         &command_buffer
     );
 
+    if(result != ::VK_SUCCESS) {
+        CONSOLE_CRITICAL("Failed to allocate vertex command buffer.");
+        return;
+    }
+
     ::VkCommandBufferBeginInfo buffer_info { };
     buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     buffer_info.flags = ::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    auto result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
+    result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
 
     if(result != ::VK_SUCCESS) {
         CONSOLE_CRITICAL("Unable to begin vertex command buffer recording.");
@@ -162,11 +167,26 @@ StagedVertexBuffer::_mem_type_index(const uint32_t type_bits,
     return type_index;
 }
 
+void StagedVertexBuffer::_populate_staging_buffer() {
+    ::vkMapMemory(
+        _instance.logical_device(),
+        _staging_memory,
+        0u,
+        _buffer_size,
+        0u,
+        &_staging_data
+    );
+
+    memcpy(_staging_data, _vertices.data(), _buffer_size);
+
+    ::vkUnmapMemory(_instance.logical_device(), _staging_memory);
+}
+
 StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
                                        const Instance &instance) :
     _staging_buffer { nullptr },
     _staging_memory { nullptr },
-    _buffer_data    { nullptr },
+    _staging_data   { nullptr },
     _vertex_buffer  { nullptr },
     _vertex_memory  { nullptr },
     _instance       { instance }
@@ -176,13 +196,27 @@ StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
     _buffer_size = sizeof(Vertex) * _vertices.size();
 
     _create_buffer(_staging_buffer, ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-    _create_buffer(_vertex_buffer,  ::VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                                    ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    _allocate_memory(_staging_buffer, ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                      ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    _staging_memory);
-    _allocate_memory(_vertex_buffer, ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                     _vertex_memory);
+
+    _allocate_memory(
+        _staging_buffer,
+        ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        _staging_memory
+    );
+    
+    _populate_staging_buffer();
+
+    _create_buffer(
+        _vertex_buffer,
+        ::VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+    );
+
+    _allocate_memory(
+        _vertex_buffer,
+        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        _vertex_memory
+    );
 }
 
 StagedVertexBuffer::~StagedVertexBuffer() {

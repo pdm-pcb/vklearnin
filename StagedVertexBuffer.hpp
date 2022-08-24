@@ -26,7 +26,7 @@ private:
 
     ::VkBuffer       _staging_buffer;
     ::VkDeviceMemory _staging_memory;
-    void            *_buffer_data;
+    void            *_staging_data;
     ::VkBuffer       _vertex_buffer;
     ::VkDeviceMemory _vertex_memory;
 
@@ -37,6 +37,7 @@ private:
                           ::VkDeviceMemory &memory);
     uint32_t _mem_type_index(const uint32_t type_bits,
                              const ::VkMemoryPropertyFlags flags);
+    void _populate_staging_buffer();
 };
 
 #endif // VKL_STAGEDBUFFER_HPP

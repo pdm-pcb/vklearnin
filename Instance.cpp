@@ -73,7 +73,7 @@ void Instance::init_instance() {
     GET_INSTANCE_PROC_ADDR(_instance, CreateDebugUtilsMessengerEXT);
     GET_INSTANCE_PROC_ADDR(_instance, DestroyDebugUtilsMessengerEXT);
     VKDebugger::init(*this);
-#endif // VK_VALIDATION_LAYER
+#endif // VK_VALIDATION_LAYER   
 
     // -------------------------------------------------------------------------
     // Query and populate the list of instance extensions
@@ -104,7 +104,7 @@ void Instance::init_instance() {
         }
         if(!supported) {
             CONSOLE_ERROR(
-                "Instance xtension {} unsupported",
+                "Instance extension {} unsupported",
                 required_extension
             );
         }
