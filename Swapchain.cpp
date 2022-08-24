@@ -18,7 +18,10 @@ void Swapchain::init_color_format() {
     );
 
     if(result != VK_SUCCESS || format_count == 0u) {
-        CONSOLE_CRITICAL("Could not query surface format.");
+        CONSOLE_CRITICAL(
+            "Could not query surface format. {} formats found.",
+            format_count    
+        );
     }
 
     CONSOLE_TRACE("Found {} color formats", format_count);

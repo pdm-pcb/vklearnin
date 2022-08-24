@@ -7,6 +7,8 @@
 
 #include <cstdint>
 
+class RenderLoop;
+
 class X11Window {
     struct MotifHints {
         uint32_t   flags;

@@ -20,6 +20,9 @@ bool X11Window::message_loop() {
     while((event = ::xcb_poll_for_event(_connection))) {       
         event_type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
         switch(event_type) {
+            case 0:
+                break;
+
             case XCB_KEY_PRESS: {
                 CONSOLE_TRACE("{}", "XCB_KEY_PRESS");
 
@@ -70,6 +73,28 @@ bool X11Window::message_loop() {
                 break;
             }
 
+            case XCB_BUTTON_PRESS: {
+                CONSOLE_TRACE("{}", "XCB_BUTTON_PRESS");
+
+                break;
+            }
+
+            case XCB_BUTTON_RELEASE: {
+                CONSOLE_TRACE("{}", "XCB_BUTTON_RELEASE");
+
+                break;
+            }
+
+            case XCB_EXPOSE:
+                CONSOLE_TRACE("{}", "XCB_EXPOSE");
+                
+                break;
+
+            case XCB_GRAPHICS_EXPOSURE:
+                CONSOLE_TRACE("{}", "XCB_BUTTON_RELEASE");
+
+                break;
+
             case XCB_MAP_NOTIFY:
                 CONSOLE_TRACE("{}", "XCB_MAP_NOTIFY");
                 break;
@@ -78,10 +103,12 @@ bool X11Window::message_loop() {
                 CONSOLE_TRACE("{}", "XCB_CONFIGURE_NOTIFY");
 
                 auto *config = reinterpret_cast<config_notify>(event);
-                _width         = config->width;
-                _height        = config->height;
-                _extent.width  = config->width;
-                _extent.height = config->height;
+                if(config->width != _width || config->height != _height) {
+                    _width         = config->width;
+                    _height        = config->height;
+                    _extent.width  = config->width;
+                    _extent.height = config->height;
+                }
                 break;
             }
 
@@ -116,8 +143,10 @@ void X11Window::init_window() {
         _screen->black_pixel,
         ::XCB_EVENT_MASK_KEY_PRESS |
         ::XCB_EVENT_MASK_KEY_RELEASE |
-        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
-        ::XCB_EVENT_MASK_NO_EVENT
+        ::XCB_EVENT_MASK_BUTTON_PRESS |
+        ::XCB_EVENT_MASK_BUTTON_RELEASE |
+        ::XCB_EVENT_MASK_EXPOSURE |
+        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY
     };
 
     ::xcb_create_window(
@@ -140,6 +169,12 @@ void X11Window::init_window() {
     _acquire_multiuse_atoms();
 
     ::xcb_map_window(_connection, _window);
+    ::xcb_set_input_focus(
+        _connection,
+        ::XCB_INPUT_FOCUS_POINTER_ROOT,
+        _window,
+        XCB_CURRENT_TIME
+    );
 
     _center_window();
     _running = true;

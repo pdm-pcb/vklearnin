@@ -29,11 +29,6 @@ public:
     bool run(const Instance &instance, Swapchain &swapchain,
              Pipeline &pipeline, Framebuffers &framebuffers);
 
-    inline void resized(bool &resized) {
-        _resized = resized;
-        resized = false;
-    }
-
     // -------------------------------------------------------------------------
     // Setup
     void init_synchronization();
@@ -45,8 +40,6 @@ private:
     std::array<::VkSemaphore, MAX_IMAGES> _image_available_sems;
     std::array<::VkSemaphore, MAX_IMAGES> _draw_complete_sems;
     std::array<::VkFence, MAX_IMAGES>     _display_fences;
-
-    bool _resized;
 
     const ::VkDevice &_device;
     Window           &_window;

@@ -43,7 +43,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         );
 
         // if we need to resize everything, let's do it
-        if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized == true) {
+        if(result == ::VK_ERROR_OUT_OF_DATE_KHR) {
             _image_resized(instance, swapchain, pipeline, framebuffers);
             continue;   // be sure to continue so eveything updates
         }
@@ -237,12 +237,10 @@ void RenderLoop::init_synchronization() {
 void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
                                 Pipeline &pipeline, Framebuffers &framebuffers)
 {
-    CONSOLE_ERROR("Image requires updating");
+    CONSOLE_WARN("Image requires updating");
 
     // wait for current commands to run their course
     ::vkDeviceWaitIdle(instance.logical_device());
-    // reset the local flag
-    _resized = false;
 
     // demolish it all, then recreate it per the dependencies established
     // initially
@@ -258,7 +256,6 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
 // =============================================================================
 RenderLoop::RenderLoop(const ::VkDevice &device, Window &window,
                        CommandQueues &queues) :
-    _resized { false  },
     _device  { device },
     _window  { window },
     _queues  { queues }
