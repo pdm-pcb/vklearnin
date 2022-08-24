@@ -11,16 +11,12 @@
 
 #include "ConsoleLog.hpp"
 
+#define GLM_FORCE_SWIZZLE
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_INLINE
-#define GLM_FORCE_SSE42
+#define GLM_FORCE_SINGLE_ONLY
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 
 #include <vulkan/vulkan.h>
 

@@ -11,33 +11,52 @@ class Vertex;
 
 class StagedVertexBuffer final {
 public:
-    void populate_buffer(const ::VkCommandPool &pool, const ::VkQueue &queue);
+    void populate_buffers(const ::VkCommandPool &pool, const ::VkQueue &queue);
 
-    ::VkBuffer handle() const { return _vertex_buffer; }
+    inline ::VkBuffer vertex_handle() const { return _vertex_buffer; }
+    inline ::VkBuffer index_handle()  const { return _index_buffer;  }
 
-    StagedVertexBuffer(const std::vector<Vertex> &vertices, const Instance &instance);
+    inline uint32_t index_count() const {
+        return static_cast<uint32_t>(_indices.size());
+    }
+
+    StagedVertexBuffer(const std::vector<Vertex> &vertices,
+                       const std::vector<uint16_t> &indices,
+                       const Instance &instance);
     ~StagedVertexBuffer();
 
     StagedVertexBuffer() = delete;
 
 private:
     std::vector<Vertex> _vertices;
-    size_t _buffer_size;
+    size_t _vertex_buffer_size;
+    std::vector<uint16_t> _indices;
+    size_t _index_buffer_size;
 
-    ::VkBuffer       _staging_buffer;
-    ::VkDeviceMemory _staging_memory;
-    void            *_staging_data;
+    ::VkBuffer       _staging_vertex_buffer;
+    ::VkDeviceMemory _staging_vertex_memory;
+    void            *_staging_vertex_data;
     ::VkBuffer       _vertex_buffer;
     ::VkDeviceMemory _vertex_memory;
 
+    ::VkBuffer       _staging_index_buffer;
+    ::VkDeviceMemory _staging_index_memory;
+    void            *_staging_index_data;
+    ::VkBuffer       _index_buffer;
+    ::VkDeviceMemory _index_memory;
+
     const Instance  &_instance;
+
+    void _create_staging_buffers();
+    void _populate_staging_buffers();
+    void _create_device_buffers();
+    void _destroy_staging_buffers();
 
     void _create_buffer(::VkBuffer &handle, const uint32_t usage_flags);
     void _allocate_memory(const ::VkBuffer &handle, const uint32_t type_flags,
                           ::VkDeviceMemory &memory);
     uint32_t _mem_type_index(const uint32_t type_bits,
                              const ::VkMemoryPropertyFlags flags);
-    void _populate_staging_buffer();
 };
 
 #endif // VKL_STAGEDBUFFER_HPP

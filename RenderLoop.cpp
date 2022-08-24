@@ -27,16 +27,22 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
     uint32_t image_index = 0u;
 
     const std::vector<Vertex> vertices {
-        {{  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f }},
-        {{  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f }},
-        {{ -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f }}
+        {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+        {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+        {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+        {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+    };
+
+    const std::vector<uint16_t> indices {
+        0u, 1u, 2u,
+        2u, 3u, 0u
     };
     
-    StagedVertexBuffer vb(vertices, instance);
-    vb.populate_buffer(queues.command_pool(), queues.graphics_queue());
+    StagedVertexBuffer vb(vertices, indices, instance);
+    vb.populate_buffers(queues.command_pool(), queues.graphics_queue());
 
     ::VkBuffer vertex_buffers[] {
-        { vb.handle() }
+        { vb.vertex_handle() }
     };
     ::VkDeviceSize vertex_buffer_offsets[] {
         { 0u }
@@ -79,8 +85,8 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
             static_cast<::VkCommandBufferResetFlagBits>(0u)
         );
 
-        auto buffer = _queues.command_buffer(image_index);
-        result = ::vkBeginCommandBuffer(buffer, &buffer_info);
+        auto command_buffer = _queues.command_buffer(image_index);
+        result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
 
         if(result != ::VK_SUCCESS) {
             CONSOLE_CRITICAL("Unable to begin command buffer recording.");
@@ -106,38 +112,45 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
         pass_info.pClearValues = clear_values;
 
         // go time!
-        ::vkCmdBeginRenderPass(
-            buffer,
-            &pass_info,
-            ::VK_SUBPASS_CONTENTS_INLINE
-        );
-                // bind the pipeline so everything's current
-                ::vkCmdBindPipeline(
-                    buffer,
-                    ::VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline.pipeline()
-                );
-                // update the dynamic traits of the pipeline
-                ::vkCmdSetViewport(buffer, 0u, 1u, &pipeline.viewport());
-                ::vkCmdSetScissor(buffer,0u, 1u, &pipeline.scissor());
-                // time for some host-side vertex data!
-                ::vkCmdBindVertexBuffers(
-                    buffer,
-                    0u,
-                    std::size(vertex_buffers),
-                    vertex_buffers,
-                    vertex_buffer_offsets
-                );
-                // boom, draw.
-                ::vkCmdDraw(
-                    buffer,
-                    3u, 1u,
-                    0u, 0u
-                );
+        ::vkCmdBeginRenderPass(command_buffer, &pass_info,
+                               ::VK_SUBPASS_CONTENTS_INLINE);
 
-        ::vkCmdEndRenderPass(buffer);
+            // bind the pipeline so everything's current
+            ::vkCmdBindPipeline(
+                command_buffer,
+                ::VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipeline.pipeline()
+            );
+            // update the dynamic traits of the pipeline
+            ::vkCmdSetViewport(command_buffer, 0u, 1u, &pipeline.viewport());
+            ::vkCmdSetScissor(command_buffer,0u, 1u, &pipeline.scissor());
 
-        result = ::vkEndCommandBuffer(buffer);
+            // time for some host-side vertex data!
+            ::vkCmdBindVertexBuffers(
+                command_buffer,
+                0u,
+                std::size(vertex_buffers),
+                vertex_buffers,
+                vertex_buffer_offsets
+            );
+            // and indices while we're at it
+            ::vkCmdBindIndexBuffer(
+                command_buffer,
+                vb.index_handle(),
+                0u,
+                ::VK_INDEX_TYPE_UINT16
+            );
+
+            // boom, draw.
+            ::vkCmdDrawIndexed(
+                command_buffer,
+                vb.index_count(),
+                1u, 0u, 0u, 0u
+            );
+
+        ::vkCmdEndRenderPass(command_buffer);
+
+        result = ::vkEndCommandBuffer(command_buffer);
         if(result != ::VK_SUCCESS) {
             CONSOLE_CRITICAL("Failed to record to command buffer.");
         }

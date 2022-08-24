@@ -21,35 +21,28 @@ public:
             ::VkVertexInputAttributeDescription {
                 .location = 0u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32_SFLOAT,
+                .format = ::VK_FORMAT_R32G32B32A32_SFLOAT,
                 .offset = offsetof(Vertex, _position)
             },
             ::VkVertexInputAttributeDescription {
                 .location = 1u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32B32_SFLOAT,
+                .format = ::VK_FORMAT_R32G32B32A32_SFLOAT,
                 .offset = offsetof(Vertex, _color)
             },
         };
     }
 
-    inline void set_position(const glm::vec2 &position) {
-        _position = position;
-    }
-
-    inline void set_color(const glm::vec3 &color) {
-        _color = color;
-    }
-
-    Vertex() = default;
-    Vertex(const glm::vec2 &position, const glm::vec3 &color) :
+    Vertex(const glm::vec4 &position, const glm::vec4 &color) :
         _position { position },
         _color { color }
     { }
+    
+    Vertex() = delete;
 
 private:
-    glm::vec2 _position;
-    glm::vec3 _color;
+    glm::vec4 _position;
+    glm::vec4 _color;
 };
 
 #endif // VKL_VERTEX_HPP

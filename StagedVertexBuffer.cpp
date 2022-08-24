@@ -4,8 +4,8 @@
 #include "Instance.hpp"
 #include "Vertex.hpp"
 
-void StagedVertexBuffer::populate_buffer(const ::VkCommandPool &pool,
-                                         const ::VkQueue &queue)
+void StagedVertexBuffer::populate_buffers(const ::VkCommandPool &pool,
+                                          const ::VkQueue &queue)
 {
     ::VkCommandBufferAllocateInfo alloc_info { };
     alloc_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -36,14 +36,24 @@ void StagedVertexBuffer::populate_buffer(const ::VkCommandPool &pool,
         return;
     }
 
-        VkBufferCopy copyRegion { };
-        copyRegion.size = _buffer_size;
+        ::VkBufferCopy vertex_region { };
+        vertex_region.size = _vertex_buffer_size;
         ::vkCmdCopyBuffer(
             command_buffer,
-            _staging_buffer,
+            _staging_vertex_buffer,
             _vertex_buffer,
             1u,
-            &copyRegion
+            &vertex_region
+        );
+
+        ::VkBufferCopy index_region { };
+        index_region.size = _index_buffer_size;
+        ::vkCmdCopyBuffer(
+            command_buffer,
+            _staging_index_buffer,
+            _index_buffer,
+            1u,
+            &index_region
         );
 
     result = ::vkEndCommandBuffer(command_buffer);
@@ -74,6 +84,52 @@ void StagedVertexBuffer::populate_buffer(const ::VkCommandPool &pool,
         pool,
         1u,
         &command_buffer
+    );
+
+    _destroy_staging_buffers();
+}
+
+void StagedVertexBuffer::_create_staging_buffers() {
+    _create_buffer(_staging_vertex_buffer, ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    _allocate_memory(
+        _staging_vertex_buffer,
+        ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        _staging_vertex_memory
+    );
+
+    _create_buffer(_staging_index_buffer, ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    _allocate_memory(
+        _staging_index_buffer,
+        ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        _staging_index_memory
+    );
+}
+
+void StagedVertexBuffer::_create_device_buffers() {
+    _create_buffer(
+        _vertex_buffer,
+        ::VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+    );
+
+    _allocate_memory(
+        _vertex_buffer,
+        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        _vertex_memory
+    );
+
+    _create_buffer(
+        _index_buffer,
+        ::VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        ::VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+    );
+
+    _allocate_memory(
+        _index_buffer,
+        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        _index_memory
     );
 }
 
@@ -149,6 +205,12 @@ StagedVertexBuffer::_mem_type_index(const uint32_t type_bits,
         &memory_props
     );
 
+    CONSOLE_TRACE(
+        "Found {} memory types and {} heaps on physical device.",
+        memory_props.memoryTypeCount,
+        memory_props.memoryHeapCount
+    );
+
     uint32_t type_index = 0;
     while(type_index < memory_props.memoryTypeCount)
     {
@@ -167,71 +229,86 @@ StagedVertexBuffer::_mem_type_index(const uint32_t type_bits,
     return type_index;
 }
 
-void StagedVertexBuffer::_populate_staging_buffer() {
+void StagedVertexBuffer::_populate_staging_buffers() {
     ::vkMapMemory(
         _instance.logical_device(),
-        _staging_memory,
+        _staging_vertex_memory,
         0u,
-        _buffer_size,
+        _vertex_buffer_size,
         0u,
-        &_staging_data
+        &_staging_vertex_data
     );
 
-    memcpy(_staging_data, _vertices.data(), _buffer_size);
+    memcpy(_staging_vertex_data, _vertices.data(), _vertex_buffer_size);
 
-    ::vkUnmapMemory(_instance.logical_device(), _staging_memory);
+    ::vkUnmapMemory(_instance.logical_device(), _staging_vertex_memory);
+
+    ::vkMapMemory(
+        _instance.logical_device(),
+        _staging_index_memory,
+        0u,
+        _index_buffer_size,
+        0u,
+        &_staging_index_data
+    );
+
+    memcpy(_staging_index_data, _indices.data(), _index_buffer_size);
+
+    ::vkUnmapMemory(_instance.logical_device(), _staging_index_memory);
 }
 
-StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
-                                       const Instance &instance) :
-    _staging_buffer { nullptr },
-    _staging_memory { nullptr },
-    _staging_data   { nullptr },
-    _vertex_buffer  { nullptr },
-    _vertex_memory  { nullptr },
-    _instance       { instance }
-{
-    _vertices.resize(vertices.size());
-    _vertices = vertices;
-    _buffer_size = sizeof(Vertex) * _vertices.size();
-
-    _create_buffer(_staging_buffer, ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-
-    _allocate_memory(
-        _staging_buffer,
-        ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        _staging_memory
-    );
-    
-    _populate_staging_buffer();
-
-    _create_buffer(
-        _vertex_buffer,
-        ::VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-        ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-    );
-
-    _allocate_memory(
-        _vertex_buffer,
-        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        _vertex_memory
-    );
-}
-
-StagedVertexBuffer::~StagedVertexBuffer() {
+void StagedVertexBuffer::_destroy_staging_buffers() {
     ::vkDestroyBuffer(
         _instance.logical_device(),
-        _staging_buffer,
+        _staging_vertex_buffer,
         nullptr
     );
 
     ::vkFreeMemory(
         _instance.logical_device(),
-        _staging_memory,
+        _staging_vertex_memory,
         nullptr
     );
 
+    ::vkDestroyBuffer(
+        _instance.logical_device(),
+        _staging_index_buffer,
+        nullptr
+    );
+
+    ::vkFreeMemory(
+        _instance.logical_device(),
+        _staging_index_memory,
+        nullptr
+    );
+}
+
+StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
+                                       const std::vector<uint16_t> &indices,
+                                       const Instance &instance) :
+    _vertices           { vertices },
+    _vertex_buffer_size { sizeof(Vertex) * _vertices.size() },
+    _indices            { indices },
+    _index_buffer_size  { sizeof(uint16_t) * _indices.size() },
+    _staging_vertex_buffer { nullptr },
+    _staging_vertex_memory { nullptr },
+    _staging_vertex_data   { nullptr },
+    _vertex_buffer { nullptr },
+    _vertex_memory { nullptr },
+    _staging_index_buffer { nullptr },
+    _staging_index_memory { nullptr },
+    _staging_index_data   { nullptr },
+    _index_buffer { nullptr  },
+    _index_memory { nullptr  },
+    _instance     { instance }
+{
+
+    _create_staging_buffers();
+    _populate_staging_buffers();
+    _create_device_buffers();
+}
+
+StagedVertexBuffer::~StagedVertexBuffer() {
     ::vkDestroyBuffer(
         _instance.logical_device(),
         _vertex_buffer,
@@ -241,6 +318,18 @@ StagedVertexBuffer::~StagedVertexBuffer() {
     ::vkFreeMemory(
         _instance.logical_device(),
         _vertex_memory,
+        nullptr
+    );
+
+    ::vkDestroyBuffer(
+        _instance.logical_device(),
+        _index_buffer,
+        nullptr
+    );
+
+    ::vkFreeMemory(
+        _instance.logical_device(),
+        _index_memory,
         nullptr
     );
 }
