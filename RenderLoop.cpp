@@ -33,7 +33,7 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
         {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
     };
 
-    const std::vector<uint16_t> indices {
+    const std::vector<StagedVertexBuffer::Index> indices {
         0u, 1u, 2u,
         2u, 3u, 0u
     };
@@ -121,6 +121,7 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
                 ::VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipeline.pipeline()
             );
+
             // update the dynamic traits of the pipeline
             ::vkCmdSetViewport(command_buffer, 0u, 1u, &pipeline.viewport());
             ::vkCmdSetScissor(command_buffer,0u, 1u, &pipeline.scissor());
@@ -138,7 +139,7 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
                 command_buffer,
                 vb.index_handle(),
                 0u,
-                ::VK_INDEX_TYPE_UINT16
+                vb.index_type()
             );
 
             // boom, draw.

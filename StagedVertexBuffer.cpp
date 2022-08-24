@@ -165,7 +165,7 @@ void StagedVertexBuffer::_allocate_memory(const ::VkBuffer &handle,
         &memory_reqs
     );
 
-    auto type_index = _mem_type_index(
+    auto type_index = _find_memory_type(
         memory_reqs.memoryTypeBits,
         type_flags
     );
@@ -196,7 +196,7 @@ void StagedVertexBuffer::_allocate_memory(const ::VkBuffer &handle,
 }
 
 uint32_t
-StagedVertexBuffer::_mem_type_index(const uint32_t type_bits,
+StagedVertexBuffer::_find_memory_type(const uint32_t type_bits,
                                     const ::VkMemoryPropertyFlags flags)
 {
     ::VkPhysicalDeviceMemoryProperties memory_props { };
@@ -284,12 +284,12 @@ void StagedVertexBuffer::_destroy_staging_buffers() {
 }
 
 StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
-                                       const std::vector<uint16_t> &indices,
+                                       const std::vector<Index> &indices,
                                        const Instance &instance) :
     _vertices           { vertices },
     _vertex_buffer_size { sizeof(Vertex) * _vertices.size() },
     _indices            { indices },
-    _index_buffer_size  { sizeof(uint16_t) * _indices.size() },
+    _index_buffer_size  { sizeof(Index) * _indices.size() },
     _staging_vertex_buffer { nullptr },
     _staging_vertex_memory { nullptr },
     _staging_vertex_data   { nullptr },
@@ -302,7 +302,6 @@ StagedVertexBuffer::StagedVertexBuffer(const std::vector<Vertex> &vertices,
     _index_memory { nullptr  },
     _instance     { instance }
 {
-
     _create_staging_buffers();
     _populate_staging_buffers();
     _create_device_buffers();

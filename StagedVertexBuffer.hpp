@@ -11,6 +11,8 @@ class Vertex;
 
 class StagedVertexBuffer final {
 public:
+    using Index = uint32_t;
+
     void populate_buffers(const ::VkCommandPool &pool, const ::VkQueue &queue);
 
     inline ::VkBuffer vertex_handle() const { return _vertex_buffer; }
@@ -20,8 +22,12 @@ public:
         return static_cast<uint32_t>(_indices.size());
     }
 
+    inline ::VkIndexType index_type() const {
+        return ::VK_INDEX_TYPE_UINT32;
+    }
+
     StagedVertexBuffer(const std::vector<Vertex> &vertices,
-                       const std::vector<uint16_t> &indices,
+                       const std::vector<Index> &indices,
                        const Instance &instance);
     ~StagedVertexBuffer();
 
@@ -30,7 +36,7 @@ public:
 private:
     std::vector<Vertex> _vertices;
     size_t _vertex_buffer_size;
-    std::vector<uint16_t> _indices;
+    std::vector<Index> _indices;
     size_t _index_buffer_size;
 
     ::VkBuffer       _staging_vertex_buffer;
@@ -55,8 +61,8 @@ private:
     void _create_buffer(::VkBuffer &handle, const uint32_t usage_flags);
     void _allocate_memory(const ::VkBuffer &handle, const uint32_t type_flags,
                           ::VkDeviceMemory &memory);
-    uint32_t _mem_type_index(const uint32_t type_bits,
-                             const ::VkMemoryPropertyFlags flags);
+    uint32_t _find_memory_type(const uint32_t type_bits,
+                               const ::VkMemoryPropertyFlags flags);
 };
 
 #endif // VKL_STAGEDBUFFER_HPP
