@@ -1,7 +1,10 @@
 #ifndef VKL_RENDERLOOP_HPP
 #define VKL_RENDERLOOP_HPP
 
-#include "common.hpp"
+#include "Index.hpp"
+#include "StagedBuffer.hpp"
+
+#include <vulkan/vulkan.h>
 
 class Instance;
 class CommandQueues;
@@ -26,9 +29,11 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance, const CommandQueues &queues,
-             Swapchain &swapchain, Pipeline &pipeline,
-             Framebuffers &framebuffers);
+    bool run(const Instance &instance,Swapchain &swapchain,
+             Pipeline &pipeline, Framebuffers &framebuffers,
+             const std::vector<::VkBuffer> &vertex_buffers,
+             const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
+             const StagedBuffer<Index> &index_buffer);
 
     // -------------------------------------------------------------------------
     // Setup

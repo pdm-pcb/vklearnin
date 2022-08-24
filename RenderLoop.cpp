@@ -15,40 +15,17 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
-                     Swapchain &swapchain, Pipeline &pipeline,
-                     Framebuffers &framebuffers)
+bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
+                     Pipeline &pipeline, Framebuffers &framebuffers,
+                     const std::vector<::VkBuffer> &vertex_buffers,
+                     const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
+                     const StagedBuffer<Index> &index_buffer)
 {
     CONSOLE_INFO("");
 
     ::VkResult result = ::VK_RESULT_MAX_ENUM;
     uint32_t frame       = 0u;
     uint32_t image_index = 0u;
-
-    const std::vector<Vertex> vertices {
-        {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-        {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-        {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-        {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
-    };
-    
-    StagedBuffer<Vertex> vb(vertices, instance);
-    vb.populate_buffer(queues.command_pool(), queues.graphics_queue());
-
-    const std::vector<Index> indices {
-        0u, 1u, 2u,
-        2u, 3u, 0u
-    };
-
-    StagedBuffer<Index> ib(indices, instance);
-    ib.populate_buffer(queues.command_pool(), queues.graphics_queue());
-
-    ::VkBuffer vertex_buffers[] {
-        { vb.handle() }
-    };
-    ::VkDeviceSize vertex_buffer_offsets[] {
-        { 0u }
-    };
 
     while(_window.message_loop() == true) {
         // flip between zero and one, without a mod operation
@@ -133,13 +110,13 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
                 command_buffer,
                 0u,
                 std::size(vertex_buffers),
-                vertex_buffers,
-                vertex_buffer_offsets
+                vertex_buffers.data(),
+                vertex_buffer_offsets.data()
             );
             // and indices while we're at it
             ::vkCmdBindIndexBuffer(
                 command_buffer,
-                ib.handle(),
+                index_buffer.handle(),
                 0u,
                 IndexType
             );
@@ -147,7 +124,7 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
             // boom, draw.
             ::vkCmdDrawIndexed(
                 command_buffer,
-                static_cast<uint32_t>(ib.count()),
+                static_cast<uint32_t>(index_buffer.count()),
                 1u, 0u, 0u, 0u
             );
 

@@ -5,6 +5,7 @@
 #include "Pipeline.hpp"
 #include "Framebuffers.hpp"
 #include "RenderLoop.hpp"
+#include "StagedBuffer.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -46,6 +47,39 @@ int main() {
     command_queues.init_pools();
     command_queues.init_queues();
     command_queues.init_buffers();
+
+    // these buffers are effectively placeholders for what will be static
+    // vertex data loaded from disk or so
+
+    // Vertex Buffer------------------------------------------------------------
+    const std::vector<Vertex> vertices {
+        {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+        {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+        {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+        {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+    };
+    
+    StagedBuffer<Vertex> vertex_buffer(vertices, instance);
+    vertex_buffer.populate_buffer(command_queues.command_pool(),
+                       command_queues.graphics_queue());
+
+    std::vector<::VkBuffer> vertex_buffers {
+        { vertex_buffer.handle() }
+    };
+    std::vector<::VkDeviceSize> vertex_buffer_offsets {
+        { 0u }
+    };
+    // -------------------------------------------------------------------------
+    // Index Buffer-------------------------------------------------------------
+    const std::vector<Index> indices {
+        0u, 1u, 2u,
+        2u, 3u, 0u
+    };
+
+    StagedBuffer<Index> index_buffer(indices, instance);
+    index_buffer.populate_buffer(command_queues.command_pool(),
+                                 command_queues.graphics_queue());
+    // -------------------------------------------------------------------------
     
     // the swapchain will use the function pointers gathered by the instance,
     // as well as details of the window's surface
@@ -85,10 +119,12 @@ int main() {
     while(carry_on) {
         carry_on = render_loop.run(
             instance,
-            command_queues,
             swapchain,
             pipeline,
-            framebuffers
+            framebuffers,
+            vertex_buffers,
+            vertex_buffer_offsets,
+            index_buffer
         );
 
         // ...!
