@@ -22,7 +22,7 @@ int main() {
     instance.init_instance_procs();
     instance.init_physical_device();
 
-    Window window(1024u, 768u, 0, 0, instance.vulkan_instance());
+    Window window(instance.vulkan_instance());
 
     // both the window itself and the window's surface are required for
     // establishing a command queue family for the Vulkan instance

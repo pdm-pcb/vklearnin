@@ -106,8 +106,6 @@ bool X11Window::message_loop() {
                 if(config->width != _width || config->height != _height) {
                     _width         = config->width;
                     _height        = config->height;
-                    _extent.width  = config->width;
-                    _extent.height = config->height;
                 }
                 break;
             }
@@ -418,9 +416,8 @@ void X11Window::_center_window() {
 }
 
 //==============================================================================
-X11Window::X11Window(const uint32_t width, const uint32_t height,
-                     const int32_t x_offset, const int32_t y_offset,
-                     const ::VkInstance &instance) :
+X11Window::X11Window(const ::VkInstance &instance,
+                     const uint32_t width, const uint32_t height) :
     _connection       { nullptr },
     _screen           { nullptr },
     _key_symbols      { nullptr },
@@ -430,8 +427,6 @@ X11Window::X11Window(const uint32_t width, const uint32_t height,
     _fullscreen_atom  { 0u },
     _fullscreen_event { },
     _surface          { 0u },
-    _offset           { x_offset, y_offset },
-    _extent           { width, height },
     _width            { width  },
     _height           { height },
     _screen_width     { 0u },
@@ -464,6 +459,11 @@ X11Window::X11Window(const uint32_t width, const uint32_t height,
     _window = ::xcb_generate_id(_connection);
 
     _query_randr();
+
+    if(_width == 0 || _height == 0) {
+        _width  = static_cast<uint32_t>(_screen_width  * 0.75f);
+        _height = static_cast<uint32_t>(_screen_height * 0.75f);
+    }
 }
 
 X11Window::~X11Window() {

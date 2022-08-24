@@ -25,14 +25,11 @@ public:
     void init_surface();
 
     inline ::VkSurfaceKHR & surface() { return _surface; }
-    inline const ::VkOffset2D & offset() const { return _offset; }
-    inline const ::VkExtent2D & extent() const { return _extent; }
-    inline uint32_t width()  const { return _width;  }
-    inline uint32_t height() const { return _height; }
+    inline uint32_t width()  const    { return _width;   }
+    inline uint32_t height() const    { return _height;  }
 
-    X11Window(const uint32_t width, const uint32_t height,
-              const int32_t x_offset, const int32_t y_offset,
-              const ::VkInstance &instance);
+    X11Window(const ::VkInstance &instance,
+              const uint32_t width = 0, const uint32_t height = 0);
     ~X11Window();
 
     X11Window() = delete;
@@ -49,8 +46,6 @@ private:
     ::xcb_client_message_event_t _fullscreen_event;
 
     ::VkSurfaceKHR _surface;
-    ::VkOffset2D   _offset;
-    ::VkExtent2D   _extent;
     
     uint32_t _width;
     uint32_t _height;
