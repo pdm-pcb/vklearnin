@@ -27,7 +27,8 @@ public:
     // -------------------------------------------------------------------------
     // Recovery
     void destroy();
-    void create(const ::VkExtent2D  &extent, const CommandQueues &queues);
+    void create(const ::VkExtent2D &extent, const CommandQueues &queues,
+                ::VkSurfaceKHR &surface);
 
     // -------------------------------------------------------------------------
     // For those concerned with swapchain atributes
@@ -49,7 +50,7 @@ public:
     }
 
 
-    Swapchain(const Instance &instance, const ::VkSurfaceKHR &surface);
+    Swapchain(const Instance &instance, ::VkSurfaceKHR &surface);
     ~Swapchain();
 
     Swapchain() = delete;
@@ -73,7 +74,7 @@ private:
     std::vector<::VkImageView> _image_views;
 
     const Instance       &_instance;
-    const ::VkSurfaceKHR &_surface;
+    ::VkSurfaceKHR &_surface;
 };
 
 #endif // VKL_SWAPCHAIN_HPP

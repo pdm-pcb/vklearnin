@@ -8,18 +8,21 @@ using client_msg        = ::xcb_client_message_event_t *;
 using config_notify     = ::xcb_configure_notify_event_t *;
 using keypress_notify   = ::xcb_key_press_event_t *;
 using keyrelease_notify = ::xcb_key_release_event_t *;
+using property_notify   = ::xcb_property_notify_event_t *;
 
-static constexpr int XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80;
-static constexpr ::xcb_mod_mask_t altmask = ::XCB_MOD_MASK_5;
+static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
 
 //==============================================================================
-bool X11Window::message_loop(RenderLoop &render_loop) {
+bool X11Window::message_loop() {
     ::xcb_generic_event_t *event = nullptr;
+    uint32_t event_type = 0u;
 
-    while((event = ::xcb_poll_for_event(_connection))) {
-        switch(event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {            
-            case XCB_KEY_PRESS: CONSOLE_WARN("{}", "XCB_KEY_PRESS");
-            {
+    while((event = ::xcb_poll_for_event(_connection))) {       
+        event_type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
+        switch(event_type) {
+            case XCB_KEY_PRESS: {
+                CONSOLE_TRACE("{}", "XCB_KEY_PRESS");
+
                 auto *press = reinterpret_cast<keypress_notify>(event);
                 auto key = ::xcb_key_symbols_get_keysym(
                     _key_symbols,
@@ -35,8 +38,9 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                 break;
             }
 
-            case XCB_KEY_RELEASE: CONSOLE_WARN("{}", "XCB_KEY_RELEASE");
-            {
+            case XCB_KEY_RELEASE: {
+                CONSOLE_TRACE("{}", "XCB_KEY_RELEASE");
+
                 auto *release = reinterpret_cast<keyrelease_notify>(event);
                 auto key = ::xcb_key_symbols_get_keysym(
                     _key_symbols,
@@ -46,24 +50,19 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
 
                 switch(key) {
                     case XK_Return: {
-                        if(release->state & altmask) {
-                            static uint32_t prev_width;
-                            static uint32_t prev_height;
-
-                            if(_fullscreen) {
-                                _width  = prev_width;
-                                _height = prev_height;
-                            }
-                            else {
-                                prev_width  = _width;
-                                prev_height = _height;
-
-                                _width  = _display_xres;
-                                _height = _display_yres;
-                            }
-
-                            _fullscreen = !_fullscreen;
-                            _size_window(_width, _height);
+                        if((release->state & ::XCB_MOD_MASK_1) ||
+                           (release->state & ::XCB_MOD_MASK_5))
+                        {
+                            ::xcb_send_event(
+                                _connection,
+                                0u,
+                                _screen->root,
+                                ::XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT |
+                                ::XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                                reinterpret_cast<const char*>(&_fullscreen_event)
+                            );
+                            
+                            ::xcb_flush(_connection);
                         }
                         break;
                     }
@@ -71,79 +70,343 @@ bool X11Window::message_loop(RenderLoop &render_loop) {
                 break;
             }
 
-            case XCB_BUTTON_PRESS:      CONSOLE_WARN("{}", "XCB_BUTTON_PRESS");      break;
-            case XCB_BUTTON_RELEASE:    CONSOLE_WARN("{}", "XCB_BUTTON_RELEASE");    break;
-            case XCB_MOTION_NOTIFY:     CONSOLE_WARN("{}", "XCB_MOTION_NOTIFY");     break;
-            case XCB_ENTER_NOTIFY:      CONSOLE_WARN("{}", "XCB_ENTER_NOTIFY");      break;
-            case XCB_LEAVE_NOTIFY:      CONSOLE_WARN("{}", "XCB_LEAVE_NOTIFY");      break;
-            case XCB_FOCUS_IN:          CONSOLE_WARN("{}", "XCB_FOCUS_IN");          break;
-            case XCB_FOCUS_OUT:         CONSOLE_WARN("{}", "XCB_FOCUS_OUT");         break;
-            case XCB_KEYMAP_NOTIFY:     CONSOLE_WARN("{}", "XCB_KEYMAP_NOTIFY");     break;
-            case XCB_EXPOSE:            CONSOLE_WARN("{}", "XCB_EXPOSE");            break;
-            case XCB_GRAPHICS_EXPOSURE: CONSOLE_WARN("{}", "XCB_GRAPHICS_EXPOSURE"); break;
-            case XCB_NO_EXPOSURE:       CONSOLE_WARN("{}", "XCB_NO_EXPOSURE");       break;
-            case XCB_VISIBILITY_NOTIFY: CONSOLE_WARN("{}", "XCB_VISIBILITY_NOTIFY"); break;
-
-            case XCB_CREATE_NOTIFY: CONSOLE_WARN("{}", "XCB_CREATE_NOTIFY");
-                _running = true;
+            case XCB_MAP_NOTIFY:
+                CONSOLE_TRACE("{}", "XCB_MAP_NOTIFY");
                 break;
 
-            case XCB_DESTROY_NOTIFY: CONSOLE_WARN("{}", "XCB_DESTROY_NOTIFY");
-                _running = false;
-                break;
+            case XCB_CONFIGURE_NOTIFY:  {
+                CONSOLE_TRACE("{}", "XCB_CONFIGURE_NOTIFY");
 
-            case XCB_UNMAP_NOTIFY:    CONSOLE_WARN("{}", "XCB_UNMAP_NOTIFY");    break;
-            case XCB_MAP_NOTIFY:      CONSOLE_WARN("{}", "XCB_MAP_NOTIFY");      break;
-            case XCB_MAP_REQUEST:     CONSOLE_WARN("{}", "XCB_MAP_REQUEST");     break;
-            case XCB_REPARENT_NOTIFY: CONSOLE_WARN("{}", "XCB_REPARENT_NOTIFY"); break;
-
-            case XCB_CONFIGURE_NOTIFY: CONSOLE_WARN("{}", "XCB_CONFIGURE_NOTIFY");
-            {
                 auto *config = reinterpret_cast<config_notify>(event);
-                if(((config->width  != _extent.width) ||
-                    (config->height != _extent.height)))
-                {
-                    CONSOLE_WARN(
-                        "config: {}x{}, offset {}x{}",
-                        config->width, config->height,
-                        config->x, config->y
-                    );
-                    _resized = true;
-                }
+                _width         = config->width;
+                _height        = config->height;
+                _extent.width  = config->width;
+                _extent.height = config->height;
                 break;
             }
 
-            case XCB_CONFIGURE_REQUEST: CONSOLE_WARN("{}", "XCB_CONFIGURE_REQUEST"); break;
-            case XCB_GRAVITY_NOTIFY:    CONSOLE_WARN("{}", "XCB_GRAVITY_NOTIFY");    break;
-            case XCB_RESIZE_REQUEST:    CONSOLE_WARN("{}", "XCB_RESIZE_REQUEST");    break;
-            case XCB_CIRCULATE_NOTIFY:  CONSOLE_WARN("{}", "XCB_CIRCULATE_NOTIFY");  break;
-            case XCB_PROPERTY_NOTIFY:   CONSOLE_WARN("{}", "XCB_PROPERTY_NOTIFY");   break;
-            case XCB_SELECTION_CLEAR:   CONSOLE_WARN("{}", "XCB_SELECTION_CLEAR");   break;
-            case XCB_SELECTION_REQUEST: CONSOLE_WARN("{}", "XCB_SELECTION_REQUEST"); break;
-            case XCB_SELECTION_NOTIFY:  CONSOLE_WARN("{}", "XCB_SELECTION_NOTIFY");  break;
-            case XCB_COLORMAP_NOTIFY:   CONSOLE_WARN("{}", "XCB_COLORMAP_NOTIFY");   break;
-
             case XCB_CLIENT_MESSAGE: {
+                CONSOLE_TRACE("{}", "XCB_CLIENT_MESSAGE");
+
                 auto *msg = reinterpret_cast<client_msg>(event);
-                if(msg->data.data32[0] == _wm_delete) {
+                if(msg->data.data32[0] == _delete_atom) {
                     _running = false;
                 }
                 break;
             }
             
-            case XCB_GE_GENERIC:
+            default:
+                CONSOLE_WARN("Unknown XCB message? '{}'", event_type);
                 break;
         }
 
         free(event);
     }
-    
-    render_loop.resized(_resized);
+
     return _running;
 }
 
 //==============================================================================
 void X11Window::init_window() {
+    CONSOLE_INFO("");
+
+    uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL |
+                          ::XCB_CW_EVENT_MASK;
+    uint32_t value_list[] {
+        _screen->black_pixel,
+        ::XCB_EVENT_MASK_KEY_PRESS |
+        ::XCB_EVENT_MASK_KEY_RELEASE |
+        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
+        ::XCB_EVENT_MASK_NO_EVENT
+    };
+
+    ::xcb_create_window(
+        _connection,
+        XCB_COPY_FROM_PARENT,
+        _window,
+        _screen->root,
+        0, 0,
+        static_cast<uint16_t>(_width),
+        static_cast<uint16_t>(_height),
+        0,
+        ::XCB_WINDOW_CLASS_INPUT_OUTPUT,
+        _screen->root_visual,
+        vakue_mask,
+        value_list
+    );
+
+    _redirect_delete();
+    _remove_decorations();
+    _acquire_multiuse_atoms();
+
+    ::xcb_map_window(_connection, _window);
+
+    _center_window();
+    _running = true;
+}
+
+//==============================================================================
+void X11Window::init_surface() {
+    CONSOLE_INFO("");
+
+    if(_surface != nullptr) {
+        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        _surface = nullptr;
+    }
+
+    ::VkXcbSurfaceCreateInfoKHR surface_info { };
+    surface_info.sType = ::VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+    surface_info.connection = _connection;
+    surface_info.window = _window;
+
+    auto result = ::vkCreateXcbSurfaceKHR(
+        _instance,
+        &surface_info,
+        nullptr,
+        &_surface
+    );
+
+    if(result != ::VK_SUCCESS) {
+        CONSOLE_CRITICAL("Unable to create XCB surface.");
+    }
+}
+
+//==============================================================================
+void X11Window::_query_randr() {
+    CONSOLE_INFO("");
+
+    auto reply = ::xcb_randr_get_monitors_reply(
+        _connection,
+        ::xcb_randr_get_monitors(
+            _connection,
+            _screen->root,
+            0u
+        ),
+        nullptr
+    );
+
+    auto iter = ::xcb_randr_get_monitors_monitors_iterator(reply);
+    CONSOLE_TRACE("Found {} monitors", iter.rem);
+
+    while (iter.rem > 0) {
+        ::xcb_randr_monitor_info_t *info = iter.data;
+        CONSOLE_TRACE(
+            "\n\tMonitor Name: {}"
+            "\n\tResolution  : {}x{} +{}+{}"
+            "\n\tPrimary     : {}",
+            info->name,
+            info->width, info->height,
+            info->x, info->y,
+            (info->primary ? "Yes" : "No")
+        );
+
+        if(info->primary) {
+            _screen_width    = info->width;
+            _screen_height   = info->height;
+            _screen_x_offset = info->x;
+            _screen_y_offset = info->y;
+        }
+
+        ::xcb_randr_monitor_info_next(&iter);
+    }
+
+    free(reply);
+}
+
+//==============================================================================
+void X11Window::_redirect_delete() {
+    CONSOLE_INFO("");
+
+    auto *delete_reply = ::xcb_intern_atom_reply(
+        _connection,
+        ::xcb_intern_atom(
+            _connection,
+            0,
+            sizeof("WM_DELETE_WINDOW") - 1,
+            "WM_DELETE_WINDOW"
+        ),
+        nullptr
+    );
+
+    _delete_atom = delete_reply->atom;
+
+    auto *protocols_reply = ::xcb_intern_atom_reply(
+        _connection,
+        ::xcb_intern_atom(
+            _connection,
+            0,
+            sizeof("WM_PROTOCOLS") - 1,
+            "WM_PROTOCOLS"
+        ),
+        nullptr
+    );
+
+    ::xcb_change_property(
+        _connection,
+        ::XCB_PROP_MODE_REPLACE,
+        _window,
+        protocols_reply->atom,
+        ::XCB_ATOM_ATOM,
+        32u,
+        1u,
+        &_delete_atom
+    );
+
+    free(delete_reply);
+    free(protocols_reply);
+}
+
+//==============================================================================
+void X11Window::_remove_decorations() {
+    CONSOLE_INFO("");
+
+    auto *motif_reply = ::xcb_intern_atom_reply(
+        _connection,
+        ::xcb_intern_atom(
+            _connection,
+            0,
+            sizeof("_MOTIF_WM_HINTS") - 1,
+            "_MOTIF_WM_HINTS"
+        ),
+        nullptr
+    );
+
+    MotifHints hints {
+        .flags = 2u,
+        .functions = 0u,
+        .decorations = 0u,
+        .input_mode = 0,
+        .status = 0u,
+    };
+
+    ::xcb_change_property(
+        _connection,
+        XCB_PROP_MODE_REPLACE,
+        _window,
+        motif_reply->atom,
+        XCB_ATOM_INTEGER,
+        32u,
+        5u,
+        &hints
+    );
+
+    free(motif_reply);
+}
+
+//==============================================================================
+void X11Window::_acquire_multiuse_atoms() {
+    auto wm_state_reply = ::xcb_intern_atom_reply(
+        _connection,
+        ::xcb_intern_atom(
+            _connection,
+            0,
+            sizeof("_NET_WM_STATE") - 1,
+            "_NET_WM_STATE"
+        ),
+        nullptr
+    );
+
+    auto fullscreen_reply = ::xcb_intern_atom_reply(
+        _connection,
+            ::xcb_intern_atom(
+            _connection,
+            0,
+            sizeof("_NET_WM_STATE_FULLSCREEN") - 1,
+            "_NET_WM_STATE_FULLSCREEN"
+        ),
+        nullptr
+    );
+
+    _wm_state_atom   = wm_state_reply->atom;
+    _fullscreen_atom = fullscreen_reply->atom;
+
+    free(wm_state_reply);
+    free(fullscreen_reply);
+
+    _fullscreen_event.response_type  = XCB_CLIENT_MESSAGE;
+    _fullscreen_event.window         = _window;
+    _fullscreen_event.type           = _wm_state_atom;
+    _fullscreen_event.format         = 32u;
+    _fullscreen_event.data.data32[0] = 2u;
+    _fullscreen_event.data.data32[1] = _fullscreen_atom;
+    _fullscreen_event.data.data32[2] = 0u;
+}
+
+//==============================================================================
+void X11Window::_size_window(const uint32_t width, const uint32_t height) {
+    CONSOLE_INFO("");
+
+    _width  = width;
+    _height = height;
+   
+    uint32_t value_mask = ::XCB_CONFIG_WINDOW_WIDTH |
+                          ::XCB_CONFIG_WINDOW_HEIGHT;
+
+    uint32_t value_list[] {
+        _width,
+        _height
+    };
+
+    ::xcb_configure_window(
+        _connection,
+        _window,
+        value_mask,
+        value_list
+    );
+
+    ::xcb_flush(_connection);
+}
+
+//==============================================================================
+void X11Window::_center_window() {
+    CONSOLE_INFO("");
+
+    uint32_t pos_x = (_screen_width  / 2 - (_width  / 2));
+    uint32_t pos_y = (_screen_height / 2 - (_height / 2));
+    
+    uint32_t value_mask = ::XCB_CONFIG_WINDOW_X |
+                          ::XCB_CONFIG_WINDOW_Y;
+
+    int32_t value_list[] {
+        static_cast<int32_t>(pos_x) + _screen_x_offset,
+        static_cast<int32_t>(pos_y) + _screen_y_offset,
+    };
+
+    ::xcb_configure_window(
+        _connection,
+        _window,
+        value_mask,
+        value_list
+    );
+
+    ::xcb_flush(_connection);
+}
+
+//==============================================================================
+X11Window::X11Window(const uint32_t width, const uint32_t height,
+                     const int32_t x_offset, const int32_t y_offset,
+                     const ::VkInstance &instance) :
+    _connection       { nullptr },
+    _screen           { nullptr },
+    _key_symbols      { nullptr },
+    _window           { 0u },
+    _delete_atom      { 0u },
+    _wm_state_atom    { 0u },
+    _fullscreen_atom  { 0u },
+    _fullscreen_event { },
+    _surface          { 0u },
+    _offset           { x_offset, y_offset },
+    _extent           { width, height },
+    _width            { width  },
+    _height           { height },
+    _screen_width     { 0u },
+    _screen_height    { 0u },
+    _screen_x_offset  { 0  },
+    _screen_y_offset  { 0  },
+    _fullscreen       { false },
+    _running          { false },
+    _instance         { instance }
+{
     CONSOLE_INFO("");
 
     int screenp = 0;
@@ -163,278 +426,9 @@ void X11Window::init_window() {
     }
 
     _screen = screen_iter.data;
-
     _window = ::xcb_generate_id(_connection);
 
-    uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL | ::XCB_CW_EVENT_MASK;
-    uint32_t value_list[] {
-        _screen->black_pixel,
-        ::XCB_EVENT_MASK_KEY_PRESS |
-        ::XCB_EVENT_MASK_KEY_RELEASE |
-        ::XCB_EVENT_MASK_BUTTON_PRESS |
-        ::XCB_EVENT_MASK_BUTTON_RELEASE |
-        ::XCB_EVENT_MASK_ENTER_WINDOW |
-        ::XCB_EVENT_MASK_LEAVE_WINDOW |
-        ::XCB_EVENT_MASK_POINTER_MOTION |
-        ::XCB_EVENT_MASK_POINTER_MOTION_HINT |
-        ::XCB_EVENT_MASK_BUTTON_1_MOTION |
-        ::XCB_EVENT_MASK_BUTTON_2_MOTION |
-        ::XCB_EVENT_MASK_BUTTON_3_MOTION |
-        ::XCB_EVENT_MASK_BUTTON_4_MOTION |
-        ::XCB_EVENT_MASK_BUTTON_5_MOTION |
-        ::XCB_EVENT_MASK_BUTTON_MOTION |
-        ::XCB_EVENT_MASK_KEYMAP_STATE |
-        ::XCB_EVENT_MASK_EXPOSURE |
-        ::XCB_EVENT_MASK_VISIBILITY_CHANGE |
-        ::XCB_EVENT_MASK_STRUCTURE_NOTIFY |
-        // ::XCB_EVENT_MASK_RESIZE_REDIRECT |
-        ::XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
-        ::XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT |
-        ::XCB_EVENT_MASK_FOCUS_CHANGE |
-        ::XCB_EVENT_MASK_PROPERTY_CHANGE |
-        ::XCB_EVENT_MASK_COLOR_MAP_CHANGE |
-        ::XCB_EVENT_MASK_OWNER_GRAB_BUTTON |
-        ::XCB_EVENT_MASK_NO_EVENT
-    };
-
-    ::xcb_create_window(
-        _connection,
-        XCB_COPY_FROM_PARENT,
-        _window,
-        _screen->root,
-        0, 0,
-        static_cast<uint16_t>(_extent.width),
-        static_cast<uint16_t>(_extent.height),
-        0,
-        ::XCB_WINDOW_CLASS_INPUT_OUTPUT,
-        _screen->root_visual,
-        vakue_mask,
-        value_list
-    );
-
-    ::xcb_intern_atom_cookie_t wm_delete_cookie = ::xcb_intern_atom(
-        _connection,
-        0,
-        strlen("WM_DELETE_WINDOW"),
-        "WM_DELETE_WINDOW"
-    );
-
-    ::xcb_intern_atom_cookie_t wm_protocols_cookie = ::xcb_intern_atom(
-        _connection,
-        0,
-        strlen("WM_PROTOCOLS"),
-        "WM_PROTOCOLS"
-    );
-
-    ::xcb_intern_atom_reply_t *delete_reply = ::xcb_intern_atom_reply(
-        _connection,
-        wm_delete_cookie,
-        nullptr
-    );
-
-    ::xcb_intern_atom_reply_t *protocols_reply = ::xcb_intern_atom_reply(
-        _connection,
-        wm_protocols_cookie,
-        nullptr
-    );
-
-    _wm_delete = delete_reply->atom;
-    _wm_proto  = protocols_reply->atom;
-
-    ::xcb_change_property(
-        _connection,
-        ::XCB_PROP_MODE_REPLACE,
-        _window,
-        _wm_proto,
-        ::XCB_ATOM_ATOM,
-        32u,    // data format
-        1u,     // data length (?)
-        &_wm_delete
-    );
-
-    free(delete_reply);
-    free(protocols_reply);
-
-    // auto motif_cookie = xcb_intern_atom(
-    //     _connection,
-    //     0,
-    //     strlen("_MOTIF_WM_HINTS"),
-    //     "_MOTIF_WM_HINTS"
-    // );
-    // auto *motif_reply = xcb_intern_atom_reply(
-    //     _connection,
-    //     motif_cookie,
-    //     NULL
-    // );
-
-    // MotifHints hints {
-    //     .flags = 2u,
-    //     .functions = 0u,
-    //     .decorations = 0u,
-    //     .input_mode = 0,
-    //     .status = 0u,
-    // };
-
-    // ::xcb_change_property(
-    //     _connection,
-    //     XCB_PROP_MODE_REPLACE,
-    //     _window,
-    //     motif_reply->atom,
-    //     XCB_ATOM_INTEGER,
-    //     32,
-    //     5,
-    //     &hints
-    // );
-
-    // free(motif_reply);
-
-    ::xcb_map_window(_connection, _window);
-
-    _size_window(_extent.width, _extent.height);
-    _running = true;
-}
-
-//==============================================================================
-void X11Window::init_surface() {
-    if(_surface != nullptr) {
-        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        _surface = nullptr;
-    }
-
-    ::VkXcbSurfaceCreateInfoKHR surface_info { };
-    surface_info.sType = ::VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-    surface_info.connection = _connection;
-    surface_info.window = _window;
-
-    ::VkResult result = vkCreateXcbSurfaceKHR(
-        _instance,
-        &surface_info,
-        nullptr,
-        &_surface
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create XCB surface.");
-    }
-}
-
-//==============================================================================
-void X11Window::_size_window(const uint32_t width, const uint32_t height) {
     _query_randr();
-
-    _extent = { width, height };
-
-    uint32_t pos_x = (_display_xres / 2 - (_extent.width  / 2));
-    uint32_t pos_y = (_display_yres / 2 - (_extent.height / 2));
-    
-    uint32_t value_mask =
-        ::XCB_CONFIG_WINDOW_X |
-        ::XCB_CONFIG_WINDOW_Y |
-        ::XCB_CONFIG_WINDOW_WIDTH |
-        ::XCB_CONFIG_WINDOW_HEIGHT;
-
-    int32_t value_list[] {
-        static_cast<int32_t>(pos_x) + _display_xoff,
-        static_cast<int32_t>(pos_y) + _display_yoff,
-        static_cast<int32_t>(_extent.width),
-        static_cast<int32_t>(_extent.height)
-    };
-
-    ::xcb_configure_window(
-        _connection,
-        _window,
-        value_mask,
-        value_list
-    );
-
-    ::xcb_flush(_connection);
-}
-
-//==============================================================================
-void X11Window::_query_randr() {
-    auto *reply = xcb_randr_get_screen_resources_current_reply(
-        _connection,
-        xcb_randr_get_screen_resources_current(_connection, _window),
-        nullptr
-    );
-
-    auto reply_ts = reply->config_timestamp;
-
-    int count = xcb_randr_get_screen_resources_current_outputs_length(reply);
-
-    if(count == 0) {
-        CONSOLE_CRITICAL("xrandr could not provide any outputs");
-    }
-
-    auto *outputs = xcb_randr_get_screen_resources_current_outputs(reply);
-    auto *output = xcb_randr_get_output_info_reply(
-        _connection,
-        xcb_randr_get_output_info(
-            _connection,
-            outputs[0],
-            reply_ts
-        ),
-        nullptr
-    );
-
-    if(output == nullptr) {
-        CONSOLE_CRITICAL("Primary xrandr output provided nullptr");
-    }
-
-    if(output->crtc == XCB_NONE ||
-        output->connection == XCB_RANDR_CONNECTION_DISCONNECTED)
-    {
-        CONSOLE_CRITICAL("Primary xrandr output is invalid or disconnected");
-    }
-
-    auto *crtc = xcb_randr_get_crtc_info_reply(
-        _connection,
-        xcb_randr_get_crtc_info(_connection, output->crtc, reply_ts),
-        nullptr
-    );
-
-    _display_xres = crtc->width;
-    _display_yres = crtc->height;
-
-    _display_xoff = crtc->x;
-    _display_yoff = crtc->y;
-
-    free(crtc);
-    free(output);
-    free(reply);
-
-    CONSOLE_TRACE(
-        "Display 0 with resolution {}x{}, offset {}x{} selected.",
-        _display_xres, _display_yres,
-        _display_xoff, _display_yoff
-    );
-}
-
-//==============================================================================
-X11Window::X11Window(const uint32_t width, const uint32_t height,
-                     const int32_t x_offset, const int32_t y_offset,
-                     const ::VkInstance &instance) :
-    _connection    { nullptr },
-    _window        { 0u },
-    _screen        { nullptr },
-    _wm_delete     { 0u },
-    _wm_proto      { 0u },
-    _key_symbols   { nullptr },
-    _surface       { 0u },
-    _offset        { x_offset, y_offset },
-    _extent        { width, height },
-    _width         { width  },
-    _height        { height },
-    _display_xres  { 0u },
-    _display_yres  { 0u },
-    _display_xoff  { 0 },
-    _display_yoff  { 0 },
-    _running       { false },
-    _resized       { false },
-    _fullscreen    { false },
-    _instance      { instance }
-{
-    CONSOLE_INFO("");
 }
 
 X11Window::~X11Window() {
@@ -445,40 +439,3 @@ X11Window::~X11Window() {
     ::xcb_destroy_window(_connection, _window);
     ::xcb_disconnect(_connection);
 }
-
-/* these are handy "introspection" functions I've stumbled upon along the way
-void print_modifiers(uint32_t mask) {
-    const char **mod, *mods[] = {
-        "Shift", "Lock", "Ctrl", "Alt",
-        "Mod2", "Mod3", "Mod4", "Mod5",
-        "Button1", "Button2", "Button3", "Button4", "Button5"
-    };
-
-    printf("%u: ", mask);
-    for (mod = mods; mask; mask >>= 1, mod++)
-        if (mask & 1)
-            printf(*mod);
-    putchar ('\n');
-}
-
-void atom_name(xcb_connection_t *connection, xcb_atom_t atom) {
-    if(!atom) return;
-
-    xcb_generic_error_t *error = nullptr;
-    auto cookie = xcb_get_atom_name(connection, atom);
-    auto *reply = xcb_get_atom_name_reply(connection, cookie, &error);
-
-    if(error) return;
-
-    if(reply) {
-        auto namesize = xcb_get_atom_name_name_length(reply) + 1;
-        char *name = new char[namesize];
-        memset(name, '\0', namesize);
-        strcpy(name, xcb_get_atom_name_name(reply));
-        // ???DO SOMETHING
-        delete[] name;
-        free(reply);
-    }
-    return;
-}
-*/

@@ -361,9 +361,12 @@ void Swapchain::destroy() {
 }
 
 //==============================================================================
-void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues)
+void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues,
+                       ::VkSurfaceKHR &surface)
 {
     CONSOLE_INFO("");
+
+    _surface = surface;
 
     init_color_format();
     init_present_modes();
@@ -374,7 +377,7 @@ void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues)
 }
 
 //==============================================================================
-Swapchain::Swapchain(const Instance &instance, const ::VkSurfaceKHR &surface) :
+Swapchain::Swapchain(const Instance &instance, ::VkSurfaceKHR &surface) :
     _color_format       { ::VK_FORMAT_MAX_ENUM },
     _color_space        { ::VK_COLOR_SPACE_MAX_ENUM_KHR },
     _image_count        { 0u },

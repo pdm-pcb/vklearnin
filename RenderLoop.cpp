@@ -23,7 +23,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
     uint32_t frame       = 0u;
     uint32_t image_index = 0u;
 
-    while(_window.message_loop(*this) == true) {
+    while(_window.message_loop() == true) {
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
         frame = 1 - frame;
@@ -43,7 +43,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         );
 
         // if we need to resize everything, let's do it
-        if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized) {
+        if(result == ::VK_ERROR_OUT_OF_DATE_KHR || _resized == true) {
             _image_resized(instance, swapchain, pipeline, framebuffers);
             continue;   // be sure to continue so eveything updates
         }
@@ -237,7 +237,7 @@ void RenderLoop::init_synchronization() {
 void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
                                 Pipeline &pipeline, Framebuffers &framebuffers)
 {
-    CONSOLE_WARN("Image dimensions changed");
+    CONSOLE_ERROR("Image requires updating");
 
     // wait for current commands to run their course
     ::vkDeviceWaitIdle(instance.logical_device());
@@ -248,7 +248,9 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
     // initially
     framebuffers.destroy();
     swapchain.destroy();
-    swapchain.create(_window.extent(), _queues);
+    _window.init_surface();
+    swapchain.create({ _window.width(), _window.height() }, _queues,
+                     _window.surface());
     framebuffers.create(swapchain, pipeline);
     pipeline.update_dimensions(swapchain);
 }

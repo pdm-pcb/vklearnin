@@ -142,7 +142,7 @@ char * Shader::_read_source(const char *filepath) {
     char *dest = new char[filesize + 1] { };
     memset(dest, '\0', filesize + 1);
 
-    input_file.read(dest, filesize);
+    input_file.read(dest, static_cast<std::streamsize>(filesize));
     input_file.close();
 
     CONSOLE_TRACE("Loaded shader source {}", filepath);
@@ -165,7 +165,7 @@ std::vector<char> Shader::_read_binary(const char *filepath) {
     input_file.seekg(0, input_file.beg);
 
     std::vector<char> dest(filesize);
-    input_file.read(dest.data(), filesize);
+    input_file.read(dest.data(), static_cast<std::streamsize>(filesize));
     input_file.close();
 
     CONSOLE_TRACE("Loaded shader binary {}", filepath);

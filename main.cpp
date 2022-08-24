@@ -51,10 +51,13 @@ int main() {
     // as well as details of the window's surface
     Swapchain swapchain(instance, window.surface());
 
-    swapchain.init_color_format();            // presumably 32-bit SRGB
-    swapchain.init_present_modes();           // presumably FIFO/v-sync
-    swapchain.init_extent(window.extent());   // presumably the resolution
-    swapchain.init_swapchain(command_queues); // presumably all of the above. =)
+    swapchain.init_color_format();  // presumably 32-bit SRGB
+    swapchain.init_present_modes(); // presumably FIFO/v-sync
+    swapchain.init_extent({         // just the window size for now
+        window.width(),
+        window.height()
+    });
+    swapchain.init_swapchain(command_queues); // and, go!
 
     swapchain.init_swapchain_images(); // should give us two images for writing
     swapchain.init_image_views();      // views to interface with the images

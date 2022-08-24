@@ -80,14 +80,22 @@ void Pipeline::init_render_passes(const Swapchain &swapchain) {
     // I am guessing this will all make more sense once I've given multipass
     // rendering a go
     ::VkSubpassDescription subpasses[] {{
-        .pipelineBindPoint = ::VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount =
+        .flags = { },
+        .pipelineBindPoint    = ::VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0u,
+        .pInputAttachments    = nullptr,
+        .colorAttachmentCount = 
             static_cast<uint32_t>(std::size(attachment_refs)),
-        .pColorAttachments = attachment_refs,
+        .pColorAttachments       = attachment_refs,
+        .pResolveAttachments     = nullptr,
+        .pDepthStencilAttachment = nullptr,
+        .preserveAttachmentCount = 0u,
+        .pPreserveAttachments    = 0u,
     }};
 
     // the sole attachment point for this render pass is the color buffer
     ::VkAttachmentDescription attachments[] {{
+        .flags          = 0u,
         .format         = swapchain.color_format(),
         .samples        = ::VK_SAMPLE_COUNT_1_BIT,
         .loadOp         = ::VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -102,12 +110,13 @@ void Pipeline::init_render_passes(const Swapchain &swapchain) {
     // dependency ensures the render pass doesn't begin until there's an image
     // available
     ::VkSubpassDependency dependencies[] {{
-        .srcSubpass    = VK_SUBPASS_EXTERNAL,
-        .dstSubpass    = 0u,
-        .srcStageMask  = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask  = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = 0u,
-        .dstAccessMask = ::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .srcSubpass      = VK_SUBPASS_EXTERNAL,
+        .dstSubpass      = 0u,
+        .srcStageMask    = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask    = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask   = 0u,
+        .dstAccessMask   = ::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dependencyFlags = 0u
     }};
 
     ::VkRenderPassCreateInfo renderpass_info { };
@@ -267,10 +276,13 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
 
     ::VkGraphicsPipelineCreateInfo pipelines[] {{
         .sType      = ::VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext      = nullptr,
+        .flags      = 0u,
         .stageCount = static_cast<uint32_t>(_shader_stages.size()),
         .pStages    = _shader_stages.data(),
         .pVertexInputState   = &vertex_info,
         .pInputAssemblyState = &assembly_info,
+        .pTessellationState  = nullptr,
         .pViewportState      = &viewport_info,
         .pRasterizationState = &rasterizer,
         .pMultisampleState   = &multisampling,

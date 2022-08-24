@@ -38,7 +38,7 @@ public:
     inline uint32_t queue_count() const {
         return static_cast<uint32_t>(_queue_info_structs.size());
     }
-    inline const ::VkDeviceQueueCreateInfo * const queues() const {
+    inline const ::VkDeviceQueueCreateInfo * queues() const {
         return _queue_info_structs.data();
     }
     inline const ::VkCommandBuffer & command_buffer(const size_t index) const {
