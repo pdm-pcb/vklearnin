@@ -1,3 +1,5 @@
+#ifdef WIN32
+
 #include "common.hpp"
 #include "Win32Window.hpp"
 
@@ -204,3 +206,5 @@ Win32Window::~Win32Window() {
 
     ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
 }
+
+#endif // WIN32

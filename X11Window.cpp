@@ -1,3 +1,5 @@
+#ifdef __linux__
+
 #include "common.hpp"
 #include "X11Window.hpp"
 
@@ -474,3 +476,5 @@ X11Window::~X11Window() {
     ::xcb_destroy_window(_connection, _window);
     ::xcb_disconnect(_connection);
 }
+
+#endif // __linux__

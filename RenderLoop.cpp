@@ -6,6 +6,7 @@
 #include "Swapchain.hpp"
 #include "Pipeline.hpp"
 #include "Framebuffers.hpp"
+#include "VertexBuffer.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -22,6 +23,20 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
     ::VkResult result = ::VK_RESULT_MAX_ENUM;
     uint32_t frame       = 0u;
     uint32_t image_index = 0u;
+
+    const std::vector<Vertex> vertices {
+        {{  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f }},
+        {{  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f }},
+        {{ -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f }}
+    };
+
+    VertexBuffer vb(vertices, instance);
+    ::VkBuffer vertex_buffers[] {
+        { vb.handle() }
+    };
+    ::VkDeviceSize vertex_buffer_offsets[] {
+        { 0u }
+    };
 
     while(_window.message_loop() == true) {
         // flip between zero and one, without a mod operation
@@ -102,6 +117,14 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                 // update the dynamic traits of the pipeline
                 ::vkCmdSetViewport(buffer, 0u, 1u, &pipeline.viewport());
                 ::vkCmdSetScissor(buffer,0u, 1u, &pipeline.scissor());
+                // time for some host-side vertex data!
+                ::vkCmdBindVertexBuffers(
+                    buffer,
+                    0u,
+                    std::size(vertex_buffers),
+                    vertex_buffers,
+                    vertex_buffer_offsets
+                );
                 // boom, draw.
                 ::vkCmdDraw(
                     buffer,

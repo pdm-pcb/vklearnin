@@ -7,3 +7,5 @@ CMakeSettings.json
 compile_commands.json
 
 build/
+shaders/*.d
+shaders/*.spv

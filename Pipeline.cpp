@@ -3,6 +3,7 @@
 
 #include "Instance.hpp"
 #include "Shader.hpp"
+#include "Vertex.hpp"
 
 // =============================================================================
 // void Pipeline::vertex_from_source(const char *filepath, const bool optimize) {
@@ -190,14 +191,19 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
         static_cast<uint32_t>(std::size(dynamic_states));
     dynamic_state_info.pDynamicStates = dynamic_states;
 
-    // since there really aren't any vertex buffers at the present, this'll do
+    // grab the data from the newly formulated Vertex class
+    auto binding_desc   = Vertex::binding_desc();
+    auto attribute_desc = Vertex::attribute_desc();
+
+    // and hand them over as part of the pipeline's input state
     ::VkPipelineVertexInputStateCreateInfo vertex_info { };
     vertex_info.sType =
         ::VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_info.vertexBindingDescriptionCount = 0u;
-    vertex_info.pVertexBindingDescriptions = nullptr;
-    vertex_info.vertexAttributeDescriptionCount = 0u;
-    vertex_info.pVertexAttributeDescriptions = nullptr;
+    vertex_info.vertexBindingDescriptionCount = 1u;
+    vertex_info.vertexAttributeDescriptionCount =
+        static_cast<uint32_t>(attribute_desc.size());
+    vertex_info.pVertexBindingDescriptions = &binding_desc;
+    vertex_info.pVertexAttributeDescriptions = attribute_desc.data();
 
     // assemble a triangle list, like anything at this point
     ::VkPipelineInputAssemblyStateCreateInfo assembly_info { };

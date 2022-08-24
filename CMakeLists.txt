@@ -12,72 +12,82 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+    include(CompileShaders)
+
 	find_package(Vulkan REQUIRED)
 	find_package(glm REQUIRED)
 	find_package(spdlog REQUIRED)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+file(
+    GLOB PROJECT_SOURCE
+    "*.cpp"
+)
+
+file(
+    GLOB PROJECT_HEADERS
+    "*.hpp"
+)
+
 add_executable(
-	vulkan-learnin
-	"main.cpp"
-    "MemTracker.cpp"
-    "VKDebugger.cpp"
-    "Instance.cpp"
-    "CommandQueues.cpp"
-    "Swapchain.cpp"
-    "Shader.cpp"
-    "Pipeline.cpp"
-    "Framebuffers.cpp"
-    "RenderLoop.cpp"
+	vklearnin
+	${PROJECT_SOURCE}
+    ${PROJECT_HEADERS}
+)
+
+file(
+    GLOB SHADER_SOURCE
+    "shaders/shader.vert"
+    "shaders/shader.frag"
+)
+
+compile_shader(
+    vklearnin
+    ENV vulkan1.3
+    SOURCES ${SHADER_SOURCE}
 )
 
 target_link_libraries(
-	vulkan-learnin PUBLIC
+	vklearnin PUBLIC
 	Vulkan::Vulkan
     glm
     spdlog
 )
 
 target_include_directories(
-    vulkan-learnin PUBLIC
+    vklearnin PUBLIC
     "${spdlog_SOURCE_DIR}"
 )
 
 # -----------------------------------------------------------------------------
 # Linux build details
 if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
-	target_sources(
-		vulkan-learnin PUBLIC
-		"X11Window.cpp"
-	)
-
 	target_link_libraries(
-		vulkan-learnin PUBLIC
+		vklearnin PUBLIC
 		"xcb"
         "xcb-keysyms"
         "xcb-randr"
 	)
 
 	target_compile_options(
-		vulkan-learnin PRIVATE
+		vklearnin PRIVATE
 		-march=native -mtune=native
-		-Wall -Wextra -Wsign-conversion -pedantic
-        -Wno-narrowing
+		-Wall -Wextra -pedantic -Wsign-conversion
 	)
 
 	if(CMAKE_BUILD_TYPE MATCHES "Debug")
 		target_compile_options(
-			vulkan-learnin PUBLIC
+			vklearnin PUBLIC
 			-O0 -ggdb3
 		)
-
         target_compile_definitions(
-            vulkan-learnin PUBLIC
+            vklearnin PUBLIC
             "DEBUG"
         )
 	elseif(CMAKE_BUILD_TYPE MATCHES "Release")
 		target_compile_options(
-			vulkan-learnin PUBLIC
+			vklearnin PUBLIC
 			-O3
 		)
 	endif()
@@ -85,26 +95,21 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
 # -----------------------------------------------------------------------------
 # Windows build details
 elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
-	target_sources(
-		vulkan-learnin PUBLIC
-		"Win32Window.cpp"
-	)
-
 	target_compile_options(
-		vulkan-learnin PUBLIC
+		vklearnin PUBLIC
 		"/nologo"  # Suppress copyright message
 		"/W4"	   # Warnin's
 		"/wd4312"  # Disable the warning for casting to a bigger size
 	)
 
 	target_compile_definitions(
-		vulkan-learnin PUBLIC
+		vklearnin PUBLIC
 		"WIN64"
 	)
 
 	if(CMAKE_BUILD_TYPE MATCHES "Debug")
 		target_compile_options(
-			vulkan-learnin PUBLIC
+			vklearnin PUBLIC
 			"/JMC"      # Just-My-Code
 			"/Zi"		# Debugging information
 			"/RTC1"     # Runtime checks
@@ -116,12 +121,12 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
         )
 
         target_compile_definitions(
-            vulkan-learnin PUBLIC
+            vklearnin PUBLIC
             "DEBUG"
         )
 	elseif(CMAKE_BUILD_TYPE MATCHES "Release")
 		target_compile_options(
-			vulkan-learnin PUBLIC
+			vklearnin PUBLIC
 			"/O2"         # Optimization not disabled =D
 			"/fp:fast"    # Gotta go fast
 			"/GS-"        # No buffer overrun checks
@@ -130,7 +135,7 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 set_target_properties(
-	vulkan-learnin PROPERTIES
+	vklearnin PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
@@ -139,14 +144,13 @@ set_target_properties(
 	EXECUTABLE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/release/lib
 )
 
-get_target_property(vulkan-learnin_flags vulkan-learnin COMPILE_OPTIONS)
-get_target_property(vulkan-learnin_defs  vulkan-learnin COMPILE_DEFINITIONS)
-get_target_property(vulkan-learnin_inc   vulkan-learnin INCLUDE_DIRECTORIES)
-get_target_property(vulkan-learnin_link  vulkan-learnin LINK_DIRECTORIES)
+get_target_property(vklearnin_flags vklearnin COMPILE_OPTIONS)
+get_target_property(vklearnin_defs  vklearnin COMPILE_DEFINITIONS)
+get_target_property(vklearnin_inc   vklearnin INCLUDE_DIRECTORIES)
+get_target_property(vklearnin_link  vklearnin LINK_DIRECTORIES)
 
-message(STATUS "vulkan-learnin compile flags: ${vulkan-learnin_flags}")
-message(STATUS "vulkan-learnin compile defines: ${vulkan-learnin_defs}")
-message(STATUS "vulkan-learnin include directories: ${vulkan-learnin_inc}")
-message(STATUS "vulkan-learnin link directories: ${vulkan-learnin_link}")
+message(STATUS "vklearnin compile flags: ${vklearnin_flags}")
+message(STATUS "vklearnin compile defines: ${vklearnin_defs}")
+message(STATUS "vklearnin include directories: ${vklearnin_inc}")
+message(STATUS "vklearnin link directories: ${vklearnin_link}")
 message(STATUS "cmake compile flags: ${CMAKE_CXX_FLAGS}")
- 

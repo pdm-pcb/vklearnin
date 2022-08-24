@@ -11,6 +11,17 @@
 
 #include "ConsoleLog.hpp"
 
+#define GLM_FORCE_CXX17
+#define GLM_FORCE_INLINE
+#define GLM_FORCE_SSE42
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #include <vulkan/vulkan.h>
 
 #if defined(__linux__)
@@ -18,8 +29,7 @@
     #include <xcb/xcb_keysyms.h>
     #include <xcb/randr.h>
 
-    #define XK_MISCELLANY
-    #define XK_LATIN1
+    #include <X11/keysym.h>
     #include <X11/keysymdef.h>
 
     #include <vulkan/vulkan_xcb.h>
@@ -54,12 +64,13 @@
 #endif
 
 #include <cstdint>
-#include <cassert>
+#include <cstddef>
 #include <cstdio>
+#include <cassert>
 #include <vector>
+#include <array>
 #include <limits>
 #include <utility>
-#include <array>
 #include <optional>
 
 static constexpr char ENGINE_NAME[]      { "Vulkan Learnin'" };

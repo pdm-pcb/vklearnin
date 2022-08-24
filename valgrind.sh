@@ -7,7 +7,7 @@ valgrind --leak-check=full \
          --track-origins=yes \
          --verbose \
          --log-file=memtest.log \
-         ./vulkan-learnin
+         ./vlearnin
 
 grep -ni "definitely" -A 10 memtest.log
 
