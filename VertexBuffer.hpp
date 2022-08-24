@@ -21,6 +21,7 @@ public:
 
 private:
     std::vector<Vertex> _vertices;
+    size_t _buffer_size;
 
     ::VkBuffer       _buffer_handle;
     ::VkDeviceMemory _device_memory;
@@ -29,6 +30,8 @@ private:
     const Instance  &_instance;
 
     void _create_buffer();
+    void _allocate_memory();
+    void _bind() const;
     void _populate_buffer();
     uint32_t _mem_type_index(const uint32_t type_bits,
                              const ::VkMemoryPropertyFlags flags);

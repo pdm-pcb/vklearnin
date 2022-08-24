@@ -21,7 +21,9 @@ void VertexBuffer::_create_buffer() {
         CONSOLE_CRITICAL("Could not create vertex buffer.");
         return;
     }
+}
 
+void VertexBuffer::_allocate_memory() {
     ::VkMemoryRequirements memory_reqs { };
     ::vkGetBufferMemoryRequirements(
         _instance.logical_device(),
@@ -40,7 +42,7 @@ void VertexBuffer::_create_buffer() {
     alloc_info.allocationSize = memory_reqs.size;
     alloc_info.memoryTypeIndex = type_index;
 
-    result = ::vkAllocateMemory(
+    auto result = ::vkAllocateMemory(
         _instance.logical_device(),
         &alloc_info,
         nullptr,
@@ -51,33 +53,6 @@ void VertexBuffer::_create_buffer() {
         CONSOLE_ERROR("Unable to allocate device memory");
         return;
     }
-
-    ::vkBindBufferMemory(
-        _instance.logical_device(),
-        _buffer_handle,
-        _device_memory,
-        0u
-    );
-}
-
-void VertexBuffer::_populate_buffer() {
-    auto buffer_size = sizeof(Vertex) * _vertices.size();
-
-    ::vkMapMemory(
-        _instance.logical_device(),
-        _device_memory,
-        0u,
-        buffer_size,
-        0u,
-        &_buffer_data
-    );
-
-    memcpy(_buffer_data, _vertices.data(), buffer_size);
-
-    ::vkUnmapMemory(
-        _instance.logical_device(),
-        _device_memory
-    );
 }
 
 uint32_t VertexBuffer::_mem_type_index(const uint32_t type_bits,
@@ -107,6 +82,33 @@ uint32_t VertexBuffer::_mem_type_index(const uint32_t type_bits,
     return type_index;
 }
 
+void VertexBuffer::_bind() const {
+    ::vkBindBufferMemory(
+        _instance.logical_device(),
+        _buffer_handle,
+        _device_memory,
+        0u
+    );
+}
+
+void VertexBuffer::_populate_buffer() {
+    ::vkMapMemory(
+        _instance.logical_device(),
+        _device_memory,
+        0u,
+        _buffer_size,
+        0u,
+        &_buffer_data
+    );
+
+    memcpy(_buffer_data, _vertices.data(), _buffer_size);
+
+    ::vkUnmapMemory(
+        _instance.logical_device(),
+        _device_memory
+    );
+}
+
 VertexBuffer::VertexBuffer(const std::vector<Vertex> &vertices,
                            const Instance &instance) :
     _buffer_handle { nullptr  },
@@ -115,8 +117,11 @@ VertexBuffer::VertexBuffer(const std::vector<Vertex> &vertices,
 {
     _vertices.resize(vertices.size());
     _vertices = vertices;
+    _buffer_size = sizeof(Vertex) * _vertices.size();
 
     _create_buffer();
+    _allocate_memory();
+    _bind();
     _populate_buffer();
 }
 

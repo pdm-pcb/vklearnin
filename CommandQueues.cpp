@@ -47,7 +47,9 @@ void CommandQueues::init_families(const Instance &instance) {
 
         // if this family can both draw and present, we've got the queue we
         // want
-        if((family_props[queue].queueFlags & ::VK_QUEUE_GRAPHICS_BIT) != 0) {
+        if((family_props[queue].queueFlags &
+            (::VK_QUEUE_GRAPHICS_BIT | ::VK_QUEUE_TRANSFER_BIT)) != 0)
+        {
             if(present_support[queue] == VK_TRUE) {
                 _graphics_family = queue;
                 _present_family = queue;
