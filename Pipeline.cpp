@@ -156,20 +156,53 @@ void Pipeline::init_render_passes(const Swapchain &swapchain) {
 void Pipeline::init_layout() {
     CONSOLE_INFO("");
 
-    // not too much detail in this info struct
-    ::VkPipelineLayoutCreateInfo layout_info { };
-    layout_info.sType = ::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    VkDescriptorSetLayoutBinding ubo_layout_binding {
+        .binding            = 0u,
+        .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount    = 1u,
+        .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr
+    };
 
-    ::VkResult result = ::vkCreatePipelineLayout(
+    ::VkDescriptorSetLayoutCreateInfo desc_layout_info {
+        .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0u,
+        .bindingCount = 1u,
+        .pBindings = &ubo_layout_binding,
+    };
+
+    auto result = ::vkCreateDescriptorSetLayout(
         _device,
-        &layout_info,
+        &desc_layout_info,
         nullptr,
-        &_layout
+        &_desc_layout
+    );
+
+    if(result != ::VK_SUCCESS) {
+        CONSOLE_CRITICAL("Could not create descriptor set layout");
+    }
+
+    ::VkPipelineLayoutCreateInfo pipeline_layout_info {
+        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0u,
+        .setLayoutCount = 1u,
+        .pSetLayouts = &_desc_layout,
+        .pushConstantRangeCount = 0u,
+        .pPushConstantRanges = nullptr
+    };
+
+    result = ::vkCreatePipelineLayout(
+        _device,
+        &pipeline_layout_info,
+        nullptr,
+        &_pipeline_layout
     );
 
     if(result != ::VK_SUCCESS) {
         CONSOLE_CRITICAL("Unable to initialize pipeline layout.");
-    }    
+    }
 }
 
 void Pipeline::init_pipeline(const Swapchain &swapchain) {
@@ -295,7 +328,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
         .pDepthStencilState  = nullptr,
         .pColorBlendState    = &blend_info,
         .pDynamicState       = &dynamic_state_info,
-        .layout              = _layout,
+        .layout              = _pipeline_layout,
         .renderPass          = _renderpass,
         .subpass             = 0u,
         .basePipelineHandle  = VK_NULL_HANDLE,
@@ -330,9 +363,10 @@ Pipeline::Pipeline(const ::VkDevice &device) :
     _frag       { nullptr },
     _viewport   { },
     _scissor    { },
-    _renderpass { nullptr },
-    _layout     { nullptr },
-    _pipeline   { nullptr }
+    _renderpass      { nullptr },
+    _pipeline_layout { nullptr },
+    _desc_layout     { nullptr },
+    _pipeline        { nullptr }
 {
     CONSOLE_INFO("");
 }
@@ -349,8 +383,11 @@ Pipeline::~Pipeline() {
     if(_renderpass != nullptr) {
         ::vkDestroyRenderPass(_device, _renderpass, nullptr);
     }
-    if(_layout != nullptr) {
-        ::vkDestroyPipelineLayout(_device, _layout, nullptr);
+    if(_pipeline_layout != nullptr) {
+        ::vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
+    }
+    if(_desc_layout != nullptr) {
+        ::vkDestroyDescriptorSetLayout(_device, _desc_layout, nullptr);
     }
     if(_pipeline != nullptr) {
         ::vkDestroyPipeline(_device, _pipeline, nullptr);

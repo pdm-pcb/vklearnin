@@ -68,9 +68,10 @@ private:
     ::VkViewport _viewport;
     ::VkRect2D   _scissor;
 
-    ::VkRenderPass     _renderpass;
-    ::VkPipelineLayout _layout;
-    ::VkPipeline       _pipeline;
+    ::VkRenderPass          _renderpass;
+    ::VkPipelineLayout      _pipeline_layout;
+    ::VkDescriptorSetLayout _desc_layout;
+    ::VkPipeline            _pipeline;
 };
 
 #endif // VKL_PIPELINE_HPP
