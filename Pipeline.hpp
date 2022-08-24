@@ -22,6 +22,7 @@ public:
 
     // create a suitable default layout
     void init_render_passes(const Swapchain &swapchain);
+    void init_ubos(const ::VkDevice &device, const size_t count);
     void init_layout();
     void init_pipeline(const Swapchain &swapchain);
 
@@ -70,7 +71,6 @@ private:
 
     ::VkRenderPass          _renderpass;
     ::VkPipelineLayout      _pipeline_layout;
-    ::VkDescriptorSetLayout _desc_layout;
     ::VkPipeline            _pipeline;
 };
 

@@ -48,20 +48,23 @@ int main() {
     command_queues.init_queues();
     command_queues.init_buffers();
 
+    //--------------------------------------------------------------------------
     // these buffers are effectively placeholders for what will be static
     // vertex data loaded from disk or so
 
+    // =========================================================================
     // Vertex Buffer------------------------------------------------------------
+
     const std::vector<Vertex> vertices {
-        {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
-        {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
-        {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
-        {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
+        {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f }},
+        {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+        {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+        {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
     
     StagedBuffer<Vertex> vertex_buffer(vertices, instance);
     vertex_buffer.populate_buffer(command_queues.command_pool(),
-                       command_queues.graphics_queue());
+                                  command_queues.graphics_queue());
 
     std::vector<::VkBuffer> vertex_buffers {
         { vertex_buffer.handle() }
@@ -69,6 +72,7 @@ int main() {
     std::vector<::VkDeviceSize> vertex_buffer_offsets {
         { 0u }
     };
+
     // -------------------------------------------------------------------------
     // Index Buffer-------------------------------------------------------------
     const std::vector<Index> indices {
@@ -79,8 +83,10 @@ int main() {
     StagedBuffer<Index> index_buffer(indices, instance);
     index_buffer.populate_buffer(command_queues.command_pool(),
                                  command_queues.graphics_queue());
+
     // -------------------------------------------------------------------------
-    
+    // =========================================================================   
+ 
     // the swapchain will use the function pointers gathered by the instance,
     // as well as details of the window's surface
     Swapchain swapchain(instance, window.surface());
@@ -109,6 +115,7 @@ int main() {
     pipeline.init_layout();            // the bare minimum for now
     pipeline.init_pipeline(swapchain); // set it all up with the right values
 
+    // Only need two actual render targets for now
     Framebuffers framebuffers(instance.logical_device());
     framebuffers.init_buffers(swapchain, pipeline);
 

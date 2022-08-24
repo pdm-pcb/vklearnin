@@ -156,44 +156,17 @@ void Pipeline::init_render_passes(const Swapchain &swapchain) {
 void Pipeline::init_layout() {
     CONSOLE_INFO("");
 
-    VkDescriptorSetLayoutBinding ubo_layout_binding {
-        .binding            = 0u,
-        .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount    = 1u,
-        .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr
-    };
-
-    ::VkDescriptorSetLayoutCreateInfo desc_layout_info {
-        .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .bindingCount = 1u,
-        .pBindings = &ubo_layout_binding,
-    };
-
-    auto result = ::vkCreateDescriptorSetLayout(
-        _device,
-        &desc_layout_info,
-        nullptr,
-        &_desc_layout
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create descriptor set layout");
-    }
-
     ::VkPipelineLayoutCreateInfo pipeline_layout_info {
         .sType = ::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .setLayoutCount = 1u,
-        .pSetLayouts = &_desc_layout,
+        .setLayoutCount = 0u,
+        .pSetLayouts = nullptr,
         .pushConstantRangeCount = 0u,
         .pPushConstantRanges = nullptr
     };
 
-    result = ::vkCreatePipelineLayout(
+    auto result = ::vkCreatePipelineLayout(
         _device,
         &pipeline_layout_info,
         nullptr,
@@ -365,7 +338,6 @@ Pipeline::Pipeline(const ::VkDevice &device) :
     _scissor    { },
     _renderpass      { nullptr },
     _pipeline_layout { nullptr },
-    _desc_layout     { nullptr },
     _pipeline        { nullptr }
 {
     CONSOLE_INFO("");
@@ -385,9 +357,6 @@ Pipeline::~Pipeline() {
     }
     if(_pipeline_layout != nullptr) {
         ::vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
-    }
-    if(_desc_layout != nullptr) {
-        ::vkDestroyDescriptorSetLayout(_device, _desc_layout, nullptr);
     }
     if(_pipeline != nullptr) {
         ::vkDestroyPipeline(_device, _pipeline, nullptr);
