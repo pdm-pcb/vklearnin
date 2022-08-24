@@ -94,6 +94,22 @@ void Instance::init_instance() {
         extensions.data()
     );
 
+    for(const char *required_extension : instance_extensions) {
+        bool supported = false;
+        for(const auto &extension : extensions) {
+            if(strcmp(required_extension, extension.extensionName) == 0) {
+                supported = true;
+                break;
+            }
+        }
+        if(!supported) {
+            CONSOLE_ERROR(
+                "Instance xtension {} unsupported",
+                required_extension
+            );
+        }
+    }
+
     for(const auto &extension : extensions) {
         CONSOLE_TRACE("\t{:s}", extension.extensionName);
     }

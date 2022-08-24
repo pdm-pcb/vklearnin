@@ -53,7 +53,6 @@ void * operator new(size_t bytes, const std::nothrow_t&) noexcept {
 
 void operator delete(void *memory) noexcept {
     if(memory == nullptr) {
-        printf("Tried to delete nullptr!\n");
         return;
     }
     size_t bytes = static_cast<size_t *>(memory)[-1];
@@ -81,7 +80,6 @@ void operator delete(void *memory) noexcept {
 
 void operator delete[](void *memory) noexcept {
     if(memory == nullptr) {
-        printf("Tried to delete[] nullptr!\n");
         return;
     }
 
@@ -110,7 +108,6 @@ void operator delete[](void *memory) noexcept {
 
 void operator delete(void *memory, std::size_t bytes) noexcept {
     if(memory == nullptr) {
-        printf("Tried to sized delete nullptr!\n");
         return;
     }
 
@@ -140,7 +137,6 @@ void operator delete(void *memory, std::size_t bytes) noexcept {
 
 void operator delete[](void *memory, std::size_t bytes) noexcept {
     if(memory == nullptr) {
-        printf("Tried to sized delete[] nullptr!\n");
         return;
     }
 
@@ -170,7 +166,6 @@ void operator delete[](void *memory, std::size_t bytes) noexcept {
 
 void operator delete(void *memory, const std::nothrow_t&) noexcept {
     if(memory == nullptr) {
-        printf("Tried to delete noexcept nullptr!\n");
         return;
     }
 

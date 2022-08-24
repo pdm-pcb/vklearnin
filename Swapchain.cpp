@@ -146,7 +146,10 @@ void Swapchain::init_extent(const ::VkExtent2D &extent) {
         &surface_capabilities
     );
 
-    if(result != ::VK_SUCCESS || surface_capabilities.maxImageCount == 0) {
+    if(surface_capabilities.maxImageCount == 0) {
+        CONSOLE_ERROR("Physical device capabilities reported zero images.");
+    }
+    if(result != ::VK_SUCCESS) {
         CONSOLE_CRITICAL("Could not get surface capabilities.");
     }
 
