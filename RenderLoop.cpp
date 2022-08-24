@@ -6,8 +6,7 @@
 #include "Swapchain.hpp"
 #include "Pipeline.hpp"
 #include "Framebuffers.hpp"
-#include "Vertex.hpp"
-#include "StagedVertexBuffer.hpp"
+#include "StagedBuffer.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -32,17 +31,20 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
         {{  0.5f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
         {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }}
     };
+    
+    StagedBuffer<Vertex> vb(vertices, instance);
+    vb.populate_buffer(queues.command_pool(), queues.graphics_queue());
 
-    const std::vector<StagedVertexBuffer::Index> indices {
+    const std::vector<Index> indices {
         0u, 1u, 2u,
         2u, 3u, 0u
     };
-    
-    StagedVertexBuffer vb(vertices, indices, instance);
-    vb.populate_buffers(queues.command_pool(), queues.graphics_queue());
+
+    StagedBuffer<Index> ib(indices, instance);
+    ib.populate_buffer(queues.command_pool(), queues.graphics_queue());
 
     ::VkBuffer vertex_buffers[] {
-        { vb.vertex_handle() }
+        { vb.handle() }
     };
     ::VkDeviceSize vertex_buffer_offsets[] {
         { 0u }
@@ -137,15 +139,15 @@ bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
             // and indices while we're at it
             ::vkCmdBindIndexBuffer(
                 command_buffer,
-                vb.index_handle(),
+                ib.handle(),
                 0u,
-                vb.index_type()
+                IndexType
             );
 
             // boom, draw.
             ::vkCmdDrawIndexed(
                 command_buffer,
-                vb.index_count(),
+                static_cast<uint32_t>(ib.count()),
                 1u, 0u, 0u, 0u
             );
 

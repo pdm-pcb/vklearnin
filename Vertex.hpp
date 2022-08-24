@@ -35,7 +35,7 @@ public:
 
     Vertex(const glm::vec4 &position, const glm::vec4 &color) :
         _position { position },
-        _color { color }
+        _color    { color }
     { }
     
     Vertex() = delete;

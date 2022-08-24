@@ -36,6 +36,11 @@ add_executable(
     ${PROJECT_HEADERS}
 )
 
+target_precompile_headers(
+    vklearnin PUBLIC
+    "common.hpp"
+)
+
 file(
     GLOB SHADER_SOURCE
     "shaders/shader.vert"
