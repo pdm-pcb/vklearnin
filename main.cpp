@@ -85,6 +85,7 @@ int main() {
     while(carry_on) {
         carry_on = render_loop.run(
             instance,
+            command_queues,
             swapchain,
             pipeline,
             framebuffers

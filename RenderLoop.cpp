@@ -6,7 +6,8 @@
 #include "Swapchain.hpp"
 #include "Pipeline.hpp"
 #include "Framebuffers.hpp"
-#include "VertexBuffer.hpp"
+#include "Vertex.hpp"
+#include "StagedVertexBuffer.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -15,8 +16,9 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
-                     Pipeline &pipeline, Framebuffers &framebuffers)
+bool RenderLoop::run(const Instance &instance, const CommandQueues &queues,
+                     Swapchain &swapchain, Pipeline &pipeline,
+                     Framebuffers &framebuffers)
 {
     CONSOLE_INFO("");
 
@@ -29,8 +31,10 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         {{  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f }},
         {{ -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f }}
     };
+    
+    StagedVertexBuffer vb(vertices, instance);
+    vb.populate_buffer(queues.command_pool(), queues.graphics_queue());
 
-    VertexBuffer vb(vertices, instance);
     ::VkBuffer vertex_buffers[] {
         { vb.handle() }
     };
@@ -63,6 +67,11 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             continue;   // be sure to continue so eveything updates
         }
 
+        // something tells me this could go outside the loop, as it never
+        // changes, but it's fine for now
+        ::VkCommandBufferBeginInfo buffer_info { };
+        buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
         // clear out what needs clearing
         ::vkResetFences(_device, 1u, &_display_fences[frame]);
         _queues.reset_command_buffer(
@@ -70,18 +79,12 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             static_cast<::VkCommandBufferResetFlagBits>(0u)
         );
 
-        // something tells me this could go outside the loop, as it never
-        // changes, but it's fine for now
-        ::VkCommandBufferBeginInfo buffer_info { };
-        buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        buffer_info.flags = 0u;
-        buffer_info.pInheritanceInfo = nullptr;
-
         auto buffer = _queues.command_buffer(image_index);
         result = ::vkBeginCommandBuffer(buffer, &buffer_info);
 
         if(result != ::VK_SUCCESS) {
             CONSOLE_CRITICAL("Unable to begin command buffer recording.");
+            return false;
         }
 
         // initial setup for the pass

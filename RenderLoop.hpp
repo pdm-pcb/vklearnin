@@ -26,8 +26,9 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance, Swapchain &swapchain,
-             Pipeline &pipeline, Framebuffers &framebuffers);
+    bool run(const Instance &instance, const CommandQueues &queues,
+             Swapchain &swapchain, Pipeline &pipeline,
+             Framebuffers &framebuffers);
 
     // -------------------------------------------------------------------------
     // Setup

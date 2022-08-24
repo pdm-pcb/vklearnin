@@ -50,6 +50,9 @@ public:
     inline const ::VkQueue & present_queue() const {
         return _present_queue;
     }
+    inline const ::VkCommandPool & command_pool() const {
+        return _command_pool;
+    }
 
     CommandQueues(const ::VkPhysicalDevice &physical_device,
                   const ::VkDevice         &device,
