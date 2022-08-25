@@ -3,6 +3,43 @@
 
 #include "UniformBufferObject.hpp"
 
+// =============================================================================
+// ok, so very explicitly right now, this descriptor set  class can only be used
+// in conjunction with uniform buffers. Not only that, but exclusively during
+// the vertex shader stage. This will no doubt need to change, but let's see
+// how far it takes us.
+void DescriptorSet::init_layout() {
+    CONSOLE_INFO("");
+
+    ::VkDescriptorSetLayoutBinding ubo_layout_binding {
+        .binding            = 0u,
+        .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount    = 1u,
+        .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
+        .pImmutableSamplers = nullptr
+    };
+
+    ::VkDescriptorSetLayoutCreateInfo desc_layout_info {
+        .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0u,
+        .bindingCount = 1u,
+        .pBindings = &ubo_layout_binding,
+    };
+
+    auto result = ::vkCreateDescriptorSetLayout(
+        _device,
+        &desc_layout_info,
+        nullptr,
+        &_layout
+    );
+
+    if(result != ::VK_SUCCESS) {
+        CONSOLE_ERROR("Could not create descriptor set layout");
+    }
+}
+
+// =============================================================================
 void DescriptorSet::init_pool() {
     CONSOLE_INFO("");
 
@@ -32,12 +69,13 @@ void DescriptorSet::init_pool() {
     }
 }
 
+// =============================================================================
 void DescriptorSet::init_sets(UniformBufferObject &ubo)
 {
     CONSOLE_INFO("");
 
     std::vector<::VkDescriptorSetLayout>
-        set_layouts(_max_images, ubo.descriptor_set_layout());
+        set_layouts(_max_images, _layout);
 
     ::VkDescriptorSetAllocateInfo alloc_info {
         .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -85,6 +123,7 @@ void DescriptorSet::init_sets(UniformBufferObject &ubo)
     }
 }
 
+// =============================================================================
 DescriptorSet::DescriptorSet(const uint32_t frames_in_flight,
                              const ::VkDevice &device) :
     _pool       { nullptr },
@@ -97,5 +136,6 @@ DescriptorSet::DescriptorSet(const uint32_t frames_in_flight,
 }
 
 DescriptorSet::~DescriptorSet() {
+    ::vkDestroyDescriptorSetLayout(_device, _layout, nullptr);
     ::vkDestroyDescriptorPool(_device, _pool, nullptr);
 }

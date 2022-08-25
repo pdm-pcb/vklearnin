@@ -1,7 +1,7 @@
 #ifndef VKL_VERTEX_HPP
 #define VKL_VERTEX_HPP
 
-#include "common.hpp"
+#include <glm/glm.hpp>
 
 class Vertex final {
 public:

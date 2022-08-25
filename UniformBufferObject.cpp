@@ -23,38 +23,6 @@ void UniformBufferObject::update(const MVPMatrices &data,
 }
 
 // =============================================================================
-void UniformBufferObject::init_descriptor_set() {
-    CONSOLE_INFO("");
-
-    ::VkDescriptorSetLayoutBinding ubo_layout_binding {
-        .binding            = 0u,
-        .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount    = 1u,
-        .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr
-    };
-
-    ::VkDescriptorSetLayoutCreateInfo desc_layout_info {
-        .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .bindingCount = 1u,
-        .pBindings = &ubo_layout_binding,
-    };
-
-    auto result = ::vkCreateDescriptorSetLayout(
-        _instance.logical_device(),
-        &desc_layout_info,
-        nullptr,
-        &_desc_set_layout
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Could not create descriptor set layout");
-    }
-}
-
-// =============================================================================
 void UniformBufferObject::init_buffers() {
     CONSOLE_INFO("");
 
@@ -94,7 +62,4 @@ UniformBufferObject::~UniformBufferObject() {
     for(auto &memory : _memory_handles) {
         ::vkFreeMemory(_instance.logical_device(), memory, nullptr);
     }
-
-    ::vkDestroyDescriptorSetLayout(_instance.logical_device(),
-                                   _desc_set_layout, nullptr);
 }

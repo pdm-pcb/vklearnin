@@ -103,12 +103,12 @@ int main() {
     // =========================================================================
     // Uniform Buffer Object(s)
     UniformBufferObject ubo(MAX_IMAGES, instance);
-    ubo.init_descriptor_set();
     ubo.init_buffers();
 
     // =========================================================================
     // Descriptor Sets
     DescriptorSet descriptor_set(MAX_IMAGES, instance.logical_device());
+    descriptor_set.init_layout();
     descriptor_set.init_pool();
     descriptor_set.init_sets(ubo);
 
@@ -120,7 +120,7 @@ int main() {
     pipeline.fragment_from_binary("../../shaders/shader.frag.spv");
 
     pipeline.init_render_passes(swapchain); // only one render pass for now
-    pipeline.init_layout(ubo.descriptor_set_layout());
+    pipeline.init_layout(descriptor_set.layout());
     pipeline.init_pipeline(swapchain); // set it all up with the right values
 
     // =========================================================================

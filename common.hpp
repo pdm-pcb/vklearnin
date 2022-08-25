@@ -11,6 +11,9 @@
 
 #include "ConsoleLog.hpp"
 #include "BufferTools.hpp"
+#include "Index.hpp"
+#include "Vertex.hpp"
+#include "MVPMatrices.hpp"
 
 #define GLM_FORCE_SWIZZLE
 #define GLM_FORCE_CXX17
