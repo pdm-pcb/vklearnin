@@ -1,6 +1,6 @@
 #ifdef __linux__
-#ifndef VKL_X11WINDOW_HPP
-#define VKL_X11WINDOW_HPP
+#ifndef VKLEARNIN_X11WINDOW_HPP
+#define VKLEARNIN_X11WINDOW_HPP
 
 #include <xcb/xcb.h>
 #include <vulkan/vulkan.h>
@@ -68,5 +68,5 @@ private:
     void _center_window();
 };
 
-#endif // VKL_X11WINDOW_HPP
+#endif // VKLEARNIN_X11WINDOW_HPP
 #endif // __liunx__

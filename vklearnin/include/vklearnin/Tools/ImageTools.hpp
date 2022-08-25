@@ -1,5 +1,5 @@
-#ifndef VKL_TOOLS_HPP
-#define VKL_TOOLS_HPP
+#ifndef VKLEARNIN_TOOLS_HPP
+#define VKLEARNIN_TOOLS_HPP
 
 namespace ImageTools {
 
@@ -10,4 +10,4 @@ void set_image_layout(::VkCommandBuffer cmd_buffer, ::VkImage image,
 
 } // namespace tools
 
-#endif // VKL_TOOLS_HPP
+#endif // VKLEARNIN_TOOLS_HPP

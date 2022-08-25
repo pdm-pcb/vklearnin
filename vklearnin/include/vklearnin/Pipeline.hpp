@@ -1,5 +1,5 @@
-#ifndef VKL_PIPELINE_HPP
-#define VKL_PIPELINE_HPP
+#ifndef VKLEARNIN_PIPELINE_HPP
+#define VKLEARNIN_PIPELINE_HPP
 
 #include "vklearnin/Swapchain.hpp"
 
@@ -70,4 +70,4 @@ private:
     ::VkPipeline       _pipeline;
 };
 
-#endif // VKL_PIPELINE_HPP
+#endif // VKLEARNIN_PIPELINE_HPP

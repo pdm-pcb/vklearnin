@@ -1,5 +1,5 @@
-#ifndef VKL_COMMANDQUEUES_HPP
-#define VKL_COMMANDQUEUES_HPP
+#ifndef VKLEARNIN_COMMANDQUEUES_HPP
+#define VKLEARNIN_COMMANDQUEUES_HPP
 
 #include "vklearnin/common.hpp"
 
@@ -79,4 +79,4 @@ private:
 
 };
 
-#endif // VKL_QUEUEFAMILY_INDICES_HPP
+#endif // VKLEARNIN_QUEUEFAMILY_INDICES_HPP

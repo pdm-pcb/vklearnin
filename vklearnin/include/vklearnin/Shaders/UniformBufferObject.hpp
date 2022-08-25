@@ -1,5 +1,5 @@
-#ifndef VKL_UNIFORMBUFFEROBJECT_HPP
-#define VKL_UNIFORMBUFFEROBJECT_HPP
+#ifndef VKLEARNIN_UNIFORMBUFFEROBJECT_HPP
+#define VKLEARNIN_UNIFORMBUFFEROBJECT_HPP
 
 #include "vklearnin/Shaders/MVPMatrices.hpp"
 
@@ -35,4 +35,4 @@ private:
     const Instance &_instance;
 };
 
-#endif // VKL_UNIFORMBUFFEROBJECT_HPP
+#endif // VKLEARNIN_UNIFORMBUFFEROBJECT_HPP

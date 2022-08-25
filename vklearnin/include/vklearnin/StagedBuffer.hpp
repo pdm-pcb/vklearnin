@@ -1,5 +1,5 @@
-#ifndef VKL_STAGEDBUFFER_HPP
-#define VKL_STAGEDBUFFER_HPP
+#ifndef VKLEARNIN_STAGEDBUFFER_HPP
+#define VKLEARNIN_STAGEDBUFFER_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -210,4 +210,4 @@ private:
     }
 };
 
-#endif // VKL_STAGEDBUFFER_HPP
+#endif // VKLEARNIN_STAGEDBUFFER_HPP

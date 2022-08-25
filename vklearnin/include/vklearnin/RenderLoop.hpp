@@ -1,5 +1,5 @@
-#ifndef VKL_RENDERLOOP_HPP
-#define VKL_RENDERLOOP_HPP
+#ifndef VKLEARNIN_RENDERLOOP_HPP
+#define VKLEARNIN_RENDERLOOP_HPP
 
 #include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/StagedBuffer.hpp"
@@ -61,4 +61,4 @@ private:
                      const uint32_t frame_index);
 };
 
-#endif // VKL_RENDERLOOP_HPP
+#endif // VKLEARNIN_RENDERLOOP_HPP

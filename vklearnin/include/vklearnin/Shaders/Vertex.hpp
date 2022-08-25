@@ -1,5 +1,5 @@
-#ifndef VKL_VERTEX_HPP
-#define VKL_VERTEX_HPP
+#ifndef VKLEARNIN_VERTEX_HPP
+#define VKLEARNIN_VERTEX_HPP
 
 #include <glm/glm.hpp>
 
@@ -45,4 +45,4 @@ private:
     glm::vec4 _color;
 };
 
-#endif // VKL_VERTEX_HPP
+#endif // VKLEARNIN_VERTEX_HPP

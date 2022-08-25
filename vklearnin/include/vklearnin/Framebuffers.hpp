@@ -1,5 +1,5 @@
-#ifndef VKL_FRAMEBUFFERS_HPP
-#define VKL_FRAMEBUFFERS_HPP
+#ifndef VKLEARNIN_FRAMEBUFFERS_HPP
+#define VKLEARNIN_FRAMEBUFFERS_HPP
 
 #include <vulkan/vulkan.hpp>
 
@@ -30,4 +30,4 @@ private:
     const ::VkDevice &_device;
 };
 
-#endif // VKL_FRAMEBUFFERS_HPP
+#endif // VKLEARNIN_FRAMEBUFFERS_HPP

@@ -1,6 +1,6 @@
 #ifdef WIN32
-#ifndef VKL_WIN32WINDOW_HPP
-#define VKL_WIN32WINDOW_HPP
+#ifndef VKLEARNIN_WIN32WINDOW_HPP
+#define VKLEARNIN_WIN32WINDOW_HPP
 
 #include <vulkan/vulkan.h>
 #include <Windows.h>
@@ -57,5 +57,5 @@ private:
     void _build_window(const uint32_t width, const uint32_t height);
 };
 
-#endif // VKL_WIN32WINDOW_HPP
+#endif // VKLEARNIN_WIN32WINDOW_HPP
 #endif // WIN32

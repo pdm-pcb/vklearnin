@@ -1,5 +1,5 @@
-#ifndef VKL_VKDEBUGGER_HPP
-#define VKL_VKDEBUGGER_HPP
+#ifndef VKLEARNIN_VKDEBUGGER_HPP
+#define VKLEARNIN_VKDEBUGGER_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -23,4 +23,4 @@ private:
     static ::VkDebugUtilsMessengerEXT _debug_messenger;
 };
 
-#endif // VKL_VKDEBUGGER_HPP
+#endif // VKLEARNIN_VKDEBUGGER_HPP

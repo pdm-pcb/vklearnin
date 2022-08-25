@@ -1,5 +1,5 @@
-#ifndef VKL_BUFFER_TOOLS_HPP
-#define VKL_BUFFER_TOOLS_HPP
+#ifndef VKLEARNIN_BUFFER_TOOLS_HPP
+#define VKLEARNIN_BUFFER_TOOLS_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -17,4 +17,4 @@ void create_buffer(::VkBuffer       &buffer,
                    const Instance   &instance);
 } // namespace BufferTools
 
-#endif // VKL_BUFFER_TOOLS_HPP
+#endif // VKLEARNIN_BUFFER_TOOLS_HPP

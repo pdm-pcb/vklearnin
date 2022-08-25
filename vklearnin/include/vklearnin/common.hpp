@@ -1,5 +1,5 @@
-#ifndef VKL_COMMON_HPP
-#define VKL_COMMON_HPP
+#ifndef VKLEARNIN_COMMON_HPP
+#define VKLEARNIN_COMMON_HPP
 
 // #define MEMLOG
 #include "vklearnin/Tools/MemTracker.hpp"
@@ -86,4 +86,4 @@ static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
 static constexpr uint32_t MAX_IMAGES = 2;
 
-#endif // VKL_COMMON_HPP
+#endif // VKLEARNIN_COMMON_HPP

@@ -116,8 +116,8 @@ int main() {
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
     // so no online compiling for now.
     Pipeline pipeline(instance.logical_device());
-    pipeline.vertex_from_binary("../../shaders/shader.vert.spv");
-    pipeline.fragment_from_binary("../../shaders/shader.frag.spv");
+    pipeline.vertex_from_binary("../../assets/shaders/shader.vert.spv");
+    pipeline.fragment_from_binary("../../assets/shaders/shader.frag.spv");
 
     pipeline.init_render_passes(swapchain); // only one render pass for now
     pipeline.init_layout(descriptor_set.layout());

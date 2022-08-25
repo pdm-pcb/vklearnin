@@ -1,5 +1,5 @@
-#ifndef VKL_SHADER_HPP
-#define VKL_SHADER_HPP
+#ifndef VKLEARNIN_SHADER_HPP
+#define VKLEARNIN_SHADER_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -33,4 +33,4 @@ private:
     // static shaderc::CompileOptions _options;
 };
 
-#endif // VKL_SHADER_HPP
+#endif // VKLEARNIN_SHADER_HPP

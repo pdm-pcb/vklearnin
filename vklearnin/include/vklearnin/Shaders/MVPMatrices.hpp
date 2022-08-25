@@ -1,5 +1,5 @@
-#ifndef VKL_MVPMATRICES_HPP
-#define VKL_MVPMATRICES_HPP
+#ifndef VKLEARNIN_MVPMATRICES_HPP
+#define VKLEARNIN_MVPMATRICES_HPP
 
 #include <glm/glm.hpp>
 
@@ -9,4 +9,4 @@ struct MVPMatrices {
     glm::mat4 proj;
 };
 
-#endif // VKL_MVPMATRICES_HPP
+#endif // VKLEARNIN_MVPMATRICES_HPP

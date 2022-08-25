@@ -1,5 +1,5 @@
-#ifndef VKL_CONSOLELOG_HPP
-#define VKL_CONSOLELOG_HPP
+#ifndef VKLEARNIN_CONSOLELOG_HPP
+#define VKLEARNIN_CONSOLELOG_HPP
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
@@ -28,4 +28,4 @@ public:
 #define CONSOLE_ERROR(...)    SPDLOG_ERROR(__VA_ARGS__)
 #define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); assert(false)
 
-#endif // VKL_CONSOLELOG_HPP
+#endif // VKLEARNIN_CONSOLELOG_HPP

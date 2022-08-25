@@ -1,5 +1,5 @@
-#ifndef VKL_INSTANCE_HPP
-#define VKL_INSTANCE_HPP
+#ifndef VKLEARNIN_INSTANCE_HPP
+#define VKLEARNIN_INSTANCE_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -102,4 +102,4 @@ private:
     ::VkDevice         _logical_device;
 };
 
-#endif // VKL_INSTANCE_HPP
+#endif // VKLEARNIN_INSTANCE_HPP

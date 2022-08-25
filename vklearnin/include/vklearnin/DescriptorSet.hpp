@@ -1,5 +1,5 @@
-#ifndef VKL_DESCRIPTORSET_HPP
-#define VKL_DESCRIPTORSET_HPP
+#ifndef VKLEARNIN_DESCRIPTORSET_HPP
+#define VKLEARNIN_DESCRIPTORSET_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -29,4 +29,4 @@ private:
     const ::VkDevice &_device;
 };
 
-#endif // VKL_DESCRIPTORSET_HPP
+#endif // VKLEARNIN_DESCRIPTORSET_HPP

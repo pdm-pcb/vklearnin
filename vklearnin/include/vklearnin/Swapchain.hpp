@@ -1,5 +1,5 @@
-#ifndef VKL_SWAPCHAIN_HPP
-#define VKL_SWAPCHAIN_HPP
+#ifndef VKLEARNIN_SWAPCHAIN_HPP
+#define VKLEARNIN_SWAPCHAIN_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -81,4 +81,4 @@ private:
     ::VkSurfaceKHR &_surface;
 };
 
-#endif // VKL_SWAPCHAIN_HPP
+#endif // VKLEARNIN_SWAPCHAIN_HPP

@@ -1,5 +1,5 @@
-#ifndef VKL_MEMTRACKER_HPP
-#define VKL_MEMTRACKER_HPP
+#ifndef VKLEARNIN_MEMTRACKER_HPP
+#define VKLEARNIN_MEMTRACKER_HPP
 
 #include <cstddef>
 #include <new>
@@ -22,4 +22,4 @@ struct MemTracker {
     void operator delete(void *memory, const std::nothrow_t&) noexcept;
 #endif // DEBUG
 
-#endif // VKL_MEMTRACKER_HPP
+#endif // VKLEARNIN_MEMTRACKER_HPP

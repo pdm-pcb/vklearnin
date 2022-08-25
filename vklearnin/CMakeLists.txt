@@ -55,7 +55,7 @@ target_link_libraries(
 	Vulkan::Vulkan
     glm
     spdlog
-    stb
+    third_party
 )
 
 target_include_directories(
