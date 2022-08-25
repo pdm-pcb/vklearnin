@@ -77,13 +77,6 @@ void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
         CONSOLE_ERROR("Unable to allocate buffer memory");
         return;
     }
-
-    ::vkBindBufferMemory(
-        instance.logical_device(),
-        buffer,
-        memory,
-        0u
-    );
 }
 
 uint32_t find_memory_type(const uint32_t type_bits,

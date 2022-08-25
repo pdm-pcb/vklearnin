@@ -6,7 +6,7 @@
 
 #include <vector>
 
-struct MVPMatrices {
+struct MVPMatrices {    // TODO: genericifiy the UBO
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
@@ -26,6 +26,10 @@ public:
         return _desc_set_layout;
     }
 
+    inline std::vector<::VkBuffer> & buffer_handles() {
+        return _buffer_handles;
+    }
+
     UniformBufferObject(const size_t frames_in_flight,
                         const Instance &instance);
     ~UniformBufferObject();
@@ -33,7 +37,7 @@ public:
     UniformBufferObject() = delete;
 
 private:
-    ::VkDescriptorSetLayout _desc_set_layout;
+    ::VkDescriptorSetLayout _desc_set_layout;   // TODO: move this to the right class
 
     std::vector<::VkBuffer>       _buffer_handles;
     std::vector<::VkDeviceMemory> _memory_handles;

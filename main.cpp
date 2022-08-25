@@ -7,6 +7,7 @@
 #include "RenderLoop.hpp"
 #include "StagedBuffer.hpp"
 #include "UniformBufferObject.hpp"
+#include "DescriptorSet.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -106,6 +107,12 @@ int main() {
     ubo.init_buffers();
 
     // =========================================================================
+    // Descriptor Sets
+    DescriptorSet descriptor_set(MAX_IMAGES, instance.logical_device());
+    descriptor_set.init_pool();
+    descriptor_set.init_sets(ubo);
+
+    // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
     // so no online compiling for now.
     Pipeline pipeline(instance.logical_device());
@@ -131,9 +138,10 @@ int main() {
     while(carry_on) {
         carry_on = render_loop.run(
             instance,
-            ubo,
             swapchain,
+            ubo,
             pipeline,
+            descriptor_set,
             framebuffers,
             vertex_buffers,
             vertex_buffer_offsets,

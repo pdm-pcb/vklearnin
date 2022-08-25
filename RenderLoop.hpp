@@ -12,6 +12,7 @@ class Swapchain;
 class Pipeline;
 class Framebuffers;
 class UniformBufferObject;
+class DescriptorSet;
 
 #if defined(__linux__)
     class X11Window;
@@ -30,9 +31,9 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance, UniformBufferObject &ubo,
-             Swapchain &swapchain, Pipeline &pipeline,
-             Framebuffers &framebuffers,
+    bool run(const Instance &instance, Swapchain &swapchain,
+             UniformBufferObject &ubo, Pipeline &pipeline,
+             DescriptorSet &descriptor_set, Framebuffers &framebuffers,
              const std::vector<::VkBuffer> &vertex_buffers,
              const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
              const StagedBuffer<Index> &index_buffer);

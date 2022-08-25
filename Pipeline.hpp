@@ -50,6 +50,7 @@ public:
     inline const ::VkPipeline   & pipeline()   const { return _pipeline;   }
     inline const ::VkViewport   & viewport()   const { return _viewport;   }
     inline const ::VkRect2D     & scissor()    const { return _scissor;    }
+    inline const ::VkPipelineLayout & layout() const { return _layout;     }
 
     Pipeline(const ::VkDevice &device);
     ~Pipeline();
@@ -64,9 +65,9 @@ private:
     ::VkViewport _viewport;
     ::VkRect2D   _scissor;
 
-    ::VkRenderPass          _renderpass;
-    ::VkPipelineLayout      _pipeline_layout;
-    ::VkPipeline            _pipeline;
+    ::VkRenderPass     _renderpass;
+    ::VkPipelineLayout _layout;
+    ::VkPipeline       _pipeline;
 };
 
 #endif // VKL_PIPELINE_HPP

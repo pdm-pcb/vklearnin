@@ -134,7 +134,7 @@ void Pipeline::init_layout(const ::VkDescriptorSetLayout &desc_set_layout) {
         _device,
         &pipeline_layout_info,
         nullptr,
-        &_pipeline_layout
+        &_layout
     );
 
     if(result != ::VK_SUCCESS) {
@@ -265,7 +265,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
         .pDepthStencilState  = nullptr,
         .pColorBlendState    = &blend_info,
         .pDynamicState       = &dynamic_state_info,
-        .layout              = _pipeline_layout,
+        .layout              = _layout,
         .renderPass          = _renderpass,
         .subpass             = 0u,
         .basePipelineHandle  = VK_NULL_HANDLE,
@@ -301,7 +301,7 @@ Pipeline::Pipeline(const ::VkDevice &device) :
     _viewport   { },
     _scissor    { },
     _renderpass      { nullptr },
-    _pipeline_layout { nullptr },
+    _layout { nullptr },
     _pipeline        { nullptr }
 {
     CONSOLE_INFO("");
@@ -319,8 +319,8 @@ Pipeline::~Pipeline() {
     if(_renderpass != nullptr) {
         ::vkDestroyRenderPass(_device, _renderpass, nullptr);
     }
-    if(_pipeline_layout != nullptr) {
-        ::vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
+    if(_layout != nullptr) {
+        ::vkDestroyPipelineLayout(_device, _layout, nullptr);
     }
     if(_pipeline != nullptr) {
         ::vkDestroyPipeline(_device, _pipeline, nullptr);

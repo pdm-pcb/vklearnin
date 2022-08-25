@@ -8,6 +8,7 @@
 #include "Framebuffers.hpp"
 #include "StagedBuffer.hpp"
 #include "UniformBufferObject.hpp"
+#include "DescriptorSet.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -16,9 +17,9 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, UniformBufferObject &ubo,
-                     Swapchain &swapchain, Pipeline &pipeline,
-                     Framebuffers &framebuffers,
+bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
+                     UniformBufferObject &ubo, Pipeline &pipeline,
+                     DescriptorSet &descriptor_set, Framebuffers &framebuffers,
                      const std::vector<::VkBuffer> &vertex_buffers,
                      const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
                      const StagedBuffer<Index> &index_buffer)
@@ -33,8 +34,6 @@ bool RenderLoop::run(const Instance &instance, UniformBufferObject &ubo,
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
         frame_index = 1 - frame_index;
-
-        _update_ubo(ubo, swapchain, frame_index);
 
         // wait your turn
         ::vkWaitForFences(_device, 1u, &_display_fences[frame_index], VK_TRUE,
@@ -55,6 +54,11 @@ bool RenderLoop::run(const Instance &instance, UniformBufferObject &ubo,
             _image_resized(instance, swapchain, pipeline, framebuffers);
             continue;   // be sure to continue so eveything updates
         }
+
+        // now send the fresh data to the UBOs. Im curious: how much does order
+        // matter here? Should this be done after the fences are reset? Is
+        // that even relevant? Guess I'll have to read the spec. =)
+        _update_ubo(ubo, swapchain, frame_index);
 
         // something tells me this could go outside the loop, as it never
         // changes, but it's fine for now
@@ -123,6 +127,16 @@ bool RenderLoop::run(const Instance &instance, UniformBufferObject &ubo,
                 index_buffer.handle(),
                 0u,
                 IndexType
+            );
+
+            // time for some descriptor sets
+            ::vkCmdBindDescriptorSets(
+                command_buffer,
+                ::VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipeline.layout(),
+                0u, 1u,
+                descriptor_set.sets().data(),
+                0u, nullptr
             );
 
             // boom, draw.
@@ -281,12 +295,12 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
                              const uint32_t image_index)
 {
     using HRC = std::chrono::high_resolution_clock;
-    using ms = std::chrono::milliseconds::period;
-    using duration_ms = std::chrono::duration<float, ms>;
+    using s = std::chrono::seconds::period;
+    using duration_s = std::chrono::duration<float, s>;
 
     static auto start = HRC::now();
     auto now = HRC::now();
-    auto runtime = duration_ms(now - start).count();
+    auto runtime = duration_s(now - start).count();
 
     MVPMatrices matrices { };
 
@@ -309,7 +323,7 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
         10.0f
     );
 
-    matrices.proj[1][1] *= -1;
+    // matrices.proj[1][1] *= -1;
 
     ubo.update(matrices, image_index);
 }
