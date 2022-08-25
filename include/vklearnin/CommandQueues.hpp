@@ -1,7 +1,7 @@
 #ifndef VKL_COMMANDQUEUES_HPP
 #define VKL_COMMANDQUEUES_HPP
 
-#include "common.hpp"
+#include "vklearnin/common.hpp"
 
 class Instance;
 

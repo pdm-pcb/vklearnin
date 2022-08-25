@@ -1,23 +1,22 @@
-#include "common.hpp"
-#include "UniformBufferObject.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Shaders/UniformBufferObject.hpp"
 
-#include "Instance.hpp"
+#include "vklearnin/Instance.hpp"
 
 // =============================================================================
-void UniformBufferObject::update(const MVPMatrices &data,
-                                 const uint32_t frame_index)
+void UniformBufferObject::update(const void *data, const uint32_t frame_index)
 {
     void *destination = nullptr;
     ::vkMapMemory(
         _instance.logical_device(),
         _memory_handles[frame_index],
         0u,
-        sizeof(MVPMatrices),
+        _data_size,
         0u,
         &destination
     );
 
-    memcpy(destination, &data, sizeof(MVPMatrices));
+    memcpy(destination, data, _data_size);
 
     ::vkUnmapMemory(_instance.logical_device(), _memory_handles[frame_index]);
 }
@@ -31,7 +30,7 @@ void UniformBufferObject::init_buffers() {
     {
         BufferTools::create_buffer(
             _buffer_handles[frame],
-            sizeof(MVPMatrices),
+            _data_size,
             ::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             _memory_handles[frame],
             ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -42,9 +41,11 @@ void UniformBufferObject::init_buffers() {
 }
 
 // =============================================================================
-UniformBufferObject::UniformBufferObject(const size_t frames_in_flight,
+UniformBufferObject::UniformBufferObject(const size_t data_size,
+                                         const size_t frames_in_flight,
                                          const Instance &instance) :
-    _instance { instance }
+    _data_size { data_size },
+    _instance  { instance  }
 {
     CONSOLE_INFO("");
 

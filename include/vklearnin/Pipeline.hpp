@@ -1,7 +1,7 @@
 #ifndef VKL_PIPELINE_HPP
 #define VKL_PIPELINE_HPP
 
-#include "Swapchain.hpp"
+#include "vklearnin/Swapchain.hpp"
 
 #include <vulkan/vulkan.hpp>
 

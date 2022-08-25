@@ -1,5 +1,5 @@
-#include "common.hpp"
-#include "Shader.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Shaders/Shader.hpp"
 
 #include <fstream>
 

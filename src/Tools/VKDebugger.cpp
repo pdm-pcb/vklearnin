@@ -1,7 +1,7 @@
-#include "common.hpp"
-#include "VKDebugger.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Tools/VKDebugger.hpp"
 
-#include "Instance.hpp"
+#include "vklearnin/Instance.hpp"
 
 ::VkDebugUtilsMessengerEXT VKDebugger::_debug_messenger = nullptr;
 

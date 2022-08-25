@@ -1,5 +1,5 @@
-#include "common.hpp"
-#include "MemTracker.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Tools/MemTracker.hpp"
 
 #ifdef DEBUG
 

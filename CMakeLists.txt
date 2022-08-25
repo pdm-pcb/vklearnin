@@ -21,13 +21,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(
-    GLOB PROJECT_SOURCE
-    "*.cpp"
+    GLOB_RECURSE PROJECT_SOURCE
+    "src/*.cpp"
 )
 
 file(
-    GLOB PROJECT_HEADERS
-    "*.hpp"
+    GLOB_RECURSE PROJECT_HEADERS
+    "include/vklearnin/*.hpp"
 )
 
 add_executable(
@@ -36,9 +36,14 @@ add_executable(
     ${PROJECT_HEADERS}
 )
 
+target_include_directories(
+    vklearnin PUBLIC
+    "include/"
+)
+
 target_precompile_headers(
     vklearnin PUBLIC
-    "common.hpp"
+    "include/vklearnin/common.hpp"
 )
 
 file(

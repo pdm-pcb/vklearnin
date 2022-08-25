@@ -1,19 +1,19 @@
-#include "common.hpp"
-#include "RenderLoop.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/RenderLoop.hpp"
 
-#include "Instance.hpp"
-#include "CommandQueues.hpp"
-#include "Swapchain.hpp"
-#include "Pipeline.hpp"
-#include "Framebuffers.hpp"
-#include "StagedBuffer.hpp"
-#include "UniformBufferObject.hpp"
-#include "DescriptorSet.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/Swapchain.hpp"
+#include "vklearnin/Pipeline.hpp"
+#include "vklearnin/Framebuffers.hpp"
+#include "vklearnin/StagedBuffer.hpp"
+#include "vklearnin/Shaders/UniformBufferObject.hpp"
+#include "vklearnin/DescriptorSet.hpp"
 
 #if defined(__linux__)
-    #include "X11Window.hpp"
+    #include "vklearnin/Platform/X11/X11Window.hpp"
 #elif defined(_WIN32)
-    #include "Win32Window.hpp"
+    #include "vklearnin/Win32Window.hpp"
 #endif
 
 // =============================================================================
@@ -295,12 +295,12 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
                              const uint32_t image_index)
 {
     using HRC = std::chrono::high_resolution_clock;
-    using s = std::chrono::seconds::period;
-    using duration_s = std::chrono::duration<float, s>;
+    using second_period = std::chrono::seconds::period;
+    using duration_seconds = std::chrono::duration<float, second_period>;
 
     static auto start = HRC::now();
     auto now = HRC::now();
-    auto runtime = duration_s(now - start).count();
+    auto runtime = duration_seconds(now - start).count();
 
     MVPMatrices matrices { };
 
@@ -323,7 +323,7 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
         10.0f
     );
 
-    ubo.update(matrices, image_index);
+    ubo.update(&matrices, image_index);
 }
 
 // =============================================================================

@@ -1,7 +1,7 @@
-#include "common.hpp"
-#include "DescriptorSet.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/DescriptorSet.hpp"
 
-#include "UniformBufferObject.hpp"
+#include "vklearnin/Shaders/UniformBufferObject.hpp"
 
 // =============================================================================
 // ok, so very explicitly right now, this descriptor set  class can only be used

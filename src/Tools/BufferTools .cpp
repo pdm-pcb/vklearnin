@@ -1,7 +1,7 @@
-#include "common.hpp"
-#include "BufferTools.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Tools/BufferTools.hpp"
 
-#include "Instance.hpp"
+#include "vklearnin/Instance.hpp"
 
 namespace BufferTools {
 

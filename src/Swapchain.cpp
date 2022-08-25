@@ -1,8 +1,8 @@
-#include "common.hpp"
-#include "Swapchain.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Swapchain.hpp"
 
-#include "Instance.hpp"
-#include "CommandQueues.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/CommandQueues.hpp"
 
 //==============================================================================
 void Swapchain::init_color_format() {

@@ -1,19 +1,19 @@
-#include "common.hpp"
-#include "Instance.hpp"
-#include "CommandQueues.hpp"
-#include "Swapchain.hpp"
-#include "Pipeline.hpp"
-#include "Framebuffers.hpp"
-#include "RenderLoop.hpp"
-#include "StagedBuffer.hpp"
-#include "UniformBufferObject.hpp"
-#include "DescriptorSet.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/Swapchain.hpp"
+#include "vklearnin/Pipeline.hpp"
+#include "vklearnin/Framebuffers.hpp"
+#include "vklearnin/RenderLoop.hpp"
+#include "vklearnin/StagedBuffer.hpp"
+#include "vklearnin/Shaders/UniformBufferObject.hpp"
+#include "vklearnin/DescriptorSet.hpp"
 
 #if defined(__linux__)
-    #include "X11Window.hpp"
+    #include "vklearnin/Platform/X11/X11Window.hpp"
     using Window = X11Window;
 #elif defined(_WIN32)
-    #include "Win32Window.hpp"
+    #include "vklearnin/Win32Window.hpp"
     using Window = Win32Window;
 #endif
 
@@ -102,7 +102,7 @@ int main() {
 
     // =========================================================================
     // Uniform Buffer Object(s)
-    UniformBufferObject ubo(MAX_IMAGES, instance);
+    UniformBufferObject ubo(sizeof(MVPMatrices), MAX_IMAGES, instance);
     ubo.init_buffers();
 
     // =========================================================================

@@ -1,9 +1,7 @@
-#include "common.hpp"
-#include "Pipeline.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Pipeline.hpp"
 
-#include "Instance.hpp"
-#include "Shader.hpp"
-#include "Vertex.hpp"
+#include "vklearnin/Instance.hpp"
 
 // =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {

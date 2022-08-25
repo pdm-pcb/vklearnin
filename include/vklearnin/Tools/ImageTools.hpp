@@ -1,7 +1,7 @@
 #ifndef VKL_TOOLS_HPP
 #define VKL_TOOLS_HPP
 
-namespace tools {
+namespace ImageTools {
 
 void set_image_layout(::VkCommandBuffer cmd_buffer, ::VkImage image,
                       ::VkImageAspectFlags image_aspects,

@@ -7,10 +7,10 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "Instance.hpp"
-#include "Vertex.hpp"
-#include "Index.hpp"
-#include "BufferTools.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/Shaders/Vertex.hpp"
+#include "vklearnin/Shaders/Index.hpp"
+#include "vklearnin/Tools/BufferTools.hpp"
 
 template <typename Datum>
 class StagedBuffer {

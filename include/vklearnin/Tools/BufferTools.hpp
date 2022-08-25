@@ -1,6 +1,10 @@
 #ifndef VKL_BUFFER_TOOLS_HPP
 #define VKL_BUFFER_TOOLS_HPP
 
+#include <vulkan/vulkan.h>
+
+#include <cstdint>
+
 class Instance;
 
 namespace BufferTools {

@@ -1,8 +1,8 @@
 #ifndef VKL_RENDERLOOP_HPP
 #define VKL_RENDERLOOP_HPP
 
-#include "Index.hpp"
-#include "StagedBuffer.hpp"
+#include "vklearnin/Shaders/Index.hpp"
+#include "vklearnin/StagedBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 

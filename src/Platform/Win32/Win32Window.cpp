@@ -1,10 +1,10 @@
 #ifdef WIN32
 
-#include "common.hpp"
-#include "Win32Window.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Win32Window.hpp"
 
-#include "Instance.hpp"
-#include "RenderLoop.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/RenderLoop.hpp"
 
 //==============================================================================
 bool Win32Window::message_loop(RenderLoop &render_loop) {

@@ -1,7 +1,7 @@
-#include "common.hpp"
-#include "tools.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Tools/ImageTools.hpp"
 
-namespace tools {
+namespace ImageTools {
 
 void set_image_layout(::VkCommandBuffer cmd_buffer,
                       ::VkImage image,

@@ -2,18 +2,19 @@
 #define VKL_COMMON_HPP
 
 // #define MEMLOG
-#include "MemTracker.hpp"
+#include "vklearnin/Tools/MemTracker.hpp"
 
 #ifdef DEBUG
     #define VK_VALIDATION_LAYER
-    #include "VKDebugger.hpp"
+    #include "vklearnin/Tools/VKDebugger.hpp"
 #endif // DEBUG
 
-#include "ConsoleLog.hpp"
-#include "BufferTools.hpp"
-#include "Index.hpp"
-#include "Vertex.hpp"
-#include "MVPMatrices.hpp"
+#include "vklearnin/Tools/ConsoleLog.hpp"
+#include "vklearnin/Tools/BufferTools.hpp"
+#include "vklearnin/Shaders/Shader.hpp"
+#include "vklearnin/Shaders/Index.hpp"
+#include "vklearnin/Shaders/Vertex.hpp"
+#include "vklearnin/Shaders/MVPMatrices.hpp"
 
 #define GLM_FORCE_SWIZZLE
 #define GLM_FORCE_CXX17

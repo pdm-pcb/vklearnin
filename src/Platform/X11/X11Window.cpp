@@ -1,10 +1,10 @@
 #ifdef __linux__
 
-#include "common.hpp"
-#include "X11Window.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Platform/X11/X11Window.hpp"
 
-#include "Instance.hpp"
-#include "RenderLoop.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/RenderLoop.hpp"
 
 using client_msg        = ::xcb_client_message_event_t *;
 using config_notify     = ::xcb_configure_notify_event_t *;

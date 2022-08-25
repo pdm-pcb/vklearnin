@@ -1,14 +1,14 @@
-#include "common.hpp"
-#include "CommandQueues.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/CommandQueues.hpp"
 
-#include "Instance.hpp"
+#include "vklearnin/Instance.hpp"
 
 #include <set>
 
 #if defined(__linux__)
-    #include "X11Window.hpp"
+    #include "vklearnin/Platform/X11/X11Window.hpp"
 #elif defined(_WIN32)
-    #include "Win32Window.hpp"
+    #include "vklearnin/Win32Window.hpp"
 #endif
 
 // =============================================================================

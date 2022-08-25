@@ -1,9 +1,9 @@
-#include "common.hpp"
-#include "Framebuffers.hpp"
+#include "vklearnin/common.hpp"
+#include "vklearnin/Framebuffers.hpp"
 
-#include "Instance.hpp"
-#include "Swapchain.hpp"
-#include "Pipeline.hpp"
+#include "vklearnin/Instance.hpp"
+#include "vklearnin/Swapchain.hpp"
+#include "vklearnin/Pipeline.hpp"
 
 // =============================================================================
 void Framebuffers::init_buffers(const Swapchain &swapchain,
