@@ -62,10 +62,10 @@ void Instance::init_instance() {
     // For the following error on MacOS, some fiddling must be done:
     // https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Instance#page_Encountered-VK_ERROR_INCOMPATIBLE_DRIVER
     if(result == ::VK_ERROR_INCOMPATIBLE_DRIVER) {
-        CONSOLE_CRITICAL("Incompatible Vulkan driver version.");
+        CONSOLE_ERROR("Incompatible Vulkan driver version.");
     }
     else if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Failed to create Vulkan instance.");
+        CONSOLE_ERROR("Failed to create Vulkan instance.");
     }
 
 // grab the function addresses for the debug utility
@@ -133,7 +133,7 @@ void Instance::init_physical_device() {
     ::vkEnumeratePhysicalDevices(_instance, &physical_count, devices.data());
 
     if(result != ::VK_SUCCESS || physical_count == 0u) {
-        CONSOLE_CRITICAL("No suitable device found.");
+        CONSOLE_ERROR("No suitable device found.");
     }
 
     CONSOLE_TRACE("Found {} devices", physical_count);
@@ -287,7 +287,7 @@ void Instance::init_logical_device(const CommandQueues &queues) {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create logical device.");
+        CONSOLE_ERROR("Unable to create logical device.");
     }
 }
 

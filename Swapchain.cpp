@@ -18,7 +18,7 @@ void Swapchain::init_color_format() {
     );
 
     if(result != VK_SUCCESS || format_count == 0u) {
-        CONSOLE_CRITICAL(
+        CONSOLE_ERROR(
             "Could not query surface format. {} formats found.",
             format_count    
         );
@@ -70,7 +70,7 @@ void Swapchain::init_present_modes() {
     );
 
     if(result != ::VK_SUCCESS || mode_count == 0) {
-        CONSOLE_CRITICAL("Unable to query surface presentation modes.");
+        CONSOLE_ERROR("Unable to query surface presentation modes.");
     }
 
     CONSOLE_TRACE("Found {} presentation modes", mode_count);
@@ -84,7 +84,7 @@ void Swapchain::init_present_modes() {
     );
 
     if(result != ::VK_SUCCESS || mode_count == 0) {
-        CONSOLE_CRITICAL("Unable to populate surface presentation modes.");
+        CONSOLE_ERROR("Unable to populate surface presentation modes.");
     }
 
     // iterate available modes, and choose FIFO/V-Sync by default, if it's
@@ -150,7 +150,7 @@ void Swapchain::init_extent(const ::VkExtent2D &extent) {
         CONSOLE_ERROR("Physical device capabilities reported zero images.");
     }
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not get surface capabilities.");
+        CONSOLE_ERROR("Could not get surface capabilities.");
     }
 
     CONSOLE_TRACE(
@@ -202,11 +202,13 @@ void Swapchain::init_extent(const ::VkExtent2D &extent) {
     if(surface_capabilities.currentTransform ==
        ::VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR)
     {
-        CONSOLE_CRITICAL("Could not get surface current transform.");
+        CONSOLE_ERROR("Could not get surface current transform.");
     }
 
     // this ought to be the identity transform, I suspect
     _transform = surface_capabilities.currentTransform;
+
+    _aspect_ratio = static_cast<float>(_extent.width) / _extent.height;
 }
 
 //==============================================================================
@@ -268,7 +270,7 @@ void Swapchain::init_swapchain(const CommandQueues &queues) {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create swapchain.");
+        CONSOLE_ERROR("Could not create swapchain.");
     }
 }
 
@@ -285,7 +287,7 @@ void Swapchain::init_swapchain_images() {
     );
 
     if(result != ::VK_SUCCESS || _image_count == 0) {
-        CONSOLE_CRITICAL("Unable to query swapchain images.");
+        CONSOLE_ERROR("Unable to query swapchain images.");
     }
 
     // in a double buffered setup, there should be two images in the chain
@@ -301,7 +303,7 @@ void Swapchain::init_swapchain_images() {
     );
 
     if(result != ::VK_SUCCESS || _image_count == 0) {
-        CONSOLE_CRITICAL("Unable to populate swapchain images.");
+        CONSOLE_ERROR("Unable to populate swapchain images.");
     }
 }
 
@@ -339,7 +341,7 @@ void Swapchain::init_image_views() {
         );
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Failed to create image view {}.", image_index);
+            CONSOLE_ERROR("Failed to create image view {}.", image_index);
         }
         else {
             CONSOLE_TRACE("Created image view {}.", image_index);
@@ -368,7 +370,7 @@ void Swapchain::destroy() {
 
 //==============================================================================
 void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues,
-                       ::VkSurfaceKHR &surface)
+                       const ::VkSurfaceKHR &surface)
 {
     CONSOLE_INFO("");
 
@@ -390,6 +392,7 @@ Swapchain::Swapchain(const Instance &instance, ::VkSurfaceKHR &surface) :
     _image_array_layers { 1u }, // layers > 1 are for stereoscopic 3D
     _offset             { 0, 0 },
     _extent             { UI32MAX, UI32MAX },
+    _aspect_ratio       { 0.0f },
     _present_mode       { ::VK_PRESENT_MODE_MAX_ENUM_KHR },
     _transform          { ::VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR },
     _swapchain          { nullptr  },

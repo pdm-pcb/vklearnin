@@ -49,7 +49,7 @@ void set_image_layout(::VkCommandBuffer cmd_buffer,
             break;
 
         default:
-            CONSOLE_CRITICAL("Unknown old image layout {}", old_layout);
+            CONSOLE_ERROR("Unknown old image layout {}", old_layout);
             break;
     }
 
@@ -80,15 +80,15 @@ void set_image_layout(::VkCommandBuffer cmd_buffer,
             break;
 
         case ::VK_IMAGE_LAYOUT_UNDEFINED:
-            CONSOLE_CRITICAL("New image layout cannot be undefined");
+            CONSOLE_ERROR("New image layout cannot be undefined");
             break;
 
         case ::VK_IMAGE_LAYOUT_PREINITIALIZED:
-            CONSOLE_CRITICAL("New image layout cannot be preinitialized");
+            CONSOLE_ERROR("New image layout cannot be preinitialized");
             break;
 
         default:
-            CONSOLE_CRITICAL("Unknown new image layout {}", old_layout);
+            CONSOLE_ERROR("Unknown new image layout {}", old_layout);
             break;
     }
 

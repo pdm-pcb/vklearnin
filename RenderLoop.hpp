@@ -11,6 +11,7 @@ class CommandQueues;
 class Swapchain;
 class Pipeline;
 class Framebuffers;
+class UniformBufferObject;
 
 #if defined(__linux__)
     class X11Window;
@@ -29,8 +30,9 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance,Swapchain &swapchain,
-             Pipeline &pipeline, Framebuffers &framebuffers,
+    bool run(const Instance &instance, UniformBufferObject &ubo,
+             Swapchain &swapchain, Pipeline &pipeline,
+             Framebuffers &framebuffers,
              const std::vector<::VkBuffer> &vertex_buffers,
              const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
              const StagedBuffer<Index> &index_buffer);
@@ -53,6 +55,9 @@ private:
 
     void _image_resized(const Instance &instance, Swapchain &swapchain,
                         Pipeline &pipeline, Framebuffers &framebuffers);
+
+    void _update_ubo(UniformBufferObject &ubo, const Swapchain &swapchain,
+                     const uint32_t frame_index);
 };
 
 #endif // VKL_RENDERLOOP_HPP

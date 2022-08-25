@@ -59,7 +59,7 @@ void CommandQueues::init_families(const Instance &instance) {
     }
 
     if(is_complete() == false) {
-        CONSOLE_CRITICAL("Could not find a suitable command queue family.");
+        CONSOLE_ERROR("Could not find a suitable command queue family.");
     }
 }
 
@@ -116,7 +116,7 @@ void CommandQueues::init_pools() {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create graphics command pool.");
+        CONSOLE_ERROR("Unable to create graphics command pool.");
     }
     else {
         CONSOLE_TRACE("Created graphics command pool");
@@ -136,7 +136,7 @@ void CommandQueues::init_queues() {
     );
 
     if(_graphics_queue == nullptr) {
-        CONSOLE_CRITICAL("Could not get logical device's graphics queue.");
+        CONSOLE_ERROR("Could not get logical device's graphics queue.");
     }
 
     // retrieve the presentation command queue
@@ -148,7 +148,7 @@ void CommandQueues::init_queues() {
     );
 
     if(_present_queue == nullptr) {
-        CONSOLE_CRITICAL("Could not get logical device's presentation queue.");
+        CONSOLE_ERROR("Could not get logical device's presentation queue.");
     }
 }
 
@@ -176,7 +176,7 @@ void CommandQueues::init_buffers() {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to allocate command buffer");
+        CONSOLE_ERROR("Unable to allocate command buffer");
     }
 }
 

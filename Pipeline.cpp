@@ -6,42 +6,6 @@
 #include "Vertex.hpp"
 
 // =============================================================================
-// void Pipeline::vertex_from_source(const char *filepath, const bool optimize) {
-//     _vert = Shader::module_from_source(
-//         filepath,
-//         ::shaderc_vertex_shader,
-//         _device,
-//         optimize
-//     );
-
-//     _shader_stages.emplace_back(::VkPipelineShaderStageCreateInfo { });
-//     auto &stage = _shader_stages.back();
-
-//     stage.sType  = ::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-//     stage.stage  = ::VK_SHADER_STAGE_VERTEX_BIT;
-//     stage.module = _vert;
-//     stage.pName  = "main";
-// }
-
-// =============================================================================
-// void Pipeline::fragment_from_source(const char *filepath, const bool optimize) {
-//     _frag = Shader::module_from_source(
-//         filepath,
-//         ::shaderc_fragment_shader,
-//         _device,
-//         optimize
-//     );
-
-//     _shader_stages.emplace_back(::VkPipelineShaderStageCreateInfo { });
-//     auto &stage = _shader_stages.back();
-
-//     stage.sType  = ::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-//     stage.stage  = ::VK_SHADER_STAGE_FRAGMENT_BIT;
-//     stage.module = _frag;
-//     stage.pName  = "main";
-// }
-
-// =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {
     _vert = Shader::module_from_binary(filepath, _device);
 
@@ -148,20 +112,20 @@ void Pipeline::init_render_passes(const Swapchain &swapchain) {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Could not create default render pass");
+        CONSOLE_ERROR("Could not create default render pass");
     }
 }
 
 // =============================================================================
-void Pipeline::init_layout() {
+void Pipeline::init_layout(const ::VkDescriptorSetLayout &desc_set_layout) {
     CONSOLE_INFO("");
 
     ::VkPipelineLayoutCreateInfo pipeline_layout_info {
         .sType = ::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .setLayoutCount = 0u,
-        .pSetLayouts = nullptr,
+        .setLayoutCount = 1u,
+        .pSetLayouts = &desc_set_layout,
         .pushConstantRangeCount = 0u,
         .pPushConstantRanges = nullptr
     };
@@ -174,7 +138,7 @@ void Pipeline::init_layout() {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to initialize pipeline layout.");
+        CONSOLE_ERROR("Unable to initialize pipeline layout.");
     }
 }
 
@@ -318,7 +282,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain) {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create graphics pipelines.");
+        CONSOLE_ERROR("Unable to create graphics pipelines.");
     }
     else {
         CONSOLE_TRACE(

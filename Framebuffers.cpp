@@ -40,7 +40,7 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
         );
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Failed to create framebuffer {}", buffer_idx);
+            CONSOLE_ERROR("Failed to create framebuffer {}", buffer_idx);
         }
     }
 

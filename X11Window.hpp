@@ -49,8 +49,6 @@ private:
     
     uint32_t _width;
     uint32_t _height;
-    uint32_t _x_pos;
-    uint32_t _y_pos;
 
     uint32_t _screen_width;
     uint32_t _screen_height;

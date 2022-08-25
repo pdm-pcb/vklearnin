@@ -19,6 +19,8 @@ void create_buffer(::VkBuffer       &buffer,
                    const uint32_t    memory_flags,
                    const Instance   &instance)
 {
+    CONSOLE_INFO("");
+
     ::VkBufferCreateInfo buffer_info { };
     buffer_info.sType       = ::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_info.size        = buffer_size;
@@ -37,10 +39,18 @@ void create_buffer(::VkBuffer       &buffer,
     }
 
     allocate_memory(buffer, memory, memory_flags, instance);
+
+    ::vkBindBufferMemory(
+        instance.logical_device(),
+        buffer, memory,
+        0u
+    );
 }
 
 void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
                      const uint32_t type_flags, const Instance &instance) {
+    CONSOLE_INFO("");
+
     ::VkMemoryRequirements memory_reqs { };
     ::vkGetBufferMemoryRequirements(
         instance.logical_device(),
@@ -80,6 +90,8 @@ uint32_t find_memory_type(const uint32_t type_bits,
                           const ::VkMemoryPropertyFlags flags,
                           const Instance &instance)
 {
+    CONSOLE_INFO("");
+
     ::VkPhysicalDeviceMemoryProperties memory_props { };
     ::vkGetPhysicalDeviceMemoryProperties(
         instance.physical_device(),

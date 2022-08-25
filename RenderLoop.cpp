@@ -7,6 +7,7 @@
 #include "Pipeline.hpp"
 #include "Framebuffers.hpp"
 #include "StagedBuffer.hpp"
+#include "UniformBufferObject.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -15,8 +16,9 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
-                     Pipeline &pipeline, Framebuffers &framebuffers,
+bool RenderLoop::run(const Instance &instance, UniformBufferObject &ubo,
+                     Swapchain &swapchain, Pipeline &pipeline,
+                     Framebuffers &framebuffers,
                      const std::vector<::VkBuffer> &vertex_buffers,
                      const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
                      const StagedBuffer<Index> &index_buffer)
@@ -24,16 +26,18 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
     CONSOLE_INFO("");
 
     ::VkResult result = ::VK_RESULT_MAX_ENUM;
-    uint32_t frame       = 0u;
+    uint32_t frame_index = 0u;
     uint32_t image_index = 0u;
 
     while(_window.message_loop() == true) {
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
-        frame = 1 - frame;
+        frame_index = 1 - frame_index;
+
+        _update_ubo(ubo, swapchain, frame_index);
 
         // wait your turn
-        ::vkWaitForFences(_device, 1u, &_display_fences[frame], VK_TRUE,
+        ::vkWaitForFences(_device, 1u, &_display_fences[frame_index], VK_TRUE,
                           UI64MAX);
 
         // grab the next swapchain image and check it...
@@ -41,7 +45,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             _device,
             swapchain.swapchain(),
             UI64MAX,
-            _image_available_sems[frame],
+            _image_available_sems[frame_index],
             nullptr,
             &image_index
         );
@@ -58,7 +62,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
         // clear out what needs clearing
-        ::vkResetFences(_device, 1u, &_display_fences[frame]);
+        ::vkResetFences(_device, 1u, &_display_fences[frame_index]);
         _queues.reset_command_buffer(
             image_index,
             static_cast<::VkCommandBufferResetFlagBits>(0u)
@@ -68,7 +72,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Unable to begin command buffer recording.");
+            CONSOLE_ERROR("Unable to begin command buffer recording.");
             return false;
         }
 
@@ -132,13 +136,14 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
         result = ::vkEndCommandBuffer(command_buffer);
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Failed to record to command buffer.");
+            CONSOLE_ERROR("Failed to record to command buffer.");
+            return false;
         }
 
         // now wait again, but this time the signal and wait semephores are
         // reversed
         ::VkSemaphore wait_sems[] = {
-            _image_available_sems[frame]
+            _image_available_sems[frame_index]
         };
 
         ::VkPipelineStageFlags wait_stage_masks[] {
@@ -146,7 +151,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         };
 
         ::VkSemaphore signal_sems[] = {
-            _draw_complete_sems[frame]
+            _draw_complete_sems[frame_index]
         };
 
         ::VkSubmitInfo submit_info { };
@@ -166,11 +171,12 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             _queues.graphics_queue(),
             1u,
             &submit_info,
-            _display_fences[frame]
+            _display_fences[frame_index]
         );
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Could not submit command queue.");
+            CONSOLE_ERROR("Could not submit command queue.");
+            return false;
         }
 
         ::VkSwapchainKHR swapchains[] = {
@@ -198,9 +204,6 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         {
             _image_resized(instance, swapchain, pipeline, framebuffers);
         }
-
-        // static uint32_t frame_count = 0u;
-        // CONSOLE_TRACE("Frame {}", ++frame_count);
     }
 
     ::vkDeviceWaitIdle(_device);
@@ -222,7 +225,7 @@ void RenderLoop::init_synchronization() {
     for(auto &sem : _image_available_sems) {
         result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Could not create image available semaphore");
+            CONSOLE_ERROR("Could not create image available semaphore");
         }
     }
 
@@ -231,7 +234,7 @@ void RenderLoop::init_synchronization() {
     for(auto &sem : _draw_complete_sems) {
         result = ::vkCreateSemaphore(_device, &sem_info, nullptr, &sem);
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Could not create draw complete semaphore");
+            CONSOLE_ERROR("Could not create draw complete semaphore");
         }
     }
 
@@ -245,7 +248,7 @@ void RenderLoop::init_synchronization() {
     for(auto &fence : _display_fences) {
         result = ::vkCreateFence(_device, &fence_info, nullptr, &fence);
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Could not create display fence");
+            CONSOLE_ERROR("Could not create display fence");
         }
     }
 
@@ -270,6 +273,45 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
                      _window.surface());
     framebuffers.create(swapchain, pipeline);
     pipeline.update_dimensions(swapchain);
+}
+
+// =============================================================================
+void RenderLoop::_update_ubo(UniformBufferObject &ubo,
+                             const Swapchain &swapchain,
+                             const uint32_t image_index)
+{
+    using HRC = std::chrono::high_resolution_clock;
+    using ms = std::chrono::milliseconds::period;
+    using duration_ms = std::chrono::duration<float, ms>;
+
+    static auto start = HRC::now();
+    auto now = HRC::now();
+    auto runtime = duration_ms(now - start).count();
+
+    MVPMatrices matrices { };
+
+    matrices.model = glm::rotate(
+        glm::mat4(1.0f),
+        runtime * glm::radians(90.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+
+    matrices.view = glm::lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+
+    matrices.proj = glm::perspective(
+        glm::radians(45.0f),
+        swapchain.aspect_ratio(),
+        0.1f,
+        10.0f
+    );
+
+    matrices.proj[1][1] *= -1;
+
+    ubo.update(matrices, image_index);
 }
 
 // =============================================================================

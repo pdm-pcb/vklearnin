@@ -28,7 +28,7 @@ public:
     // Recovery
     void destroy();
     void create(const ::VkExtent2D &extent, const CommandQueues &queues,
-                ::VkSurfaceKHR &surface);
+                const ::VkSurfaceKHR &surface);
 
     // -------------------------------------------------------------------------
     // For those concerned with swapchain atributes
@@ -48,6 +48,9 @@ public:
     inline const ::VkSwapchainKHR & swapchain() const {
         return _swapchain;
     }
+    inline float aspect_ratio() const {
+        return _aspect_ratio;
+    }
 
 
     Swapchain(const Instance &instance, ::VkSurfaceKHR &surface);
@@ -63,6 +66,7 @@ private:
     uint32_t           _image_array_layers;
     ::VkOffset2D       _offset;
     ::VkExtent2D       _extent;
+    float              _aspect_ratio;
     ::VkPresentModeKHR _present_mode;
 
     ::VkSurfaceTransformFlagBitsKHR _transform;
@@ -73,7 +77,7 @@ private:
     std::vector<::VkImage>     _images;
     std::vector<::VkImageView> _image_views;
 
-    const Instance       &_instance;
+    const Instance &_instance;
     ::VkSurfaceKHR &_surface;
 };
 

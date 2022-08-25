@@ -117,7 +117,7 @@ void Win32Window::init_window() {
 
     ::HRESULT result = ::RegisterClassEx(&wcex);
     if(!SUCCEEDED(result)) {
-        CONSOLE_CRITICAL("Could not register WNDCLASSEX with Windows.");
+        CONSOLE_ERROR("Could not register WNDCLASSEX with Windows.");
     }
 
     _hwindow = ::CreateWindowExA(
@@ -134,7 +134,7 @@ void Win32Window::init_window() {
     );
 
     if(_hwindow == nullptr) {
-        CONSOLE_CRITICAL("Unable to create win32 window.");
+        CONSOLE_ERROR("Unable to create win32 window.");
     }
 
     _build_window(_extent.width, _extent.height);
@@ -160,7 +160,7 @@ void Win32Window::init_surface() {
     );
 
     if(result != VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create Vulkan surface");
+        CONSOLE_ERROR("Unable to create Vulkan surface");
     }
 }
 

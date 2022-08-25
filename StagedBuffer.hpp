@@ -15,7 +15,11 @@
 template <typename Datum>
 class StagedBuffer {
 public:
+// =============================================================================
     void populate_buffer(const ::VkCommandPool &pool, const ::VkQueue &queue) {
+
+        // --------------------------------------------------------------------
+        // grab a command buffer for this one operation
         ::VkCommandBufferAllocateInfo alloc_info { };
         alloc_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         alloc_info.level = ::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -30,10 +34,11 @@ public:
         );
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Failed to allocate command buffer.");
+            CONSOLE_ERROR("Failed to allocate command buffer.");
             return;
         }
 
+        // open the buffer
         ::VkCommandBufferBeginInfo buffer_info { };
         buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         buffer_info.flags = ::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -41,10 +46,11 @@ public:
         result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Unable to begin command buffer recording.");
+            CONSOLE_ERROR("Unable to begin command buffer recording.");
             return;
         }
 
+            // copy the goodness
             ::VkBufferCopy copy_region { };
             copy_region.size = _buffer_size;
             ::vkCmdCopyBuffer(
@@ -55,11 +61,13 @@ public:
                 &copy_region
             );
 
+        // close the buffer
         result = ::vkEndCommandBuffer(command_buffer);
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Failed to record to command buffer.");
+            CONSOLE_ERROR("Failed to record to command buffer.");
         }
 
+        // finally, submit to the queue
         ::VkSubmitInfo submitInfo{};
         submitInfo.sType = ::VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1u;
@@ -73,11 +81,13 @@ public:
         );
 
         if(result != ::VK_SUCCESS) {
-            CONSOLE_CRITICAL("Unable to submit buffer command queue.");
+            CONSOLE_ERROR("Unable to submit buffer command queue.");
         }
 
+        // give it some time...
         ::vkQueueWaitIdle(queue);
 
+        // and we're done
         ::vkFreeCommandBuffers(
             _instance.logical_device(),
             pool,
@@ -85,12 +95,14 @@ public:
             &command_buffer
         );
 
+        // done with this, too
         _destroy_staging_buffer();
     }
 
     inline ::VkBuffer handle() const { return _device_buffer; }
     inline size_t count()      const { return _data.size();   }
 
+// =============================================================================
     StagedBuffer(const std::vector<Datum> &data, const Instance &instance) :
         _data           { data },
         _buffer_size    { _data.size() * sizeof(Datum) },
@@ -134,6 +146,7 @@ private:
 
     const Instance  &_instance;
 
+// =============================================================================
     void _create_staging_buffer() {
         BufferTools::create_buffer(
             _staging_buffer, sizeof(Datum) * _data.size(),
@@ -145,6 +158,7 @@ private:
         );
     }
 
+// =============================================================================
     void _populate_staging_buffer() {
         ::vkMapMemory(
             _instance.logical_device(),
@@ -160,6 +174,7 @@ private:
         ::vkUnmapMemory(_instance.logical_device(), _staging_memory);
     }
     
+// =============================================================================
     void _create_device_buffer() {
         ::VkFlags buffer_type_flag;
 
@@ -178,6 +193,7 @@ private:
         );
     }
     
+// =============================================================================
     void _destroy_staging_buffer() {
         ::vkDestroyBuffer(
             _instance.logical_device(),
@@ -185,6 +201,7 @@ private:
             nullptr
         );
 
+// =============================================================================
         ::vkFreeMemory(
             _instance.logical_device(),
             _staging_memory,

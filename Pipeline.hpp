@@ -12,18 +12,13 @@ class Instance;
 // =============================================================================
 class Pipeline {
 public:
-    // populate the module member variables
-    // void vertex_from_source(const char *filepath,
-    //                         const bool optimize = false);
-    // void fragment_from_source(const char *filepath,
-    //                           const bool optimize = false);
     void vertex_from_binary(const char *filepath);
     void fragment_from_binary(const char *filepath);
 
     // create a suitable default layout
     void init_render_passes(const Swapchain &swapchain);
     void init_ubos(const ::VkDevice &device, const size_t count);
-    void init_layout();
+    void init_layout(const ::VkDescriptorSetLayout &desc_set_layout);
     void init_pipeline(const Swapchain &swapchain);
 
     // -------------------------------------------------------------------------

@@ -35,6 +35,12 @@ public:
     inline uint32_t present_index() const {
         return _present_family.value(); 
     }
+    inline const ::VkQueue & graphics_queue() const {
+        return _graphics_queue;
+    }
+    inline const ::VkQueue & present_queue() const {
+        return _present_queue;
+    }
     inline uint32_t queue_count() const {
         return static_cast<uint32_t>(_queue_info_structs.size());
     }
@@ -43,12 +49,6 @@ public:
     }
     inline const ::VkCommandBuffer & command_buffer(const size_t index) const {
         return _command_buffers[index];
-    }
-    inline const ::VkQueue & graphics_queue() const {
-        return _graphics_queue;
-    }
-    inline const ::VkQueue & present_queue() const {
-        return _present_queue;
     }
     inline const ::VkCommandPool & command_pool() const {
         return _command_pool;

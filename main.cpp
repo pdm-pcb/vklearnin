@@ -6,6 +6,7 @@
 #include "Framebuffers.hpp"
 #include "RenderLoop.hpp"
 #include "StagedBuffer.hpp"
+#include "UniformBufferObject.hpp"
 
 #if defined(__linux__)
     #include "X11Window.hpp"
@@ -23,6 +24,8 @@ int main() {
     instance.init_instance_procs();
     instance.init_physical_device();
 
+    // =========================================================================
+    // Window, command pool, and command queues
     Window window(instance.vulkan_instance());
 
     // both the window itself and the window's surface are required for
@@ -48,13 +51,11 @@ int main() {
     command_queues.init_queues();
     command_queues.init_buffers();
 
-    //--------------------------------------------------------------------------
+    // =========================================================================
     // these buffers are effectively placeholders for what will be static
     // vertex data loaded from disk or so
 
-    // =========================================================================
     // Vertex Buffer------------------------------------------------------------
-
     const std::vector<Vertex> vertices {
         {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f }},
         {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
@@ -73,7 +74,6 @@ int main() {
         { 0u }
     };
 
-    // -------------------------------------------------------------------------
     // Index Buffer-------------------------------------------------------------
     const std::vector<Index> indices {
         0u, 1u, 2u,
@@ -84,9 +84,7 @@ int main() {
     index_buffer.populate_buffer(command_queues.command_pool(),
                                  command_queues.graphics_queue());
 
-    // -------------------------------------------------------------------------
-    // =========================================================================   
- 
+    // =========================================================================
     // the swapchain will use the function pointers gathered by the instance,
     // as well as details of the window's surface
     Swapchain swapchain(instance, window.surface());
@@ -98,27 +96,34 @@ int main() {
         window.height()
     });
     swapchain.init_swapchain(command_queues); // and, go!
-
     swapchain.init_swapchain_images(); // should give us two images for writing
     swapchain.init_image_views();      // views to interface with the images
 
-    Pipeline pipeline(instance.logical_device());
-    // pipeline.vertex_from_source("../../shaders/shader.vert");
-    // pipeline.fragment_from_source("../../shaders/shader.frag");
+    // =========================================================================
+    // Uniform Buffer Object(s)
+    UniformBufferObject ubo(MAX_IMAGES, instance);
+    ubo.init_descriptor_set();
+    ubo.init_buffers();
 
+    // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
     // so no online compiling for now.
+    Pipeline pipeline(instance.logical_device());
     pipeline.vertex_from_binary("../../shaders/shader.vert.spv");
     pipeline.fragment_from_binary("../../shaders/shader.frag.spv");
 
     pipeline.init_render_passes(swapchain); // only one render pass for now
-    pipeline.init_layout();            // the bare minimum for now
+    pipeline.init_layout(ubo.descriptor_set_layout());
     pipeline.init_pipeline(swapchain); // set it all up with the right values
 
-    // Only need two actual render targets for now
+    // =========================================================================
+    // Only need two render targets for now
     Framebuffers framebuffers(instance.logical_device());
     framebuffers.init_buffers(swapchain, pipeline);
 
+
+    // =========================================================================
+    // The business end
     RenderLoop render_loop(instance.logical_device(), window, command_queues);
     render_loop.init_synchronization();
 
@@ -126,6 +131,7 @@ int main() {
     while(carry_on) {
         carry_on = render_loop.run(
             instance,
+            ubo,
             swapchain,
             pipeline,
             framebuffers,

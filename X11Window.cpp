@@ -17,10 +17,10 @@ static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
 //==============================================================================
 bool X11Window::message_loop() {
     ::xcb_generic_event_t *event = nullptr;
-    uint32_t event_type = 0u;
 
     while((event = ::xcb_poll_for_event(_connection))) {       
-        event_type = event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
+        uint32_t event_type =
+            event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
         switch(event_type) {
             case 0:
                 break;
@@ -202,7 +202,7 @@ void X11Window::init_surface() {
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to create XCB surface.");
+        CONSOLE_ERROR("Unable to create XCB surface.");
     }
 }
 
@@ -445,7 +445,7 @@ X11Window::X11Window(const ::VkInstance &instance,
     _connection = ::xcb_connect(nullptr, &screenp);
 
     if(::xcb_connection_has_error(_connection)) {
-        CONSOLE_CRITICAL("Could not connect to X server.");
+        CONSOLE_ERROR("Could not connect to X server.");
     }
 
     _key_symbols = xcb_key_symbols_alloc(_connection);
