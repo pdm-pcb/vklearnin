@@ -67,4 +67,46 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
     );
 }
 
+::VkImageView init_view(const ::VkImage image, const ::VkFormat &color_format,
+                        const ::VkDevice &device)
+{
+    CONSOLE_INFO("");
+
+    ::VkImageViewCreateInfo image_info {
+        .sType = ::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0u,
+        .image = image,
+        .viewType = ::VK_IMAGE_VIEW_TYPE_2D,
+        .format = color_format,
+        .components = {
+            .r = ::VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = ::VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = ::VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = ::VK_COMPONENT_SWIZZLE_IDENTITY,
+        },
+        .subresourceRange {
+            .aspectMask = ::VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel   = 0u,
+            .levelCount     = 1u,
+            .baseArrayLayer = 0u,
+            .layerCount     = 1u
+        }
+    };
+
+    ::VkImageView view; 
+    auto result = ::vkCreateImageView(
+        device,
+        &image_info,
+        nullptr,
+        &view
+    );
+
+    if(result != ::VK_SUCCESS) {
+        CONSOLE_ERROR("Failed to create image view.");
+    }
+
+    return view;
+}
+
 } // namespace vkt

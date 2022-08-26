@@ -2,7 +2,7 @@
 #include "vklearnin/Textures/Texture2D.hpp"
 
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/SingleUseCommandBuffer.hpp"
+#include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
 #include "stb/stb_image.h"
 
@@ -59,6 +59,14 @@ void Texture2D::load_file(const char *filepath) {
 
     _create_image();
     _upload_texture();
+}
+
+void Texture2D::init_image_view() {
+    _view = ImageTools::init_view(
+        _image_handle,
+        _format,
+        _instance.logical_device()
+    );
 }
 
 // =============================================================================
@@ -213,6 +221,7 @@ Texture2D::Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
     _format       { ::VK_FORMAT_UNDEFINED },
     _offset       { 0, 0, 0 },
     _extent       { 0u, 0u, 1u },
+    _view         { nullptr },
     _staging      { nullptr },
     _pool         { pool },
     _queue        { queue },

@@ -12,6 +12,9 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
                        const ::VkImageLayout &old_layout,
                        const ::VkImageLayout &new_layout);
 
+::VkImageView init_view(const ::VkImage image, const ::VkFormat &color_format,
+                        const ::VkDevice &device);
+
 } // namespace tools
 
 #endif // VKLEARNIN_TOOLS_HPP

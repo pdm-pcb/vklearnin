@@ -1,6 +1,6 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Pipeline.hpp"
 #include "vklearnin/Framebuffers.hpp"
@@ -9,6 +9,7 @@
 #include "vklearnin/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
+#include "vklearnin/Textures/Sampler2D.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -86,6 +87,16 @@ int main() {
                       command_queues.graphics_queue(),
                       instance);
     texture.load_file("../../assets/textures/stone_wall01d.png");
+
+    Sampler2D sampler(instance.logical_device());
+    sampler.init(
+        ::VK_FILTER_LINEAR,
+        ::VK_FILTER_LINEAR,
+        ::VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        true, instance.max_anisotropy()
+    );
     
     // =========================================================================
     // the swapchain will use the function pointers gathered by the instance,

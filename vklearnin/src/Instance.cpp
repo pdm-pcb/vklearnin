@@ -1,7 +1,7 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
 
-#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -165,10 +165,6 @@ void Instance::init_physical_device() {
                 break;
         }
 
-        // I am sure this is supposed to be used somewhere, but...
-        ::VkPhysicalDeviceFeatures features { };
-        ::vkGetPhysicalDeviceFeatures(devices[device_idx], &features);
-
         // grabbing the VRAM amount in proper megabytes
         ::VkPhysicalDeviceMemoryProperties memory { };
         ::vkGetPhysicalDeviceMemoryProperties(devices[device_idx], &memory);
@@ -231,15 +227,23 @@ void Instance::init_physical_device() {
             "\tDevice Type:    {}\n"
             "\tDriver Version: {}\n"
             "\tVRAM:           {}MB\n"
+            "\tMax Anisotropy: {}x\n"
             "\tVulkan Version: {}.{}.{}\n",
             properties.deviceName,
             type_string,
             driver_props.driverInfo,
             vram,
+            properties.limits.maxSamplerAnisotropy,
             VK_API_VERSION_MAJOR(properties.apiVersion),
             VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion)
         );
+
+        // TODO: likewise with the below, and any features that get enabled
+        //       later - this needs to be reliably configurable
+        if(device_idx == 0) {
+            _max_anisotropy = properties.limits.maxSamplerAnisotropy;
+        }
     }
 
     // TODO: this should actually be a choice, but whateva.
@@ -255,20 +259,25 @@ void Instance::init_logical_device(const CommandQueues &queues) {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    // the driver will tell us what kinda features we've got
     ::VkPhysicalDeviceFeatures features { };
+    features.samplerAnisotropy = true;
+
+    // Let's just enable _all_ the features. =D
+    // ::vkGetPhysicalDeviceFeatures(_physical_device, &features);
 
     // finally populate the logical device creation information
-    ::VkDeviceCreateInfo device_info { };
-    device_info.sType = ::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_info.pNext = nullptr;
-    device_info.flags = 0u;
-    device_info.queueCreateInfoCount = queues.queue_count();
-    device_info.pQueueCreateInfos    = queues.queues();
-    device_info.enabledExtensionCount = 
-        static_cast<uint32_t>(std::size(extensions));
-    device_info.ppEnabledExtensionNames = extensions;
-    device_info.pEnabledFeatures = &features;
+    ::VkDeviceCreateInfo device_info {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0u,
+        .queueCreateInfoCount = queues.queue_count(),
+        .pQueueCreateInfos = queues.queues(),
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = 0,
+        .enabledExtensionCount = static_cast<uint32_t>(std::size(extensions)),
+        .ppEnabledExtensionNames = extensions,
+        .pEnabledFeatures = &features,
+    };
 
 // enable the validation layer if we're in a debug build
 // TODO: should probably change to permit multiple layers, but we'll cross
@@ -333,7 +342,8 @@ Instance::Instance() :
     _QueuePresentKHR       { nullptr },
     _instance        { nullptr },
     _physical_device { nullptr },
-    _logical_device  { nullptr }
+    _logical_device  { nullptr },
+    _max_anisotropy  { 0.0f }
 {    
     CONSOLE_INFO("");
 }

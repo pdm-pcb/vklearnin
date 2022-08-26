@@ -5,7 +5,7 @@
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/Buffers/StagingBuffer.hpp"
-#include "vklearnin/SingleUseCommandBuffer.hpp"
+#include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 

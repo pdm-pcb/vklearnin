@@ -2,7 +2,7 @@
 #include "vklearnin/RenderLoop.hpp"
 
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Pipeline.hpp"
 #include "vklearnin/Framebuffers.hpp"

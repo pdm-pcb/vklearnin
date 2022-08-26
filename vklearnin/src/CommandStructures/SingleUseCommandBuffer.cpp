@@ -1,5 +1,5 @@
 #include "vklearnin/common.hpp"
-#include "vklearnin/SingleUseCommandBuffer.hpp"
+#include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
 #include "vklearnin/Instance.hpp"
 

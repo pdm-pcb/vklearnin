@@ -1,5 +1,5 @@
 #include "vklearnin/common.hpp"
-#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 
 #include "vklearnin/Instance.hpp"
 

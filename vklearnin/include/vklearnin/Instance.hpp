@@ -64,6 +64,9 @@ public:
     inline const ::VkDevice & logical_device() const {
         return _logical_device;
     }
+    inline float max_anisotropy() const {
+        return _max_anisotropy;
+    }
 
     // -------------------------------------------------------------------------
     // Instance function pointers
@@ -100,6 +103,7 @@ private:
     ::VkInstance       _instance;
     ::VkPhysicalDevice _physical_device;
     ::VkDevice         _logical_device;
+    float _max_anisotropy;
 };
 
 #endif // VKLEARNIN_INSTANCE_HPP

@@ -10,6 +10,7 @@ class Instance;
 class Texture2D {
 public:
     void load_file(const char *filepath);
+    void init_image_view();
 
     Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
               const Instance &instance);
@@ -22,6 +23,8 @@ private:
 
     ::VkOffset3D _offset;
     ::VkExtent3D _extent;
+
+    ::VkImageView _view;
 
     StagingBuffer<uint8_t> *_staging;
     const ::VkCommandPool  &_pool;

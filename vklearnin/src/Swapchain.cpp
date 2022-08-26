@@ -2,7 +2,7 @@
 #include "vklearnin/Swapchain.hpp"
 
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/CommandQueues.hpp"
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 
 //==============================================================================
 void Swapchain::init_color_format() {
@@ -311,41 +311,12 @@ void Swapchain::init_swapchain_images() {
 void Swapchain::init_image_views() {
     CONSOLE_INFO("");
 
-    // since we now know how many images there are
-    _image_views.resize(_image_count);
-
-    // set everything to simple defaults
-    for(size_t image_index = 0; image_index < _image_count; ++image_index) {
-        ::VkImageViewCreateInfo image_info { };
-        image_info.sType      = ::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        image_info.image      = _images[image_index];
-        image_info.viewType   = ::VK_IMAGE_VIEW_TYPE_2D;
-        image_info.format     = _color_format;
-        image_info.components = {
-            .r = ::VK_COMPONENT_SWIZZLE_IDENTITY,
-            .g = ::VK_COMPONENT_SWIZZLE_IDENTITY,
-            .b = ::VK_COMPONENT_SWIZZLE_IDENTITY,
-            .a = ::VK_COMPONENT_SWIZZLE_IDENTITY,
-        };
-        image_info.subresourceRange.aspectMask = ::VK_IMAGE_ASPECT_COLOR_BIT;
-        image_info.subresourceRange.baseMipLevel   = 0u;
-        image_info.subresourceRange.levelCount     = 1u;
-        image_info.subresourceRange.baseArrayLayer = 0u;
-        image_info.subresourceRange.layerCount     = 1u;
-
-        ::VkResult result = ::vkCreateImageView(
-            _instance.logical_device(),
-            &image_info,
-            nullptr,
-            &_image_views[image_index]
-        );
-
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Failed to create image view {}.", image_index);
-        }
-        else {
-            CONSOLE_TRACE("Created image view {}.", image_index);
-        }
+    for(size_t image = 0; image < _image_count; ++image) {
+        _image_views.emplace_back(ImageTools::init_view(
+            _images[image],
+            _color_format,
+            _instance.logical_device()
+        ));
     }
 }
 
