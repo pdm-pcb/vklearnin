@@ -6,8 +6,8 @@
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Pipeline.hpp"
 #include "vklearnin/Framebuffers.hpp"
-#include "vklearnin/StagedBuffer.hpp"
-#include "vklearnin/Shaders/UniformBufferObject.hpp"
+#include "vklearnin/Buffers/BufferObject.hpp"
+#include "vklearnin/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 
 #if defined(__linux__)
@@ -20,9 +20,9 @@
 bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                      UniformBufferObject &ubo, Pipeline &pipeline,
                      DescriptorSet &descriptor_set, Framebuffers &framebuffers,
+                     const BufferObject<Index> &index_buffer,
                      const std::vector<::VkBuffer> &vertex_buffers,
-                     const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
-                     const StagedBuffer<Index> &index_buffer)
+                     const std::vector<::VkDeviceSize> &vertex_buffer_offsets)
 {
     CONSOLE_INFO("");
 
@@ -117,7 +117,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             ::vkCmdBindVertexBuffers(
                 command_buffer,
                 0u,
-                std::size(vertex_buffers),
+                vertex_buffers.size(),
                 vertex_buffers.data(),
                 vertex_buffer_offsets.data()
             );

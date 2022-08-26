@@ -1,7 +1,7 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 
-#include "vklearnin/StagedBuffer.hpp"
+#include "vklearnin/Buffers/StagingBuffer.hpp"
 
 #include "stb/stb_image.h"
 

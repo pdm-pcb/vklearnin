@@ -5,8 +5,8 @@
 #include "vklearnin/Pipeline.hpp"
 #include "vklearnin/Framebuffers.hpp"
 #include "vklearnin/RenderLoop.hpp"
-#include "vklearnin/StagedBuffer.hpp"
-#include "vklearnin/Shaders/UniformBufferObject.hpp"
+#include "vklearnin/Buffers/BufferObject.hpp"
+#include "vklearnin/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 
 #if defined(__linux__)
@@ -64,15 +64,12 @@ int main() {
         {{ -0.5f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
     
-    StagedBuffer<Vertex> vertex_buffer(vertices, instance);
+    BufferObject<Vertex> vertex_buffer(vertices, instance);
     vertex_buffer.populate_buffer(command_queues.command_pool(),
                                   command_queues.graphics_queue());
 
     std::vector<::VkBuffer> vertex_buffers {
-        { vertex_buffer.handle() }
-    };
-    std::vector<::VkDeviceSize> vertex_buffer_offsets {
-        { 0u }
+        vertex_buffer.handle()
     };
 
     // Index Buffer-------------------------------------------------------------
@@ -81,7 +78,7 @@ int main() {
         2u, 3u, 0u
     };
 
-    StagedBuffer<Index> index_buffer(indices, instance);
+    BufferObject<Index> index_buffer(indices, instance);
     index_buffer.populate_buffer(command_queues.command_pool(),
                                  command_queues.graphics_queue());
 
@@ -143,9 +140,9 @@ int main() {
             pipeline,
             descriptor_set,
             framebuffers,
+            index_buffer,
             vertex_buffers,
-            vertex_buffer_offsets,
-            index_buffer
+            { 0u }
         );
 
         // ...!

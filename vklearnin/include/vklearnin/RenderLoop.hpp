@@ -1,8 +1,8 @@
 #ifndef VKLEARNIN_RENDERLOOP_HPP
 #define VKLEARNIN_RENDERLOOP_HPP
 
+#include "vklearnin/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Index.hpp"
-#include "vklearnin/StagedBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -34,9 +34,9 @@ public:
     bool run(const Instance &instance, Swapchain &swapchain,
              UniformBufferObject &ubo, Pipeline &pipeline,
              DescriptorSet &descriptor_set, Framebuffers &framebuffers,
+             const BufferObject<Index> &index_buffer,
              const std::vector<::VkBuffer> &vertex_buffers,
-             const std::vector<::VkDeviceSize> &vertex_buffer_offsets,
-             const StagedBuffer<Index> &index_buffer);
+             const std::vector<::VkDeviceSize> &vertex_buffer_offsets);
 
     // -------------------------------------------------------------------------
     // Setup

@@ -1,5 +1,5 @@
 #include "vklearnin/common.hpp"
-#include "vklearnin/Shaders/UniformBufferObject.hpp"
+#include "vklearnin/Buffers/UniformBufferObject.hpp"
 
 #include "vklearnin/Instance.hpp"
 
