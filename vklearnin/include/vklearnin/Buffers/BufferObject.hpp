@@ -5,7 +5,7 @@
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/Buffers/StagingBuffer.hpp"
-#include "vklearnin/Tools/BufferTools.hpp"
+#include "vklearnin/SingleUseCommandBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -20,84 +20,26 @@ class BufferObject {
 public:
 //==============================================================================
     void populate_buffer(const ::VkCommandPool &pool, const ::VkQueue &queue) {
-        // ---------------------------------------------------------------------
-        // allocate a command buffer for this one operation
-        ::VkCommandBufferAllocateInfo alloc_info { };
-        alloc_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        alloc_info.level = ::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        alloc_info.commandPool = pool;
-        alloc_info.commandBufferCount = 1u;
+        // I'm glad the tutorial mentioned making this into its own class. It's
+        // quite good sense.
+        SingleUseCommandBuffer command_buffer(pool, _instance);
+        auto buffer_handle = command_buffer.init();
 
-        ::VkCommandBuffer command_buffer;
-        auto result = ::vkAllocateCommandBuffers(
-            _instance.logical_device(),
-            &alloc_info,
-            &command_buffer
-        );
-
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Failed to allocate command buffer.");
-            return;
-        }
-
-        // open the buffer
-        ::VkCommandBufferBeginInfo buffer_info { };
-        buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        buffer_info.flags = ::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        result = ::vkBeginCommandBuffer(command_buffer, &buffer_info);
-
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Unable to begin command buffer recording.");
-            return;
-        }
-
+        command_buffer.begin();
             // copy the goodness
             ::VkBufferCopy copy_region { };
             copy_region.size = _buffer_size;
             ::vkCmdCopyBuffer(
-                command_buffer,
+                buffer_handle,
                 _staging_buffer->handle(),
                 _device_buffer,
                 1u,
                 &copy_region
             );
+        command_buffer.end();
+        command_buffer.submit(queue);
 
-        // close the buffer
-        result = ::vkEndCommandBuffer(command_buffer);
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Failed to record to command buffer.");
-        }
-
-        // finally, submit to the queue
-        ::VkSubmitInfo submitInfo{};
-        submitInfo.sType = ::VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1u;
-        submitInfo.pCommandBuffers = &command_buffer;
-
-        result = ::vkQueueSubmit(
-            queue,
-            1u,
-            &submitInfo,
-            nullptr
-        );
-
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Unable to submit buffer command queue.");
-        }
-
-        // give it some time...
-        ::vkQueueWaitIdle(queue);
-
-        // and we're done
-        ::vkFreeCommandBuffers(
-            _instance.logical_device(),
-            pool,
-            1u,
-            &command_buffer
-        );
-
-        // done with this, too
+        // we've copied all the data, so the staging buffer can take its leave
         delete _staging_buffer;
     }
 
@@ -135,33 +77,33 @@ public:
 
 private:
     StagingBuffer<Datum> *_staging_buffer;
-    ::VkBuffer             _device_buffer;
-    ::VkDeviceMemory       _device_memory;
+    ::VkBuffer            _device_buffer;
+    ::VkDeviceMemory      _device_memory;
 
     const std::vector<Datum> &_data;
     const size_t _buffer_size;
 
     const Instance &_instance;
 
-//==============================================================================
-void _create_device_buffer() {
-    ::VkBufferUsageFlagBits buffer_type;
+    //==========================================================================
+    void _create_device_buffer() {
+        ::VkBufferUsageFlagBits buffer_type;
 
-    if constexpr(std::is_same_v<Datum, Vertex>) {
-        buffer_type = ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    }
-    if constexpr(std::is_same_v<Datum, Index>) {
-        buffer_type = ::VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    }
+        if constexpr(std::is_same_v<Datum, Vertex>) {
+            buffer_type = ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        }
+        if constexpr(std::is_same_v<Datum, Index>) {
+            buffer_type = ::VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        }
 
-    BufferTools::create_buffer(
-        _device_buffer, _buffer_size,
-        ::VK_BUFFER_USAGE_TRANSFER_DST_BIT | buffer_type,
-        _device_memory,
-        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        _instance
-    );
-}
+        BufferTools::create_buffer(
+            _device_buffer, _buffer_size,
+            ::VK_BUFFER_USAGE_TRANSFER_DST_BIT | buffer_type,
+            _device_memory,
+            ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            _instance
+        );
+    }
 };
 
 #endif // VKLEARNIN_BUFFERS_BUFFEROBJECT_HPP

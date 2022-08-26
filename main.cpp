@@ -8,6 +8,7 @@
 #include "vklearnin/Buffers/BufferObject.hpp"
 #include "vklearnin/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
+#include "vklearnin/Textures/Texture2D.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -35,14 +36,12 @@ int main() {
     window.init_surface();
     
     // track down the desired queue families
-    CommandQueues command_queues(instance.physical_device(),
-                                 instance.logical_device(),
-                                 window.surface());
-    command_queues.init_families(instance);
+    CommandQueues command_queues(window.surface(), instance);
+    command_queues.init_families();
     command_queues.init_queue_info();
 
     // with the physical device set up and queue family chosen, the logical
-    // devuce can be created
+    // device can be created
     instance.init_logical_device(command_queues);
     instance.init_logical_device_procs();
 
@@ -82,6 +81,12 @@ int main() {
     index_buffer.populate_buffer(command_queues.command_pool(),
                                  command_queues.graphics_queue());
 
+    // =========================================================================
+    Texture2D texture(command_queues.command_pool(),
+                      command_queues.graphics_queue(),
+                      instance);
+    texture.load_file("../../assets/textures/stone_wall01d.png");
+    
     // =========================================================================
     // the swapchain will use the function pointers gathered by the instance,
     // as well as details of the window's surface

@@ -1,8 +1,8 @@
 #ifndef VKLEARNIN_STAGEDBUFFER_HPP
 #define VKLEARNIN_STAGEDBUFFER_HPP
 
+#include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/Tools/BufferTools.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -22,11 +22,29 @@ public:
         _staging_memory { nullptr },
         _instance       { instance }
     {
+        CONSOLE_INFO("");
+
+        _create_staging_buffer();
+        _populate_staging_buffer();
+    }
+
+    StagingBuffer(const Datum *data_begin, const Datum *data_end,
+                  const Instance &instance) :
+        _data           { data_begin, data_end },
+        _buffer_size    { _data.size() * sizeof(Datum) },
+        _staging_buffer { nullptr },
+        _staging_memory { nullptr },
+        _instance       { instance }
+    {
+        CONSOLE_INFO("");
+
         _create_staging_buffer();
         _populate_staging_buffer();
     }
 
     ~StagingBuffer() {
+        CONSOLE_INFO("");
+
         ::vkDestroyBuffer(
             _instance.logical_device(),
             _staging_buffer,
@@ -53,6 +71,8 @@ private:
 
 // =============================================================================
     void _create_staging_buffer() {
+        CONSOLE_INFO("");
+
         BufferTools::create_buffer(
             _staging_buffer, sizeof(Datum) * _data.size(),
             ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -65,6 +85,8 @@ private:
 
 // =============================================================================
     void _populate_staging_buffer() {
+        CONSOLE_INFO("");
+
         void *_staging_data;
         
         ::vkMapMemory(

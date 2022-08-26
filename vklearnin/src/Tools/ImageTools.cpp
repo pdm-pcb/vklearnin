@@ -3,101 +3,67 @@
 
 namespace ImageTools {
 
-void set_image_layout(::VkCommandBuffer cmd_buffer,
-                      ::VkImage image,
-                      ::VkImageAspectFlags image_aspects,
-                      ::VkImageLayout old_layout,
-                      ::VkImageLayout new_layout)
+// =============================================================================
+void layout_transition(const ::VkCommandBuffer &command_buffer,
+                       const ::VkImage &image_handle,
+                       const ::VkFormat &image_format,
+                       const ::VkImageAspectFlags &aspect_flags,
+                       const ::VkImageLayout &old_layout,
+                       const ::VkImageLayout &new_layout)
 {
     CONSOLE_INFO("");
-    ::VkImageMemoryBarrier barrier { };
-    barrier.sType = ::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.pNext = nullptr;
-    barrier.oldLayout = old_layout;
-    barrier.newLayout = new_layout;
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = image_aspects;
-    barrier.subresourceRange.baseMipLevel = 0u;
-    barrier.subresourceRange.levelCount   = 1u;
-    barrier.subresourceRange.layerCount   = 1u;
 
-    switch(old_layout) {
-        case ::VK_IMAGE_LAYOUT_UNDEFINED:
-            CONSOLE_WARN("Old image layout undefined");
-            break;
+    ::VkImageMemoryBarrier barrier {
+        .sType = ::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0u,
+        .dstAccessMask = 0u,
+        .oldLayout = ::VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = ::VK_IMAGE_LAYOUT_UNDEFINED,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image_handle,
+        .subresourceRange {
+            .aspectMask     = aspect_flags,
+            .baseMipLevel   = 0u,
+            .levelCount     = 1u,
+            .baseArrayLayer = 0u,
+            .layerCount     = 1u,
+        }
+    };
 
-        case ::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-            barrier.srcAccessMask = ::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            break;
-        
-        case ::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-            barrier.srcAccessMask =
-                ::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            break;
-        
-        case ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-            barrier.srcAccessMask = ::VK_ACCESS_SHADER_READ_BIT;
-            break;
-        
-        case ::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-            barrier.srcAccessMask = ::VK_ACCESS_TRANSFER_READ_BIT;
-            break;
+    ::VkPipelineStageFlags source_stage      = 0u;
+    ::VkPipelineStageFlags destination_stage = 0u;
 
-        case ::VK_IMAGE_LAYOUT_PREINITIALIZED:
-            barrier.srcAccessMask =
-                ::VK_ACCESS_HOST_WRITE_BIT | ::VK_ACCESS_TRANSFER_WRITE_BIT;
-            break;
-
-        default:
-            CONSOLE_ERROR("Unknown old image layout {}", old_layout);
-            break;
-    }
-
-    switch(new_layout) {
-        case ::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-            barrier.srcAccessMask = ::VK_ACCESS_TRANSFER_READ_BIT;
-            barrier.dstAccessMask = ::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            break;
-
-        case ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-            barrier.srcAccessMask =
-                ::VK_ACCESS_HOST_WRITE_BIT | ::VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = ::VK_ACCESS_SHADER_READ_BIT;
-            break;
-        
-        case ::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-            barrier.srcAccessMask |= ::VK_ACCESS_TRANSFER_READ_BIT;
-            barrier.dstAccessMask  = ::VK_ACCESS_TRANSFER_READ_BIT;
-            break;
-        
-        case ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+    if(old_layout == ::VK_IMAGE_LAYOUT_UNDEFINED) {
+        if(new_layout == ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            barrier.srcAccessMask = 0u;
             barrier.dstAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
-            break;
-
-        case ::VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL:
-            barrier.dstAccessMask |=
-                ::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            break;
-
-        case ::VK_IMAGE_LAYOUT_UNDEFINED:
-            CONSOLE_ERROR("New image layout cannot be undefined");
-            break;
-
-        case ::VK_IMAGE_LAYOUT_PREINITIALIZED:
-            CONSOLE_ERROR("New image layout cannot be preinitialized");
-            break;
-
-        default:
-            CONSOLE_ERROR("Unknown new image layout {}", old_layout);
-            break;
+            source_stage      = ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destination_stage = ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        }
     }
+    else if(old_layout == ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        if(new_layout == ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {    
+            barrier.srcAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = ::VK_ACCESS_TRANSFER_READ_BIT;
+            source_stage      = ::VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destination_stage = ::VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+    }
+
+    ::VkImageMemoryBarrier image_barriers[] {
+        { barrier }
+    };
 
     ::vkCmdPipelineBarrier(
-        cmd_buffer,
-        ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        0, 0, nullptr, 0, nullptr, 1,
-        &barrier
+        command_buffer,
+        source_stage,
+        destination_stage,
+        0u,
+        0u, nullptr,
+        0u, nullptr,
+        std::size(image_barriers), image_barriers
     );
 }
 

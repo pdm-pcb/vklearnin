@@ -12,13 +12,13 @@
 #endif
 
 // =============================================================================
-void CommandQueues::init_families(const Instance &instance) {
+void CommandQueues::init_families() {
     CONSOLE_INFO("");
 
     // query and populate the list of command queue families
     uint32_t queue_family_count = 0u;
     ::vkGetPhysicalDeviceQueueFamilyProperties(
-        _physical_device,
+        _instance.physical_device(),
         &queue_family_count,
         nullptr
     );
@@ -28,7 +28,7 @@ void CommandQueues::init_families(const Instance &instance) {
 
     std::vector<::VkQueueFamilyProperties> family_props(queue_family_count);
     ::vkGetPhysicalDeviceQueueFamilyProperties(
-        _physical_device,
+        _instance.physical_device(),
         &queue_family_count,
         family_props.data()
     );
@@ -38,8 +38,8 @@ void CommandQueues::init_families(const Instance &instance) {
     std::vector<::VkBool32> present_support(queue_family_count);
     for(uint32_t queue = 0; queue < queue_family_count; ++queue) {
         // grab the surface info for this command queue family
-        instance._GetPhysicalDeviceSurfaceSupportKHR(
-            _physical_device,
+        _instance._GetPhysicalDeviceSurfaceSupportKHR(
+            _instance.physical_device(),
             queue,
             _surface,
             &present_support[queue]
@@ -109,7 +109,7 @@ void CommandQueues::init_pools() {
     pool_info.queueFamilyIndex = graphics_index();
 
     ::VkResult result = ::vkCreateCommandPool(
-        _device,
+        _instance.logical_device(),
         &pool_info,
         nullptr,
         &_command_pool
@@ -129,7 +129,7 @@ void CommandQueues::init_queues() {
 
     // retrieve the graphics command queue
     ::vkGetDeviceQueue(
-        _device,
+        _instance.logical_device(),
         graphics_index(),
         0u,
         &_graphics_queue
@@ -141,7 +141,7 @@ void CommandQueues::init_queues() {
 
     // retrieve the presentation command queue
     ::vkGetDeviceQueue(
-        _device,
+        _instance.logical_device(),
         present_index(),
         0u,
         &_present_queue
@@ -170,7 +170,7 @@ void CommandQueues::init_buffers() {
     );
 
     ::VkResult result = ::vkAllocateCommandBuffers(
-        _device,
+        _instance.logical_device(),
         &buffer_info,
         _command_buffers.data()
     );
@@ -181,22 +181,24 @@ void CommandQueues::init_buffers() {
 }
 
 // =============================================================================
-CommandQueues::CommandQueues(const ::VkPhysicalDevice &physical_device,
-                             const ::VkDevice         &device,
-                             const ::VkSurfaceKHR     &surface) :
-    _graphics_queue  { nullptr },
-    _present_queue   { nullptr },
-    _command_pool    { nullptr },
-    _command_buffers { nullptr },
-    _physical_device { physical_device },
-    _device          { device  },
-    _surface         { surface }
+CommandQueues::CommandQueues(const ::VkSurfaceKHR &surface,
+                             const Instance &instance) :
+    _graphics_queue  { nullptr  },
+    _present_queue   { nullptr  },
+    _command_pool    { nullptr  },
+    _command_buffers { nullptr  },
+    _surface         { surface  },
+    _instance        { instance }
 {
     CONSOLE_INFO("");
 }
 
 CommandQueues::~CommandQueues() {
     if(_command_pool != nullptr) {
-        ::vkDestroyCommandPool(_device, _command_pool, nullptr);
+        ::vkDestroyCommandPool(
+            _instance.logical_device(),
+            _command_pool,
+            nullptr
+        );
     }
 }

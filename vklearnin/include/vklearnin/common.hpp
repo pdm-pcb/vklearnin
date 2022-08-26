@@ -11,6 +11,7 @@
 
 #include "vklearnin/Tools/ConsoleLog.hpp"
 #include "vklearnin/Tools/BufferTools.hpp"
+#include "vklearnin/Tools/ImageTools.hpp"
 #include "vklearnin/Shaders/Shader.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/Shaders/Vertex.hpp"

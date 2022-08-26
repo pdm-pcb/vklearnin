@@ -3,7 +3,7 @@
 
 #include "vklearnin/Instance.hpp"
 
-::VkDebugUtilsMessengerEXT VKDebugger::_debug_messenger = nullptr;
+::VkDebugUtilsMessengerEXT VKDebugger::_debug_messenger = 0u;
 
 VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
     ::VkDebugUtilsMessageSeverityFlagBitsEXT severity,
@@ -13,31 +13,31 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
 {
     switch(severity) {
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            CONSOLE_TRACE("\n\t{:s}", callback_data->pMessage);
+            CONSOLE_TRACE("{:s}", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            CONSOLE_INFO("\n\t{:s}", callback_data->pMessage);
+            CONSOLE_INFO("{:s}", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
             if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) ==
                type)
             {
-                CONSOLE_WARN("\n\tPerformance: {:s}", callback_data->pMessage);
+                CONSOLE_WARN("\nPerformance: {:s}\n", callback_data->pMessage);
             }
             else if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) ==
                type)
             {
-                CONSOLE_WARN("\n\tValidation: {:s}", callback_data->pMessage);
+                CONSOLE_WARN("\nValidation: {:s}\n", callback_data->pMessage);
             }
             else {
-                CONSOLE_WARN("\n\tUnknown: {:s}", callback_data->pMessage);
+                CONSOLE_WARN("\n???: {:s}\n", callback_data->pMessage);
             }
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            CONSOLE_ERROR("\n\t{:s}", callback_data->pMessage);
+            CONSOLE_ERROR("\n{:s}\n", callback_data->pMessage);
             break;
         default:
-            CONSOLE_TRACE("\n\tUnknwon: {:s}", callback_data->pMessage);
+            CONSOLE_TRACE("???: {:s}", callback_data->pMessage);
             break;
     }
 
@@ -50,9 +50,12 @@ void VKDebugger::init(Instance &instance) {
     debug_info.sType =
         ::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debug_info.messageSeverity =
+        ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT    |
         ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
         ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     debug_info.messageType =
+        ::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT    |
         ::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
         ::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debug_info.pfnUserCallback = VKDebugger::callback;

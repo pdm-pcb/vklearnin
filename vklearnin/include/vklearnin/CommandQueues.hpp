@@ -17,7 +17,7 @@ public:
     // -------------------------------------------------------------------------
     // Multi-stage setup
 
-    void init_families(const Instance &instance);
+    void init_families();
     void init_queue_info();
     void init_pools();
     void init_queues();
@@ -54,9 +54,7 @@ public:
         return _command_pool;
     }
 
-    CommandQueues(const ::VkPhysicalDevice &physical_device,
-                  const ::VkDevice         &device,
-                  const ::VkSurfaceKHR     &surface);
+    CommandQueues(const ::VkSurfaceKHR &surface, const Instance &instance);
     ~CommandQueues();
 
     CommandQueues() = delete;
@@ -73,9 +71,8 @@ private:
     ::VkCommandPool _command_pool;
     std::array<::VkCommandBuffer, MAX_IMAGES> _command_buffers;
 
-    const ::VkPhysicalDevice &_physical_device;
-    const ::VkDevice         &_device;
-    const ::VkSurfaceKHR     &_surface;
+    const ::VkSurfaceKHR &_surface;
+    const Instance       &_instance;
 
 };
 

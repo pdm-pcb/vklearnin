@@ -10,14 +10,6 @@
 class RenderLoop;
 
 class X11Window {
-    struct MotifHints {
-        uint32_t   flags;
-        uint32_t   functions;
-        uint32_t   decorations;
-        int32_t    input_mode;
-        uint32_t   status;
-    };
-
 public:
     bool message_loop();
 
@@ -35,6 +27,14 @@ public:
     X11Window() = delete;
 
 private:
+    struct MotifHints {
+        uint32_t flags;
+        uint32_t functions;
+        uint32_t decorations;
+        int32_t  input_mode;
+        uint32_t status;
+    };
+
     ::xcb_connection_t  *_connection;
     ::xcb_screen_t      *_screen;
     ::xcb_key_symbols_t *_key_symbols;

@@ -1,12 +1,16 @@
 #ifndef VKLEARNIN_TOOLS_HPP
 #define VKLEARNIN_TOOLS_HPP
 
+#include <vulkan/vulkan.h>
+
 namespace ImageTools {
 
-void set_image_layout(::VkCommandBuffer cmd_buffer, ::VkImage image,
-                      ::VkImageAspectFlags image_aspects,
-                      ::VkImageLayout old_layout,
-                      ::VkImageLayout new_layout);
+void layout_transition(const ::VkCommandBuffer &command_buffer,
+                       const ::VkImage &image_handle,
+                       const ::VkFormat &image_format,
+                       const ::VkImageAspectFlags &aspect_flags,
+                       const ::VkImageLayout &old_layout,
+                       const ::VkImageLayout &new_layout);
 
 } // namespace tools
 
