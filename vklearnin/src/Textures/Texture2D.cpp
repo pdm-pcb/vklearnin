@@ -179,6 +179,8 @@ void Texture2D::_upload_texture() {
 
     _layout_transition(::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    delete _staging;
 }
 
 // =============================================================================

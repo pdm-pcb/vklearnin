@@ -18,8 +18,8 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
         .pNext = nullptr,
         .srcAccessMask = 0u,
         .dstAccessMask = 0u,
-        .oldLayout = ::VK_IMAGE_LAYOUT_UNDEFINED,
-        .newLayout = ::VK_IMAGE_LAYOUT_UNDEFINED,
+        .oldLayout = old_layout,
+        .newLayout = new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image_handle,
@@ -40,13 +40,13 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
             barrier.srcAccessMask = 0u;
             barrier.dstAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
             source_stage      = ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            destination_stage = ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destination_stage = ::VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
     }
     else if(old_layout == ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         if(new_layout == ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {    
             barrier.srcAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = ::VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = ::VK_ACCESS_SHADER_READ_BIT;
             source_stage      = ::VK_PIPELINE_STAGE_TRANSFER_BIT;
             destination_stage = ::VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
