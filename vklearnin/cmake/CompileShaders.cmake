@@ -5,6 +5,7 @@ find_package(Vulkan COMPONENTS glslc REQUIRED)
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 
 function(compile_shader target)
+    message("Compiling shader sources ${arg_SOURCES}")
     cmake_parse_arguments(PARSE_ARGV 1 arg "" "ENV" "SOURCES")
     foreach(source ${arg_SOURCES})
         add_custom_command(

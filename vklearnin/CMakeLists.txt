@@ -2,12 +2,11 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     add_compile_definitions("DEBUG")
 endif()
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
-	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
-    include(CompileShaders)
-    include(FetchDeps)
-	find_package(Vulkan REQUIRED )
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
+include(FetchDeps)
+include(CompileShaders)
+
+find_package(Vulkan REQUIRED)
 
 file(
     GLOB_RECURSE PROJECT_SOURCE
@@ -35,16 +34,11 @@ target_precompile_headers(
     "include/vklearnin/common.hpp"
 )
 
-file(
-    GLOB SHADER_SOURCE
-    "shaders/shader.vert"
-    "shaders/shader.frag"
-)
-
-compile_shader(
-    vklearnin
-    ENV vulkan1.3
-    SOURCES ${SHADER_SOURCE}
+target_include_directories(
+    vklearnin PUBLIC
+    "${fmt_SOURCE_DIR}"
+    "${spdlog_SOURCE_DIR}"
+    "${glm_SOURCE_DIR}"
 )
 
 target_link_libraries(
@@ -55,11 +49,20 @@ target_link_libraries(
     third_party
 )
 
-target_include_directories(
-    vklearnin PUBLIC
-    "${fmt_SOURCE_DIR}"
-    "${spdlog_SOURCE_DIR}"
-    "${glm_SOURCE_DIR}"
+set(
+    SHADER_SOURCE
+    "${PROJECT_SOURCE_DIR}/assets/shaders/shader.vert"
+    "${PROJECT_SOURCE_DIR}/assets/shaders/shader.frag"
+)
+
+if("${SHADER_SOURCE}" STREQUAL "")
+    message(FATAL_ERROR "Shader source glob was empty")
+endif()
+
+compile_shader(
+    vklearnin
+    ENV vulkan1.3
+    SOURCES ${SHADER_SOURCE}
 )
 
 # -----------------------------------------------------------------------------
@@ -144,6 +147,10 @@ set_target_properties(
     PCH_WARN_INVALID OFF
 	EXECUTABLE_OUTPUT_DIRECTORY_DEBUG   ${PROJECT_SOURCE_DIR}/debug/bin
 	EXECUTABLE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/release/bin
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG      ${PROJECT_SOURCE_DIR}/debug/lib
+	LIBRARY_OUTPUT_DIRECTORY_DEBUG      ${PROJECT_SOURCE_DIR}/debug/lib
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE    ${PROJECT_SOURCE_DIR}/release/lib
+	LIBRARY_OUTPUT_DIRECTORY_RELEASE    ${PROJECT_SOURCE_DIR}/release/lib
 )
 
 get_target_property(vklearnin_flags vklearnin COMPILE_OPTIONS)
