@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_FRAMEBUFFERS_HPP
-#define VKLEARNIN_FRAMEBUFFERS_HPP
+#ifndef VKLEARNIN_BUFFERS_FRAMEBUFFERS_HPP
+#define VKLEARNIN_BUFFERS_FRAMEBUFFERS_HPP
 
 #include <vulkan/vulkan.hpp>
 
@@ -8,12 +8,15 @@
 class Instance;
 class Swapchain;
 class Pipeline;
+class DepthBuffer;
 
 // =============================================================================
 class Framebuffers {
 public:
     void init_buffers(const Swapchain &swapchain, const Pipeline &pipeline);
 
+    // -------------------------------------------------------------------------
+    // In the event of recreating the swapchain
     void destroy();
     void create(const Swapchain &swapchain, const Pipeline &pipeline);
 
@@ -30,4 +33,4 @@ private:
     const ::VkDevice &_device;
 };
 
-#endif // VKLEARNIN_FRAMEBUFFERS_HPP
+#endif // VKLEARNIN_BUFFERS_FRAMEBUFFERS_HPP

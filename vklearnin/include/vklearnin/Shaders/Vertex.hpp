@@ -2,17 +2,22 @@
 #define VKLEARNIN_VERTEX_HPP
 
 #include <glm/glm.hpp>
+#include <vulkan/vulkan.h>
+
+#include <vector>
 
 class Vertex final {
 public:
-    using AttribDesc = std::array<::VkVertexInputAttributeDescription, 3>;
-    using BindingDesc = ::VkVertexInputBindingDescription;
+    using AttribDesc = std::vector<::VkVertexInputAttributeDescription>;
+    using BindingDesc = std::vector<::VkVertexInputBindingDescription>;
 
     static inline BindingDesc binding_desc() {
         return BindingDesc {
-            .binding = 0u,
-            .stride  = static_cast<uint32_t>(sizeof(Vertex)),
-            .inputRate = ::VK_VERTEX_INPUT_RATE_VERTEX
+            {
+                .binding = 0u,
+                .stride  = static_cast<uint32_t>(sizeof(Vertex)),
+                .inputRate = ::VK_VERTEX_INPUT_RATE_VERTEX
+            }
         };
     }
 

@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_RENDERLOOP_HPP
 #define VKLEARNIN_RENDERLOOP_HPP
 
-#include "vklearnin/Buffers/BufferObject.hpp"
+#include "vklearnin/Shaders/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 
 #include <vulkan/vulkan.h>
@@ -13,6 +13,7 @@ class Pipeline;
 class Framebuffers;
 class UniformBufferObject;
 class DescriptorSet;
+class DepthBuffer;
 
 #if defined(__linux__)
     class X11Window;

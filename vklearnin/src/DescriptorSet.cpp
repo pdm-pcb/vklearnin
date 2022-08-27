@@ -1,7 +1,7 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 
-#include "vklearnin/Buffers/UniformBufferObject.hpp"
+#include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 
 // =============================================================================

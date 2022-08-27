@@ -33,6 +33,9 @@ public:
     // -------------------------------------------------------------------------
     // For those concerned with swapchain atributes
 
+    inline const ::VkRect2D render_area() const {
+        return { _offset, _extent };
+    }
     inline const std::pair<uint32_t, uint32_t> extent() const {
         return { _extent.width, _extent.height };
     }

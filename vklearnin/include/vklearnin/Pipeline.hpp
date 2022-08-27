@@ -2,12 +2,14 @@
 #define VKLEARNIN_PIPELINE_HPP
 
 #include "vklearnin/Swapchain.hpp"
+#include "vklearnin/Buffers/DepthBuffer.hpp"
 
 #include <vulkan/vulkan.hpp>
 
 #include <vector>
 
 class Instance;
+class DepthBuffer;
 
 // =============================================================================
 class Pipeline {
@@ -46,18 +48,17 @@ public:
     // -------------------------------------------------------------------------
     // For those concerned with pipeline atributes
 
-    inline const ::VkRenderPass & renderpass() const { return _renderpass; }
-    inline const ::VkPipeline   & pipeline()   const { return _pipeline;   }
-    inline const ::VkViewport   & viewport()   const { return _viewport;   }
-    inline const ::VkRect2D     & scissor()    const { return _scissor;    }
-    inline const ::VkPipelineLayout & layout() const { return _layout;     }
+    inline const ::VkRenderPass & renderpass() const { return _renderpass;    }
+    inline const ::VkPipeline   & pipeline()   const { return _pipeline;      }
+    inline const ::VkViewport   & viewport()   const { return _viewport;      }
+    inline const ::VkRect2D     & scissor()    const { return _scissor;       }
+    inline const ::VkPipelineLayout & layout() const { return _layout;        }
+    inline const DepthBuffer & depth_buffer()  const { return *_depth_buffer; }
 
-    Pipeline(const ::VkDevice &device);
+    Pipeline(const Instance &instance);
     ~Pipeline();
 
 private:
-    const ::VkDevice &_device;
-
     ::VkShaderModule _vert;
     ::VkShaderModule _frag;
     std::vector<::VkPipelineShaderStageCreateInfo> _shader_stages;
@@ -65,9 +66,13 @@ private:
     ::VkViewport _viewport;
     ::VkRect2D   _scissor;
 
+    DepthBuffer *_depth_buffer;
+
     ::VkRenderPass     _renderpass;
     ::VkPipelineLayout _layout;
     ::VkPipeline       _pipeline;
+
+    const Instance &_instance;
 };
 
 #endif // VKLEARNIN_PIPELINE_HPP

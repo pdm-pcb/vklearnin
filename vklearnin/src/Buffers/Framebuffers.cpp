@@ -1,5 +1,5 @@
 #include "vklearnin/common.hpp"
-#include "vklearnin/Framebuffers.hpp"
+#include "vklearnin/Buffers/Framebuffers.hpp"
 
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/Swapchain.hpp"
@@ -13,24 +13,27 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
 
     _buffers.resize(swapchain.image_views().size());
 
+    // ensure the dimensions match
+    auto [width, height] = swapchain.extent();
+
     // run through and associate one framebuffer per swapchain image
     for(size_t buffer_idx = 0; buffer_idx < _buffers.size(); ++buffer_idx) {
         ::VkImageView attachments[] = {
-            swapchain.image_views()[buffer_idx]
+            swapchain.image_views()[buffer_idx],
+            pipeline.depth_buffer().image_view()
         };
 
-        ::VkFramebufferCreateInfo buffer_info { };
-        buffer_info.sType = ::VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        buffer_info.renderPass      = pipeline.renderpass();
-        buffer_info.attachmentCount = 1u;
-        buffer_info.pAttachments    = attachments;
-
-        // ensure the dimensions match
-        auto [width, height] = swapchain.extent();
-        buffer_info.width    = width;
-        buffer_info.height   = height;
-
-        buffer_info.layers = 1u;
+        ::VkFramebufferCreateInfo buffer_info {
+            .sType = ::VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0u,
+            .renderPass = pipeline.renderpass(),
+            .attachmentCount = std::size(attachments),
+            .pAttachments = attachments,
+            .width = width,
+            .height = height,
+            .layers = 1u,
+        };
 
         ::VkResult result = ::vkCreateFramebuffer(
             _device,
@@ -51,6 +54,7 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
     );
 }
 
+// =============================================================================
 void Framebuffers::destroy() {
     CONSOLE_INFO("");
 
@@ -59,6 +63,7 @@ void Framebuffers::destroy() {
     }
 }
 
+// =============================================================================
 void Framebuffers::create(const Swapchain &swapchain, const Pipeline &pipeline)
 {
     init_buffers(swapchain, pipeline);

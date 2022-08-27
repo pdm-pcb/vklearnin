@@ -68,6 +68,7 @@ void Texture2D::init_image_view() {
     _view = ImageTools::init_view(
         _image_handle,
         _format,
+        ::VK_IMAGE_ASPECT_COLOR_BIT,
         _instance.logical_device()
     );
 }
@@ -91,74 +92,14 @@ void Texture2D::init_sampler(const ::VkFilter min_filter,
 void Texture2D::_create_image() {
     CONSOLE_INFO("");
 
-    ::VkImageCreateInfo image_info {
-        .sType = ::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .imageType = ::VK_IMAGE_TYPE_2D,
-        .format = _format,
-        .extent = _extent,
-        .mipLevels   = 1u,
-        .arrayLayers = 1u,
-        .samples     = ::VK_SAMPLE_COUNT_1_BIT,
-        .tiling      = ::VK_IMAGE_TILING_OPTIMAL,
-        .usage       = ::VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                       :: VK_IMAGE_USAGE_SAMPLED_BIT,
-        .sharingMode = ::VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0u,
-        .pQueueFamilyIndices = nullptr,
-        .initialLayout = ::VK_IMAGE_LAYOUT_UNDEFINED
-    };
-
-    auto result = ::vkCreateImage(
-        _instance.logical_device(),
-        &image_info,
-        nullptr,
-        &_image_handle
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Failed to create image handle");
-        return;
-    }
-
-    ::VkMemoryRequirements memory_reqs { };
-    ::vkGetImageMemoryRequirements(
-        _instance.logical_device(),
-        _image_handle,
-        &memory_reqs
-    );
-
-    auto memory_type_index = BufferTools::find_memory_type(
-        memory_reqs.memoryTypeBits,
+    ImageTools::init_image(
+        _extent, _format,
+        ::VK_IMAGE_TILING_OPTIMAL,
+        ::VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        :: VK_IMAGE_USAGE_SAMPLED_BIT,
         ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        _image_handle, _device_memory,
         _instance
-    );
-
-    ::VkMemoryAllocateInfo memory_info {
-        .sType = ::VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = memory_reqs.size,
-        .memoryTypeIndex = memory_type_index,
-    };
-
-    result = ::vkAllocateMemory(
-        _instance.logical_device(),
-        &memory_info,
-        nullptr,
-        &_device_memory
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Could not allocate device memory for texture");
-        return;
-    }
-
-    ::vkBindImageMemory(
-        _instance.logical_device(),
-        _image_handle,
-        _device_memory,
-        0u
     );
 }
 
@@ -223,7 +164,6 @@ void Texture2D::_layout_transition(const ::VkImageLayout &old_layout,
             command_buffer_handle,
             _image_handle,
             _format,
-            ::VK_IMAGE_ASPECT_COLOR_BIT,
             old_layout,
             new_layout
         );

@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_TEXTURES_TEXTURE2D_HPP
 #define VKLEARNIN_TEXTURES_TEXTURE2D_HPP
 
-#include "vklearnin/Buffers/StagingBuffer.hpp"
+#include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
 
 #include <cstdint>

@@ -315,6 +315,7 @@ void Swapchain::init_image_views() {
         _image_views.emplace_back(ImageTools::init_view(
             _images[image],
             _color_format,
+            ::VK_IMAGE_ASPECT_COLOR_BIT,
             _instance.logical_device()
         ));
     }

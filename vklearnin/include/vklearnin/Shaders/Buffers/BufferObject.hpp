@@ -1,10 +1,10 @@
-#ifndef VKLEARNIN_BUFFERS_BUFFEROBJECT_HPP
-#define VKLEARNIN_BUFFERS_BUFFEROBJECT_HPP
+#ifndef VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
+#define VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
 
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/Index.hpp"
-#include "vklearnin/Buffers/StagingBuffer.hpp"
+#include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
 #include <vulkan/vulkan.h>
@@ -106,4 +106,4 @@ private:
     }
 };
 
-#endif // VKLEARNIN_BUFFERS_BUFFEROBJECT_HPP
+#endif // VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP

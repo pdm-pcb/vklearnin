@@ -3,12 +3,13 @@
 #include "vklearnin/CommandStructures/CommandQueues.hpp"
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Pipeline.hpp"
-#include "vklearnin/Framebuffers.hpp"
+#include "vklearnin/Buffers/Framebuffers.hpp"
 #include "vklearnin/RenderLoop.hpp"
-#include "vklearnin/Buffers/BufferObject.hpp"
-#include "vklearnin/Buffers/UniformBufferObject.hpp"
+#include "vklearnin/Shaders/Buffers/BufferObject.hpp"
+#include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
+#include "vklearnin/Buffers/DepthBuffer.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -60,7 +61,12 @@ int main() {
         {{ -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }},
         {{  0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }},
         {{  0.5f,  0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }},
-        {{ -0.5f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }}
+        {{ -0.5f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }},
+
+        {{ -0.5f, -0.5f, -1.0f }, { 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }},
+        {{  0.5f, -0.5f, -1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }},
+        {{  0.5f,  0.5f, -1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }},
+        {{ -0.5f,  0.5f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }},
     };
     
     BufferObject<Vertex> vertex_buffer(vertices, instance);
@@ -74,7 +80,10 @@ int main() {
     // Index Buffer-------------------------------------------------------------
     const std::vector<Index> indices {
         0u, 1u, 2u,
-        2u, 3u, 0u
+        2u, 3u, 0u,
+
+        4u, 5u, 6u,
+        6u, 7u, 4u,
     };
 
     BufferObject<Index> index_buffer(indices, instance);
@@ -126,13 +135,13 @@ int main() {
     // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
     // so no online compiling for now.
-    Pipeline pipeline(instance.logical_device());
+    Pipeline pipeline(instance);
     pipeline.vertex_from_binary("../../assets/shaders/shader.vert.spv");
     pipeline.fragment_from_binary("../../assets/shaders/shader.frag.spv");
 
-    pipeline.init_render_passes(swapchain); // only one render pass for now
+    pipeline.init_render_passes(swapchain);
     pipeline.init_layout(descriptor_set.layout());
-    pipeline.init_pipeline(swapchain); // set it all up with the right values
+    pipeline.init_pipeline(swapchain);
 
     // =========================================================================
     // Only need two render targets for now

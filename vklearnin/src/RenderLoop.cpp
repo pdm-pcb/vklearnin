@@ -5,9 +5,9 @@
 #include "vklearnin/CommandStructures/CommandQueues.hpp"
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Pipeline.hpp"
-#include "vklearnin/Framebuffers.hpp"
-#include "vklearnin/Buffers/BufferObject.hpp"
-#include "vklearnin/Buffers/UniformBufferObject.hpp"
+#include "vklearnin/Buffers/Framebuffers.hpp"
+#include "vklearnin/Shaders/Buffers/BufferObject.hpp"
+#include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 
 #if defined(__linux__)
@@ -81,22 +81,20 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         }
 
         // initial setup for the pass
-        ::VkClearValue clear_values[] = {{
-            .color = { 0.1f, 0.1f, 0.1f, 1.0f }
-        }};
+        ::VkClearValue clear_values[] = {
+            { .color        { 0.1f, 0.1f, 0.1f, 1.0f }},
+            { .depthStencil { 1.0f, 0u }}
+        };
 
-        ::VkRenderPassBeginInfo pass_info { };
-        pass_info.sType = ::VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        pass_info.renderPass = pipeline.renderpass();
-        pass_info.framebuffer = framebuffers.buffer(image_index);
-
-        auto [width, height] = swapchain.extent();
-        auto [x, y]          = swapchain.offset();
-        pass_info.renderArea.extent = { width, height };
-        pass_info.renderArea.offset = { x, y };
-        pass_info.clearValueCount =
-            static_cast<uint32_t>(std::size(clear_values));
-        pass_info.pClearValues = clear_values;
+        ::VkRenderPassBeginInfo pass_info {
+            .sType = ::VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = nullptr,
+            .renderPass = pipeline.renderpass(),
+            .framebuffer = framebuffers.buffer(image_index),
+            .renderArea = swapchain.render_area(),
+            .clearValueCount = std::size(clear_values),
+            .pClearValues = clear_values,
+        };
 
         // go time!
         ::vkCmdBeginRenderPass(command_buffer, &pass_info,
@@ -311,7 +309,7 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
     );
 
     matrices.view = glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 2.0f),
+        glm::vec3(1.0f, 1.0f, 2.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
