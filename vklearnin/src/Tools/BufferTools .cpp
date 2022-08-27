@@ -27,7 +27,7 @@ void create_buffer(::VkBuffer       &buffer,
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Failed to create buffer.");
+        CONSOLE_CRITICAL("Failed to create buffer.");
     }
 
     allocate_memory(buffer, memory, memory_flags, instance);
@@ -66,7 +66,7 @@ void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
     );
 
     if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to allocate buffer memory");
+        CONSOLE_CRITICAL("Unable to allocate buffer memory");
         return;
     }
 }
@@ -99,9 +99,8 @@ uint32_t find_memory_type(const uint32_t type_bits,
         ++type_index;
     }
 
-    if(type_index > memory_props.memoryHeapCount) {
-        CONSOLE_ERROR("Could not find matching memory type");
-        return std::numeric_limits<uint32_t>::max();
+    if(type_index > memory_props.memoryTypeCount) {
+        CONSOLE_CRITICAL("Could not find matching memory type");
     }
 
     return type_index;
