@@ -4,13 +4,9 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
-
     include(CompileShaders)
-
-	find_package(Vulkan REQUIRED)
-	find_package(glm REQUIRED)
-	find_package(fmt REQUIRED)
-	find_package(spdlog REQUIRED)
+    include(FetchDeps)
+	find_package(Vulkan REQUIRED )
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(
@@ -61,7 +57,9 @@ target_link_libraries(
 
 target_include_directories(
     vklearnin PUBLIC
+    "${fmt_SOURCE_DIR}"
     "${spdlog_SOURCE_DIR}"
+    "${glm_SOURCE_DIR}"
 )
 
 # -----------------------------------------------------------------------------
@@ -153,8 +151,8 @@ get_target_property(vklearnin_defs  vklearnin COMPILE_DEFINITIONS)
 get_target_property(vklearnin_inc   vklearnin INCLUDE_DIRECTORIES)
 get_target_property(vklearnin_link  vklearnin LINK_DIRECTORIES)
 
-message(STATUS "vklearnin compile flags: ${vklearnin_flags}")
-message(STATUS "vklearnin compile defines: ${vklearnin_defs}")
-message(STATUS "vklearnin include directories: ${vklearnin_inc}")
-message(STATUS "vklearnin link directories: ${vklearnin_link}")
-message(STATUS "cmake compile flags: ${CMAKE_CXX_FLAGS}")
+message(NOTICE "vklearnin compile flags: ${vklearnin_flags}")
+message(NOTICE "vklearnin compile defines: ${vklearnin_defs}")
+message(NOTICE "vklearnin include directories: ${vklearnin_inc}")
+message(NOTICE "vklearnin link directories: ${vklearnin_link}")
+message(NOTICE "cmake compile flags: ${CMAKE_CXX_FLAGS}")
