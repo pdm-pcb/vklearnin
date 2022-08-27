@@ -9,6 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 
 	find_package(Vulkan REQUIRED)
 	find_package(glm REQUIRED)
+	find_package(fmt REQUIRED)
 	find_package(spdlog REQUIRED)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -53,7 +54,7 @@ compile_shader(
 target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
-    glm
+    fmt
     spdlog
     third_party
 )

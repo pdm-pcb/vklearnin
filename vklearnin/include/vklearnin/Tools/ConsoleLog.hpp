@@ -1,6 +1,7 @@
 #ifndef VKLEARNIN_CONSOLELOG_HPP
 #define VKLEARNIN_CONSOLELOG_HPP
 
+#define SPDLOG_FMT_EXTERNAL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/xchar.h>
