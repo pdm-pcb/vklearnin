@@ -2,29 +2,37 @@
 #include "vklearnin/DescriptorSet.hpp"
 
 #include "vklearnin/Buffers/UniformBufferObject.hpp"
+#include "vklearnin/Textures/Texture2D.hpp"
 
 // =============================================================================
-// ok, so very explicitly right now, this descriptor set  class can only be used
-// in conjunction with uniform buffers. Not only that, but exclusively during
-// the vertex shader stage. This will no doubt need to change, but let's see
-// how far it takes us.
 void DescriptorSet::init_layout() {
     CONSOLE_INFO("");
-
-    ::VkDescriptorSetLayoutBinding ubo_layout_binding {
-        .binding            = 0u,
-        .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount    = 1u,
-        .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
-        .pImmutableSamplers = nullptr
+    ::VkDescriptorSetLayoutBinding bindings[] {
+        // MVP matrices UBO
+        {
+            .binding            = 0u,
+            .descriptorType     = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount    = 1u,
+            .stageFlags         = ::VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        // Sampler2D
+        {
+            .binding            = 1u,
+            .descriptorType     = ::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount    = 1u,
+            .stageFlags         = ::VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        }
     };
 
+    // now build the above descriptor set
     ::VkDescriptorSetLayoutCreateInfo desc_layout_info {
         .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .bindingCount = 1u,
-        .pBindings = &ubo_layout_binding,
+        .bindingCount = std::size(bindings),
+        .pBindings = bindings,
     };
 
     auto result = ::vkCreateDescriptorSetLayout(
@@ -43,9 +51,15 @@ void DescriptorSet::init_layout() {
 void DescriptorSet::init_pool() {
     CONSOLE_INFO("");
 
-    ::VkDescriptorPoolSize pool_size {
-        .type = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = _max_images
+    ::VkDescriptorPoolSize pool_size[] {
+        {
+            .type = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = _max_images
+        },
+        {
+            .type = ::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = _max_images
+        },
     };
 
     ::VkDescriptorPoolCreateInfo pool_info {
@@ -53,8 +67,8 @@ void DescriptorSet::init_pool() {
         .pNext = nullptr,
         .flags = 0u,
         .maxSets = _max_images,
-        .poolSizeCount = 1u,
-        .pPoolSizes = &pool_size
+        .poolSizeCount = std::size(pool_size),
+        .pPoolSizes = pool_size
     };
 
     auto result = ::vkCreateDescriptorPool(
@@ -70,8 +84,7 @@ void DescriptorSet::init_pool() {
 }
 
 // =============================================================================
-void DescriptorSet::init_sets(UniformBufferObject &ubo)
-{
+void DescriptorSet::init_sets(UniformBufferObject &ubo, Texture2D &texture) {
     CONSOLE_INFO("");
 
     std::vector<::VkDescriptorSetLayout>
@@ -102,22 +115,42 @@ void DescriptorSet::init_sets(UniformBufferObject &ubo)
             .range  = static_cast<uint32_t>(sizeof(MVPMatrices))
         };
 
-        ::VkWriteDescriptorSet write_info {
-            .sType = ::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _sets[frame],
-            .dstBinding = 0u,
-            .dstArrayElement = 0u,
-            .descriptorCount = 1u,
-            .descriptorType = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pImageInfo = nullptr,
-            .pBufferInfo = &buffer_info,
-            .pTexelBufferView = nullptr
+        ::VkDescriptorImageInfo image_info {
+            .sampler = texture.sampler(),
+            .imageView = texture.view(),
+            .imageLayout = texture.layout(),
+        };
+
+        ::VkWriteDescriptorSet write_info[] {
+            {
+                .sType = ::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = nullptr,
+                .dstSet = _sets[frame],
+                .dstBinding = 0u,
+                .dstArrayElement = 0u,
+                .descriptorCount = 1u,
+                .descriptorType = ::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &buffer_info,
+                .pTexelBufferView = nullptr
+            },
+            {
+                .sType = ::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = nullptr,
+                .dstSet = _sets[frame],
+                .dstBinding = 1u,
+                .dstArrayElement = 0u,
+                .descriptorCount = 1u,
+                .descriptorType = ::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &image_info,
+                .pBufferInfo = nullptr,
+                .pTexelBufferView = nullptr
+            },
         };
 
         ::vkUpdateDescriptorSets(
             _device,
-            1u, &write_info,
+            std::size(write_info), write_info,
             0u, nullptr
         );
     }

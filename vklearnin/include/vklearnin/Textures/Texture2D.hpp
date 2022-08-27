@@ -2,6 +2,7 @@
 #define VKLEARNIN_TEXTURES_TEXTURE2D_HPP
 
 #include "vklearnin/Buffers/StagingBuffer.hpp"
+#include "vklearnin/Textures/Sampler2D.hpp"
 
 #include <cstdint>
 
@@ -11,6 +12,17 @@ class Texture2D {
 public:
     void load_file(const char *filepath);
     void init_image_view();
+    void init_sampler(const ::VkFilter min_filter, const ::VkFilter mag_filter,
+                      const ::VkSamplerMipmapMode mipmap_mode,
+                      const ::VkSamplerAddressMode address_mode_u,
+                      const ::VkSamplerAddressMode address_mode_v,
+                      const ::VkBool32 enable_anisotropy,
+                      const float max_anisotropy);
+
+    inline ::VkSampler     sampler() const { return _sampler.handle(); }
+    inline ::VkImageView   view()    const { return _view;   }
+    inline ::VkFormat      format()  const { return _format; }
+    inline ::VkImageLayout layout()  const { return _layout; }
 
     Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
               const Instance &instance);
@@ -18,13 +30,15 @@ public:
 
 private:
     ::VkImage        _image_handle;
-    ::VkFormat       _format;
     ::VkDeviceMemory _device_memory;
 
     ::VkOffset3D _offset;
     ::VkExtent3D _extent;
 
-    ::VkImageView _view;
+    ::VkImageView   _view;
+    Sampler2D       _sampler;
+    ::VkFormat      _format;
+    ::VkImageLayout _layout;
 
     StagingBuffer<uint8_t> *_staging;
     const ::VkCommandPool  &_pool;

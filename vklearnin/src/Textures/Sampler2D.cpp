@@ -19,7 +19,7 @@ void Sampler2D::init(const ::VkFilter min_filter, const ::VkFilter mag_filter,
         .mipmapMode = mipmap_mode,
         .addressModeU = address_mode_u,
         .addressModeV = address_mode_v,
-        // 0 or repeat is the default, and W shouldn't matter for 2D samplers
+        // repeat is the default (0u), but W shouldn't matter for 2D samplers
         .addressModeW = ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .mipLodBias = 0.0f,
         .anisotropyEnable = enable_anisotropy,

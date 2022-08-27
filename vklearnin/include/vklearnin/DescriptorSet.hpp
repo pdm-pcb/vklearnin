@@ -6,12 +6,13 @@
 #include <vector>
 
 class UniformBufferObject;
+class Texture2D;
 
 class DescriptorSet {
 public:
     void init_layout();
     void init_pool();
-    void init_sets(UniformBufferObject &ubo);
+    void init_sets(UniformBufferObject &ubo, Texture2D &texture);
 
 
     inline ::VkDescriptorSetLayout layout() const { return _layout; }

@@ -1,7 +1,7 @@
 # Thanks to diapir for this one. Slightly modified for my own uses:
 # https://stackoverflow.com/a/60472877/1464937
 
-find_package(Vulkan COMPONENTS glslc)
+find_package(Vulkan COMPONENTS glslc REQUIRED)
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 
 function(compile_shader target)

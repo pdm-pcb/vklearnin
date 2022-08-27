@@ -61,12 +61,30 @@ void Texture2D::load_file(const char *filepath) {
     _upload_texture();
 }
 
+// =============================================================================
 void Texture2D::init_image_view() {
+    CONSOLE_INFO("");
+
     _view = ImageTools::init_view(
         _image_handle,
         _format,
         _instance.logical_device()
     );
+}
+
+// =============================================================================
+void Texture2D::init_sampler(const ::VkFilter min_filter,
+                             const ::VkFilter mag_filter,
+                             const ::VkSamplerMipmapMode mipmap_mode,
+                             const ::VkSamplerAddressMode address_mode_u,
+                             const ::VkSamplerAddressMode address_mode_v,
+                             const ::VkBool32 enable_anisotropy,
+                             const float max_anisotropy)
+{
+    CONSOLE_INFO("");
+
+    _sampler.init(min_filter, mag_filter, mipmap_mode, address_mode_u,
+                  address_mode_v, enable_anisotropy, max_anisotropy);
 }
 
 // =============================================================================
@@ -212,16 +230,20 @@ void Texture2D::_layout_transition(const ::VkImageLayout &old_layout,
 
     command_buffer.end();
     command_buffer.submit(_queue);
+
+    _layout = new_layout;
 }
 
 // =============================================================================
 Texture2D::Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
                      const Instance &instance) :
-    _image_handle { 0u  },
-    _format       { ::VK_FORMAT_UNDEFINED },
+    _image_handle { 0u },
     _offset       { 0, 0, 0 },
     _extent       { 0u, 0u, 1u },
     _view         { nullptr },
+    _sampler      { Sampler2D(instance.logical_device()) },
+    _format       { ::VK_FORMAT_UNDEFINED },
+    _layout       { ::VK_IMAGE_LAYOUT_UNDEFINED },
     _staging      { nullptr },
     _pool         { pool },
     _queue        { queue },

@@ -11,8 +11,12 @@ public:
               const ::VkSamplerAddressMode address_mode_v,
               const ::VkBool32 enable_anisotropy, const float max_anisotropy);
 
+    inline ::VkSampler handle() const { return _sampler; }
+
     Sampler2D(const ::VkDevice &device);
     ~Sampler2D();
+
+    Sampler2D() = delete;
 
 private:
     ::VkSampler _sampler;

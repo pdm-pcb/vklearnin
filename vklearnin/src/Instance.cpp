@@ -55,6 +55,25 @@ void Instance::init_instance() {
     const char *layers[] { "VK_LAYER_KHRONOS_validation" };
     create_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
     create_info.ppEnabledLayerNames = layers;
+
+    ::VkValidationFeatureEnableEXT enables[] {
+        { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT },
+        { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT},
+        { ::VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT },
+        // { ::VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT },
+        { ::VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT },
+    };
+
+    ::VkValidationFeaturesEXT validation_features {
+        .sType = ::VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = nullptr,
+        .enabledValidationFeatureCount = std::size(enables),
+        .pEnabledValidationFeatures = enables,
+        .disabledValidationFeatureCount = 0u,
+        .pDisabledValidationFeatures = nullptr,
+    };
+
+    create_info.pNext = &validation_features;
 #endif // VK_VALIDATION_LAYER
 
     ::VkResult result = vkCreateInstance(&create_info, nullptr, &_instance);
@@ -259,11 +278,16 @@ void Instance::init_logical_device(const CommandQueues &queues) {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
+    ::VkPhysicalDeviceFeatures supported_features;
+    ::vkGetPhysicalDeviceFeatures(_physical_device, &supported_features);
+
+    if(supported_features.samplerAnisotropy == false) {
+        CONSOLE_ERROR("Hardware device does not support anisotropic "
+                      "filtering.");
+    }
+
     ::VkPhysicalDeviceFeatures features { };
     features.samplerAnisotropy = true;
-
-    // Let's just enable _all_ the features. =D
-    // ::vkGetPhysicalDeviceFeatures(_physical_device, &features);
 
     // finally populate the logical device creation information
     ::VkDeviceCreateInfo device_info {

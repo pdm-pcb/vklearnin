@@ -11,6 +11,12 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
     const ::VkDebugUtilsMessengerCallbackDataEXT* callback_data,
     [[maybe_unused]] void *user_data)
 {
+    if(strstr(callback_data->pMessage, "small-allocation") ||
+       strstr(callback_data->pMessage, "small-dedicated-allocation"))
+    {
+        return VK_FALSE;
+    }
+
     switch(severity) {
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
             CONSOLE_TRACE("{:s}", callback_data->pMessage);
@@ -22,12 +28,12 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
             if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) ==
                type)
             {
-                CONSOLE_WARN("\nPerformance: {:s}\n", callback_data->pMessage);
+                CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
             }
             else if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) ==
                type)
             {
-                CONSOLE_WARN("\nValidation: {:s}\n", callback_data->pMessage);
+                CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
             }
             else {
                 CONSOLE_WARN("\n???: {:s}\n", callback_data->pMessage);

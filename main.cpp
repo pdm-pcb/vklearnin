@@ -9,7 +9,6 @@
 #include "vklearnin/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
-#include "vklearnin/Textures/Sampler2D.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -87,9 +86,8 @@ int main() {
                       command_queues.graphics_queue(),
                       instance);
     texture.load_file("../../assets/textures/stone_wall01d.png");
-
-    Sampler2D sampler(instance.logical_device());
-    sampler.init(
+    texture.init_image_view();
+    texture.init_sampler(
         ::VK_FILTER_LINEAR,
         ::VK_FILTER_LINEAR,
         ::VK_SAMPLER_MIPMAP_MODE_LINEAR,
@@ -123,7 +121,7 @@ int main() {
     DescriptorSet descriptor_set(MAX_IMAGES, instance.logical_device());
     descriptor_set.init_layout();
     descriptor_set.init_pool();
-    descriptor_set.init_sets(ubo);
+    descriptor_set.init_sets(ubo, texture);
 
     // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
