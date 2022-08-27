@@ -255,6 +255,7 @@ Texture2D::Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
 Texture2D::~Texture2D() {
     CONSOLE_INFO("");
 
+    ::vkDestroyImageView(_instance.logical_device(), _view, nullptr);
     ::vkDestroyImage(_instance.logical_device(), _image_handle, nullptr);
     ::vkFreeMemory(_instance.logical_device(), _device_memory, nullptr);
 }

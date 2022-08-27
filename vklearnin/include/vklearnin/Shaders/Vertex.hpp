@@ -5,7 +5,7 @@
 
 class Vertex final {
 public:
-    using AttribDesc = std::array<::VkVertexInputAttributeDescription, 2>;
+    using AttribDesc = std::array<::VkVertexInputAttributeDescription, 3>;
     using BindingDesc = ::VkVertexInputBindingDescription;
 
     static inline BindingDesc binding_desc() {
@@ -21,28 +21,37 @@ public:
             ::VkVertexInputAttributeDescription {
                 .location = 0u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32B32A32_SFLOAT,
+                .format = ::VK_FORMAT_R32G32B32_SFLOAT,
                 .offset = offsetof(Vertex, _position)
             },
             ::VkVertexInputAttributeDescription {
                 .location = 1u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32B32A32_SFLOAT,
+                .format = ::VK_FORMAT_R32G32B32_SFLOAT,
                 .offset = offsetof(Vertex, _color)
+            },
+            ::VkVertexInputAttributeDescription {
+                .location = 2u,
+                .binding = 0u,
+                .format = ::VK_FORMAT_R32G32_SFLOAT,
+                .offset = offsetof(Vertex, _texcoord)
             },
         };
     }
 
-    Vertex(const glm::vec4 &position, const glm::vec4 &color) :
+    Vertex(const glm::vec3 &position, const glm::vec3 &color,
+           const glm::vec2 &texcoord) :
         _position { position },
-        _color    { color }
+        _color    { color },
+        _texcoord { texcoord }
     { }
     
     Vertex() = delete;
 
 private:
-    glm::vec4 _position;
-    glm::vec4 _color;
+    glm::vec3 _position;
+    glm::vec3 _color;
+    glm::vec2 _texcoord;
 };
 
 #endif // VKLEARNIN_VERTEX_HPP

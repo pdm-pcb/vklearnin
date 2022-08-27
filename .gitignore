@@ -11,4 +11,3 @@ debug/
 release/
 assets/shaders/*.d
 assets/shaders/*.spv
-assets/textures/
