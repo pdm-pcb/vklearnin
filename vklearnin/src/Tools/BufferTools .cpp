@@ -99,7 +99,7 @@ uint32_t find_memory_type(const uint32_t type_bits,
         ++type_index;
     }
 
-    if(type_index == memory_props.memoryHeapCount) {
+    if(type_index > memory_props.memoryHeapCount) {
         CONSOLE_ERROR("Could not find matching memory type");
         return std::numeric_limits<uint32_t>::max();
     }
