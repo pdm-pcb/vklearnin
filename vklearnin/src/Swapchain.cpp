@@ -172,15 +172,16 @@ void Swapchain::init_extent(const ::VkExtent2D &extent) {
         surface_capabilities.maxImageArrayLayers
     );
 
-    // default to double buffering
-    _image_count = MAX_IMAGES;
-
     // Don't exceed the maximum image count, however. Zero is a special maximum
     // indicating unlimiated images
     if(surface_capabilities.maxImageCount != 0u &&
-       _image_count >= surface_capabilities.maxImageCount)
+       MAX_IMAGES >= surface_capabilities.maxImageCount)
     {
-        _image_count = surface_capabilities.maxImageCount;
+        CONSOLE_CRITICAL(
+            "Configured image count {} exceeds surface max of {}",
+            MAX_IMAGES,
+            surface_capabilities.maxImageCount
+        );
     }
 
     // we're only asking for one right now, but just make sure
@@ -219,7 +220,7 @@ void Swapchain::init_swapchain(const CommandQueues &queues) {
     ::VkSwapchainCreateInfoKHR swapchain_info { };
     swapchain_info.sType = ::VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     swapchain_info.surface          = _surface;
-    swapchain_info.minImageCount    = _image_count;
+    swapchain_info.minImageCount    = MAX_IMAGES;
     swapchain_info.imageFormat      = _color_format;
     swapchain_info.imageColorSpace  = _color_space;
     swapchain_info.imageExtent      = _extent;
@@ -278,31 +279,33 @@ void Swapchain::init_swapchain(const CommandQueues &queues) {
 void Swapchain::init_swapchain_images() {
     CONSOLE_INFO("");
 
+    uint32_t swapchain_images;
+
     // query and populate the list of swapchain images
     ::VkResult result = _instance._GetSwapchainImagesKHR(
         _instance.logical_device(),
         _swapchain,
-        &_image_count,
+        &swapchain_images,
         nullptr
     );
 
-    if(result != ::VK_SUCCESS || _image_count == 0) {
+    if(result != ::VK_SUCCESS || MAX_IMAGES == 0) {
         CONSOLE_ERROR("Unable to query swapchain images.");
     }
 
-    // in a double buffered setup, there should be two images in the chain
-    CONSOLE_TRACE("Swapchain consists of {} images", _image_count);
-
-    _images.resize(_image_count);
+    if(swapchain_images != MAX_IMAGES) {
+        CONSOLE_CRITICAL("Expecting {} swapchain images, but queried {}",
+                         MAX_IMAGES, swapchain_images);
+    }
 
     result = _instance._GetSwapchainImagesKHR(
         _instance.logical_device(),
         _swapchain,
-        &_image_count,
+        &swapchain_images,
         _images.data()
     );
 
-    if(result != ::VK_SUCCESS || _image_count == 0) {
+    if(result != ::VK_SUCCESS || MAX_IMAGES == 0) {
         CONSOLE_ERROR("Unable to populate swapchain images.");
     }
 }
@@ -311,13 +314,13 @@ void Swapchain::init_swapchain_images() {
 void Swapchain::init_image_views() {
     CONSOLE_INFO("");
 
-    for(size_t image = 0; image < _image_count; ++image) {
-        _image_views.emplace_back(ImageTools::init_view(
+    for(size_t image = 0; image < MAX_IMAGES; ++image) {
+        _image_views[image] = ImageTools::init_view(
             _images[image],
             _color_format,
             ::VK_IMAGE_ASPECT_COLOR_BIT,
             _instance.logical_device()
-        ));
+        );
     }
 }
 
@@ -325,8 +328,9 @@ void Swapchain::init_image_views() {
 void Swapchain::destroy() {
     CONSOLE_INFO("");
 
-    for(auto view : _image_views) {
+    for(auto &view : _image_views) {
         ::vkDestroyImageView(_instance.logical_device(), view, nullptr);
+        view = nullptr;
     }
     
     if(_swapchain != nullptr) {
@@ -360,7 +364,6 @@ void Swapchain::create(const ::VkExtent2D &extent, const CommandQueues &queues,
 Swapchain::Swapchain(const Instance &instance, ::VkSurfaceKHR &surface) :
     _color_format       { ::VK_FORMAT_MAX_ENUM },
     _color_space        { ::VK_COLOR_SPACE_MAX_ENUM_KHR },
-    _image_count        { 0u },
     _image_array_layers { 1u }, // layers > 1 are for stereoscopic 3D
     _offset             { 0, 0 },
     _extent             { UI32MAX, UI32MAX },

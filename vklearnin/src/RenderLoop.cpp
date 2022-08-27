@@ -276,15 +276,25 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
     // wait for current commands to run their course
     ::vkDeviceWaitIdle(instance.logical_device());
 
-    // demolish it all, then recreate it per the dependencies established
-    // initially
+    CONSOLE_TRACE("Destroy framebuffers and swapchain");
     framebuffers.destroy();
     swapchain.destroy();
+    
+    CONSOLE_TRACE("Reinitialize window surface");
     _window.init_surface();
-    swapchain.create({ _window.width(), _window.height() }, _queues,
-                     _window.surface());
-    framebuffers.create(swapchain, pipeline);
+
+    CONSOLE_TRACE("Recreate swapchain");
+    swapchain.create(
+        { _window.width(), _window.height() },
+        _queues,
+        _window.surface()
+    );
+
+    CONSOLE_TRACE("Update pipeline dimensions");
     pipeline.update_dimensions(swapchain);
+
+    CONSOLE_TRACE("Recreate framebuffers");
+    framebuffers.create(swapchain, pipeline);
 }
 
 // =============================================================================

@@ -1,11 +1,9 @@
 #ifndef VKLEARNIN_SWAPCHAIN_HPP
 #define VKLEARNIN_SWAPCHAIN_HPP
 
-#include <vulkan/vulkan.h>
+#include "vklearnin/common.hpp"
 
-#include <cstdint>
-#include <vector>
-#include <utility>
+#include <vulkan/vulkan.h>
 
 class Instance;
 class CommandQueues;
@@ -45,7 +43,7 @@ public:
     inline ::VkFormat color_format() const {
         return _color_format;
     }
-    inline const std::vector<::VkImageView> & image_views() const {
+    inline const std::array<::VkImageView, MAX_IMAGES> & image_views() const {
         return _image_views;
     }
     inline const ::VkSwapchainKHR & swapchain() const {
@@ -77,8 +75,8 @@ private:
     ::VkSwapchainKHR _swapchain;
     ::VkSwapchainKHR _old_swapchain;
 
-    std::vector<::VkImage>     _images;
-    std::vector<::VkImageView> _image_views;
+    std::array<::VkImage, MAX_IMAGES>     _images;
+    std::array<::VkImageView, MAX_IMAGES> _image_views;
 
     const Instance &_instance;
     ::VkSurfaceKHR &_surface;

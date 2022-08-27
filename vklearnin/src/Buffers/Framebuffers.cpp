@@ -66,6 +66,8 @@ void Framebuffers::destroy() {
 // =============================================================================
 void Framebuffers::create(const Swapchain &swapchain, const Pipeline &pipeline)
 {
+    CONSOLE_INFO("");
+
     init_buffers(swapchain, pipeline);
 }
 

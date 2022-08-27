@@ -4,6 +4,7 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/Swapchain.hpp"
 
+// =============================================================================
 void DepthBuffer::init_image(const ::VkImageTiling &tiling,
                              const ::VkFormatFeatureFlags &flags)
 {
@@ -23,7 +24,10 @@ void DepthBuffer::init_image(const ::VkImageTiling &tiling,
     );
 }
 
+// =============================================================================
 void DepthBuffer::init_image_view() {
+    CONSOLE_INFO("");
+
     _image_view = ImageTools::init_view(
         _image_handle,
         _format,
@@ -32,6 +36,7 @@ void DepthBuffer::init_image_view() {
     );
 }
 
+// =============================================================================
 void DepthBuffer::_choose_format(const ::VkImageTiling &tiling,
                                  const ::VkFormatFeatureFlags &flags)
 {
@@ -74,6 +79,7 @@ void DepthBuffer::_choose_format(const ::VkImageTiling &tiling,
     _format = formats[fmt_index];
 }
 
+// =============================================================================
 DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
     _image_handle  { nullptr },
     _device_memory { nullptr },

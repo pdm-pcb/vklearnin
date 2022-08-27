@@ -85,7 +85,7 @@ void init_image(const ::VkExtent3D extent, const ::VkFormat format,
 }
 
 // =============================================================================
-VkImageView init_view(const ::VkImage &image, const ::VkFormat &color_format,
+::VkImageView init_view(const ::VkImage &image, const ::VkFormat &color_format,
                         const ::VkImageAspectFlags &aspect_flags,
                         const ::VkDevice &device)
 {
@@ -156,25 +156,14 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
         }
     };
 
-    ::VkPipelineStageFlags source_stage      = 0u;
-    ::VkPipelineStageFlags destination_stage = 0u;
+    ::VkPipelineStageFlags source_stage      = ::VK_PIPELINE_STAGE_NONE;
+    ::VkPipelineStageFlags destination_stage = ::VK_PIPELINE_STAGE_NONE;
 
     if(old_layout == ::VK_IMAGE_LAYOUT_UNDEFINED) {
-        if(new_layout == ::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-            barrier.srcAccessMask = 0u;
-            barrier.dstAccessMask =
-                ::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                ::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-            barrier.subresourceRange.aspectMask = ::VK_IMAGE_ASPECT_DEPTH_BIT;
-            if(has_stencil_component(image_format)) {
-                barrier.subresourceRange.aspectMask |=
-                    ::VK_IMAGE_ASPECT_STENCIL_BIT;
-            }
-        }
-        else if(new_layout == ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        if(new_layout == ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
             barrier.srcAccessMask = 0u;
             barrier.dstAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
+
             source_stage      = ::VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destination_stage = ::VK_PIPELINE_STAGE_TRANSFER_BIT;
 
@@ -189,6 +178,7 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
         if(new_layout == ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {    
             barrier.srcAccessMask = ::VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = ::VK_ACCESS_SHADER_READ_BIT;
+
             source_stage      = ::VK_PIPELINE_STAGE_TRANSFER_BIT;
             destination_stage = ::VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 

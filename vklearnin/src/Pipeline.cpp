@@ -35,12 +35,7 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
 {
     CONSOLE_INFO("");
 
-    _depth_buffer = new DepthBuffer(_instance, swapchain);
-    _depth_buffer->init_image(
-        ::VK_IMAGE_TILING_OPTIMAL,
-        ::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
-    _depth_buffer->init_image_view();
+    _init_depth_buffer(swapchain);
 
     ::VkAttachmentReference color_refs[] {{
         // the zeroth attachment is the fragment shader's outColor layout
@@ -369,15 +364,30 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
 }
 
 // =============================================================================
+void Pipeline::_init_depth_buffer(const Swapchain &swapchain) {
+    if(_depth_buffer != nullptr) {
+        delete _depth_buffer;
+    }
+
+    _depth_buffer = new DepthBuffer(_instance, swapchain);
+    _depth_buffer->init_image(
+        ::VK_IMAGE_TILING_OPTIMAL,
+        ::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+    _depth_buffer->init_image_view();
+}
+
+// =============================================================================
 Pipeline::Pipeline(const Instance &instance) :
-    _vert       { nullptr },
-    _frag       { nullptr },
-    _viewport   { },
-    _scissor    { },
-    _renderpass { nullptr },
-    _layout     { nullptr },
-    _pipeline   { nullptr },
-    _instance   { instance }
+    _vert         { nullptr },
+    _frag         { nullptr },
+    _viewport     { },
+    _scissor      { },
+    _depth_buffer { nullptr },
+    _renderpass   { nullptr },
+    _layout       { nullptr },
+    _pipeline     { nullptr },
+    _instance     { instance }
 {
     CONSOLE_INFO("");
 }

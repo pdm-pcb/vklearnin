@@ -43,6 +43,8 @@ public:
             .offset = { x, y },
             .extent = { width, height },
         };
+
+        _init_depth_buffer(swapchain);
     }
 
     // -------------------------------------------------------------------------
@@ -73,6 +75,8 @@ private:
     ::VkPipeline       _pipeline;
 
     const Instance &_instance;
+
+    void _init_depth_buffer(const Swapchain &swapchain);
 };
 
 #endif // VKLEARNIN_PIPELINE_HPP
