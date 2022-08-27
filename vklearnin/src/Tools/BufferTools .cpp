@@ -4,6 +4,8 @@
 #include "vklearnin/Instance.hpp"
 
 namespace BufferTools {
+
+// =============================================================================
 void create_buffer(::VkBuffer       &buffer,
                    const size_t      buffer_size,
                    const uint32_t    buffer_usage_flags,
@@ -39,6 +41,7 @@ void create_buffer(::VkBuffer       &buffer,
     );
 }
 
+// =============================================================================
 void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
                      const uint32_t type_flags, const Instance &instance) {
     CONSOLE_INFO("");
@@ -71,6 +74,7 @@ void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
     }
 }
 
+// =============================================================================
 uint32_t find_memory_type(const uint32_t type_bits,
                           const ::VkMemoryPropertyFlags flags,
                           const Instance &instance)

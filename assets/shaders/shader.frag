@@ -8,5 +8,6 @@ layout(location = 1) in vec2 vs_out_texcoord;
 layout(location = 0) out vec4 ps_out_color;
 
 void main() {
-    ps_out_color = texture(texsampler, vs_out_texcoord);
+    ps_out_color = vec4(vs_out_color, 1.0) *
+                   texture(texsampler, vs_out_texcoord);
 }

@@ -5,6 +5,7 @@
 
 ::VkDebugUtilsMessengerEXT VKDebugger::_debug_messenger = 0u;
 
+// =============================================================================
 VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
     ::VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     ::VkDebugUtilsMessageTypeFlagsEXT type,
@@ -51,6 +52,7 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
     return VK_FALSE;
 }
 
+// =============================================================================
 void VKDebugger::init(Instance &instance) {
 
     ::VkDebugUtilsMessengerCreateInfoEXT debug_info { };
@@ -80,6 +82,7 @@ void VKDebugger::init(Instance &instance) {
     }
 }
 
+// =============================================================================
 void VKDebugger::shutdown(Instance &instance) {    
     instance._DestroyDebugUtilsMessengerEXT(
         instance.vulkan_instance(),
