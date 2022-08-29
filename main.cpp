@@ -16,14 +16,12 @@
     #include "vklearnin/Platform/X11/X11Window.hpp"
     using Window = X11Window;
 #elif defined(_WIN32)
-    #include "vklearnin/Win32Window.hpp"
+    #include "vklearnin/Platform/Win32/Win32Window.hpp"
     using Window = Win32Window;
 #endif
 
-int main(int argc, char **argv) {
+int main() {
     ConsoleLog::init();
-
-    CONSOLE_TRACE("{}", argv[0]);
 
     Instance instance;
     instance.init_instance();
@@ -46,7 +44,8 @@ int main(int argc, char **argv) {
 
     // with the physical device set up and queue family chosen, the logical
     // device can be created
-    instance.init_logical_device(command_queues);
+    instance.init_logical_device(command_queues.queues(),
+                                 command_queues.queue_count());
     instance.init_logical_device_procs();
 
     // now that there's a logical device in place, go a head and initialize a

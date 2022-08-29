@@ -13,7 +13,7 @@
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
 #elif defined(_WIN32)
-    #include "vklearnin/Win32Window.hpp"
+    #include "vklearnin/Platform/Win32/Win32Window.hpp"
 #endif
 
 // =============================================================================

@@ -1,4 +1,5 @@
-.vscode/
+# let's give this a shot for the time being
+#.vscode/
 *.code-workspace
 .vs/
 .idea/

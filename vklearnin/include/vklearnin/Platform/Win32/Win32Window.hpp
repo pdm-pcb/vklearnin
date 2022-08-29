@@ -12,18 +12,17 @@ class RenderLoop;
 
 class Win32Window {
 public:
-    bool message_loop(RenderLoop &render_loop);
+    bool message_loop();
 
     void init_window();
     void init_surface();
 
-    inline const ::VkSurfaceKHR & surface() const { return _surface; }
-    inline const ::VkOffset2D   & offset()  const { return _offset;  }
-    inline const ::VkExtent2D   & extent()  const { return _extent;  }
+    inline ::VkSurfaceKHR & surface() { return _surface; }
+    inline uint32_t width()  const    { return _width;   }
+    inline uint32_t height() const    { return _height;  }
 
-    Win32Window(const uint32_t width, const uint32_t height,
-                const int32_t x_offset, const int32_t y_offset,
-                const ::VkInstance &instance);
+    Win32Window(const ::VkInstance &instance,
+                const uint32_t width = 0, const uint32_t height = 0);
     ~Win32Window();
 
     Win32Window() = delete;
@@ -33,17 +32,14 @@ private:
     ::HWND      _hwindow;
 
     ::VkSurfaceKHR _surface;
-    ::VkOffset2D   _offset;
-    ::VkExtent2D   _extent;
 
-    bool _running;
-    bool _resized;
+    uint32_t _width;
+    uint32_t _height;
+    uint32_t _screen_width;
+    uint32_t _screen_height;
+
     bool _fullscreen;
-    
-    uint32_t _display_xres;
-    uint32_t _display_yres;
-    uint32_t _launch_width;
-    uint32_t _launch_height;
+    bool _running;
 
     const ::VkInstance &_instance;
 
@@ -54,7 +50,7 @@ private:
     _message_handler(::HWND window, ::UINT msg, ::WPARAM wparam,
                      ::LPARAM lparam);
 
-    void _build_window(const uint32_t width, const uint32_t height);
+    void _size_and_center(const uint32_t width, const uint32_t height);
 };
 
 #endif // VKLEARNIN_WIN32WINDOW_HPP

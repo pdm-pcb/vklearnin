@@ -49,7 +49,8 @@ public:
     void init_instance_procs();  // Find the instance-specific functions
     void init_physical_device(); // Get the physical devices
 
-    void init_logical_device(const CommandQueues &queues);
+    void init_logical_device(const ::VkDeviceQueueCreateInfo *queues,
+                             const uint32_t queue_count);
     void init_logical_device_procs(); // Find the device-specific functions
 
     // -------------------------------------------------------------------------

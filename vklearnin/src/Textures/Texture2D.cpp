@@ -4,7 +4,7 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
-#include "tinygltf/stb_image.h"
+#include "stb_image.h"
 
 // =============================================================================
 void Texture2D::load_file(const char *filepath, const bool flip_vertical) {

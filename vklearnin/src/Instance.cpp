@@ -6,7 +6,7 @@
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
 #elif defined(_WIN32)
-    #include "vklearnin/Win32Window.hpp"
+    #include "vklearnin/Platform/Win32/Win32Window.hpp"
 #endif
 
 // =============================================================================
@@ -270,7 +270,8 @@ void Instance::init_physical_device() {
 }
 
 // =============================================================================
-void Instance::init_logical_device(const CommandQueues &queues) {
+void Instance::init_logical_device(const ::VkDeviceQueueCreateInfo *queues,
+                                   const uint32_t queue_count) {
     CONSOLE_INFO("");
 
     // specify logical device extension(s) tahaaaaave
@@ -294,8 +295,8 @@ void Instance::init_logical_device(const CommandQueues &queues) {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .queueCreateInfoCount = queues.queue_count(),
-        .pQueueCreateInfos = queues.queues(),
+        .queueCreateInfoCount = queue_count,
+        .pQueueCreateInfos = queues,
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = 0,
         .enabledExtensionCount = static_cast<uint32_t>(std::size(extensions)),

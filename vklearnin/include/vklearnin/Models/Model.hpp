@@ -4,7 +4,7 @@
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 
-#include "tinygltf/tiny_gltf.h"
+#include "tiny_gltf.h"
 
 #include <string>
 #include <vector>

@@ -30,6 +30,7 @@ target_include_directories(
     "${fmt_SOURCE_DIR}"
     "${spdlog_SOURCE_DIR}"
     "${glm_SOURCE_DIR}"
+    "${tinygltf_SOURCE_DIR}"
 )
 
 target_precompile_headers(

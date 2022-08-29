@@ -8,7 +8,7 @@
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
 #elif defined(_WIN32)
-    #include "vklearnin/Win32Window.hpp"
+    #include "vklearnin/Platform/Win32/Win32Window.hpp"
 #endif
 
 // =============================================================================
@@ -81,12 +81,16 @@ void CommandQueues::init_queue_info() {
     // I'm suspicious of setting queueCount to 1 for each iteration of this
     // loop, but at present there really is only one queue, so...
     for(const uint32_t family : unique_command_queues) {
-        ::VkDeviceQueueCreateInfo queue_info { };
-        queue_info.sType = ::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queue_info.queueFamilyIndex = family;
-        queue_info.queueCount = 1u;
-        queue_info.pQueuePriorities = queue_priorities;
-        _queue_info_structs.emplace_back(queue_info);
+        _queue_info_structs.emplace_back(
+            ::VkDeviceQueueCreateInfo {
+                .sType = ::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0u,
+                .queueFamilyIndex = family,
+                .queueCount = std::size(queue_priorities),
+                .pQueuePriorities = queue_priorities,
+            }
+        );
     }
 
     CONSOLE_TRACE(

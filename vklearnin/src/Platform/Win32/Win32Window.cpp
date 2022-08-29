@@ -1,20 +1,19 @@
 #ifdef WIN32
 
 #include "vklearnin/common.hpp"
-#include "vklearnin/Win32Window.hpp"
+#include "vklearnin/Platform/Win32/Win32Window.hpp"
 
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/RenderLoop.hpp"
 
 //==============================================================================
-bool Win32Window::message_loop(RenderLoop &render_loop) {
+bool Win32Window::message_loop() {
     ::MSG message { };
     while(::PeekMessageA(&message, _hwindow, 0u, 0u, PM_REMOVE)) {
         ::TranslateMessage(&message);
         ::DispatchMessageA(&message);
     }
-    
-    render_loop.resized(_resized);
+
     return _running;
 }
 
@@ -68,20 +67,24 @@ bool Win32Window::message_loop(RenderLoop &render_loop) {
         // https://www.reddit.com/r/learnprogramming/comments/nqrt4o/comment/h0d1te9/
             if(HIWORD(lparam) && KF_ALTDOWN) {
                 if(LOWORD(wparam) == VK_RETURN) {
-                    if(_extent.width  == _display_xres ||
-                       _extent.height == _display_yres)
-                    {
-                        _build_window(_launch_width, _launch_height);
+                    static uint32_t old_width  = 0u;
+                    static uint32_t old_height = 0u;
+
+                    if(_width  == _screen_width && _height == _screen_height) {
+                        _size_and_center(old_width, old_height);
                     }
                     else {
-                        _build_window(_display_xres, _display_yres);
+                        old_width  = _width;
+                        old_height = _height;
+                        _size_and_center(_screen_width, _screen_height);
                     }
                 }
             }
             break;
 
         case WM_SIZE:
-            _resized = true;
+            _width = LOWORD(lparam);
+            _height = HIWORD(lparam);
             break;
 
         case WM_CLOSE:
@@ -127,8 +130,8 @@ void Win32Window::init_window() {
         WS_POPUP | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        static_cast<int>(_extent.width),
-        static_cast<int>(_extent.height),
+        static_cast<int>(_width),
+        static_cast<int>(_height),
         nullptr, nullptr, nullptr,
         this
     );
@@ -137,13 +140,18 @@ void Win32Window::init_window() {
         CONSOLE_ERROR("Unable to create win32 window.");
     }
 
-    _build_window(_extent.width, _extent.height);
+    _size_and_center(_width, _height);
     _running = true;
 }
 
 //==============================================================================
 void Win32Window::init_surface() {
     CONSOLE_INFO("");
+
+    if(_surface != nullptr) {
+        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        _surface = nullptr;
+    }
 
     ::VkWin32SurfaceCreateInfoKHR surface_info { };
     surface_info.sType = ::VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -160,45 +168,43 @@ void Win32Window::init_surface() {
     );
 
     if(result != VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to create Vulkan surface");
+        CONSOLE_ERROR("Unable to create Win32 surface");
     }
 }
 
 //==============================================================================
-void Win32Window::_build_window(const uint32_t width, const uint32_t height) {
-    _extent = { width, height };
-
-    int pos_x = _display_xres / 2 - (_extent.width  / 2);
-    int pos_y = _display_yres / 2 - (_extent.height / 2);
+void Win32Window::_size_and_center(const uint32_t width, const uint32_t height)
+{
+    int pos_x = _screen_width  / 2 - (width  / 2);
+    int pos_y = _screen_height / 2 - (height / 2);
 
     ::SetWindowPos(
         _hwindow, nullptr,
         pos_x, pos_y,
-        static_cast<int>(_extent.width),
-        static_cast<int>(_extent.height),
+        static_cast<int>(width),
+        static_cast<int>(height),
         0
     );
 }
 
 //==============================================================================
-Win32Window::Win32Window(const uint32_t width, const uint32_t height,
-                         const int32_t x_offset, const int32_t y_offset,
-                         const ::VkInstance &instance) :
-    _hinstance     { nullptr },
-    _hwindow       { nullptr },
-    _surface       { nullptr },
-    _running       { false },
-    _resized       { false },
-    _fullscreen    { false },
-    _offset        { x_offset, y_offset },
-    _extent        { width, height },
-    _display_xres  { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
-    _display_yres  { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
-    _launch_width  { width  },
-    _launch_height { height },
-    _instance      { instance }
+Win32Window::Win32Window(const ::VkInstance &instance,
+                         const uint32_t width, const uint32_t height) :
+    _hinstance       { nullptr },
+    _hwindow         { nullptr },
+    _surface         { nullptr },
+    _width           { width },
+    _height          { height },
+    _screen_width    { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
+    _screen_height   { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
+    _fullscreen      { false },
+    _running         { false },
+    _instance        { instance }
 {
-    CONSOLE_INFO("");
+    if(_width == 0 || _height == 0) {
+        _width  = static_cast<uint32_t>(_screen_width  * 0.75f);
+        _height = static_cast<uint32_t>(_screen_height * 0.75f);
+    }
 }
 
 Win32Window::~Win32Window() {
