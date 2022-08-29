@@ -270,9 +270,10 @@ void Instance::init_physical_device() {
 }
 
 // =============================================================================
-void Instance::init_logical_device(const ::VkDeviceQueueCreateInfo *queues,
-                                   const uint32_t queue_count) {
+void Instance::init_logical_device(const CommandQueues &command_queue) {
     CONSOLE_INFO("");
+
+    CONSOLE_TRACE("{}", fmt::ptr(&command_queue));
 
     // specify logical device extension(s) tahaaaaave
     const char *extensions[] {
@@ -295,8 +296,8 @@ void Instance::init_logical_device(const ::VkDeviceQueueCreateInfo *queues,
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .queueCreateInfoCount = queue_count,
-        .pQueueCreateInfos = queues,
+        .queueCreateInfoCount = command_queue.queue_count(),
+        .pQueueCreateInfos = command_queue.queues(),
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = 0,
         .enabledExtensionCount = static_cast<uint32_t>(std::size(extensions)),

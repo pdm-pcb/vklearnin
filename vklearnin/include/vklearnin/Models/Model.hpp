@@ -16,8 +16,8 @@ class Texture2D;
 
 class Model {
 public:
-    const std::vector<Vertex> vertices() const { return _vertices; }
-    const std::vector<Index>  indices()  const { return _indices;  }
+    const std::vector<Vertex> & vertices() const { return _vertices; }
+    const std::vector<Index>  & indices()  const { return _indices;  }
 
     Model(const char *model_path);
     ~Model();

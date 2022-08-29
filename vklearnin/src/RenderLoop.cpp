@@ -137,6 +137,8 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                 0u, nullptr
             );
 
+            assert(index_buffer.count() >= 3);
+
             // boom, draw.
             ::vkCmdDrawIndexed(
                 command_buffer,
@@ -315,20 +317,20 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
     matrices.model = glm::rotate(
         glm::mat4(1.0f),
         runtime * 0.7854f,
-        glm::vec3(0.0f, 0.0f, 1.0f)
+        glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
     matrices.view = glm::lookAt(
-        glm::vec3(1.0f, 1.0f, 2.0f),
+        glm::vec3(0.0f, 20.0f, 50.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
     matrices.proj = glm::perspective(
-        0.7854f,
+        -0.7854f,
         swapchain.aspect_ratio(),
         0.1f,
-        10.0f
+        1000.0f
     );
 
     ubo.update(&matrices, image_index);

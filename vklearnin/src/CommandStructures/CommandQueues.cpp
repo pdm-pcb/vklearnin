@@ -74,6 +74,8 @@ void CommandQueues::init_queue_info() {
         present_index()
     };
 
+    _queue_info_structs.reserve(unique_command_queues.size());
+
     // If there are actually multiple queue indices, they'll need to be
     // prioritized
     float queue_priorities[] = { 1.0f };

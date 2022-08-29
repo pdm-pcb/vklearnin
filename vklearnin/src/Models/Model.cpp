@@ -2,6 +2,8 @@
 #include "vklearnin/Models/Model.hpp"
 
 void Model::_process_nodes(tinygltf::Model &model, tinygltf::Node  &node) {
+    CONSOLE_INFO("");
+
     for(auto &childnode : node.children) {
         _process_nodes(model, model.nodes[static_cast<size_t>(childnode)]);
     }
@@ -14,6 +16,8 @@ void Model::_process_nodes(tinygltf::Model &model, tinygltf::Node  &node) {
 }
 
 void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
+    CONSOLE_INFO("");
+
     for(auto &primitive : mesh.primitives) {
         tinygltf::Accessor pos_accessor =
             model.accessors[static_cast<size_t>(primitive.attributes["POSITION"])];
@@ -80,6 +84,8 @@ void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
 }
 
 Model::Model(const char *model_path) {
+    CONSOLE_INFO("");
+
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
 
