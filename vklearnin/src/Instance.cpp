@@ -56,7 +56,7 @@ void Instance::init_instance() {
     create_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
     create_info.ppEnabledLayerNames = layers;
 
-    ::VkValidationFeatureEnableEXT enables[] {
+    ::VkValidationFeatureEnableEXT validation_features_enabled[] {
         { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT },
         { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT},
         { ::VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT },
@@ -67,8 +67,9 @@ void Instance::init_instance() {
     ::VkValidationFeaturesEXT validation_features {
         .sType = ::VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
         .pNext = nullptr,
-        .enabledValidationFeatureCount = std::size(enables),
-        .pEnabledValidationFeatures = enables,
+        .enabledValidationFeatureCount =
+            static_cast<uint32_t>(std::size(validation_features_enabled)),
+        .pEnabledValidationFeatures = validation_features_enabled,
         .disabledValidationFeatureCount = 0u,
         .pDisabledValidationFeatures = nullptr,
     };

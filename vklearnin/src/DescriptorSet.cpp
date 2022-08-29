@@ -31,7 +31,7 @@ void DescriptorSet::init_layout() {
         .sType = ::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .bindingCount = std::size(bindings),
+        .bindingCount = static_cast<uint32_t>(std::size(bindings)),
         .pBindings = bindings,
     };
 
@@ -67,7 +67,7 @@ void DescriptorSet::init_pool() {
         .pNext = nullptr,
         .flags = 0u,
         .maxSets = _max_images,
-        .poolSizeCount = std::size(pool_size),
+        .poolSizeCount = static_cast<uint32_t>(std::size(pool_size)),
         .pPoolSizes = pool_size
     };
 
@@ -150,7 +150,7 @@ void DescriptorSet::init_sets(UniformBufferObject &ubo, Texture2D &texture) {
 
         ::vkUpdateDescriptorSets(
             _device,
-            std::size(write_info), write_info,
+            static_cast<uint32_t>(std::size(write_info)), write_info,
             0u, nullptr
         );
     }

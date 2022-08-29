@@ -204,7 +204,7 @@ void layout_transition(const ::VkCommandBuffer &command_buffer,
         0u,
         0u, nullptr,
         0u, nullptr,
-        std::size(image_barriers), image_barriers
+        static_cast<uint32_t>(std::size(image_barriers)), image_barriers
     );
 }
 

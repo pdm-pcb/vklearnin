@@ -92,7 +92,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             .renderPass = pipeline.renderpass(),
             .framebuffer = framebuffers.buffer(image_index),
             .renderArea = swapchain.render_area(),
-            .clearValueCount = std::size(clear_values),
+            .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
             .pClearValues = clear_values,
         };
 
@@ -115,7 +115,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             ::vkCmdBindVertexBuffers(
                 command_buffer,
                 0u,
-                vertex_buffers.size(),
+                static_cast<uint32_t>(vertex_buffers.size()),
                 vertex_buffers.data(),
                 vertex_buffer_offsets.data()
             );

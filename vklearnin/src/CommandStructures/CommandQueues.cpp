@@ -78,7 +78,7 @@ void CommandQueues::init_queue_info() {
 
     // If there are actually multiple queue indices, they'll need to be
     // prioritized
-    float queue_priorities[] = { 1.0f };
+    float priorities[] = { 1.0f };
 
     // I'm suspicious of setting queueCount to 1 for each iteration of this
     // loop, but at present there really is only one queue, so...
@@ -89,8 +89,8 @@ void CommandQueues::init_queue_info() {
                 .pNext = nullptr,
                 .flags = 0u,
                 .queueFamilyIndex = family,
-                .queueCount = std::size(queue_priorities),
-                .pQueuePriorities = queue_priorities,
+                .queueCount = static_cast<uint32_t>(std::size(priorities)),
+                .pQueuePriorities = priorities,
             }
         );
     }

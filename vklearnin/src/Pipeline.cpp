@@ -54,7 +54,7 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         .pipelineBindPoint    = ::VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 0u,
         .pInputAttachments    = nullptr,
-        .colorAttachmentCount = std::size(color_refs),
+        .colorAttachmentCount = static_cast<uint32_t>(std::size(color_refs)),
         .pColorAttachments    = color_refs,
         .pResolveAttachments  = nullptr,
         .pDepthStencilAttachment = &depth_ref,
@@ -109,11 +109,11 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         .sType = ::VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .attachmentCount = std::size(attachments),
+        .attachmentCount = static_cast<uint32_t>(std::size(attachments)),
         .pAttachments    = attachments,
-        .subpassCount    = std::size(subpasses),
+        .subpassCount    = static_cast<uint32_t>(std::size(subpasses)),
         .pSubpasses      = subpasses,
-        .dependencyCount = std::size(dependencies),
+        .dependencyCount = static_cast<uint32_t>(std::size(dependencies)),
         .pDependencies   = dependencies,
     };
 
@@ -181,7 +181,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
         .sType = ::VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
-        .dynamicStateCount = std::size(dynamic_states),
+        .dynamicStateCount = static_cast<uint32_t>(std::size(dynamic_states)),
         .pDynamicStates    = dynamic_states,
     };
 
@@ -313,7 +313,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
         .flags = 0u,
         .logicOpEnable   = VK_FALSE,
         .logicOp         = ::VK_LOGIC_OP_AND,
-        .attachmentCount = std::size(blend_attachments),
+        .attachmentCount = static_cast<uint32_t>(std::size(blend_attachments)),
         .pAttachments    = blend_attachments,
         .blendConstants  = { 0.0f, 0.0f, 0.0f, 0.0f }
     };

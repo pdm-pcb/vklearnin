@@ -135,7 +135,7 @@ void Texture2D::_upload_texture() {
                 _staging->handle(),
                 _image_handle,
                 ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                std::size(copy_regions),
+                static_cast<uint32_t>(std::size(copy_regions)),
                 copy_regions
             );
 
