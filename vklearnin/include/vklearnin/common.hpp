@@ -17,8 +17,6 @@
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/MVPMatrices.hpp"
 
-#include <stb/stb_image.h>
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SWIZZLE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

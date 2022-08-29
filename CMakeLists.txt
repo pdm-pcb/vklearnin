@@ -17,7 +17,6 @@ target_link_libraries(
 )
 
 add_subdirectory(vklearnin)
-add_subdirectory(third_party)
 
 set_target_properties(
 	demo PROPERTIES
@@ -25,6 +24,6 @@ set_target_properties(
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
     PCH_WARN_INVALID OFF
-	EXECUTABLE_OUTPUT_DIRECTORY_DEBUG   ${PROJECT_SOURCE_DIR}/debug/bin
-	EXECUTABLE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/release/bin
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${PROJECT_SOURCE_DIR}/debug/bin
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/release/bin
 )

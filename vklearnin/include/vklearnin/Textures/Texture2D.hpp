@@ -10,7 +10,14 @@ class Instance;
 
 class Texture2D {
 public:
-    void load_file(const char *filepath);
+    enum BPC : int {
+        R    = 1,
+        RG   = 2,
+        RGB  = 3,
+        RGBA = 4
+    };
+
+    void load_file(const char *filepath, const bool flip_vertical = true);
     void init_image_view();
     void init_sampler(const ::VkFilter min_filter, const ::VkFilter mag_filter,
                       const ::VkSamplerMipmapMode mipmap_mode,

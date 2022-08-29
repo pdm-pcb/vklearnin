@@ -5,7 +5,7 @@
 
 #include  <cstdint>
 
-using Index = uint16_t;
-static constexpr ::VkIndexType IndexType = ::VK_INDEX_TYPE_UINT16;
+using Index = uint32_t;
+static constexpr ::VkIndexType IndexType = ::VK_INDEX_TYPE_UINT32;
 
 #endif // VKLEARNIN_INDEX_HPP

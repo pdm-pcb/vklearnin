@@ -26,3 +26,15 @@ FetchContent_Declare(
     FIND_PACKAGE_ARGS
 )
 FetchContent_MakeAvailable(glm)
+
+message(NOTICE "Fetch TinyGLTF")
+FetchContent_Declare(
+    tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG        1a7c7d20013465b5c2a1285872b52a43ab62c1b3 # 2022-03-14
+)
+
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL              OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(tinygltf)

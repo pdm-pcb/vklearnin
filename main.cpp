@@ -10,6 +10,7 @@
 #include "vklearnin/DescriptorSet.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 #include "vklearnin/Buffers/DepthBuffer.hpp"
+#include "vklearnin/Models/Model.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -19,8 +20,10 @@
     using Window = Win32Window;
 #endif
 
-int main() {
+int main(int argc, char **argv) {
     ConsoleLog::init();
+
+    CONSOLE_TRACE("{}", argv[0]);
 
     Instance instance;
     instance.init_instance();
@@ -52,11 +55,70 @@ int main() {
     command_queues.init_queues();
     command_queues.init_buffers();
 
-    // =========================================================================
-    // these buffers are effectively placeholders for what will be static
-    // vertex data loaded from disk or so
 
-    // Vertex Buffer------------------------------------------------------------
+    // =========================================================================
+    // Vertex data -------------------------------------------------------------
+    Model viking_room("../../assets/meshes/viking_room.gltf");
+    BufferObject<Vertex> vertex_buffer(viking_room.vertices(), instance);
+    vertex_buffer.populate_buffer(command_queues.command_pool(),
+                                  command_queues.graphics_queue());
+
+    std::vector<::VkBuffer> vertex_buffers {
+        vertex_buffer.handle()
+    };
+
+    BufferObject<Index> index_buffer(viking_room.indices(), instance);
+    index_buffer.populate_buffer(command_queues.command_pool(),
+                                 command_queues.graphics_queue());
+    
+/*
+    std::vector<Vertex> vertices;
+    std::vector<Index>  indices;
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string error;
+
+    bool model_loaded = tinyobj::LoadObj(
+        &attrib,
+        &shapes,
+        &materials,
+        &error,
+        "../../assets/meshes/viking_room.obj"
+    );
+
+    if(!model_loaded)
+    {
+        CONSOLE_CRITICAL("\nTinyOBJ: {}", error);
+    }
+    else if(!error.empty()) {
+        CONSOLE_WARN("\nTinyOBJ: {}", error);
+    }
+
+    for(const auto &shape : shapes) {
+        for(const auto &index : shape.mesh.indices) {
+            Vertex vert(
+                glm::vec3(
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+                ),
+                glm::vec3(1.0f, 1.0f, 1.0f),
+                glm::vec2(
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    attrib.texcoords[2 * index.texcoord_index + 1]
+                )
+            );
+
+            vertices.push_back(vert);
+            indices.push_back(indices.size());
+        }
+    }
+
+    CONSOLE_TRACE("Loaded mesh with {} vertices", vertices.size());
+*/
+/*
     const std::vector<Vertex> vertices {
         {{ -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }},
         {{  0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }},
@@ -68,14 +130,6 @@ int main() {
         {{  0.5f,  0.5f, -1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }},
         {{ -0.5f,  0.5f, -1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }},
     };
-    
-    BufferObject<Vertex> vertex_buffer(vertices, instance);
-    vertex_buffer.populate_buffer(command_queues.command_pool(),
-                                  command_queues.graphics_queue());
-
-    std::vector<::VkBuffer> vertex_buffers {
-        vertex_buffer.handle()
-    };
 
     // Index Buffer-------------------------------------------------------------
     const std::vector<Index> indices {
@@ -86,15 +140,26 @@ int main() {
         6u, 7u, 4u,
     };
 
+
+    BufferObject<Vertex> vertex_buffer(vertices, instance);
+    vertex_buffer.populate_buffer(command_queues.command_pool(),
+                                  command_queues.graphics_queue());
+
+    std::vector<::VkBuffer> vertex_buffers {
+        vertex_buffer.handle()
+    };
+
     BufferObject<Index> index_buffer(indices, instance);
     index_buffer.populate_buffer(command_queues.command_pool(),
                                  command_queues.graphics_queue());
+//*/
 
     // =========================================================================
     Texture2D texture(command_queues.command_pool(),
                       command_queues.graphics_queue(),
                       instance);
-    texture.load_file("../../assets/textures/stone_wall01d.png");
+    // texture.load_file("../../assets/textures/stone_wall01d.png");
+    texture.load_file("../../assets/textures/viking_room.png");
     texture.init_image_view();
     texture.init_sampler(
         ::VK_FILTER_LINEAR,

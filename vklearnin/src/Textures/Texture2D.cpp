@@ -4,34 +4,36 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
-#include "stb/stb_image.h"
+#include "tinygltf/stb_image.h"
 
 // =============================================================================
-void Texture2D::load_file(const char *filepath) {
+void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
     CONSOLE_INFO("");
 
     int width;
     int height;
     int channels;
 
+    ::stbi_set_flip_vertically_on_load(flip_vertical);
+
     uint8_t *image_data = ::stbi_load(
         filepath,
         &width,
         &height,
         &channels,
-        0
+        BPC::RGBA
     );
 
     if(image_data == nullptr) {
-		CONSOLE_ERROR("Failed to load image '{}'\n\t"
-                      "Size/Channels: {}x{}@{}\n\t"
-                      "Error: '{}'",
-                      filepath, width, height, channels,
-                      ::stbi_failure_reason());
+		CONSOLE_CRITICAL("Failed to load image '{}'\n\t"
+                         "Size/Channels: {}x{}@{}\n\t"
+                         "Error: '{}'",
+                         filepath, width, height, channels,
+                         ::stbi_failure_reason());
         return;
     }
 
-    auto image_size = static_cast<size_t>(width * height * channels);
+    auto image_size = static_cast<size_t>(width * height * BPC::RGBA);
 
     _staging = new StagingBuffer<uint8_t>(
         image_data,
@@ -43,18 +45,14 @@ void Texture2D::load_file(const char *filepath) {
 
     _extent.width  = static_cast<uint32_t>(width);
     _extent.height = static_cast<uint32_t>(height);
+    _format = ::VK_FORMAT_R8G8B8A8_SRGB;
 
-    switch(channels) {
-        case 1: _format = ::VK_FORMAT_R8_SRGB;       break;
-        case 2: _format = ::VK_FORMAT_R8G8_SRGB;     break;
-        case 3: _format = ::VK_FORMAT_R8G8B8_SRGB;   break;
-        case 4: _format = ::VK_FORMAT_R8G8B8A8_SRGB; break;
-        default:
-            CONSOLE_ERROR(
-                "Unsupported image channel count {} for image '{}'",
-                channels, filepath
-            );
-            break;
+    if(channels != BPC::RGBA) {
+        CONSOLE_WARN(
+            "Unsupported image channel count {} for image '{}'; converted "
+            "to RGBA",
+            channels, filepath
+        );
     }
 
     _create_image();

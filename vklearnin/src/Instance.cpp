@@ -260,13 +260,13 @@ void Instance::init_physical_device() {
 
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
-        if(device_idx == 0) {
+        if(device_idx == 1) {
             _max_anisotropy = properties.limits.maxSamplerAnisotropy;
         }
     }
 
     // TODO: this should actually be a choice, but whateva.
-    _physical_device = devices[0];
+    _physical_device = devices[1];
 }
 
 // =============================================================================

@@ -27,6 +27,9 @@ add_library(
 target_include_directories(
     vklearnin PUBLIC
     "include/"
+    "${fmt_SOURCE_DIR}"
+    "${spdlog_SOURCE_DIR}"
+    "${glm_SOURCE_DIR}"
 )
 
 target_precompile_headers(
@@ -34,19 +37,12 @@ target_precompile_headers(
     "include/vklearnin/common.hpp"
 )
 
-target_include_directories(
-    vklearnin PUBLIC
-    "${fmt_SOURCE_DIR}"
-    "${spdlog_SOURCE_DIR}"
-    "${glm_SOURCE_DIR}"
-)
-
 target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
     fmt
     spdlog
-    third_party
+    tinygltf
 )
 
 set(
@@ -145,8 +141,6 @@ set_target_properties(
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
     PCH_WARN_INVALID OFF
-	EXECUTABLE_OUTPUT_DIRECTORY_DEBUG   ${PROJECT_SOURCE_DIR}/debug/bin
-	EXECUTABLE_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/release/bin
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG      ${PROJECT_SOURCE_DIR}/debug/lib
 	LIBRARY_OUTPUT_DIRECTORY_DEBUG      ${PROJECT_SOURCE_DIR}/debug/lib
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE    ${PROJECT_SOURCE_DIR}/release/lib
