@@ -17,7 +17,7 @@ public:
         RGBA = 4
     };
 
-    void load_file(const char *filepath, const bool flip_vertical = true);
+    void load_file(const char *filepath, const bool flip_vertical = false);
     void init_image_view();
     void init_sampler(const ::VkFilter min_filter, const ::VkFilter mag_filter,
                       const ::VkSamplerMipmapMode mipmap_mode,

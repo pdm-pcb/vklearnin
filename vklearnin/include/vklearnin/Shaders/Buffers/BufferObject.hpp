@@ -27,14 +27,18 @@ public:
 
         command_buffer.begin();
             // copy the goodness
-            ::VkBufferCopy copy_region { };
-            copy_region.size = _buffer_size;
+            ::VkBufferCopy copy_regions[] {{
+                .srcOffset = 0u,
+                .dstOffset = 0u,
+                .size = _buffer_size,
+            }};
+            
             ::vkCmdCopyBuffer(
                 buffer_handle,
                 _staging_buffer->handle(),
                 _device_buffer,
-                1u,
-                &copy_region
+                static_cast<uint32_t>(std::size(copy_regions)),
+                copy_regions
             );
         command_buffer.end();
         command_buffer.submit(queue);

@@ -93,15 +93,16 @@ Model::Model(const char *model_path) {
     std::string warning;
 
     bool res = loader.LoadASCIIFromFile(&model, &error, &warning, model_path);
+    // bool res = loader.LoadBinaryFromFile(&model, &error, &warning, model_path);
 
     if(!warning.empty()) {
         CONSOLE_WARN("TinyGLTF Warning: {}", warning);
     }
     if(!error.empty()) {
-        CONSOLE_ERROR("TinyGLTF Error: {}", warning);
+        CONSOLE_ERROR("TinyGLTF Error: {}", error);
     }
     if(res == false) {
-        CONSOLE_ERROR("TinyGLTF failed to load {}", model_path);
+        CONSOLE_CRITICAL("TinyGLTF failed to load {}", model_path);
     }
 
     for(auto &node : model.nodes) {
