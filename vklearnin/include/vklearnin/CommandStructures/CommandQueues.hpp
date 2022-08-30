@@ -64,6 +64,7 @@ private:
     std::optional<uint32_t> _present_family;
 
     std::vector<::VkDeviceQueueCreateInfo> _queue_info_structs;
+    std::vector<float> _queue_priorities;
 
     ::VkQueue  _graphics_queue;
     ::VkQueue  _present_queue;

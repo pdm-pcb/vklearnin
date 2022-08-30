@@ -75,22 +75,20 @@ void CommandQueues::init_queue_info() {
     };
 
     _queue_info_structs.reserve(unique_command_queues.size());
-
-    // If there are actually multiple queue indices, they'll need to be
-    // prioritized
-    float priorities[] = { 1.0f };
+    _queue_priorities.reserve(unique_command_queues.size());
 
     // I'm suspicious of setting queueCount to 1 for each iteration of this
     // loop, but at present there really is only one queue, so...
     for(const uint32_t family : unique_command_queues) {
+        _queue_priorities.emplace_back(1.0f);
         _queue_info_structs.emplace_back(
             ::VkDeviceQueueCreateInfo {
                 .sType = ::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .pNext = nullptr,
                 .flags = 0u,
                 .queueFamilyIndex = family,
-                .queueCount = static_cast<uint32_t>(std::size(priorities)),
-                .pQueuePriorities = priorities,
+                .queueCount = static_cast<uint32_t>(_queue_priorities.size()),
+                .pQueuePriorities = _queue_priorities.data(),
             }
         );
     }

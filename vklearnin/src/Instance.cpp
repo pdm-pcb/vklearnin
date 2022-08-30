@@ -274,7 +274,7 @@ void Instance::init_physical_device() {
 void Instance::init_logical_device(const CommandQueues &command_queue) {
     CONSOLE_INFO("");
 
-    CONSOLE_TRACE("{}", fmt::ptr(&command_queue));
+    // CONSOLE_TRACE("{}", fmt::ptr(&command_queue));
 
     // specify logical device extension(s) tahaaaaave
     const char *extensions[] {
@@ -294,7 +294,7 @@ void Instance::init_logical_device(const CommandQueues &command_queue) {
 
     // finally populate the logical device creation information
     ::VkDeviceCreateInfo device_info {
-        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .sType = ::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
         .queueCreateInfoCount = command_queue.queue_count(),
@@ -381,7 +381,7 @@ Instance::~Instance() {
 
 #ifdef VK_VALIDATION_LAYER
     VKDebugger::shutdown(*this);
-#endif // VK_VALIDATION_LAYER
+#endif
 
     ::vkDestroyDevice(_logical_device, nullptr);
     ::vkDestroyInstance(_instance, nullptr);
