@@ -1,12 +1,9 @@
 #ifndef VKLEARNIN_CONSOLELOG_HPP
 #define VKLEARNIN_CONSOLELOG_HPP
 
-// #define SPDLOG_FMT_EXTERNAL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
-#include <spdlog/fmt/xchar.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
 
 #include <cassert>
 
