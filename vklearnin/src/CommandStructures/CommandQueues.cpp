@@ -15,30 +15,20 @@
 void CommandQueues::init_families() {
     CONSOLE_INFO("");
 
-    // query and populate the list of command queue families
-    uint32_t queue_family_count = 0u;
-    ::vkGetPhysicalDeviceQueueFamilyProperties(
-        _instance.physical_device(),
-        &queue_family_count,
-        nullptr
-    );
+    std::vector<vk::QueueFamilyProperties> family_props =
+        _instance.physical_device().getQueueFamilyProperties();
 
-    assert(queue_family_count > 0);
-    CONSOLE_TRACE("Found {} queue families", queue_family_count);
-
-    std::vector<::VkQueueFamilyProperties> family_props(queue_family_count);
-    ::vkGetPhysicalDeviceQueueFamilyProperties(
-        _instance.physical_device(),
-        &queue_family_count,
-        family_props.data()
-    );
+    CONSOLE_TRACE("Found {} queue families", family_props.size());
 
     // run through each queue family to establish the first which can both
     // draw and present
-    std::vector<::VkBool32> present_support(queue_family_count);
-    for(uint32_t queue = 0; queue < queue_family_count; ++queue) {
+    std::vector<vk::Bool32> present_support(family_props.size());
+
+    auto flags = (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eTransfer);
+
+    for(uint32_t queue = 0; queue < family_props.size(); ++queue) {
         // grab the surface info for this command queue family
-        _instance._GetPhysicalDeviceSurfaceSupportKHR(
+        vkGetPhysicalDeviceSurfaceSupportKHR(
             _instance.physical_device(),
             queue,
             _surface,
@@ -47,9 +37,7 @@ void CommandQueues::init_families() {
 
         // if this family can both draw and present, we've got the queue we
         // want
-        if((family_props[queue].queueFlags &
-            (::VK_QUEUE_GRAPHICS_BIT | ::VK_QUEUE_TRANSFER_BIT)) != 0)
-        {
+        if(family_props[queue].queueFlags & flags) {
             if(present_support[queue] == VK_TRUE) {
                 _graphics_family = queue;
                 _present_family = queue;
@@ -82,10 +70,7 @@ void CommandQueues::init_queue_info() {
     for(const uint32_t family : unique_command_queues) {
         _queue_priorities.emplace_back(1.0f);
         _queue_info_structs.emplace_back(
-            ::VkDeviceQueueCreateInfo {
-                .sType = ::VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .pNext = nullptr,
-                .flags = 0u,
+            vk::DeviceQueueCreateInfo {
                 .queueFamilyIndex = family,
                 .queueCount = static_cast<uint32_t>(_queue_priorities.size()),
                 .pQueuePriorities = _queue_priorities.data(),
@@ -107,19 +92,18 @@ void CommandQueues::init_pools() {
     // As I've just learned, a command pool is the memory from which any given
     // number of command buffers may be allocated. However, they are not
     // synchronized at all, so each thread must have separate pools.
-    ::VkCommandPoolCreateInfo pool_info { };
-    pool_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    pool_info.flags = ::VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    pool_info.queueFamilyIndex = graphics_index();
+    vk::CommandPoolCreateInfo pool_info {
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = graphics_index()
+    };
 
-    ::VkResult result = ::vkCreateCommandPool(
-        _instance.logical_device(),
+    auto result = _instance.logical_device().createCommandPool(
         &pool_info,
         nullptr,
         &_command_pool
     );
 
-    if(result != ::VK_SUCCESS) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Unable to create graphics command pool.");
     }
     else {
@@ -132,40 +116,30 @@ void CommandQueues::init_queues() {
     CONSOLE_INFO("");
 
     // retrieve the graphics command queue
-    ::vkGetDeviceQueue(
-        _instance.logical_device(),
+    _instance.logical_device().getQueue(
         graphics_index(),
         0u,
         &_graphics_queue
     );
 
-    if(_graphics_queue == nullptr) {
-        CONSOLE_ERROR("Could not get logical device's graphics queue.");
-    }
-
     // retrieve the presentation command queue
-    ::vkGetDeviceQueue(
-        _instance.logical_device(),
+    _instance.logical_device().getQueue(
         present_index(),
         0u,
         &_present_queue
     );
-
-    if(_present_queue == nullptr) {
-        CONSOLE_ERROR("Could not get logical device's presentation queue.");
-    }
 }
 
 // =============================================================================
 void CommandQueues::init_buffers() {
     CONSOLE_INFO("");
 
-    ::VkCommandBufferAllocateInfo buffer_info { };
-    buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    buffer_info.commandPool = _command_pool;
-    buffer_info.level = ::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    buffer_info.commandBufferCount =
-        static_cast<uint32_t>(std::size(_command_buffers));
+    vk::CommandBufferAllocateInfo buffer_info {
+        .commandPool = _command_pool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 
+            static_cast<uint32_t>(_command_buffers.size())
+    };
 
     CONSOLE_TRACE(
         "Allocating {} command {}",
@@ -173,19 +147,18 @@ void CommandQueues::init_buffers() {
         buffer_info.commandBufferCount == 1 ? "buffer" : "buffers"
     );
 
-    ::VkResult result = ::vkAllocateCommandBuffers(
-        _instance.logical_device(),
+    auto result = _instance.logical_device().allocateCommandBuffers(
         &buffer_info,
         _command_buffers.data()
     );
 
-    if(result != ::VK_SUCCESS) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Unable to allocate command buffer");
     }
 }
 
 // =============================================================================
-CommandQueues::CommandQueues(const ::VkSurfaceKHR &surface,
+CommandQueues::CommandQueues(const vk::SurfaceKHR &surface,
                              const Instance &instance) :
     _graphics_queue  { nullptr  },
     _present_queue   { nullptr  },
@@ -198,11 +171,5 @@ CommandQueues::CommandQueues(const ::VkSurfaceKHR &surface,
 }
 
 CommandQueues::~CommandQueues() {
-    if(_command_pool != nullptr) {
-        ::vkDestroyCommandPool(
-            _instance.logical_device(),
-            _command_pool,
-            nullptr
-        );
-    }
+    _instance.logical_device().destroy(_command_pool);
 }

@@ -2,7 +2,7 @@
 #ifndef VKLEARNIN_WIN32WINDOW_HPP
 #define VKLEARNIN_WIN32WINDOW_HPP
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <Windows.h>
 
 #include <cstdint>
@@ -17,11 +17,11 @@ public:
     void init_window();
     void init_surface();
 
-    inline ::VkSurfaceKHR & surface() { return _surface; }
+    inline vk::SurfaceKHR & surface() { return _surface; }
     inline uint32_t width()  const    { return _width;   }
     inline uint32_t height() const    { return _height;  }
 
-    Win32Window(const ::VkInstance &instance,
+    Win32Window(const vk::Instance &instance,
                 const uint32_t width = 0, const uint32_t height = 0);
     ~Win32Window();
 
@@ -31,7 +31,7 @@ private:
     ::HINSTANCE _hinstance;
     ::HWND      _hwindow;
 
-    ::VkSurfaceKHR _surface;
+    vk::SurfaceKHR _surface;
 
     uint32_t _width;
     uint32_t _height;
@@ -41,7 +41,7 @@ private:
     bool _fullscreen;
     bool _running;
 
-    const ::VkInstance &_instance;
+    const vk::Instance &_instance;
 
     static ::LRESULT CALLBACK
     _message_dispatch(::HWND window, ::UINT msg, ::WPARAM wparam,

@@ -4,7 +4,7 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <vector>
 
@@ -12,7 +12,7 @@ template <typename Datum>
 class StagingBuffer {
 public:
 // =============================================================================
-    inline ::VkBuffer handle() const { return _staging_buffer; }
+    inline vk::Buffer handle() const { return _staging_buffer; }
 
 // =============================================================================
     StagingBuffer(const std::vector<Datum> &data, const Instance &instance) :
@@ -64,8 +64,8 @@ private:
     std::vector<Datum> _data;
     size_t _buffer_size;
 
-    ::VkBuffer       _staging_buffer;
-    ::VkDeviceMemory _staging_memory;
+    vk::Buffer       _staging_buffer;
+    vk::DeviceMemory _staging_memory;
 
     const Instance  &_instance;
 
@@ -75,10 +75,10 @@ private:
 
         BufferTools::create_buffer(
             _staging_buffer, sizeof(Datum) * _data.size(),
-            ::VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            vk::BufferUsageFlagBits::eTransferSrc,
             _staging_memory,
-            ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-            ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent,
             _instance
         );
     }

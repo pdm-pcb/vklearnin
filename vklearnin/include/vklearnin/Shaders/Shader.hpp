@@ -1,24 +1,24 @@
 #ifndef VKLEARNIN_SHADER_HPP
 #define VKLEARNIN_SHADER_HPP
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <string>
 
 // =============================================================================
 class Shader {
 public:
-    // static ::VkShaderModule
+    // static vk::ShaderModule
     // module_from_source(const char *filepath,
     //                    const ::shaderc_shader_kind shader_kind,
-    //                    const ::VkDevice &logical_device,
+    //                    const vk::Device &logical_device,
     //                    const bool optimize);
 
-    static ::VkShaderModule
-    module_from_binary(const char *filepath,
-                       const ::VkDevice &logical_device);
+    static vk::ShaderModule
+    module_from_binary(const char *filepath, const vk::Device &device);
+
 private:
-    static char * _read_source(const char *filepath);
+    // static char * _read_source(const char *filepath);
     static std::vector<char> _read_binary(const char *filepath);
 
     // static std::string _preprocess(const char *filepath,

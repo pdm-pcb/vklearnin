@@ -5,8 +5,8 @@
 #include "vklearnin/Swapchain.hpp"
 
 // =============================================================================
-void DepthBuffer::init_image(const ::VkImageTiling &tiling,
-                             const ::VkFormatFeatureFlags &flags)
+void DepthBuffer::init_image(const vk::ImageTiling &tiling,
+                             const vk::FormatFeatureFlags &flags)
 {
     CONSOLE_INFO("");
 
@@ -17,8 +17,8 @@ void DepthBuffer::init_image(const ::VkImageTiling &tiling,
     ImageTools::init_image(
         { width, height, 1u },
         _format, tiling,
-        ::VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
         _image_handle, _device_memory,
         _instance
     );
@@ -31,39 +31,36 @@ void DepthBuffer::init_image_view() {
     _image_view = ImageTools::init_view(
         _image_handle,
         _format,
-        ::VK_IMAGE_ASPECT_DEPTH_BIT,
+        vk::ImageAspectFlagBits::eDepth,
         _instance.logical_device()
     );
 }
 
 // =============================================================================
-void DepthBuffer::_choose_format(const ::VkImageTiling &tiling,
-                                 const ::VkFormatFeatureFlags &flags)
+void DepthBuffer::_choose_format(const vk::ImageTiling &tiling,
+                                 const vk::FormatFeatureFlags &flags)
 {
     CONSOLE_INFO("");
 
-    ::VkFormat formats[] {
-        ::VK_FORMAT_D32_SFLOAT,
-        ::VK_FORMAT_D32_SFLOAT_S8_UINT,
-        ::VK_FORMAT_D24_UNORM_S8_UINT
+    vk::Format formats[] {
+        vk::Format::eD32Sfloat,
+        vk::Format::eD32SfloatS8Uint,
+        vk::Format::eD24UnormS8Uint,
     };
 
     size_t fmt_index = 0;
     while(fmt_index < std::size(formats)) {
-        ::VkFormatProperties format_props;
-        ::vkGetPhysicalDeviceFormatProperties(
-            _instance.physical_device(),
-            formats[fmt_index],
-            &format_props
+        auto format_props =_instance.physical_device().getFormatProperties(
+            formats[fmt_index]
         );
 
-        if(tiling == ::VK_IMAGE_TILING_LINEAR &&
+        if(tiling == vk::ImageTiling::eLinear &&
           (format_props.linearTilingFeatures & flags) == flags)
         {
             break;
         }
 
-        if(tiling == ::VK_IMAGE_TILING_OPTIMAL &&
+        if(tiling == vk::ImageTiling::eOptimal &&
           (format_props.optimalTilingFeatures & flags) == flags)
         {
             break;
@@ -84,7 +81,7 @@ DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
     _image_handle  { nullptr },
     _device_memory { nullptr },
     _image_view    { nullptr },
-    _format        { ::VK_FORMAT_UNDEFINED },
+    _format        { vk::Format::eUndefined },
     _instance      { instance  },
     _swapchain     { swapchain }
 {

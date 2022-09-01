@@ -31,10 +31,10 @@ void UniformBufferObject::init_buffers() {
         BufferTools::create_buffer(
             _buffer_handles[frame],
             _data_size,
-            ::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            vk::BufferUsageFlagBits::eUniformBuffer,
             _memory_handles[frame],
-            ::VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-            ::VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent,
             _instance
         );
     }

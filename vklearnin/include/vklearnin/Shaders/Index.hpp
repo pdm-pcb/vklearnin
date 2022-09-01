@@ -1,11 +1,11 @@
 #ifndef VKLEARNIN_INDEX_HPP
 #define VKLEARNIN_INDEX_HPP
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include  <cstdint>
 
 using Index = uint32_t;
-static constexpr ::VkIndexType IndexType = ::VK_INDEX_TYPE_UINT32;
+static constexpr vk::IndexType IndexType = vk::IndexType::eUint32;
 
 #endif // VKLEARNIN_INDEX_HPP

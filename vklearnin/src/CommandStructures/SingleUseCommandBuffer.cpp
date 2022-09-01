@@ -4,23 +4,22 @@
 #include "vklearnin/Instance.hpp"
 
 // =============================================================================
-::VkCommandBuffer & SingleUseCommandBuffer::init()
+vk::CommandBuffer & SingleUseCommandBuffer::init()
 {
     CONSOLE_INFO("");
 
-    ::VkCommandBufferAllocateInfo alloc_info { };
-    alloc_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.level = ::VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = _pool;
-    alloc_info.commandBufferCount = 1u;
+    vk::CommandBufferAllocateInfo alloc_info {
+        .commandPool = _pool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1u
+    };
 
-    auto result = ::vkAllocateCommandBuffers(
-        _instance.logical_device(),
+    auto result = _instance.logical_device().allocateCommandBuffers(
         &alloc_info,
         &_buffer
     );
 
-    if(result != ::VK_SUCCESS) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Failed to allocate command buffer.");
     }
 
@@ -31,61 +30,40 @@
 void SingleUseCommandBuffer::begin() {
     CONSOLE_INFO("");
 
-    ::VkCommandBufferBeginInfo buffer_info { };
-    buffer_info.sType = ::VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    buffer_info.flags = ::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vk::CommandBufferBeginInfo buffer_info {
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    };
 
-    auto result = ::vkBeginCommandBuffer(_buffer, &buffer_info);
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to begin command buffer recording.");
-    }
+    _buffer.begin(buffer_info);
 }
 
 // =============================================================================
 void SingleUseCommandBuffer::end() {
     CONSOLE_INFO("");
 
-    auto result = ::vkEndCommandBuffer(_buffer);
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Failed to record to command buffer.");
-    }
+     _buffer.end();
 }
 
 // =============================================================================
-void SingleUseCommandBuffer::submit(const ::VkQueue &queue) {
+void SingleUseCommandBuffer::submit(const vk::Queue &queue) {
     CONSOLE_INFO("");
 
-    ::VkSubmitInfo submitInfo{};
-    submitInfo.sType = ::VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1u;
-    submitInfo.pCommandBuffers = &_buffer;
+    vk::SubmitInfo submitInfo {
+        .commandBufferCount = 1u,
+        .pCommandBuffers = &_buffer
+    };
 
-    auto result = ::vkQueueSubmit(
-        queue,
-        1u,
-        &submitInfo,
-        0u
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to submit buffer command queue.");
-    }
+    queue.submit(submitInfo);
 
     // give it some time...
-    ::vkQueueWaitIdle(queue);
+    queue.waitIdle();
 
     // and we're done
-    ::vkFreeCommandBuffers(
-        _instance.logical_device(),
-        _pool,
-        1u,
-        &_buffer
-    );
+    _instance.logical_device().freeCommandBuffers(_pool, _buffer);
 }
 
 // =============================================================================
-SingleUseCommandBuffer::SingleUseCommandBuffer(const ::VkCommandPool &pool,
+SingleUseCommandBuffer::SingleUseCommandBuffer(const vk::CommandPool &pool,
                                                const Instance &instance) :
     _pool     { pool },
     _buffer   { nullptr },

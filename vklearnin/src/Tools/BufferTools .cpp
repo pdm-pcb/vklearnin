@@ -6,31 +6,21 @@
 namespace BufferTools {
 
 // =============================================================================
-void create_buffer(::VkBuffer       &buffer,
-                   const size_t      buffer_size,
-                   const uint32_t    buffer_usage_flags,
-                   ::VkDeviceMemory &memory,
-                   const uint32_t    memory_flags,
-                   const Instance   &instance)
+void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
+                   const vk::BufferUsageFlags buffer_usage_flags,
+                   vk::DeviceMemory &memory,
+                   const vk::MemoryPropertyFlags memory_flags,
+                   const Instance &instance)
 {
     CONSOLE_INFO("");
 
-    ::VkBufferCreateInfo buffer_info { };
-    buffer_info.sType       = ::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size        = buffer_size;
-    buffer_info.usage       = buffer_usage_flags;
-    buffer_info.sharingMode = ::VK_SHARING_MODE_EXCLUSIVE;
+    vk::BufferCreateInfo buffer_info {
+        .size        = buffer_size,
+        .usage       = buffer_usage_flags,
+        .sharingMode = vk::SharingMode::eExclusive,
+    };
 
-    auto result = ::vkCreateBuffer(
-        instance.logical_device(),
-        &buffer_info,
-        nullptr,
-        &buffer
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Failed to create buffer.");
-    }
+    buffer = instance.logical_device().createBuffer(buffer_info);
 
     allocate_memory(buffer, memory, memory_flags, instance);
 
@@ -42,50 +32,36 @@ void create_buffer(::VkBuffer       &buffer,
 }
 
 // =============================================================================
-void allocate_memory(const ::VkBuffer &buffer, ::VkDeviceMemory &memory,
-                     const uint32_t type_flags, const Instance &instance) {
+void allocate_memory(const vk::Buffer &buffer, vk::DeviceMemory &memory,
+                     const vk::MemoryPropertyFlags type_flags,
+                     const Instance &instance)
+{
     CONSOLE_INFO("");
 
-    ::VkMemoryRequirements memory_reqs { };
-    ::vkGetBufferMemoryRequirements(
-        instance.logical_device(),
-        buffer,
-        &memory_reqs
+    auto memory_reqs =
+        instance.logical_device().getBufferMemoryRequirements(buffer);
+
+    auto type_index = find_memory_type(
+        memory_reqs.memoryTypeBits,
+        type_flags,
+        instance
     );
 
-    auto type_index = find_memory_type(memory_reqs.memoryTypeBits, type_flags,
-                                       instance);
-
-    ::VkMemoryAllocateInfo alloc_info { };
-    alloc_info.sType = ::VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    vk::MemoryAllocateInfo alloc_info { };
     alloc_info.allocationSize = memory_reqs.size;
     alloc_info.memoryTypeIndex = type_index;
 
-    auto result = ::vkAllocateMemory(
-        instance.logical_device(),
-        &alloc_info,
-        nullptr,
-        &memory
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_CRITICAL("Unable to allocate buffer memory");
-        return;
-    }
+    memory = instance.logical_device().allocateMemory(alloc_info);
 }
 
 // =============================================================================
 uint32_t find_memory_type(const uint32_t type_bits,
-                          const ::VkMemoryPropertyFlags flags,
+                          const vk::MemoryPropertyFlags flags,
                           const Instance &instance)
 {
     CONSOLE_INFO("");
 
-    ::VkPhysicalDeviceMemoryProperties memory_props { };
-    ::vkGetPhysicalDeviceMemoryProperties(
-        instance.physical_device(),
-        &memory_props
-    );
+    auto memory_props = instance.physical_device().getMemoryProperties();
 
     CONSOLE_TRACE(
         "Found {} memory types and {} heaps on physical device.",

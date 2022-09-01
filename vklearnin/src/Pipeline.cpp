@@ -7,27 +7,21 @@
 // =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {
     _vert = Shader::module_from_binary(filepath, _instance.logical_device());
-
-    _shader_stages.emplace_back(::VkPipelineShaderStageCreateInfo { });
-    auto &stage = _shader_stages.back();
-
-    stage.sType  = ::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stage.stage  = ::VK_SHADER_STAGE_VERTEX_BIT;
-    stage.module = _vert;
-    stage.pName  = "main";
+    _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
+        .stage = vk::ShaderStageFlagBits::eVertex,
+        .module = _vert,
+        .pName = "main",
+    });
 }
 
 // =============================================================================
 void Pipeline::fragment_from_binary(const char *filepath) {
     _frag = Shader::module_from_binary(filepath, _instance.logical_device());
-
-    _shader_stages.emplace_back(::VkPipelineShaderStageCreateInfo { });
-    auto &stage = _shader_stages.back();
-
-    stage.sType  = ::VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stage.stage  = ::VK_SHADER_STAGE_FRAGMENT_BIT;
-    stage.module = _frag;
-    stage.pName  = "main";
+    _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
+        .stage = vk::ShaderStageFlagBits::eFragment,
+        .module = _frag,
+        .pName = "main",
+    });
 }
 
 // =============================================================================
@@ -37,21 +31,20 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
 
     _init_depth_buffer(swapchain);
 
-    ::VkAttachmentReference color_refs[] {{
+    vk::AttachmentReference color_refs[] {{
         // the zeroth attachment is the fragment shader's outColor layout
         // location
         .attachment = 0u,
-        .layout     = ::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .layout     = vk::ImageLayout::eColorAttachmentOptimal,
     }};
 
-    ::VkAttachmentReference depth_ref {
+    vk::AttachmentReference depth_ref {
         .attachment = 1,
-        .layout = ::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     };
 
-    ::VkSubpassDescription subpasses[] {{
-        .flags = 0u,
-        .pipelineBindPoint    = ::VK_PIPELINE_BIND_POINT_GRAPHICS,
+    vk::SubpassDescription subpasses[] {{
+        .pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
         .inputAttachmentCount = 0u,
         .pInputAttachments    = nullptr,
         .colorAttachmentCount = static_cast<uint32_t>(std::size(color_refs)),
@@ -62,53 +55,48 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         .pPreserveAttachments    = 0u,
     }};
 
-    ::VkAttachmentDescription attachments[] {
+    vk::AttachmentDescription attachments[] {
         // color attachment description
         {
-            .flags          = 0u,
             .format         = swapchain.color_format(),
-            .samples        = ::VK_SAMPLE_COUNT_1_BIT,
-            .loadOp         = ::VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp        = ::VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp  = ::VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = ::VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout  = ::VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout    = ::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .samples        = vk::SampleCountFlagBits::e1,
+            .loadOp         = vk::AttachmentLoadOp::eClear,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
+            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+            .initialLayout  = vk::ImageLayout::eUndefined,
+            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
         },
         // depth buffer attachment description
         {
-            .flags          = 0u,
             .format         = _depth_buffer->format(),
-            .samples        = ::VK_SAMPLE_COUNT_1_BIT,
-            .loadOp         = ::VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp        = ::VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .stencilLoadOp  = ::VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = ::VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout  = ::VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = ::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .samples        = vk::SampleCountFlagBits::e1,
+            .loadOp         = vk::AttachmentLoadOp::eClear,
+            .storeOp        = vk::AttachmentStoreOp::eDontCare,
+            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+            .initialLayout  = vk::ImageLayout::eUndefined,
+            .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
         }
     };
 
     // given the single render pass for this setup, specifying the following
     // dependency ensures the render pass doesn't begin until there's an image
     // available
-    ::VkSubpassDependency dependencies[] {{
+    vk::SubpassDependency dependencies[] {{
         .srcSubpass      = VK_SUBPASS_EXTERNAL,
         .dstSubpass      = 0u,
-        .srcStageMask    = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                           ::VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-        .dstStageMask    = ::VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                           ::VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-        .srcAccessMask   = 0u,
-        .dstAccessMask   = ::VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-                           ::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dependencyFlags = 0u
+        .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+                           vk::PipelineStageFlagBits::eEarlyFragmentTests,
+        .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+                           vk::PipelineStageFlagBits::eEarlyFragmentTests,
+        .srcAccessMask   = { },
+        .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite |
+                           vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+        .dependencyFlags = { }
     }};
 
-    ::VkRenderPassCreateInfo renderpass_info {
-        .sType = ::VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::RenderPassCreateInfo renderpass_info {
         .attachmentCount = static_cast<uint32_t>(std::size(attachments)),
         .pAttachments    = attachments,
         .subpassCount    = static_cast<uint32_t>(std::size(subpasses)),
@@ -125,42 +113,22 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         renderpass_info.subpassCount == 1 ? "subpass" : "subpasses"
     );
 
-    ::VkResult result = ::vkCreateRenderPass(
-        _instance.logical_device(),
-        &renderpass_info,
-        nullptr,
-        &_renderpass
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Could not create default render pass");
-    }
+    _renderpass = _instance.logical_device().createRenderPass(renderpass_info);
 }
 
 // =============================================================================
-void Pipeline::init_layout(const ::VkDescriptorSetLayout &desc_set_layout) {
+void Pipeline::init_layout(const vk::DescriptorSetLayout &desc_set_layout) {
     CONSOLE_INFO("");
 
-    ::VkPipelineLayoutCreateInfo pipeline_layout_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::PipelineLayoutCreateInfo pipeline_layout_info {
         .setLayoutCount = 1u,
         .pSetLayouts = &desc_set_layout,
         .pushConstantRangeCount = 0u,
         .pPushConstantRanges = nullptr
     };
 
-    auto result = ::vkCreatePipelineLayout(
-        _instance.logical_device(),
-        &pipeline_layout_info,
-        nullptr,
-        &_layout
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to initialize pipeline layout.");
-    }
+    _layout =
+        _instance.logical_device().createPipelineLayout(pipeline_layout_info);
 }
 
 // =============================================================================
@@ -170,17 +138,14 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
 
     // these two will allow resizing of the viewport and/or scissor rectangle
     // without recreating the entire graphcis pipeline
-    ::VkDynamicState dynamic_states[] = { 
-        ::VK_DYNAMIC_STATE_VIEWPORT,
-        ::VK_DYNAMIC_STATE_SCISSOR
+    vk::DynamicState dynamic_states[] = { 
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor,
     };
 
     CONSOLE_TRACE("Dynamic state count: {}", std::size(dynamic_states));
 
-    ::VkPipelineDynamicStateCreateInfo dynamic_state_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::PipelineDynamicStateCreateInfo dynamic_state_info {
         .dynamicStateCount = static_cast<uint32_t>(std::size(dynamic_states)),
         .pDynamicStates    = dynamic_states,
     };
@@ -190,10 +155,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
     auto attribute_desc = Vertex::attribute_desc();
 
     // and hand them over as part of the pipeline's input state
-    ::VkPipelineVertexInputStateCreateInfo vertex_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::PipelineVertexInputStateCreateInfo vertex_info {
         .vertexBindingDescriptionCount =
             static_cast<uint32_t>(binding_desc.size()),
         .pVertexBindingDescriptions = binding_desc.data(),
@@ -203,22 +165,16 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
     };
 
     // assemble a triangle list, like anything at this point
-    ::VkPipelineInputAssemblyStateCreateInfo assembly_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .topology = ::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .primitiveRestartEnable = VK_FALSE
+    vk::PipelineInputAssemblyStateCreateInfo assembly_info {
+        .topology = vk::PrimitiveTopology::eTriangleList,
+        .primitiveRestartEnable = false
     };
 
     // viewports and scissor rectangles are all sized the same as the surface
     // at present
     update_dimensions(swapchain);
 
-    ::VkPipelineViewportStateCreateInfo viewport_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::PipelineViewportStateCreateInfo viewport_info {
         .viewportCount = 1u,
         .pViewports = nullptr,
         .scissorCount = 1u,
@@ -229,16 +185,13 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
     CONSOLE_TRACE("Scissor count:  {}", viewport_info.scissorCount);
 
     // standard rasterization details: fill, clockwise, cull backfaces
-    ::VkPipelineRasterizationStateCreateInfo rasterizer {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .depthClampEnable = VK_FALSE,
-        .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = ::VK_POLYGON_MODE_FILL,
-        .cullMode    = ::VK_CULL_MODE_BACK_BIT,
-        .frontFace   = ::VK_FRONT_FACE_CLOCKWISE,
-        .depthBiasEnable         = VK_FALSE,
+    vk::PipelineRasterizationStateCreateInfo rasterizer {
+        .depthClampEnable = false,
+        .rasterizerDiscardEnable = false,
+        .polygonMode = vk::PolygonMode::eFill,
+        .cullMode    = vk::CullModeFlagBits::eBack,
+        .frontFace   = vk::FrontFace::eClockwise,
+        .depthBiasEnable         = false,
         .depthBiasConstantFactor = 0.0f,
         .depthBiasClamp          = 0.0f,
         .depthBiasSlopeFactor    = 0.0f,
@@ -246,84 +199,72 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
     };
 
     // nothing to do here yet, but it'll be fun when we can
-    ::VkPipelineMultisampleStateCreateInfo multisampling {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .rasterizationSamples  = ::VK_SAMPLE_COUNT_1_BIT,
-        .sampleShadingEnable   = VK_FALSE,
+    vk::PipelineMultisampleStateCreateInfo multisampling {
+        .rasterizationSamples  = vk::SampleCountFlagBits::e1,
+        .sampleShadingEnable   = false,
         .minSampleShading      = 1.0f,
         .pSampleMask           = nullptr,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable      = VK_FALSE,
+        .alphaToCoverageEnable = false,
+        .alphaToOneEnable      = false,
     };
 
-    ::VkPipelineDepthStencilStateCreateInfo depth_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::PipelineDepthStencilStateCreateInfo depth_info {
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = ::VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = false,
+        .stencilTestEnable = false,
         .front = {
-            .failOp = ::VK_STENCIL_OP_KEEP,
-            .passOp = ::VK_STENCIL_OP_KEEP,
-            .depthFailOp = ::VK_STENCIL_OP_KEEP,
-            .compareOp = ::VK_COMPARE_OP_NEVER,
-            .compareMask = 0u,
-            .writeMask = 0u,
-            .reference = 0u,
+            .failOp      = vk::StencilOp::eKeep,
+            .passOp      = vk::StencilOp::eKeep,
+            .depthFailOp = vk::StencilOp::eKeep,
+            .compareOp   = vk::CompareOp::eNever,
+            .compareMask = { },
+            .writeMask   = { },
+            .reference   = { },
         },
         .back = {
-            .failOp = ::VK_STENCIL_OP_KEEP,
-            .passOp = ::VK_STENCIL_OP_KEEP,
-            .depthFailOp = ::VK_STENCIL_OP_KEEP,
-            .compareOp = ::VK_COMPARE_OP_NEVER,
-            .compareMask = 0u,
-            .writeMask = 0u,
-            .reference = 0u,
+            .failOp      = vk::StencilOp::eKeep,
+            .passOp      = vk::StencilOp::eKeep,
+            .depthFailOp = vk::StencilOp::eKeep,
+            .compareOp   = vk::CompareOp::eNever,
+            .compareMask = { },
+            .writeMask   = { },
+            .reference   = { },
         },
         .minDepthBounds = 0.0f,
         .maxDepthBounds = 1.0f,
     };
 
     // likewise here - transparency is a luxury I cannot yet afford
-    ::VkPipelineColorBlendAttachmentState blend_attachments[] = {{
-        .blendEnable = VK_FALSE,
+    vk::PipelineColorBlendAttachmentState blend_attachments[] = {{
+        .blendEnable = false,
 
-        .srcColorBlendFactor = ::VK_BLEND_FACTOR_ONE,
-        .dstColorBlendFactor = ::VK_BLEND_FACTOR_ZERO,
-        .colorBlendOp        = ::VK_BLEND_OP_ADD,
+        .srcColorBlendFactor = vk::BlendFactor::eOne,
+        .dstColorBlendFactor = vk::BlendFactor::eZero,
+        .colorBlendOp        = vk::BlendOp::eAdd,
 
-        .srcAlphaBlendFactor = ::VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = ::VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp        = ::VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+        .alphaBlendOp        = vk::BlendOp::eAdd,
 
-        .colorWriteMask = ::VK_COLOR_COMPONENT_R_BIT |
-                          ::VK_COLOR_COMPONENT_G_BIT |
-                          ::VK_COLOR_COMPONENT_B_BIT |
-                          ::VK_COLOR_COMPONENT_A_BIT
+        .colorWriteMask = vk::ColorComponentFlagBits::eR |
+                          vk::ColorComponentFlagBits::eG |
+                          vk::ColorComponentFlagBits::eB |
+                          vk::ColorComponentFlagBits::eA
     }};
 
-    ::VkPipelineColorBlendStateCreateInfo blend_info {
-        .sType = ::VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
-        .logicOpEnable   = VK_FALSE,
-        .logicOp         = ::VK_LOGIC_OP_AND,
+    vk::PipelineColorBlendStateCreateInfo blend_info {
+        .logicOpEnable   = false,
+        .logicOp         = vk::LogicOp::eAnd,
         .attachmentCount = static_cast<uint32_t>(std::size(blend_attachments)),
         .pAttachments    = blend_attachments,
-        .blendConstants  = { 0.0f, 0.0f, 0.0f, 0.0f }
+        .blendConstants  = std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f }
     };
 
     CONSOLE_TRACE("Blend attachment count: {}", blend_info.attachmentCount);
 
-    ::VkGraphicsPipelineCreateInfo pipelines[] {{
-        .sType      = ::VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext      = nullptr,
-        .flags      = 0u,
+    vk::GraphicsPipelineCreateInfo pipeline_info {
         .stageCount = static_cast<uint32_t>(_shader_stages.size()),
         .pStages    = _shader_stages.data(),
         .pVertexInputState   = &vertex_info,
@@ -338,29 +279,18 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
         .layout              = _layout,
         .renderPass          = _renderpass,
         .subpass             = 0u,
-        .basePipelineHandle  = VK_NULL_HANDLE,
+        .basePipelineHandle  = nullptr,
         .basePipelineIndex   = -1,
-    }};
+    };
 
-    ::VkResult result = ::vkCreateGraphicsPipelines(
-        _instance.logical_device(),
-        VK_NULL_HANDLE,
-        static_cast<uint32_t>(std::size(pipelines)),
-        pipelines,
-        nullptr,
-        &_pipeline
-    );
+    auto pipeline_return =
+        _instance.logical_device().createGraphicsPipeline({ }, pipeline_info);
 
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to create graphics pipelines.");
+    if(pipeline_return.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Unable to create graphics pipelines.");
     }
-    else {
-        CONSOLE_TRACE(
-            "Created {} graphics {}",
-            std::size(pipelines),
-            std::size(pipelines) == 1 ? "pipeline" : "pipelines"
-        );
-    }
+
+    _pipeline = pipeline_return.value;
 }
 
 // =============================================================================
@@ -371,8 +301,8 @@ void Pipeline::_init_depth_buffer(const Swapchain &swapchain) {
 
     _depth_buffer = new DepthBuffer(_instance, swapchain);
     _depth_buffer->init_image(
-        ::VK_IMAGE_TILING_OPTIMAL,
-        ::VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment
     );
     _depth_buffer->init_image_view();
 }
@@ -397,19 +327,9 @@ Pipeline::~Pipeline() {
 
     delete _depth_buffer;
 
-    if(_vert != nullptr) {
-        ::vkDestroyShaderModule(_instance.logical_device(), _vert, nullptr);
-    }
-    if(_frag != nullptr) {
-        ::vkDestroyShaderModule(_instance.logical_device(), _frag, nullptr);
-    }
-    if(_renderpass != nullptr) {
-        ::vkDestroyRenderPass(_instance.logical_device(), _renderpass, nullptr);
-    }
-    if(_layout != nullptr) {
-        ::vkDestroyPipelineLayout(_instance.logical_device(), _layout, nullptr);
-    }
-    if(_pipeline != nullptr) {
-        ::vkDestroyPipeline(_instance.logical_device(), _pipeline, nullptr);
-    }
+    _instance.logical_device().destroy(_vert);
+    _instance.logical_device().destroy(_frag);
+    _instance.logical_device().destroy(_renderpass);
+    _instance.logical_device().destroy(_layout);
+    _instance.logical_device().destroy(_pipeline);
 }

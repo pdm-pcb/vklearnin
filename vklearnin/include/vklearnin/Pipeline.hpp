@@ -19,8 +19,8 @@ public:
 
     // create a suitable default layout
     void init_render_passes(const Swapchain &swapchain);
-    void init_ubos(const ::VkDevice &device, const size_t count);
-    void init_layout(const ::VkDescriptorSetLayout &desc_set_layout);
+    void init_ubos(const vk::Device &device, const size_t count);
+    void init_layout(const vk::DescriptorSetLayout &desc_set_layout);
     void init_pipeline(const Swapchain &swapchain);
 
     // -------------------------------------------------------------------------
@@ -30,7 +30,7 @@ public:
         auto [width, height] = swapchain.extent(); 
         auto [x, y]          = swapchain.offset();
 
-        _viewport = {
+        _viewport = vk::Viewport {
             .x = static_cast<float>(x),
             .y = static_cast<float>(y),
             .width  = static_cast<float>(width),
@@ -39,7 +39,7 @@ public:
             .maxDepth = 1.0f,
         };
 
-        _scissor = {
+        _scissor = vk::Rect2D {
             .offset = { x, y },
             .extent = { width, height },
         };
@@ -50,29 +50,29 @@ public:
     // -------------------------------------------------------------------------
     // For those concerned with pipeline atributes
 
-    inline const ::VkRenderPass & renderpass() const { return _renderpass;    }
-    inline const ::VkPipeline   & pipeline()   const { return _pipeline;      }
-    inline const ::VkViewport   & viewport()   const { return _viewport;      }
-    inline const ::VkRect2D     & scissor()    const { return _scissor;       }
-    inline const ::VkPipelineLayout & layout() const { return _layout;        }
+    inline const vk::RenderPass & renderpass() const { return _renderpass;    }
+    inline const vk::Pipeline   & pipeline()   const { return _pipeline;      }
+    inline const vk::Viewport   & viewport()   const { return _viewport;      }
+    inline const vk::Rect2D     & scissor()    const { return _scissor;       }
+    inline const vk::PipelineLayout & layout() const { return _layout;        }
     inline const DepthBuffer & depth_buffer()  const { return *_depth_buffer; }
 
     Pipeline(const Instance &instance);
     ~Pipeline();
 
 private:
-    ::VkShaderModule _vert;
-    ::VkShaderModule _frag;
-    std::vector<::VkPipelineShaderStageCreateInfo> _shader_stages;
+    vk::ShaderModule _vert;
+    vk::ShaderModule _frag;
+    std::vector<vk::PipelineShaderStageCreateInfo> _shader_stages;
 
-    ::VkViewport _viewport;
-    ::VkRect2D   _scissor;
+    vk::Viewport _viewport;
+    vk::Rect2D   _scissor;
 
     DepthBuffer *_depth_buffer;
 
-    ::VkRenderPass     _renderpass;
-    ::VkPipelineLayout _layout;
-    ::VkPipeline       _pipeline;
+    vk::RenderPass     _renderpass;
+    vk::PipelineLayout _layout;
+    vk::Pipeline       _pipeline;
 
     const Instance &_instance;
 

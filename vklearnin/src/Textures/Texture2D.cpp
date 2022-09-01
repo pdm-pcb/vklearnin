@@ -45,7 +45,7 @@ void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
 
     _extent.width  = static_cast<uint32_t>(width);
     _extent.height = static_cast<uint32_t>(height);
-    _format = ::VK_FORMAT_R8G8B8A8_SRGB;
+    _format = vk::Format::eR8G8B8A8Srgb;
 
     if(channels != BPC::RGBA) {
         CONSOLE_WARN(
@@ -66,18 +66,18 @@ void Texture2D::init_image_view() {
     _view = ImageTools::init_view(
         _image_handle,
         _format,
-        ::VK_IMAGE_ASPECT_COLOR_BIT,
+        vk::ImageAspectFlagBits::eColor,
         _instance.logical_device()
     );
 }
 
 // =============================================================================
-void Texture2D::init_sampler(const ::VkFilter min_filter,
-                             const ::VkFilter mag_filter,
-                             const ::VkSamplerMipmapMode mipmap_mode,
-                             const ::VkSamplerAddressMode address_mode_u,
-                             const ::VkSamplerAddressMode address_mode_v,
-                             const ::VkBool32 enable_anisotropy,
+void Texture2D::init_sampler(const vk::Filter min_filter,
+                             const vk::Filter mag_filter,
+                             const vk::SamplerMipmapMode mipmap_mode,
+                             const vk::SamplerAddressMode address_mode_u,
+                             const vk::SamplerAddressMode address_mode_v,
+                             const vk::Bool32 enable_anisotropy,
                              const float max_anisotropy)
 {
     CONSOLE_INFO("");
@@ -92,10 +92,10 @@ void Texture2D::_create_image() {
 
     ImageTools::init_image(
         _extent, _format,
-        ::VK_IMAGE_TILING_OPTIMAL,
-        ::VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-        :: VK_IMAGE_USAGE_SAMPLED_BIT,
-        ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eTransferDst |
+        vk::ImageUsageFlagBits::eSampled,
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
         _image_handle, _device_memory,
         _instance
     );
@@ -105,19 +105,19 @@ void Texture2D::_create_image() {
 void Texture2D::_upload_texture() {
     CONSOLE_INFO("");
 
-    _layout_transition(::VK_IMAGE_LAYOUT_UNDEFINED,
-                       ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    _layout_transition(vk::ImageLayout::eUndefined,
+                       vk::ImageLayout::eTransferDstOptimal);
 
         SingleUseCommandBuffer command_buffer(_pool, _instance);
         auto command_buffer_handle = command_buffer.init();
         command_buffer.begin();
 
-            ::VkBufferImageCopy copy_region {
+            vk::BufferImageCopy copy_region {
                 .bufferOffset      = 0u,
                 .bufferRowLength   = 0u,
                 .bufferImageHeight = 0u,
                 .imageSubresource {
-                    .aspectMask     = ::VK_IMAGE_ASPECT_COLOR_BIT,
+                    .aspectMask     = vk::ImageAspectFlagBits::eColor,
                     .mipLevel       = 0u,
                     .baseArrayLayer = 0u,
                     .layerCount     = 1u
@@ -126,31 +126,29 @@ void Texture2D::_upload_texture() {
                 .imageExtent = _extent
             };
 
-            ::VkBufferImageCopy copy_regions[] {
+            vk::BufferImageCopy copy_regions[] {
                 { copy_region }
             };
 
-            ::vkCmdCopyBufferToImage(
-                command_buffer_handle,
+            command_buffer_handle.copyBufferToImage(
                 _staging->handle(),
                 _image_handle,
-                ::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                static_cast<uint32_t>(std::size(copy_regions)),
+                vk::ImageLayout::eTransferDstOptimal,
                 copy_regions
             );
 
         command_buffer.end();
         command_buffer.submit(_queue);
 
-    _layout_transition(::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       ::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    _layout_transition(vk::ImageLayout::eTransferDstOptimal,
+                       vk::ImageLayout::eShaderReadOnlyOptimal);
 
     delete _staging;
 }
 
 // =============================================================================
-void Texture2D::_layout_transition(const ::VkImageLayout &old_layout,
-                                   const ::VkImageLayout &new_layout)
+void Texture2D::_layout_transition(const vk::ImageLayout &old_layout,
+                                   const vk::ImageLayout &new_layout)
 {
     CONSOLE_INFO("");
 
@@ -173,15 +171,13 @@ void Texture2D::_layout_transition(const ::VkImageLayout &old_layout,
 }
 
 // =============================================================================
-Texture2D::Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
+Texture2D::Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
                      const Instance &instance) :
-    _image_handle { 0u },
     _offset       { 0, 0, 0 },
     _extent       { 0u, 0u, 1u },
-    _view         { nullptr },
     _sampler      { Sampler2D(instance.logical_device()) },
-    _format       { ::VK_FORMAT_UNDEFINED },
-    _layout       { ::VK_IMAGE_LAYOUT_UNDEFINED },
+    _format       { vk::Format::eUndefined },
+    _layout       { vk::ImageLayout::eUndefined },
     _staging      { nullptr },
     _pool         { pool },
     _queue        { queue },

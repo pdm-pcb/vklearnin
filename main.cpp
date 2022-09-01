@@ -23,9 +23,8 @@
 int main() {
     ConsoleLog::init();
 
-    Instance instance;
+    Instance instance(true);
     instance.init_instance();
-    instance.init_instance_procs();
     instance.init_physical_device();
 
     // =========================================================================
@@ -45,7 +44,6 @@ int main() {
     // with the physical device set up and queue family chosen, the logical
     // device can be created
     instance.init_logical_device(command_queue);
-    instance.init_logical_device_procs();
 
     // now that there's a logical device in place, go a head and initialize a
     // command pool, queue, and command buffer
@@ -61,7 +59,7 @@ int main() {
     vertex_buffer.populate_buffer(command_queue.command_pool(),
                                   command_queue.graphics_queue());
 
-    std::vector<::VkBuffer> vertex_buffers {
+    std::vector<vk::Buffer> vertex_buffers {
         vertex_buffer.handle()
     };
 
@@ -77,11 +75,11 @@ int main() {
     texture.load_file("../../assets/textures/spaceships/gunship_diffuse.png");
     texture.init_image_view();
     texture.init_sampler(
-        ::VK_FILTER_LINEAR,
-        ::VK_FILTER_LINEAR,
-        ::VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
         true, instance.max_anisotropy()
     );
     
@@ -107,7 +105,7 @@ int main() {
 
     // =========================================================================
     // Descriptor Sets
-    DescriptorSet descriptor_set(MAX_IMAGES, instance.logical_device());
+    DescriptorSet descriptor_set(instance.logical_device());
     descriptor_set.init_layout();
     descriptor_set.init_pool();
     descriptor_set.init_sets(ubo, texture);

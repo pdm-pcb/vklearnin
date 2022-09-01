@@ -7,7 +7,7 @@
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <vector>
 #include <cstdint>
@@ -19,7 +19,7 @@ template <typename Datum>
 class BufferObject {
 public:
 //==============================================================================
-    void populate_buffer(const ::VkCommandPool &pool, const ::VkQueue &queue) {
+    void populate_buffer(const vk::CommandPool &pool, const vk::Queue &queue) {
         // I'm glad the tutorial mentioned making this into its own class. It's
         // quite good sense.
         SingleUseCommandBuffer command_buffer(pool, _instance);
@@ -27,17 +27,15 @@ public:
 
         command_buffer.begin();
             // copy the goodness
-            ::VkBufferCopy copy_regions[] {{
+            vk::BufferCopy copy_regions[] {{
                 .srcOffset = 0u,
                 .dstOffset = 0u,
                 .size = _buffer_size,
             }};
             
-            ::vkCmdCopyBuffer(
-                buffer_handle,
+            buffer_handle.copyBuffer(
                 _staging_buffer->handle(),
                 _device_buffer,
-                static_cast<uint32_t>(std::size(copy_regions)),
                 copy_regions
             );
         command_buffer.end();
@@ -48,7 +46,7 @@ public:
     }
 
 //==============================================================================
-    inline ::VkBuffer handle() const { return _device_buffer; }
+    inline vk::Buffer handle() const { return _device_buffer; }
     inline size_t count()      const { return _data.size();   }
 
 // =============================================================================
@@ -81,8 +79,8 @@ public:
 
 private:
     StagingBuffer<Datum> *_staging_buffer;
-    ::VkBuffer            _device_buffer;
-    ::VkDeviceMemory      _device_memory;
+    vk::Buffer            _device_buffer;
+    vk::DeviceMemory      _device_memory;
 
     const std::vector<Datum> &_data;
     const size_t _buffer_size;
@@ -91,20 +89,20 @@ private:
 
     //==========================================================================
     void _create_device_buffer() {
-        ::VkBufferUsageFlagBits buffer_type;
+        vk::BufferUsageFlagBits buffer_type;
 
         if constexpr(std::is_same_v<Datum, Vertex>) {
-            buffer_type = ::VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            buffer_type = vk::BufferUsageFlagBits::eVertexBuffer;
         }
         if constexpr(std::is_same_v<Datum, Index>) {
-            buffer_type = ::VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            buffer_type = vk::BufferUsageFlagBits::eIndexBuffer;
         }
 
         BufferTools::create_buffer(
             _device_buffer, _buffer_size,
-            ::VK_BUFFER_USAGE_TRANSFER_DST_BIT | buffer_type,
+            vk::BufferUsageFlagBits::eTransferDst | buffer_type,
             _device_memory,
-            ::VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            vk::MemoryPropertyFlagBits::eDeviceLocal,
             _instance
         );
     }

@@ -20,17 +20,17 @@ public:
     void destroy();
     void create(const Swapchain &swapchain, const Pipeline &pipeline);
 
-    inline const ::VkFramebuffer & buffer(const size_t index) const {
+    inline const vk::Framebuffer & buffer(const size_t index) const {
         return _buffers[index];
     }
 
-    Framebuffers(const ::VkDevice &device);
+    Framebuffers(const vk::Device &device);
     ~Framebuffers();
 
 private:
-    std::vector<::VkFramebuffer> _buffers;
+    std::vector<vk::Framebuffer> _buffers;
 
-    const ::VkDevice &_device;
+    const vk::Device &_device;
 };
 
 #endif // VKLEARNIN_BUFFERS_FRAMEBUFFERS_HPP

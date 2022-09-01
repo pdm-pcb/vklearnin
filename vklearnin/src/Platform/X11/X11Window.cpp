@@ -189,7 +189,7 @@ void X11Window::init_surface() {
         _surface = nullptr;
     }
 
-    ::VkXcbSurfaceCreateInfoKHR surface_info { };
+    vk::XcbSurfaceCreateInfoKHR surface_info { };
     surface_info.sType = ::VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
     surface_info.connection = _connection;
     surface_info.window = _window;
@@ -201,7 +201,7 @@ void X11Window::init_surface() {
         &_surface
     );
 
-    if(result != ::VK_SUCCESS) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Unable to create XCB surface.");
     }
 }
@@ -418,7 +418,7 @@ void X11Window::_center_window() {
 }
 
 //==============================================================================
-X11Window::X11Window(const ::VkInstance &instance,
+X11Window::X11Window(const vk::Instance &instance,
                      const uint32_t width, const uint32_t height) :
     _connection       { nullptr },
     _screen           { nullptr },

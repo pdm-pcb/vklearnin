@@ -2,43 +2,43 @@
 #define VKLEARNIN_VERTEX_HPP
 
 #include <glm/glm.hpp>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <vector>
 
 class Vertex final {
 public:
-    using AttribDesc = std::vector<::VkVertexInputAttributeDescription>;
-    using BindingDesc = std::vector<::VkVertexInputBindingDescription>;
+    using AttribDesc = std::vector<vk::VertexInputAttributeDescription>;
+    using BindingDesc = std::vector<vk::VertexInputBindingDescription>;
 
     static inline BindingDesc binding_desc() {
         return BindingDesc {
             {
                 .binding = 0u,
                 .stride  = static_cast<uint32_t>(sizeof(Vertex)),
-                .inputRate = ::VK_VERTEX_INPUT_RATE_VERTEX
+                .inputRate = vk::VertexInputRate::eVertex
             }
         };
     }
 
     static inline AttribDesc attribute_desc() {
         return AttribDesc {
-            ::VkVertexInputAttributeDescription {
+            vk::VertexInputAttributeDescription {
                 .location = 0u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32B32_SFLOAT,
+                .format = vk::Format::eR32G32B32A32Sfloat,
                 .offset = offsetof(Vertex, _position)
             },
-            ::VkVertexInputAttributeDescription {
+            vk::VertexInputAttributeDescription {
                 .location = 1u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32B32_SFLOAT,
+                .format = vk::Format::eR32G32B32A32Sfloat,
                 .offset = offsetof(Vertex, _color)
             },
-            ::VkVertexInputAttributeDescription {
+            vk::VertexInputAttributeDescription {
                 .location = 2u,
                 .binding = 0u,
-                .format = ::VK_FORMAT_R32G32_SFLOAT,
+                .format = vk::Format::eR32G32B32A32Sfloat,
                 .offset = offsetof(Vertex, _texcoord)
             },
         };

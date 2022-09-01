@@ -19,43 +19,43 @@ public:
 
     void load_file(const char *filepath, const bool flip_vertical = false);
     void init_image_view();
-    void init_sampler(const ::VkFilter min_filter, const ::VkFilter mag_filter,
-                      const ::VkSamplerMipmapMode mipmap_mode,
-                      const ::VkSamplerAddressMode address_mode_u,
-                      const ::VkSamplerAddressMode address_mode_v,
-                      const ::VkBool32 enable_anisotropy,
+    void init_sampler(const vk::Filter min_filter, const vk::Filter mag_filter,
+                      const vk::SamplerMipmapMode mipmap_mode,
+                      const vk::SamplerAddressMode address_mode_u,
+                      const vk::SamplerAddressMode address_mode_v,
+                      const vk::Bool32 enable_anisotropy,
                       const float max_anisotropy);
 
-    inline ::VkSampler     sampler() const { return _sampler.handle(); }
-    inline ::VkImageView   view()    const { return _view;   }
-    inline ::VkFormat      format()  const { return _format; }
-    inline ::VkImageLayout layout()  const { return _layout; }
+    inline vk::Sampler     sampler() const { return _sampler.handle(); }
+    inline vk::ImageView   view()    const { return _view;   }
+    inline vk::Format      format()  const { return _format; }
+    inline vk::ImageLayout layout()  const { return _layout; }
 
-    Texture2D(const ::VkCommandPool &pool, const ::VkQueue &queue,
+    Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
               const Instance &instance);
     ~Texture2D();
 
 private:
-    ::VkImage        _image_handle;
-    ::VkDeviceMemory _device_memory;
+    vk::Image        _image_handle;
+    vk::DeviceMemory _device_memory;
 
-    ::VkOffset3D _offset;
-    ::VkExtent3D _extent;
+    vk::Offset3D _offset;
+    vk::Extent3D _extent;
 
-    ::VkImageView   _view;
+    vk::ImageView   _view;
     Sampler2D       _sampler;
-    ::VkFormat      _format;
-    ::VkImageLayout _layout;
+    vk::Format      _format;
+    vk::ImageLayout _layout;
 
     StagingBuffer<uint8_t> *_staging;
-    const ::VkCommandPool  &_pool;
-    const ::VkQueue        &_queue;
+    const vk::CommandPool  &_pool;
+    const vk::Queue        &_queue;
     const Instance         &_instance;
 
     void _create_image();
     void _upload_texture();
-    void _layout_transition(const ::VkImageLayout &old_layout,
-                            const ::VkImageLayout &new_layout);
+    void _layout_transition(const vk::ImageLayout &old_layout,
+                            const vk::ImageLayout &new_layout);
 };
 
 #endif // VKLEARNIN_TEXTURES_TEXTURE2D_HPP

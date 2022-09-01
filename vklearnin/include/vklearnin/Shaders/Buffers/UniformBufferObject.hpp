@@ -16,7 +16,7 @@ public:
 
     void init_buffers();
 
-    inline std::vector<::VkBuffer> & buffer_handles() {
+    inline std::vector<vk::Buffer> & buffer_handles() {
         return _buffer_handles;
     }
 
@@ -28,8 +28,8 @@ public:
     UniformBufferObject() = delete;
 
 private:
-    std::vector<::VkBuffer>       _buffer_handles;
-    std::vector<::VkDeviceMemory> _memory_handles;
+    std::vector<vk::Buffer>       _buffer_handles;
+    std::vector<vk::DeviceMemory> _memory_handles;
     
     const size_t    _data_size;
     const Instance &_instance;

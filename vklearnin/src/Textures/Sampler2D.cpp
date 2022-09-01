@@ -1,50 +1,38 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
 
-void Sampler2D::init(const ::VkFilter min_filter, const ::VkFilter mag_filter,
-                     const ::VkSamplerMipmapMode mipmap_mode,
-                     const ::VkSamplerAddressMode address_mode_u,
-                     const ::VkSamplerAddressMode address_mode_v,
-                     const ::VkBool32 enable_anisotropy,
+void Sampler2D::init(const vk::Filter min_filter, const vk::Filter mag_filter,
+                     const vk::SamplerMipmapMode mipmap_mode,
+                     const vk::SamplerAddressMode address_mode_u,
+                     const vk::SamplerAddressMode address_mode_v,
+                     const vk::Bool32 enable_anisotropy,
                      const float max_anisotropy)
 {
     CONSOLE_INFO("");
 
-    VkSamplerCreateInfo sampler_info {
-        .sType = ::VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::SamplerCreateInfo sampler_info {
         .magFilter = min_filter,
         .minFilter = mag_filter,
         .mipmapMode = mipmap_mode,
         .addressModeU = address_mode_u,
         .addressModeV = address_mode_v,
         // repeat is the default (0u), but W shouldn't matter for 2D samplers
-        .addressModeW = ::VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = vk::SamplerAddressMode::eRepeat,
         .mipLodBias = 0.0f,
         .anisotropyEnable = enable_anisotropy,
         .maxAnisotropy = max_anisotropy,
         .compareEnable = false,
-        .compareOp = ::VK_COMPARE_OP_NEVER,
+        .compareOp = vk::CompareOp::eNever,
         .minLod = 0.0f,
         .maxLod = 0.0f,
-        .borderColor = ::VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .borderColor = vk::BorderColor::eIntOpaqueBlack,
         .unnormalizedCoordinates = false,
     };
 
-    auto result = ::vkCreateSampler(
-        _device,
-        &sampler_info,
-        nullptr,
-        &_sampler
-    );
-
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to create texture sampler");
-    }
+    _sampler = _device.createSampler(sampler_info);
 }
 
-Sampler2D::Sampler2D(const ::VkDevice &device) :
+Sampler2D::Sampler2D(const vk::Device &device) :
     _sampler { nullptr },
     _device  { device  }
 {

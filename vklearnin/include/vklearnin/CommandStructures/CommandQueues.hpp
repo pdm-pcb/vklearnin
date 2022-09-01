@@ -6,12 +6,12 @@
 class Instance;
 
 // =============================================================================
-class CommandQueues {
+class CommandQueues final {
 public:
     inline void reset_command_buffer(const size_t index,
-                                     ::VkCommandBufferResetFlagBits flags)
+                                     vk::CommandBufferResetFlagBits flags)
     {
-        ::vkResetCommandBuffer(_command_buffers[index], flags);
+        _command_buffers[index].reset(flags);
     }
 
     // -------------------------------------------------------------------------
@@ -35,26 +35,26 @@ public:
     inline uint32_t present_index() const {
         return _present_family.value(); 
     }
-    inline const ::VkQueue & graphics_queue() const {
+    inline const vk::Queue & graphics_queue() const {
         return _graphics_queue;
     }
-    inline const ::VkQueue & present_queue() const {
+    inline const vk::Queue & present_queue() const {
         return _present_queue;
     }
     inline uint32_t queue_count() const {
         return static_cast<uint32_t>(_queue_info_structs.size());
     }
-    inline const ::VkDeviceQueueCreateInfo * queues() const {
+    inline const vk::DeviceQueueCreateInfo * queues() const {
         return _queue_info_structs.data();
     }
-    inline const ::VkCommandBuffer & command_buffer(const size_t index) const {
+    inline const vk::CommandBuffer & command_buffer(const size_t index) const {
         return _command_buffers[index];
     }
-    inline const ::VkCommandPool & command_pool() const {
+    inline const vk::CommandPool & command_pool() const {
         return _command_pool;
     }
 
-    CommandQueues(const ::VkSurfaceKHR &surface, const Instance &instance);
+    CommandQueues(const vk::SurfaceKHR &surface, const Instance &instance);
     ~CommandQueues();
 
     CommandQueues() = delete;
@@ -63,16 +63,16 @@ private:
     std::optional<uint32_t> _graphics_family;
     std::optional<uint32_t> _present_family;
 
-    std::vector<::VkDeviceQueueCreateInfo> _queue_info_structs;
+    std::vector<vk::DeviceQueueCreateInfo> _queue_info_structs;
     std::vector<float> _queue_priorities;
 
-    ::VkQueue  _graphics_queue;
-    ::VkQueue  _present_queue;
+    vk::Queue  _graphics_queue;
+    vk::Queue  _present_queue;
 
-    ::VkCommandPool _command_pool;
-    std::array<::VkCommandBuffer, MAX_IMAGES> _command_buffers;
+    vk::CommandPool _command_pool;
+    std::array<vk::CommandBuffer, MAX_IMAGES> _command_buffers;
 
-    const ::VkSurfaceKHR &_surface;
+    const vk::SurfaceKHR &_surface;
     const Instance       &_instance;
 
 };

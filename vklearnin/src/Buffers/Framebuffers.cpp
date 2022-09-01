@@ -18,15 +18,12 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
 
     // run through and associate one framebuffer per swapchain image
     for(size_t buffer_idx = 0; buffer_idx < _buffers.size(); ++buffer_idx) {
-        ::VkImageView attachments[] = {
+        vk::ImageView attachments[] = {
             swapchain.image_views()[buffer_idx],
             pipeline.depth_buffer().image_view()
         };
 
-        ::VkFramebufferCreateInfo buffer_info {
-            .sType = ::VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0u,
+        vk::FramebufferCreateInfo buffer_info {
             .renderPass = pipeline.renderpass(),
             .attachmentCount = static_cast<uint32_t>(std::size(attachments)),
             .pAttachments = attachments,
@@ -35,16 +32,7 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
             .layers = 1u,
         };
 
-        ::VkResult result = ::vkCreateFramebuffer(
-            _device,
-            &buffer_info,
-            nullptr,
-            &_buffers[buffer_idx]
-        );
-
-        if(result != ::VK_SUCCESS) {
-            CONSOLE_ERROR("Failed to create framebuffer {}", buffer_idx);
-        }
+        _buffers[buffer_idx] = _device.createFramebuffer(buffer_info);
     }
 
     CONSOLE_TRACE(
@@ -72,7 +60,7 @@ void Framebuffers::create(const Swapchain &swapchain, const Pipeline &pipeline)
 }
 
 // =============================================================================
-Framebuffers::Framebuffers(const ::VkDevice &device) :
+Framebuffers::Framebuffers(const vk::Device &device) :
     _device { device }
 {
     CONSOLE_INFO("");

@@ -1,27 +1,27 @@
 #ifndef VKLEARNIN_TOOLS_HPP
 #define VKLEARNIN_TOOLS_HPP
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 namespace ImageTools {
 
-void init_image(const ::VkExtent3D extent, const ::VkFormat format,
-                const ::VkImageTiling tiling, const ::VkImageUsageFlags usage,
-                const ::VkMemoryPropertyFlags memory_flags,
-                ::VkImage &image_handle, ::VkDeviceMemory &device_memory,
+void init_image(const vk::Extent3D &extent, const vk::Format &format,
+                const vk::ImageTiling &tiling, const vk::ImageUsageFlags &usage,
+                const vk::MemoryPropertyFlags &memory_flags,
+                vk::Image &image_handle, vk::DeviceMemory &device_memory,
                 const Instance &instance);
 
-::VkImageView init_view(const ::VkImage &image, const ::VkFormat &color_format,
-                        const ::VkImageAspectFlags &aspect_flags,
-                        const ::VkDevice &device);
+vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
+                        const vk::ImageAspectFlags &aspect_flags,
+                        const vk::Device &device);
 
-void layout_transition(const ::VkCommandBuffer &command_buffer,
-                       const ::VkImage &image_handle,
-                       const ::VkFormat &image_format,
-                       const ::VkImageLayout &old_layout,
-                       const ::VkImageLayout &new_layout);
+void layout_transition(const vk::CommandBuffer &command_buffer,
+                       const vk::Image &image_handle,
+                       const vk::Format &image_format,
+                       const vk::ImageLayout &old_layout,
+                       const vk::ImageLayout &new_layout);
 
-bool has_stencil_component(const ::VkFormat format);
+bool has_stencil_component(const vk::Format &format);
 
 } // namespace tools
 

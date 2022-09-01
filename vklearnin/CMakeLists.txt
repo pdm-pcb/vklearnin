@@ -41,7 +41,6 @@ target_precompile_headers(
 target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
-    fmt
     spdlog
     tinygltf
 )
@@ -58,7 +57,7 @@ endif()
 
 compile_shader(
     vklearnin
-    ENV vulkan1.3
+    ENV vulkan1.1
     SOURCES ${SHADER_SOURCE}
 )
 

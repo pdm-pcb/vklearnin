@@ -4,7 +4,7 @@
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 class Instance;
 class CommandQueues;
@@ -36,22 +36,22 @@ public:
              UniformBufferObject &ubo, Pipeline &pipeline,
              DescriptorSet &descriptor_set, Framebuffers &framebuffers,
              const BufferObject<Index> &index_buffer,
-             const std::vector<::VkBuffer> &vertex_buffers,
-             const std::vector<::VkDeviceSize> &vertex_buffer_offsets);
+             const std::vector<vk::Buffer> &vertex_buffers,
+             const std::vector<vk::DeviceSize> &vertex_buffer_offsets);
 
     // -------------------------------------------------------------------------
     // Setup
     void init_synchronization();
 
-    RenderLoop(const ::VkDevice &device, Window &window, CommandQueues &queues);
+    RenderLoop(const vk::Device &device, Window &window, CommandQueues &queues);
     ~RenderLoop();
 
 private:
-    std::array<::VkSemaphore, MAX_IMAGES> _image_available_sems;
-    std::array<::VkSemaphore, MAX_IMAGES> _draw_complete_sems;
-    std::array<::VkFence, MAX_IMAGES>     _display_fences;
+    std::array<vk::Semaphore, MAX_IMAGES> _image_available_sems;
+    std::array<vk::Semaphore, MAX_IMAGES> _draw_complete_sems;
+    std::array<vk::Fence, MAX_IMAGES>     _display_fences;
 
-    const ::VkDevice &_device;
+    const vk::Device &_device;
     Window           &_window;
     CommandQueues    &_queues;
 

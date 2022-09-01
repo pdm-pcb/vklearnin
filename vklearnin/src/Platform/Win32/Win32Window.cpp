@@ -116,7 +116,7 @@ void Win32Window::init_window() {
     wcex.hIconSm       = ::LoadIcon(_hinstance, IDI_APPLICATION);
     wcex.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = static_cast<::HBRUSH>(::GetStockObject(BLACK_BRUSH));
-    wcex.lpszClassName = APPLICATION_NAME;
+    wcex.lpszClassName = APP_NAME;
 
     ::HRESULT result = ::RegisterClassEx(&wcex);
     if(!SUCCEEDED(result)) {
@@ -125,8 +125,8 @@ void Win32Window::init_window() {
 
     _hwindow = ::CreateWindowExA(
         0u,
-        APPLICATION_NAME,
-        APPLICATION_NAME,
+        APP_NAME,
+        APP_NAME,
         WS_POPUP | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -148,28 +148,14 @@ void Win32Window::init_window() {
 void Win32Window::init_surface() {
     CONSOLE_INFO("");
 
-    if(_surface != nullptr) {
-        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        _surface = nullptr;
-    }
+    _instance.destroy(_surface);
 
-    ::VkWin32SurfaceCreateInfoKHR surface_info { };
-    surface_info.sType = ::VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    surface_info.pNext = nullptr;
-    surface_info.flags = 0u;
-    surface_info.hinstance = _hinstance;
-    surface_info.hwnd = _hwindow;
+    vk::Win32SurfaceCreateInfoKHR surface_info {
+        .hinstance = _hinstance,
+        .hwnd = _hwindow,
+    };
 
-    ::VkResult result = ::vkCreateWin32SurfaceKHR(
-        _instance,
-        &surface_info,
-        nullptr,
-        &_surface
-    );
-
-    if(result != VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to create Win32 surface");
-    }
+    _surface = _instance.createWin32SurfaceKHR(surface_info);
 }
 
 //==============================================================================
@@ -188,12 +174,12 @@ void Win32Window::_size_and_center(const uint32_t width, const uint32_t height)
 }
 
 //==============================================================================
-Win32Window::Win32Window(const ::VkInstance &instance,
+Win32Window::Win32Window(const vk::Instance &instance,
                          const uint32_t width, const uint32_t height) :
     _hinstance       { nullptr },
     _hwindow         { nullptr },
     _surface         { nullptr },
-    _width           { width },
+    _width           { width  },
     _height          { height },
     _screen_width    { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
     _screen_height   { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },

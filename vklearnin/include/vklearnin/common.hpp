@@ -1,11 +1,20 @@
 #ifndef VKLEARNIN_COMMON_HPP
 #define VKLEARNIN_COMMON_HPP
 
+#define VULKAN_HPP_NO_CONSTRUCTORS
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+
+#if defined(__linux__)
+    #define VK_USE_PLATFORM_XCB_KHR
+#elif defined(WIN32)
+    #define VK_USE_PLATFORM_WIN32_KHR
+#endif
+#include <vulkan/vulkan.hpp>
+
 // #define MEMLOG
 #include "vklearnin/Tools/MemTracker.hpp"
 
 #ifdef DEBUG
-    #define VK_VALIDATION_LAYER
     #include "vklearnin/Tools/VKDebugger.hpp"
 #endif // DEBUG
 
@@ -25,8 +34,6 @@
 #define GLM_FORCE_SINGLE_ONLY
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <vulkan/vulkan.h>
 
 #if defined(__linux__)
     #include <xcb/xcb.h>
@@ -78,11 +85,13 @@
 #include <optional>
 #include <chrono>
 
-static constexpr char ENGINE_NAME[]      { "Vulkan Learnin'" };
-static constexpr char APPLICATION_NAME[] { "Learnin'"        };
+static constexpr char APP_NAME[] { "Learnin'" };
+static constexpr char ENGINE_NAME[] { "Vulkan Learnin'" };
+static constexpr uint32_t APP_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
+static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
 static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
-static constexpr uint32_t MAX_IMAGES = 2;
+static constexpr uint32_t MAX_IMAGES = 3;
 
 #endif // VKLEARNIN_COMMON_HPP

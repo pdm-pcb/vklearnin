@@ -3,19 +3,19 @@
 
 #include "vklearnin/Instance.hpp"
 
-::VkDebugUtilsMessengerEXT VKDebugger::_debug_messenger = 0u;
+vk::DebugUtilsMessengerEXT VKDebugger::_debug_messenger { };
 
 // =============================================================================
-VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
-    ::VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-    ::VkDebugUtilsMessageTypeFlagsEXT type,
-    const ::VkDebugUtilsMessengerCallbackDataEXT* callback_data,
-    [[maybe_unused]] void *user_data)
+VKAPI_ATTR vk::Bool32 VKAPI_CALL VKDebugger::callback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+        [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT types,
+        const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+        [[maybe_unused]] void *user_data)
 {
     if(strstr(callback_data->pMessage, "small-allocation") ||
        strstr(callback_data->pMessage, "small-dedicated-allocation"))
     {
-        return VK_FALSE;
+        return false;
     }
 
     switch(severity) {
@@ -26,19 +26,7 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
             CONSOLE_INFO("{:s}", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) ==
-               type)
-            {
-                CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
-            }
-            else if((type & ::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) ==
-               type)
-            {
-                CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
-            }
-            else {
-                CONSOLE_WARN("\n???: {:s}\n", callback_data->pMessage);
-            }
+            CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
             CONSOLE_ERROR("\n{:s}\n", callback_data->pMessage);
@@ -49,44 +37,41 @@ VKAPI_ATTR ::VkBool32 VKAPI_CALL VKDebugger::callback(
             break;
     }
 
-    return VK_FALSE;
+    return false;
 }
 
 // =============================================================================
-void VKDebugger::init(Instance &instance) {
+void VKDebugger::init(vk::Instance &instance) {
 
-    ::VkDebugUtilsMessengerCreateInfoEXT debug_info { };
-    debug_info.sType =
-        ::VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    debug_info.messageSeverity =
-        // ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-        ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT    |
-        ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    debug_info.messageType =
-        ::VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT    |
-        ::VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-        ::VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debug_info.pfnUserCallback = VKDebugger::callback;
-    debug_info.pUserData = nullptr;
+    vk::DebugUtilsMessengerCreateInfoEXT debug_info {
+        .messageSeverity = (
+#if defined(__linux__)
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+#endif
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo    |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
+        ),
+        .messageType = (
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral    |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
+        ),
+        .pfnUserCallback = VKDebugger::callback
+    };
 
-    ::VkResult result = instance._CreateDebugUtilsMessengerEXT(
-        instance.vulkan_instance(),
+    auto result = instance.createDebugUtilsMessengerEXT(
         &debug_info,
         nullptr,
         &_debug_messenger
     );
     
-    if(result != ::VK_SUCCESS) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_WARN("Unable to create debug messenger.");
     }
 }
 
 // =============================================================================
-void VKDebugger::shutdown(Instance &instance) {    
-    instance._DestroyDebugUtilsMessengerEXT(
-        instance.vulkan_instance(),
-        _debug_messenger,
-        nullptr
-    );
+void VKDebugger::shutdown(vk::Instance &instance) {    
+    instance.destroy(_debug_messenger);
 }

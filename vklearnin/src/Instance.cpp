@@ -1,6 +1,11 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
 
+// This (and more; see the link) does away with the explicit loading of each
+// function/extension
+// https://github.com/KhronosGroup/Vulkan-Hpp#extensions--per-device-function-pointers
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 #include "vklearnin/CommandStructures/CommandQueues.hpp"
 
 #if defined(__linux__)
@@ -10,111 +15,101 @@
 #endif
 
 // =============================================================================
-void Instance::init_instance() {
+void Instance::init_instance()
+{
     CONSOLE_INFO("");
     
     // -------------------------------------------------------------------------
     // Application Information
 
-    ::VkApplicationInfo app_info { };
-    app_info.sType = ::VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app_info.pApplicationName = APPLICATION_NAME;
-    app_info.pEngineName = ENGINE_NAME;
-    app_info.apiVersion = VK_API_VERSION_1_3;
+    vk::ApplicationInfo app_info {
+        .pApplicationName = APP_NAME,
+        .applicationVersion = APP_VERSION,
+        .pEngineName = ENGINE_NAME,
+        .engineVersion = ENGINE_VERSION,
+        .apiVersion = VK_API_VERSION_1_1
+    };
     
     // -------------------------------------------------------------------------
-    // The instance extensions to enable
+    // The layers and extensions to enable
 
-    const char *instance_extensions[] {
-        // we'll want a surface to draw to
-        VK_KHR_SURFACE_EXTENSION_NAME,
+    std::vector<const char *> enabled_layers;
+
+    if(_validate) {
+        enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
+    }
+
+    std::vector<vk::ValidationFeatureEnableEXT> enabled_features {
+        vk::ValidationFeatureEnableEXT::eGpuAssisted,
+        vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
+        vk::ValidationFeatureEnableEXT::eBestPractices,
+        // vk::ValidationFeatureEnableEXT::eDebugPrintf,
+        vk::ValidationFeatureEnableEXT::eSynchronizationValidation
+    };
+
+    vk::ValidationFeaturesEXT validation_features {
+        .enabledValidationFeatureCount =
+            static_cast<uint32_t>(enabled_features.size()),
+        .pEnabledValidationFeatures = enabled_features.data(),
+        .disabledValidationFeatureCount = 0u,
+        .pDisabledValidationFeatures = nullptr
+    };
+
+    std::vector<const char *> enabled_extensions {
+        VK_KHR_SURFACE_EXTENSION_NAME
+    };
+
+#ifdef DEBUG
+    enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
 
 // platform-specific surfaces
 #if defined(__linux__)
-        VK_KHR_XCB_SURFACE_EXTENSION_NAME,
+        enabled_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #elif defined(_WIN32)
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+        enabled_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
-
-#ifdef VK_VALIDATION_LAYER
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-#endif // VK_VALIDATION_LAYER
-    };
 
     // -------------------------------------------------------------------------
     // Instance Creation Information (wants app info from above)
 
-    ::VkInstanceCreateInfo create_info { };
-    create_info.sType = ::VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    create_info.pApplicationInfo = &app_info;
-    create_info.enabledExtensionCount =
-        static_cast<uint32_t>(std::size(instance_extensions));
-    create_info.ppEnabledExtensionNames = instance_extensions;
-
-#ifdef VK_VALIDATION_LAYER
-    const char *layers[] { "VK_LAYER_KHRONOS_validation" };
-    create_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
-    create_info.ppEnabledLayerNames = layers;
-
-    ::VkValidationFeatureEnableEXT validation_features_enabled[] {
-        { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT },
-        { ::VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT},
-        { ::VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT },
-        // { ::VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT },
-        { ::VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT },
+    vk::InstanceCreateInfo instance_info {
+        .pNext = reinterpret_cast<void *>(&validation_features),
+        .flags = { },
+        .pApplicationInfo = &app_info,
+        .enabledLayerCount = 
+            static_cast<uint32_t>(enabled_layers.size()),
+        .ppEnabledLayerNames = enabled_layers.data(),
+        .enabledExtensionCount =
+            static_cast<uint32_t>(enabled_extensions.size()),
+        .ppEnabledExtensionNames = enabled_extensions.data()
     };
 
-    ::VkValidationFeaturesEXT validation_features {
-        .sType = ::VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-        .pNext = nullptr,
-        .enabledValidationFeatureCount =
-            static_cast<uint32_t>(std::size(validation_features_enabled)),
-        .pEnabledValidationFeatures = validation_features_enabled,
-        .disabledValidationFeatureCount = 0u,
-        .pDisabledValidationFeatures = nullptr,
-    };
+    auto result = vk::createInstance(
+        &instance_info,
+        nullptr,
+        &_instance
+    );
 
-    create_info.pNext = &validation_features;
-#endif // VK_VALIDATION_LAYER
-
-    ::VkResult result = vkCreateInstance(&create_info, nullptr, &_instance);
-
-    // For the following error on MacOS, some fiddling must be done:
-    // https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Instance#page_Encountered-VK_ERROR_INCOMPATIBLE_DRIVER
-    if(result == ::VK_ERROR_INCOMPATIBLE_DRIVER) {
-        CONSOLE_ERROR("Incompatible Vulkan driver version.");
-    }
-    else if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Failed to create Vulkan instance.");
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Failed to create Vulkan instance.");
     }
 
-// grab the function addresses for the debug utility
-#ifdef VK_VALIDATION_LAYER
-    GET_INSTANCE_PROC_ADDR(_instance, CreateDebugUtilsMessengerEXT);
-    GET_INSTANCE_PROC_ADDR(_instance, DestroyDebugUtilsMessengerEXT);
-    VKDebugger::init(*this);
-#endif // VK_VALIDATION_LAYER   
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(_instance);
+
+#ifdef DEBUG
+    // grab the function addresses for the debug utility
+    VKDebugger::init(_instance);
+#endif
 
     // -------------------------------------------------------------------------
-    // Query and populate the list of instance extensions
+    // Query and populate the list of instance extensions 
+    std::vector<vk::ExtensionProperties> extensions =
+        vk::enumerateInstanceExtensionProperties();
 
-    uint32_t extension_count = 0;
-    ::vkEnumerateInstanceExtensionProperties(
-        nullptr,
-        &extension_count,
-        nullptr
-    );
+    CONSOLE_TRACE("Found {} instance extensions.", extensions.size());   
 
-    CONSOLE_TRACE("Found {} instance extensions.", extension_count);    
-    std::vector<::VkExtensionProperties> extensions(extension_count);
-
-    ::vkEnumerateInstanceExtensionProperties(
-        nullptr,
-        &extension_count,
-        extensions.data()
-    );
-
-    for(const char *required_extension : instance_extensions) {
+    for(const char *required_extension : enabled_extensions) {
         bool supported = false;
         for(const auto &extension : extensions) {
             if(strcmp(required_extension, extension.extensionName) == 0) {
@@ -123,7 +118,7 @@ void Instance::init_instance() {
             }
         }
         if(!supported) {
-            CONSOLE_ERROR(
+            CONSOLE_CRITICAL(
                 "Instance extension {} unsupported",
                 required_extension
             );
@@ -141,42 +136,33 @@ void Instance::init_physical_device() {
 
     // -------------------------------------------------------------------------
     // Query and populate the list of physical devices
-
-    uint32_t physical_count = 0u;
-    ::VkResult result = ::vkEnumeratePhysicalDevices(
-        _instance,
-        &physical_count,
-        nullptr
-    );
-
-    std::vector<::VkPhysicalDevice> devices(physical_count);
-    ::vkEnumeratePhysicalDevices(_instance, &physical_count, devices.data());
-
-    if(result != ::VK_SUCCESS || physical_count == 0u) {
-        CONSOLE_ERROR("No suitable device found.");
+    auto devices = _instance.enumeratePhysicalDevices();
+    if(devices.size() == 0) {
+        CONSOLE_CRITICAL("Found zero physical devices.");
     }
-
-    CONSOLE_TRACE("Found {} devices", physical_count);
+    CONSOLE_TRACE("Found {} devices", devices.size());
 
     // -------------------------------------------------------------------------
     // Iterate and detail each physical device
 
-    for(uint32_t device_idx = 0; device_idx < physical_count; ++device_idx) {
-        ::VkPhysicalDeviceProperties properties { };
-        ::vkGetPhysicalDeviceProperties(devices[device_idx], &properties);
+    for(uint32_t device_idx = 0; device_idx < devices.size(); ++device_idx) {
+        auto properties = devices[device_idx].getProperties();
 
         const char *type_string;
         switch(properties.deviceType) {
-            case ::VK_PHYSICAL_DEVICE_TYPE_OTHER:
+            case vk::PhysicalDeviceType::eOther:
                 type_string = "Other";
                 break;
-            case ::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            case vk::PhysicalDeviceType::eIntegratedGpu:
                 type_string = "iGPU";
                 break;
-            case ::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            case vk::PhysicalDeviceType::eDiscreteGpu:
                 type_string = "dGPU";
                 break;
-            case ::VK_PHYSICAL_DEVICE_TYPE_CPU:
+            case vk::PhysicalDeviceType::eVirtualGpu:
+                type_string = "Virtual";
+                break;
+            case vk::PhysicalDeviceType::eCpu:
                 type_string = "CPU";
                 break;
             default:
@@ -186,57 +172,40 @@ void Instance::init_physical_device() {
         }
 
         // grabbing the VRAM amount in proper megabytes
-        ::VkPhysicalDeviceMemoryProperties memory { };
-        ::vkGetPhysicalDeviceMemoryProperties(devices[device_idx], &memory);
-
-        ::VkDeviceSize vram = 0u;
+        auto memory = devices[device_idx].getMemoryProperties();
+        vk::DeviceSize vram = 0u;
         for(uint32_t index = 0; index < memory.memoryHeapCount; ++index) {
             auto flags = memory.memoryHeaps[index].flags;
-            if((flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) == flags) {
+            if((flags & vk::MemoryHeapFlagBits::eDeviceLocal) == flags) {
                 vram = memory.memoryHeaps[index].size / 1000 / 1000;
                 break;
             }
         }
 
         // query and populate list of physical device extensions
-        uint32_t extension_count = 0u;
-        ::vkEnumerateDeviceExtensionProperties(
-            devices[device_idx],
-            nullptr,
-            &extension_count,
-            nullptr
-        );
-
-        CONSOLE_TRACE("Found {} physical device extensions", extension_count);
-
-        std::vector<::VkExtensionProperties> device_extensions(extension_count);
-        ::vkEnumerateDeviceExtensionProperties(
-            devices[device_idx],
-            nullptr,
-            &extension_count,
-            device_extensions.data()
-        );
+        auto extensions =
+            devices[device_idx].enumerateDeviceExtensionProperties();
+        
+        if(extensions.size() == 0) {
+            CONSOLE_CRITICAL("Found zero physical device extensions.");
+        }
+        CONSOLE_TRACE("Found {} physical device extensions", extensions.size());
 
         // This is some extra-ness just to acquire the correct GPU driver
         // version such that what's displayed matches what the vendors actually
         // list on their websites/etc
-        ::VkPhysicalDeviceDriverProperties driver_props { };
-        driver_props.sType =
-            ::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+        vk::PhysicalDeviceDriverProperties driver_props { };
 
-        ::VkPhysicalDeviceProperties2KHR physical_props2 { };
-        physical_props2.sType =
-            ::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
-        physical_props2.pNext = &driver_props;
+        vk::PhysicalDeviceProperties2KHR physical_props2 {
+            .pNext = &driver_props
+        };
 
-        for(const auto &extension : device_extensions) {
+
+        for(const auto &extension : extensions) {
             if(strcmp(extension.extensionName,
                     VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) == 0)
             {
-                _GetPhysicalDeviceProperties2(
-                    devices[device_idx],
-                    &physical_props2
-                );
+                devices[device_idx].getProperties2(&physical_props2);
                 break;
             }
         }
@@ -274,115 +243,76 @@ void Instance::init_physical_device() {
 void Instance::init_logical_device(const CommandQueues &command_queue) {
     CONSOLE_INFO("");
 
-    // CONSOLE_TRACE("{}", fmt::ptr(&command_queue));
-
     // specify logical device extension(s) tahaaaaave
-    const char *extensions[] {
+    std::vector<const char *> extensions {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    ::VkPhysicalDeviceFeatures supported_features;
-    ::vkGetPhysicalDeviceFeatures(_physical_device, &supported_features);
+    vk::PhysicalDeviceFeatures supported_features;
+    _physical_device.getFeatures(&supported_features);
 
     if(supported_features.samplerAnisotropy == false) {
         CONSOLE_ERROR("Hardware device does not support anisotropic "
                       "filtering.");
     }
 
-    ::VkPhysicalDeviceFeatures features { };
-    features.samplerAnisotropy = true;
+    vk::PhysicalDeviceFeatures enabled_features { };
+    enabled_features.samplerAnisotropy = true;
+
+    std::vector<const char *> layers;
+    if(_validate) {
+        layers.push_back("VK_LAYER_KHRONOS_validation");
+    }
 
     // finally populate the logical device creation information
-    ::VkDeviceCreateInfo device_info {
-        .sType = ::VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0u,
+    vk::DeviceCreateInfo device_info {
         .queueCreateInfoCount = command_queue.queue_count(),
         .pQueueCreateInfos = command_queue.queues(),
-        .enabledLayerCount = 0,
-        .ppEnabledLayerNames = 0,
-        .enabledExtensionCount = static_cast<uint32_t>(std::size(extensions)),
-        .ppEnabledExtensionNames = extensions,
-        .pEnabledFeatures = &features,
+        .enabledLayerCount = static_cast<uint32_t>(layers.size()),
+        .ppEnabledLayerNames = layers.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data(),
+        .pEnabledFeatures = &enabled_features,
     };
 
-// enable the validation layer if we're in a debug build
-// TODO: should probably change to permit multiple layers, but we'll cross
-//       that bridge when we come to it
-#ifdef VK_VALIDATION_LAYER
-    const char *layers[] { "VK_LAYER_KHRONOS_validation" };
-    device_info.enabledLayerCount = static_cast<uint32_t>(std::size(layers));
-    device_info.ppEnabledLayerNames = layers;    
-#endif // VK_VALIDATION_LAYER
-
-    ::VkResult result = ::vkCreateDevice(
-        _physical_device,
+    auto result = _physical_device.createDevice(
         &device_info,
         nullptr,
         &_logical_device
     );
 
-    if(result != ::VK_SUCCESS) {
-        CONSOLE_ERROR("Unable to create logical device.");
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Unable to create logical device.");
     }
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(_logical_device);
 }
 
 // =============================================================================
-void Instance::init_instance_procs() {
-    CONSOLE_INFO("");
-    GET_INSTANCE_PROC_ADDR(_instance, GetPhysicalDeviceSurfaceSupportKHR);
-    assert(_GetPhysicalDeviceSurfaceSupportKHR != nullptr);
-    GET_INSTANCE_PROC_ADDR(_instance, GetPhysicalDeviceSurfaceCapabilitiesKHR);
-    assert(_GetPhysicalDeviceSurfaceCapabilitiesKHR != nullptr);
-    GET_INSTANCE_PROC_ADDR(_instance, GetPhysicalDeviceSurfaceFormatsKHR);
-    assert(_GetPhysicalDeviceSurfaceFormatsKHR != nullptr);
-    GET_INSTANCE_PROC_ADDR(_instance, GetPhysicalDeviceSurfacePresentModesKHR);
-    assert(_GetPhysicalDeviceSurfacePresentModesKHR != nullptr);
-    GET_INSTANCE_PROC_ADDR(_instance, GetPhysicalDeviceProperties2);
-    assert(_GetPhysicalDeviceProperties2 != nullptr);
-}
-
-// =============================================================================
-void Instance::init_logical_device_procs() {
-    GET_DEVICE_PROC_ADDR(_logical_device, CreateSwapchainKHR);
-    assert(_CreateSwapchainKHR != nullptr);
-    GET_DEVICE_PROC_ADDR(_logical_device, DestroySwapchainKHR);
-    assert(_DestroySwapchainKHR != nullptr);
-    GET_DEVICE_PROC_ADDR(_logical_device, GetSwapchainImagesKHR);
-    assert(_GetSwapchainImagesKHR != nullptr);
-    GET_DEVICE_PROC_ADDR(_logical_device, AcquireNextImageKHR);
-    assert(_AcquireNextImageKHR != nullptr);
-    GET_DEVICE_PROC_ADDR(_logical_device, QueuePresentKHR);
-    assert(_QueuePresentKHR != nullptr);
-}
-
-// =============================================================================
-Instance::Instance() :
-    _GetPhysicalDeviceSurfaceSupportKHR      { nullptr },
-    _GetPhysicalDeviceSurfaceCapabilitiesKHR { nullptr },
-    _GetPhysicalDeviceSurfaceFormatsKHR      { nullptr },
-    _GetPhysicalDeviceSurfacePresentModesKHR { nullptr },
-    _CreateSwapchainKHR    { nullptr },
-    _DestroySwapchainKHR   { nullptr },
-    _GetSwapchainImagesKHR { nullptr },
-    _AcquireNextImageKHR   { nullptr },
-    _QueuePresentKHR       { nullptr },
+Instance::Instance(const bool validate) :
     _instance        { nullptr },
     _physical_device { nullptr },
     _logical_device  { nullptr },
-    _max_anisotropy  { 0.0f }
+    _max_anisotropy  { 0.0f },
+    _validate        { validate }
 {    
     CONSOLE_INFO("");
+
+    // first step for using the dynamic loader
+    using inst_proc = PFN_vkGetInstanceProcAddr;
+    inst_proc vkGetInstanceProcAddr =
+        _loader.getProcAddress<inst_proc>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 }
 
 // =============================================================================
 Instance::~Instance() {
     CONSOLE_INFO("");
 
-#ifdef VK_VALIDATION_LAYER
-    VKDebugger::shutdown(*this);
+#ifdef DEBUG
+    VKDebugger::shutdown(_instance);
 #endif
 
-    ::vkDestroyDevice(_logical_device, nullptr);
-    ::vkDestroyInstance(_instance, nullptr);
+    _logical_device.destroy();
+    _instance.destroy();
 }
