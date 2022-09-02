@@ -8,9 +8,8 @@ namespace BufferTools {
 // =============================================================================
 void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
                    const vk::BufferUsageFlags buffer_usage_flags,
-                   vk::DeviceMemory &memory,
-                   const vk::MemoryPropertyFlags memory_flags,
-                   const Instance &instance)
+                   ::VmaAllocation &memory, VmaMemoryUsage memory_usage,
+                   uint32_t alloc_flags)
 {
     CONSOLE_INFO("");
 
@@ -20,17 +19,40 @@ void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
         .sharingMode = vk::SharingMode::eExclusive,
     };
 
-    buffer = instance.logical_device().createBuffer(buffer_info);
+    ::VmaAllocationCreateInfo vma_info {
+        .flags = alloc_flags,
+        .usage = memory_usage,
+        .requiredFlags = 0u,
+        .preferredFlags = 0u,
+        .memoryTypeBits = 0u,
+        .pool = nullptr,
+        .pUserData = nullptr,
+        .priority = 1.0f
+    };
 
-    allocate_memory(buffer, memory, memory_flags, instance);
-
-    ::vkBindBufferMemory(
-        instance.logical_device(),
-        buffer, memory,
-        0u
+    ::vmaCreateBuffer(
+        Allocator::allocator(),
+        &static_cast<::VkBufferCreateInfo &>(buffer_info),
+        &vma_info,
+        &reinterpret_cast<::VkBuffer &>(buffer),
+        &memory,
+        nullptr
     );
+
+    CONSOLE_ERROR("{}", fmt::ptr(&buffer));
+
+    // buffer = instance.logical_device().createBuffer(buffer_info);
+
+    // allocate_memory(buffer, memory, memory_flags, instance);
+
+    // ::vkBindBufferMemory(
+    //     instance.logical_device(),
+    //     buffer, memory,
+    //     0u
+    // );
 }
 
+/*
 // =============================================================================
 void allocate_memory(const vk::Buffer &buffer, vk::DeviceMemory &memory,
                      const vk::MemoryPropertyFlags type_flags,
@@ -85,5 +107,6 @@ uint32_t find_memory_type(const uint32_t type_bits,
 
     return type_index;
 }
+*/
 
 } // namespace BufferTools

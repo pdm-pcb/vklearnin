@@ -2,6 +2,7 @@
 #define VKLEARNIN_SHADERS_UNIFORMBUFFEROBJECT_HPP
 
 #include "vklearnin/Shaders/MVPMatrices.hpp"
+#include "vklearnin/Allocator.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -28,8 +29,8 @@ public:
     UniformBufferObject() = delete;
 
 private:
-    std::vector<vk::Buffer>       _buffer_handles;
-    std::vector<vk::DeviceMemory> _memory_handles;
+    std::vector<vk::Buffer>    _buffer_handles;
+    std::vector<VmaAllocation> _memory_handles;
     
     const size_t    _data_size;
     const Instance &_instance;

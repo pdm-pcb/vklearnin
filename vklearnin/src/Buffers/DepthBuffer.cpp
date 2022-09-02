@@ -17,10 +17,11 @@ void DepthBuffer::init_image(const vk::ImageTiling &tiling,
     ImageTools::init_image(
         { width, height, 1u },
         _format, tiling,
+        _image_handle,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        _image_handle, _device_memory,
-        _instance
+        _device_memory,
+        ::VMA_MEMORY_USAGE_AUTO,
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     );
 }
 
@@ -78,9 +79,9 @@ void DepthBuffer::_choose_format(const vk::ImageTiling &tiling,
 
 // =============================================================================
 DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
-    _image_handle  { nullptr },
-    _device_memory { nullptr },
-    _image_view    { nullptr },
+    _image_handle  { },
+    _device_memory { },
+    _image_view    { },
     _format        { vk::Format::eUndefined },
     _instance      { instance  },
     _swapchain     { swapchain }
@@ -91,7 +92,11 @@ DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
 DepthBuffer::~DepthBuffer() {
     CONSOLE_INFO("");
 
-    ::vkDestroyImage(_instance.logical_device(),     _image_handle,  nullptr);
-    ::vkDestroyImageView(_instance.logical_device(), _image_view,    nullptr);
-    ::vkFreeMemory(_instance.logical_device(),       _device_memory, nullptr);
+        CONSOLE_TRACE(
+            "Destroying depth stencil image {}",
+            fmt::ptr(&_image_handle)
+        );
+
+    _instance.logical_device().destroy(_image_view);
+    ::vmaDestroyImage(Allocator::allocator(), _image_handle, _device_memory);
 }

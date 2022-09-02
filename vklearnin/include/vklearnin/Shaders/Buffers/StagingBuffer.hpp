@@ -3,6 +3,7 @@
 
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
+#include "vklearnin/common.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -45,16 +46,15 @@ public:
     ~StagingBuffer() {
         CONSOLE_INFO("");
 
-        ::vkDestroyBuffer(
-            _instance.logical_device(),
-            _staging_buffer,
-            nullptr
+        CONSOLE_TRACE(
+            "Destroying staging buffer {}",
+            fmt::ptr(&_staging_buffer)
         );
 
-        ::vkFreeMemory(
-            _instance.logical_device(),
-            _staging_memory,
-            nullptr
+        ::vmaDestroyBuffer(
+            Allocator::allocator(),
+            _staging_buffer,
+            _staging_memory
         );
     }
 
@@ -64,8 +64,8 @@ private:
     std::vector<Datum> _data;
     size_t _buffer_size;
 
-    vk::Buffer       _staging_buffer;
-    vk::DeviceMemory _staging_memory;
+    vk::Buffer      _staging_buffer;
+    ::VmaAllocation _staging_memory;
 
     const Instance  &_instance;
 
@@ -77,9 +77,8 @@ private:
             _staging_buffer, sizeof(Datum) * _data.size(),
             vk::BufferUsageFlagBits::eTransferSrc,
             _staging_memory,
-            vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent,
-            _instance
+            ::VMA_MEMORY_USAGE_CPU_ONLY,
+            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
         );
     }
 
@@ -87,20 +86,17 @@ private:
     void _populate_staging_buffer() {
         CONSOLE_INFO("");
 
-        void *_staging_data;
+        void *staging_data = nullptr;
         
-        ::vkMapMemory(
-            _instance.logical_device(),
+        ::vmaMapMemory(
+            Allocator::allocator(),
             _staging_memory,
-            0u,
-            _buffer_size,
-            0u,
-            &_staging_data
+            &staging_data
         );
 
-        memcpy(_staging_data, _data.data(), _buffer_size);
+        memcpy(staging_data, _data.data(), _buffer_size);
 
-        ::vkUnmapMemory(_instance.logical_device(), _staging_memory);
+        ::vmaUnmapMemory(Allocator::allocator(), _staging_memory);
     }
 };
 

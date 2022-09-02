@@ -3,6 +3,7 @@
 
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
+#include "vklearnin/Allocator.hpp"
 
 #include <cstdint>
 
@@ -27,7 +28,7 @@ public:
                       const float max_anisotropy);
 
     inline vk::Sampler     sampler() const { return _sampler.handle(); }
-    inline vk::ImageView   view()    const { return _view;   }
+    inline vk::ImageView   view()    const { return _image_view; }
     inline vk::Format      format()  const { return _format; }
     inline vk::ImageLayout layout()  const { return _layout; }
 
@@ -36,13 +37,13 @@ public:
     ~Texture2D();
 
 private:
-    vk::Image        _image_handle;
-    vk::DeviceMemory _device_memory;
+    vk::Image     _image_handle;
+    VmaAllocation _device_memory;
 
     vk::Offset3D _offset;
     vk::Extent3D _extent;
 
-    vk::ImageView   _view;
+    vk::ImageView   _image_view;
     Sampler2D       _sampler;
     vk::Format      _format;
     vk::ImageLayout _layout;

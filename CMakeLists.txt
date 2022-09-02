@@ -1,3 +1,4 @@
+# 3.24 is when CMake added the glslc component to the Vulkan find_package()
 cmake_minimum_required(VERSION 3.24)
 
 project(

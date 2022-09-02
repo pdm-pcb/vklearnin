@@ -31,6 +31,7 @@ target_include_directories(
     "${spdlog_SOURCE_DIR}"
     "${glm_SOURCE_DIR}"
     "${tinygltf_SOURCE_DIR}"
+    "${VulkanMemoryAllocator_SOURCE_DIR}/include"
 )
 
 target_precompile_headers(
@@ -57,7 +58,7 @@ endif()
 
 compile_shader(
     vklearnin
-    ENV vulkan1.1
+    ENV vulkan1.0
     SOURCES ${SHADER_SOURCE}
 )
 

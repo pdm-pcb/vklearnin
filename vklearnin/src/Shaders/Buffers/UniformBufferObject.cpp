@@ -7,18 +7,15 @@
 void UniformBufferObject::update(const void *data, const uint32_t frame_index)
 {
     void *destination = nullptr;
-    ::vkMapMemory(
-        _instance.logical_device(),
+    ::vmaMapMemory(
+        Allocator::allocator(),
         _memory_handles[frame_index],
-        0u,
-        _data_size,
-        0u,
         &destination
     );
 
     memcpy(destination, data, _data_size);
 
-    ::vkUnmapMemory(_instance.logical_device(), _memory_handles[frame_index]);
+    ::vmaUnmapMemory(Allocator::allocator(), _memory_handles[frame_index]);
 }
 
 // =============================================================================
@@ -33,9 +30,8 @@ void UniformBufferObject::init_buffers() {
             _data_size,
             vk::BufferUsageFlagBits::eUniformBuffer,
             _memory_handles[frame],
-            vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent,
-            _instance
+            ::VMA_MEMORY_USAGE_AUTO,
+            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
         );
     }
 }
@@ -56,11 +52,16 @@ UniformBufferObject::UniformBufferObject(const size_t data_size,
 UniformBufferObject::~UniformBufferObject() {
     CONSOLE_INFO("");
 
-    for(auto &buffer : _buffer_handles) {
-        ::vkDestroyBuffer(_instance.logical_device(), buffer, nullptr);
-    }
-
-    for(auto &memory : _memory_handles) {
-        ::vkFreeMemory(_instance.logical_device(), memory, nullptr);
+    assert(_buffer_handles.size() == _memory_handles.size());
+    for(size_t index = 0; index < _buffer_handles.size(); ++index) {
+        CONSOLE_TRACE(
+            "Destroying UBO buffer {}",
+            fmt::ptr(&_buffer_handles[index])
+        );
+        ::vmaDestroyBuffer(
+            Allocator::allocator(),
+            _buffer_handles[index],
+            _memory_handles[index]
+        );
     }
 }

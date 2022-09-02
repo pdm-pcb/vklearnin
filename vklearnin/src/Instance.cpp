@@ -1,11 +1,6 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
 
-// This (and more; see the link) does away with the explicit loading of each
-// function/extension
-// https://github.com/KhronosGroup/Vulkan-Hpp#extensions--per-device-function-pointers
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-
 #include "vklearnin/CommandStructures/CommandQueues.hpp"
 
 #if defined(__linux__)
@@ -13,6 +8,11 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #elif defined(_WIN32)
     #include "vklearnin/Platform/Win32/Win32Window.hpp"
 #endif
+
+// This (and more; see the link) does away with the explicit loading of each
+// function/extension
+// https://github.com/KhronosGroup/Vulkan-Hpp#extensions--per-device-function-pointers
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 // =============================================================================
 void Instance::init_instance()
@@ -27,7 +27,7 @@ void Instance::init_instance()
         .applicationVersion = APP_VERSION,
         .pEngineName = ENGINE_NAME,
         .engineVersion = ENGINE_VERSION,
-        .apiVersion = VK_API_VERSION_1_1
+        .apiVersion = VK_API_VER
     };
     
     // -------------------------------------------------------------------------
@@ -145,34 +145,11 @@ void Instance::init_physical_device() {
     // -------------------------------------------------------------------------
     // Iterate and detail each physical device
 
-    for(uint32_t device_idx = 0; device_idx < devices.size(); ++device_idx) {
-        auto properties = devices[device_idx].getProperties();
-
-        const char *type_string;
-        switch(properties.deviceType) {
-            case vk::PhysicalDeviceType::eOther:
-                type_string = "Other";
-                break;
-            case vk::PhysicalDeviceType::eIntegratedGpu:
-                type_string = "iGPU";
-                break;
-            case vk::PhysicalDeviceType::eDiscreteGpu:
-                type_string = "dGPU";
-                break;
-            case vk::PhysicalDeviceType::eVirtualGpu:
-                type_string = "Virtual";
-                break;
-            case vk::PhysicalDeviceType::eCpu:
-                type_string = "CPU";
-                break;
-            default:
-                type_string = "Unknown";
-                assert(false);
-                break;
-        }
+    for(const auto &device : devices) {
+        auto properties = device.getProperties();
 
         // grabbing the VRAM amount in proper megabytes
-        auto memory = devices[device_idx].getMemoryProperties();
+        auto memory = device.getMemoryProperties();
         vk::DeviceSize vram = 0u;
         for(uint32_t index = 0; index < memory.memoryHeapCount; ++index) {
             auto flags = memory.memoryHeaps[index].flags;
@@ -183,8 +160,7 @@ void Instance::init_physical_device() {
         }
 
         // query and populate list of physical device extensions
-        auto extensions =
-            devices[device_idx].enumerateDeviceExtensionProperties();
+        auto extensions = device.enumerateDeviceExtensionProperties();
         
         if(extensions.size() == 0) {
             CONSOLE_CRITICAL("Found zero physical device extensions.");
@@ -205,7 +181,7 @@ void Instance::init_physical_device() {
             if(strcmp(extension.extensionName,
                     VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) == 0)
             {
-                devices[device_idx].getProperties2(&physical_props2);
+                device.getProperties2(&physical_props2);
                 break;
             }
         }
@@ -219,7 +195,7 @@ void Instance::init_physical_device() {
             "\tMax Anisotropy: {}x\n"
             "\tVulkan Version: {}.{}.{}\n",
             properties.deviceName,
-            type_string,
+            to_string(properties.deviceType),
             driver_props.driverInfo,
             vram,
             properties.limits.maxSamplerAnisotropy,
@@ -230,9 +206,7 @@ void Instance::init_physical_device() {
 
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
-        if(device_idx == 0) {
-            _max_anisotropy = properties.limits.maxSamplerAnisotropy;
-        }
+        _max_anisotropy = properties.limits.maxSamplerAnisotropy;
     }
 
     // TODO: this should actually be a choice, but whateva.

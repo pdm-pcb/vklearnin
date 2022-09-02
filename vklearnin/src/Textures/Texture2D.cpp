@@ -48,7 +48,7 @@ void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
     _format = vk::Format::eR8G8B8A8Srgb;
 
     if(channels != BPC::RGBA) {
-        CONSOLE_WARN(
+        CONSOLE_TRACE(
             "Unsupported image channel count {} for image '{}'; converted "
             "to RGBA",
             channels, filepath
@@ -63,7 +63,7 @@ void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
 void Texture2D::init_image_view() {
     CONSOLE_INFO("");
 
-    _view = ImageTools::init_view(
+    _image_view = ImageTools::init_view(
         _image_handle,
         _format,
         vk::ImageAspectFlagBits::eColor,
@@ -91,13 +91,13 @@ void Texture2D::_create_image() {
     CONSOLE_INFO("");
 
     ImageTools::init_image(
-        _extent, _format,
-        vk::ImageTiling::eOptimal,
+        _extent, _format, vk::ImageTiling::eOptimal,
+        _image_handle,
         vk::ImageUsageFlagBits::eTransferDst |
         vk::ImageUsageFlagBits::eSampled,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        _image_handle, _device_memory,
-        _instance
+        _device_memory,
+        ::VMA_MEMORY_USAGE_GPU_ONLY,
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     );
 }
 
@@ -189,7 +189,11 @@ Texture2D::Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
 Texture2D::~Texture2D() {
     CONSOLE_INFO("");
 
-    ::vkDestroyImageView(_instance.logical_device(), _view, nullptr);
-    ::vkDestroyImage(_instance.logical_device(), _image_handle, nullptr);
-    ::vkFreeMemory(_instance.logical_device(), _device_memory, nullptr);
+        CONSOLE_TRACE(
+            "Destroying texture image {}",
+            fmt::ptr(&_image_handle)
+        );
+
+    _instance.logical_device().destroy(_image_view);
+    ::vmaDestroyImage(Allocator::allocator(), _image_handle, _device_memory);
 }

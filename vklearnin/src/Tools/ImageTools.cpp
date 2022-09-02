@@ -7,10 +7,10 @@ namespace ImageTools {
 
 // =============================================================================
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
-                const vk::ImageTiling &tiling, const vk::ImageUsageFlags &usage,
-                const vk::MemoryPropertyFlags &memory_flags,
-                vk::Image &image_handle, vk::DeviceMemory &device_memory,
-                const Instance &instance)
+                const vk::ImageTiling &tiling,
+                vk::Image &image_handle, const vk::ImageUsageFlags &usage,
+                VmaAllocation &memory, VmaMemoryUsage memory_usage,
+                uint32_t alloc_flags)
 {
     CONSOLE_INFO("");
 
@@ -29,44 +29,66 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         .initialLayout = vk::ImageLayout::eUndefined
     };
 
-    auto result = instance.logical_device().createImage(
-        &image_info,
-        nullptr,
-        &image_handle
-    );
-
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Failed to create image handle");
-        return;
-    }
-
-    auto memory_reqs =
-        instance.logical_device().getImageMemoryRequirements(image_handle);
-
-    auto memory_type_index = BufferTools::find_memory_type(
-        memory_reqs.memoryTypeBits,
-        memory_flags,
-        instance
-    );
-
-    vk::MemoryAllocateInfo memory_info {
-        .allocationSize = memory_reqs.size,
-        .memoryTypeIndex = memory_type_index,
+    ::VmaAllocationCreateInfo vma_info {
+        .flags = alloc_flags,
+        .usage = memory_usage,
+        .requiredFlags = 0u,
+        .preferredFlags = 0u,
+        .memoryTypeBits = 0u,
+        .pool = nullptr,
+        .pUserData = nullptr,
+        .priority = 1.0f
     };
 
-    device_memory = instance.logical_device().allocateMemory(memory_info);
-
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_ERROR("Could not allocate device memory for texture");
-        return;
-    }
-
-    ::vkBindImageMemory(
-        instance.logical_device(),
-        image_handle,
-        device_memory,
-        0u
+    ::vmaCreateImage(
+        Allocator::allocator(),
+        &static_cast<::VkImageCreateInfo &>(image_info),
+        &vma_info,
+        &reinterpret_cast<::VkImage &>(image_handle),
+        &memory,
+        nullptr
     );
+
+    CONSOLE_ERROR("{}", fmt::ptr(&image_handle));
+
+    // auto result = instance.logical_device().createImage(
+    //     &image_info,
+    //     nullptr,
+    //     &image_handle
+    // );
+
+    // if(result != vk::Result::eSuccess) {
+    //     CONSOLE_CRITICAL("Failed to create image handle");
+    //     return;
+    // }
+
+    // auto memory_reqs =
+    //     instance.logical_device().getImageMemoryRequirements(image_handle);
+
+    // auto memory_type_index = BufferTools::find_memory_type(
+    //     memory_reqs.memoryTypeBits,
+    //     memory_flags,
+    //     instance
+    // );
+
+    // vk::MemoryAllocateInfo memory_info {
+    //     .allocationSize = memory_reqs.size,
+    //     .memoryTypeIndex = memory_type_index,
+    // };
+
+    // device_memory = instance.logical_device().allocateMemory(memory_info);
+
+    // if(result != vk::Result::eSuccess) {
+    //     CONSOLE_ERROR("Could not allocate device memory for texture");
+    //     return;
+    // }
+
+    // ::vkBindImageMemory(
+    //     instance.logical_device(),
+    //     image_handle,
+    //     device_memory,
+    //     0u
+    // );
 }
 
 // =============================================================================

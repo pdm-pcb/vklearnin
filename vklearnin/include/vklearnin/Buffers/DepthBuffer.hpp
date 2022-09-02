@@ -1,6 +1,8 @@
 #ifndef VKLEARNIN_BUFFERS_DEPTHBUFFER_HPP
 #define VKLEARNIN_BUFFERS_DEPTHBUFFER_HPP
 
+#include "vklearnin/Allocator.hpp"
+
 #include <vulkan/vulkan.hpp>
 
 #include <vector>
@@ -22,10 +24,10 @@ public:
     ~DepthBuffer();
 
 private:
-    vk::Image        _image_handle;
-    vk::DeviceMemory _device_memory;
-    vk::ImageView    _image_view;
-    vk::Format       _format;
+    vk::Image     _image_handle;
+    VmaAllocation _device_memory;
+    vk::ImageView _image_view;
+    vk::Format    _format;
 
     const Instance  &_instance;
     const Swapchain &_swapchain;

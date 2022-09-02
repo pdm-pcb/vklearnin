@@ -2,6 +2,16 @@ include(FetchContent)
 
 # ------------------------------------------------------------------------------
 # glm --------------------------------------------------------------------------
+message(NOTICE "Fetch VMA")
+FetchContent_Declare(
+    vma 3.0.1
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+    GIT_TAG a6bfc237255a6bac1513f7c1ebde6d8aed6b5191 # v3.0.1 | 2022-05-26
+)
+FetchContent_MakeAvailable(vma)
+
+# ------------------------------------------------------------------------------
+# glm --------------------------------------------------------------------------
 message(NOTICE "Fetch GLM")
 FetchContent_Declare(
     glm 0.9.9.8

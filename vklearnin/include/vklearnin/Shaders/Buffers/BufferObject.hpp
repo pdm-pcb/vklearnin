@@ -1,17 +1,11 @@
 #ifndef VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
 #define VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
 
+#include "vklearnin/common.hpp"
+
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/Shaders/Vertex.hpp"
-#include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
-
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
-#include <cstdint>
-#include <type_traits>
 
 class Instance;
 
@@ -20,6 +14,8 @@ class BufferObject {
 public:
 //==============================================================================
     void populate_buffer(const vk::CommandPool &pool, const vk::Queue &queue) {
+        CONSOLE_INFO("");
+
         // I'm glad the tutorial mentioned making this into its own class. It's
         // quite good sense.
         SingleUseCommandBuffer command_buffer(pool, _instance);
@@ -35,7 +31,7 @@ public:
             
             buffer_handle.copyBuffer(
                 _staging_buffer->handle(),
-                _device_buffer,
+                _buffer,
                 copy_regions
             );
         command_buffer.end();
@@ -46,41 +42,40 @@ public:
     }
 
 //==============================================================================
-    inline vk::Buffer handle() const { return _device_buffer; }
+    inline vk::Buffer handle() const { return _buffer; }
     inline size_t count()      const { return _data.size();   }
 
 // =============================================================================
     BufferObject(const std::vector<Datum> &data, const Instance &instance) :
         _staging_buffer { new StagingBuffer<Datum>(data, instance) },
-        _device_buffer  { nullptr  }, 
-        _device_memory  { nullptr  },
+        _buffer         { nullptr },
+        _memory         { nullptr },
         _data           { data },
         _buffer_size    { sizeof(Datum) * _data.size() },
         _instance       { instance }
     {
+        CONSOLE_INFO("");
+
         _create_device_buffer();
     }
  
     ~BufferObject() {
-        ::vkDestroyBuffer(
-            _instance.logical_device(),
-            _device_buffer,
-            nullptr
+        CONSOLE_INFO("");
+
+        CONSOLE_TRACE(
+            "Destroying buffer object {}",
+            fmt::ptr(&_buffer)
         );
 
-        ::vkFreeMemory(
-            _instance.logical_device(),
-            _device_memory,
-            nullptr
-        );
+        ::vmaDestroyBuffer(Allocator::allocator(), _buffer, _memory);
     }
 
     BufferObject() = delete;
 
 private:
     StagingBuffer<Datum> *_staging_buffer;
-    vk::Buffer            _device_buffer;
-    vk::DeviceMemory      _device_memory;
+    vk::Buffer    _buffer;
+    VmaAllocation _memory;
 
     const std::vector<Datum> &_data;
     const size_t _buffer_size;
@@ -89,6 +84,8 @@ private:
 
     //==========================================================================
     void _create_device_buffer() {
+        CONSOLE_INFO("");
+
         vk::BufferUsageFlagBits buffer_type;
 
         if constexpr(std::is_same_v<Datum, Vertex>) {
@@ -99,11 +96,9 @@ private:
         }
 
         BufferTools::create_buffer(
-            _device_buffer, _buffer_size,
+            _buffer, _buffer_size,
             vk::BufferUsageFlagBits::eTransferDst | buffer_type,
-            _device_memory,
-            vk::MemoryPropertyFlagBits::eDeviceLocal,
-            _instance
+            _memory, ::VMA_MEMORY_USAGE_CPU_TO_GPU
         );
     }
 };
