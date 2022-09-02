@@ -65,7 +65,7 @@ private:
                         Pipeline &pipeline, Framebuffers &framebuffers);
 
     void _update_ubo(UniformBufferObject &ubo, const Swapchain &swapchain,
-                     const uint32_t frame_index);
+                     const uint32_t frame_index, const float runtime);
 };
 
 #endif // VKLEARNIN_RENDERLOOP_HPP

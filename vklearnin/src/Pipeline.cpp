@@ -120,11 +120,17 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
 void Pipeline::init_layout(const vk::DescriptorSetLayout &desc_set_layout) {
     CONSOLE_INFO("");
 
+	vk::PushConstantRange push_range {
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .offset = 0u,
+        .size = sizeof(glm::mat4)
+    };
+
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
         .setLayoutCount = 1u,
         .pSetLayouts = &desc_set_layout,
-        .pushConstantRangeCount = 0u,
-        .pPushConstantRanges = nullptr
+        .pushConstantRangeCount = 1u,
+        .pPushConstantRanges = &push_range
     };
 
     _layout =

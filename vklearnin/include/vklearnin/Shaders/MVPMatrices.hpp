@@ -3,8 +3,7 @@
 
 #include <glm/glm.hpp>
 
-struct MVPMatrices {
-    glm::mat4 model;
+struct VPMatrices {
     glm::mat4 view;
     glm::mat4 proj;
 };

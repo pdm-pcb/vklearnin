@@ -1,9 +1,12 @@
 #version 460 core
 
-layout(binding = 0) uniform MVPMatrices {
-    mat4 model;
+layout(binding = 0) uniform VPMatrices {
     mat4 view;
     mat4 proj;
+};
+
+layout(push_constant) uniform ModelMatrix {
+    mat4 model;
 };
 
 layout(location = 0) in vec3 in_position;

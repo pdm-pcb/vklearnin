@@ -29,6 +29,14 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
     uint32_t image_index = 0u;
 
     while(_window.message_loop() == true) {
+        using HRC = std::chrono::high_resolution_clock;
+        using second_period = std::chrono::seconds::period;
+        using duration_seconds = std::chrono::duration<float, second_period>;
+
+        static auto start = HRC::now();
+        auto now = HRC::now();
+        auto runtime = duration_seconds(now - start).count();
+
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
         frame_index = 1 - frame_index;
@@ -59,7 +67,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // now send the fresh data to the UBOs. Im curious: how much does order
         // matter here? Should this be done after the fences are reset? Is
         // that even relevant? Guess I'll have to read the spec. =)
-        _update_ubo(ubo, swapchain, frame_index);
+        _update_ubo(ubo, swapchain, frame_index, runtime);
 
         // clear out what needs clearing
         result = _device.resetFences(1u, &_display_fences[frame_index]);
@@ -104,7 +112,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             command_buffer.setViewport(0u, 1u, &pipeline.viewport());
             command_buffer.setScissor(0u, 1u, &pipeline.scissor());
 
-            for(const auto *model : models) {
+            for(auto *model : models) {
                 // time for some host-side vertex data!
                 command_buffer.bindVertexBuffers(
                     0u,
@@ -127,6 +135,20 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                     &descriptor_set.sets()[frame_index],
                     0u,
                     nullptr
+                );
+
+                model->model_matrix = glm::rotate(
+                    glm::mat4(1.0f),
+                    runtime * 0.7854f,
+                    glm::vec3(0.0f, 1.0f, 0.0f)
+                );
+
+                command_buffer.pushConstants(
+                    pipeline.layout(),
+                    vk::ShaderStageFlagBits::eVertex,
+                    0u,
+                    sizeof(model->model_matrix),
+                    &model->model_matrix
                 );
 
                 // boom, draw.
@@ -264,23 +286,10 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
 // =============================================================================
 void RenderLoop::_update_ubo(UniformBufferObject &ubo,
                              const Swapchain &swapchain,
-                             const uint32_t image_index)
+                             const uint32_t image_index,
+                             const float runtime)
 {
-    using HRC = std::chrono::high_resolution_clock;
-    using second_period = std::chrono::seconds::period;
-    using duration_seconds = std::chrono::duration<float, second_period>;
-
-    static auto start = HRC::now();
-    auto now = HRC::now();
-    auto runtime = duration_seconds(now - start).count();
-
-    MVPMatrices matrices { };
-
-    matrices.model = glm::rotate(
-        glm::mat4(1.0f),
-        runtime * 0.7854f,
-        glm::vec3(0.0f, 1.0f, 0.0f)
-    );
+    VPMatrices matrices { };
 
     matrices.view = glm::lookAt(
         glm::vec3(0.0f, 2.0f, 10.0f),

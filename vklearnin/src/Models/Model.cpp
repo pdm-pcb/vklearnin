@@ -95,6 +95,7 @@ void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
 }
 
 Model::Model(const char *model_path, const Instance &instance) :
+    model_matrix   { 1.0f },
     _vertex_buffer { nullptr },
     _index_buffer  { nullptr }
 {

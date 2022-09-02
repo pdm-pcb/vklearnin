@@ -7,6 +7,8 @@
 
 #include "tiny_gltf.h"
 
+#include <glm/glm.hpp>
+
 class Instance;
 
 class Model {
@@ -25,6 +27,8 @@ public:
     }
 
     void populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue);
+
+    glm::mat4 model_matrix;
 
     Model(const char *model_path, const Instance &instance);
     ~Model();

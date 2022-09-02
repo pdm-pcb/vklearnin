@@ -51,24 +51,45 @@ int main() {
     command_queue.init_queues();
     command_queue.init_buffers();
 
-
     // =========================================================================
     // Vertex data -------------------------------------------------------------
     Model gunship("../../assets/meshes/spaceships/gunship.gltf", instance);
     gunship.populate_buffers(command_queue.command_pool(),
                              command_queue.graphics_queue());
 
+    Model carrier("../../assets/meshes/spaceships/carrier.gltf", instance);
+    carrier.populate_buffers(command_queue.command_pool(),
+                             command_queue.graphics_queue());
+
     std::vector<Model *> models {
-        &gunship
+        &carrier
     };
 
     // =========================================================================
-    Texture2D texture(command_queue.command_pool(),
-                      command_queue.graphics_queue(),
-                      instance);
-    texture.load_file("../../assets/textures/spaceships/gunship_diffuse.png");
-    texture.init_image_view();
-    texture.init_sampler(
+    Texture2D gunship_texture(command_queue.command_pool(),
+                              command_queue.graphics_queue(),
+                              instance);
+    gunship_texture.load_file(
+        "../../assets/textures/spaceships/gunship_diffuse.png"
+    );
+    gunship_texture.init_image_view();
+    gunship_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        true, instance.max_anisotropy()
+    );
+
+    Texture2D carrier_texture(command_queue.command_pool(),
+                              command_queue.graphics_queue(),
+                              instance);
+    carrier_texture.load_file(
+        "../../assets/textures/spaceships/carrier_diffuse.png"
+    );
+    carrier_texture.init_image_view();
+    carrier_texture.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -94,7 +115,7 @@ int main() {
 
     // =========================================================================
     // Uniform Buffer Object(s)
-    UniformBufferObject ubo(sizeof(MVPMatrices), FRAME_OVERLAP, instance);
+    UniformBufferObject ubo(sizeof(VPMatrices), FRAME_OVERLAP, instance);
     ubo.init_buffers();
 
     // =========================================================================
@@ -102,7 +123,7 @@ int main() {
     DescriptorSet descriptor_set(instance.logical_device());
     descriptor_set.init_layout();
     descriptor_set.init_pool();
-    descriptor_set.init_sets(ubo, texture);
+    descriptor_set.init_sets(ubo, carrier_texture);
 
     // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,

@@ -78,7 +78,7 @@ void DescriptorSet::init_sets(UniformBufferObject &ubo, Texture2D &texture) {
         vk::DescriptorBufferInfo buffer_info {
             .buffer = ubo.buffer_handles()[frame],
             .offset = 0u,
-            .range  = static_cast<uint32_t>(sizeof(MVPMatrices))
+            .range  = static_cast<uint32_t>(sizeof(VPMatrices))
         };
 
         vk::DescriptorImageInfo image_info {
