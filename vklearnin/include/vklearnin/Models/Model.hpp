@@ -13,6 +13,8 @@ class Instance;
 
 class Model {
 public:
+    const glm::mat4 & update_model_matrix(float runtime);
+
     inline const std::vector<vk::Buffer> & vertex_buffers() const {
         return _vertex_buffers;
     }
@@ -28,9 +30,7 @@ public:
 
     void populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue);
 
-    glm::mat4 model_matrix;
-
-    Model(const char *model_path, const Instance &instance);
+    Model(const char *model_path, glm::vec3 position, const Instance &instance);
     ~Model();
     Model() = delete;
 
@@ -49,6 +49,9 @@ private:
 
     BufferObject<Vertex> *_vertex_buffer;
     BufferObject<Index>  *_index_buffer;
+
+    glm::vec3 _position;
+    glm::mat4 _model_matrix;
 
     void _process_nodes(tinygltf::Model &model, tinygltf::Node &node);
     void _process_mesh(tinygltf::Model &model,  tinygltf::Mesh &mesh);

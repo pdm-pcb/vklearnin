@@ -8,7 +8,7 @@
 void DescriptorSet::init_layout() {
     CONSOLE_INFO("");
     vk::DescriptorSetLayoutBinding bindings[] {
-        // MVP matrices UBO
+        // VP matrices
         {
             .binding            = 0u,
             .descriptorType     = vk::DescriptorType::eUniformBuffer,

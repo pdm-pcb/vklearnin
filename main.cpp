@@ -7,7 +7,8 @@
 #include "vklearnin/RenderLoop.hpp"
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
-#include "vklearnin/DescriptorSet.hpp"
+#include "vklearnin/DescriptorSets/PerFrameDescriptors.hpp"
+#include "vklearnin/DescriptorSets/PerMaterialDescriptors.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 #include "vklearnin/Buffers/DepthBuffer.hpp"
 #include "vklearnin/Models/Model.hpp"
@@ -53,19 +54,25 @@ int main() {
 
     // =========================================================================
     // Vertex data -------------------------------------------------------------
-    Model gunship("../../assets/meshes/spaceships/gunship.gltf", instance);
+    Model gunship("../../assets/meshes/spaceships/gunship.gltf",
+                  glm::vec3{ 2.0f, 2.0f, 0.0f },
+                  instance);
     gunship.populate_buffers(command_queue.command_pool(),
                              command_queue.graphics_queue());
 
-    Model carrier("../../assets/meshes/spaceships/carrier.gltf", instance);
+    Model carrier("../../assets/meshes/spaceships/carrier.gltf",
+                  glm::vec3{ -2.0f, -2.0f, 0.0f },
+                  instance);
     carrier.populate_buffers(command_queue.command_pool(),
                              command_queue.graphics_queue());
 
     std::vector<Model *> models {
+        &gunship,
         &carrier
     };
 
     // =========================================================================
+    // Texture data ------------------------------------------------------------
     Texture2D gunship_texture(command_queue.command_pool(),
                               command_queue.graphics_queue(),
                               instance);
@@ -97,6 +104,11 @@ int main() {
         vk::SamplerAddressMode::eRepeat,
         true, instance.max_anisotropy()
     );
+
+    std::vector<Texture2D *> textures {
+        &gunship_texture,
+        &carrier_texture
+    };
     
     // =========================================================================
     // the swapchain will use the function pointers gathered by the instance,
@@ -120,10 +132,18 @@ int main() {
 
     // =========================================================================
     // Descriptor Sets
-    DescriptorSet descriptor_set(instance.logical_device());
-    descriptor_set.init_layout();
-    descriptor_set.init_pool();
-    descriptor_set.init_sets(ubo, carrier_texture);
+    PerFrameDescriptors per_frame_descriptors(instance.logical_device());
+    per_frame_descriptors.init_layout();
+    per_frame_descriptors.init_pool();
+    per_frame_descriptors.init_sets(ubo);
+
+    PerMaterialDescriptors per_material_descriptors(
+        static_cast<uint32_t>(textures.size()),
+        instance.logical_device()
+    );
+    per_material_descriptors.init_layout();
+    per_material_descriptors.init_pool();
+    per_material_descriptors.init_sets(textures);
 
     // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
@@ -133,7 +153,10 @@ int main() {
     pipeline.fragment_from_binary("../../assets/shaders/shader.frag.spv");
 
     pipeline.init_render_passes(swapchain);
-    pipeline.init_layout(descriptor_set.layout());
+    pipeline.init_layout({
+        per_frame_descriptors.layout(),
+        per_material_descriptors.layout()
+    });
     pipeline.init_pipeline(swapchain);
 
     // =========================================================================
@@ -154,8 +177,9 @@ int main() {
             swapchain,
             ubo,
             pipeline,
-            descriptor_set,
             framebuffers,
+            per_frame_descriptors,
+            per_material_descriptors,
             models
         );
 

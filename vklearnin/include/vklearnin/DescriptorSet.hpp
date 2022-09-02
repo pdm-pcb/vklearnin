@@ -14,7 +14,6 @@ public:
     void init_pool();
     void init_sets(UniformBufferObject &ubo, Texture2D &texture);
 
-
     inline vk::DescriptorSetLayout layout() const { return _layout; }
     inline const std::vector<vk::DescriptorSet> & sets() const { return _sets; }
 

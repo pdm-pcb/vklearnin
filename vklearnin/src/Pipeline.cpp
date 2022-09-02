@@ -117,7 +117,9 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
 }
 
 // =============================================================================
-void Pipeline::init_layout(const vk::DescriptorSetLayout &desc_set_layout) {
+void
+Pipeline::init_layout(const std::vector<vk::DescriptorSetLayout> &desc_layouts)
+{
     CONSOLE_INFO("");
 
 	vk::PushConstantRange push_range {
@@ -127,14 +129,17 @@ void Pipeline::init_layout(const vk::DescriptorSetLayout &desc_set_layout) {
     };
 
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount = 1u,
-        .pSetLayouts = &desc_set_layout,
+        .setLayoutCount = static_cast<uint32_t>(desc_layouts.size()),
+        .pSetLayouts = desc_layouts.data(),
         .pushConstantRangeCount = 1u,
         .pPushConstantRanges = &push_range
     };
 
     _layout =
         _instance.logical_device().createPipelineLayout(pipeline_layout_info);
+
+    CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
+                  pipeline_layout_info.setLayoutCount);
 }
 
 // =============================================================================

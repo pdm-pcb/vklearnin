@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(binding = 0) uniform VPMatrices {
+layout(set = 0, binding = 0) uniform VPMatrices {
     mat4 view;
     mat4 proj;
 };

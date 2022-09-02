@@ -9,7 +9,8 @@ class Swapchain;
 class Pipeline;
 class Framebuffers;
 class UniformBufferObject;
-class DescriptorSet;
+class PerFrameDescriptors;
+class PerMaterialDescriptors;
 class DepthBuffer;
 class Model;
 
@@ -34,7 +35,9 @@ public:
     // main render loop: window events, then draw
     bool run(const Instance &instance, Swapchain &swapchain,
              UniformBufferObject &ubo, Pipeline &pipeline,
-             DescriptorSet &descriptor_set, Framebuffers &framebuffers,
+             Framebuffers &framebuffers,
+             PerFrameDescriptors &per_frame_descriptors,
+             PerMaterialDescriptors &per_material_descriptors,
              const std::vector<Model *> &models);
 
     // -------------------------------------------------------------------------
@@ -65,7 +68,7 @@ private:
                         Pipeline &pipeline, Framebuffers &framebuffers);
 
     void _update_ubo(UniformBufferObject &ubo, const Swapchain &swapchain,
-                     const uint32_t frame_index, const float runtime);
+                     const uint32_t frame_index);
 };
 
 #endif // VKLEARNIN_RENDERLOOP_HPP

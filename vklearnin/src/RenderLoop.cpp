@@ -8,7 +8,8 @@
 #include "vklearnin/Buffers/Framebuffers.hpp"
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
-#include "vklearnin/DescriptorSet.hpp"
+#include "vklearnin/DescriptorSets/PerFrameDescriptors.hpp"
+#include "vklearnin/DescriptorSets/PerMaterialDescriptors.hpp"
 #include "vklearnin/Models/Model.hpp"
 
 #if defined(__linux__)
@@ -20,7 +21,9 @@
 // =============================================================================
 bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                      UniformBufferObject &ubo, Pipeline &pipeline,
-                     DescriptorSet &descriptor_set, Framebuffers &framebuffers,
+                     Framebuffers &framebuffers,
+                     PerFrameDescriptors &per_frame_descriptors,
+                     PerMaterialDescriptors &per_material_descriptors,
                      const std::vector<Model *> &models)
 {
     CONSOLE_INFO("");
@@ -67,7 +70,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // now send the fresh data to the UBOs. Im curious: how much does order
         // matter here? Should this be done after the fences are reset? Is
         // that even relevant? Guess I'll have to read the spec. =)
-        _update_ubo(ubo, swapchain, frame_index, runtime);
+        _update_ubo(ubo, swapchain, frame_index);
 
         // clear out what needs clearing
         result = _device.resetFences(1u, &_display_fences[frame_index]);
@@ -84,6 +87,21 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
         auto command_buffer = _queues.command_buffer(image_index);
         command_buffer.begin(begin_info);
+
+        // bind the pipeline so everything's current
+        command_buffer.bindPipeline(
+            vk::PipelineBindPoint::eGraphics,
+            pipeline.pipeline()
+        );
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            pipeline.layout(),
+            0u, 1u,
+            &per_frame_descriptors.sets()[frame_index],
+            0u,
+            nullptr
+        );
 
         // initial setup for the pass
         vk::ClearValue clear_values[] = {
@@ -102,58 +120,45 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // go time!
         command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-            // bind the pipeline so everything's current
-            command_buffer.bindPipeline(
-                vk::PipelineBindPoint::eGraphics,
-                pipeline.pipeline()
-            );
-
             // update the dynamic traits of the pipeline
             command_buffer.setViewport(0u, 1u, &pipeline.viewport());
             command_buffer.setScissor(0u, 1u, &pipeline.scissor());
 
-            for(auto *model : models) {
+            for(size_t model_idx = 0; model_idx < models.size(); ++model_idx) {
                 // time for some host-side vertex data!
                 command_buffer.bindVertexBuffers(
                     0u,
-                    model->vertex_buffers(),
-                    model->vertex_buffer_offsets()
+                    models[model_idx]->vertex_buffers(),
+                    models[model_idx]->vertex_buffer_offsets()
                 );
                 
                 // and indices while we're at it
                 command_buffer.bindIndexBuffer(
-                    model->index_buffer(),
+                    models[model_idx]->index_buffer(),
                     0u,
                     IndexType
                 );
 
-                // time for some descriptor sets
                 command_buffer.bindDescriptorSets(
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
-                    0u, 1u,
-                    &descriptor_set.sets()[frame_index],
+                    1u, 1u,
+                    &per_material_descriptors.sets(model_idx)[frame_index],
                     0u,
                     nullptr
-                );
-
-                model->model_matrix = glm::rotate(
-                    glm::mat4(1.0f),
-                    runtime * 0.7854f,
-                    glm::vec3(0.0f, 1.0f, 0.0f)
                 );
 
                 command_buffer.pushConstants(
                     pipeline.layout(),
                     vk::ShaderStageFlagBits::eVertex,
                     0u,
-                    sizeof(model->model_matrix),
-                    &model->model_matrix
+                    sizeof(glm::mat4),
+                    &models[model_idx]->update_model_matrix(runtime)
                 );
 
                 // boom, draw.
                 command_buffer.drawIndexed(
-                    static_cast<uint32_t>(model->index_count()),
+                    static_cast<uint32_t>(models[model_idx]->index_count()),
                     1u, 0u, 0u, 0u
                 );
             }
@@ -286,8 +291,7 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
 // =============================================================================
 void RenderLoop::_update_ubo(UniformBufferObject &ubo,
                              const Swapchain &swapchain,
-                             const uint32_t image_index,
-                             const float runtime)
+                             const uint32_t image_index)
 {
     VPMatrices matrices { };
 

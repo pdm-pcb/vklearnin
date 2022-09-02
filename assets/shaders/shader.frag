@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(binding = 1) uniform sampler2D texsampler;
+layout(set = 1, binding = 0) uniform sampler2D texsampler;
 
 layout(location = 0) in vec3 vs_out_color;
 layout(location = 1) in vec2 vs_out_texcoord;

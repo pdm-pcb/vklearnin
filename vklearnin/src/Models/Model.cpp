@@ -1,6 +1,25 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Models/Model.hpp"
 
+// =============================================================================
+const glm::mat4 & Model::update_model_matrix(float runtime) {
+    auto T = glm::translate(
+        glm::mat4(1.0f),
+        _position
+    );
+
+    auto R = glm::rotate(
+        glm::mat4(1.0f),
+        runtime * 0.7854f,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    _model_matrix = T * R;
+
+    return _model_matrix;
+}
+
+// =============================================================================
 void
 Model::populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue) {
     CONSOLE_INFO("");
@@ -12,6 +31,7 @@ Model::populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue) {
     _vertex_buffer_offsets.emplace_back(0u);
 }
 
+// =============================================================================
 void Model::_process_nodes(tinygltf::Model &model, tinygltf::Node  &node) {
     CONSOLE_INFO("");
 
@@ -26,6 +46,7 @@ void Model::_process_nodes(tinygltf::Model &model, tinygltf::Node  &node) {
     }
 }
 
+// =============================================================================
 void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
     CONSOLE_INFO("");
 
@@ -94,10 +115,13 @@ void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
     }
 }
 
-Model::Model(const char *model_path, const Instance &instance) :
-    model_matrix   { 1.0f },
-    _vertex_buffer { nullptr },
-    _index_buffer  { nullptr }
+// =============================================================================
+Model::Model(const char *model_path, glm::vec3 position,
+             const Instance &instance) :
+    _vertex_buffer { nullptr  },
+    _index_buffer  { nullptr  },
+    _position      { position },
+    _model_matrix  { 1.0f }
 {
     CONSOLE_INFO("");
 

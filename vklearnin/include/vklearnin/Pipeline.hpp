@@ -20,7 +20,7 @@ public:
     // create a suitable default layout
     void init_render_passes(const Swapchain &swapchain);
     void init_ubos(const vk::Device &device, const size_t count);
-    void init_layout(const vk::DescriptorSetLayout &desc_set_layout);
+    void init_layout(const std::vector<vk::DescriptorSetLayout> &desc_layouts);
     void init_pipeline(const Swapchain &swapchain);
 
     // -------------------------------------------------------------------------
