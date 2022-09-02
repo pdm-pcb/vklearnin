@@ -134,8 +134,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                 1u, 0u, 0u, 0u
             );
 
-        ::vkCmdEndRenderPass(command_buffer);
-
+        command_buffer.endRenderPass();
         command_buffer.end();
 
         // now wait again, but this time the signal and wait semephores are
@@ -237,7 +236,7 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
     CONSOLE_WARN("Image requires updating");
 
     // wait for current commands to run their course
-    ::vkDeviceWaitIdle(instance.logical_device());
+    instance.logical_device().waitIdle();
 
     CONSOLE_TRACE("Destroy framebuffers and swapchain");
     framebuffers.destroy();
@@ -311,14 +310,14 @@ RenderLoop::~RenderLoop() {
     CONSOLE_INFO("");
 
     for(auto &sem : _image_available_sems) {
-        ::vkDestroySemaphore(_device, sem, nullptr);
+        _device.destroy(sem);
     }
     
     for(auto &sem : _draw_complete_sems) {
-        ::vkDestroySemaphore(_device, sem, nullptr);
+        _device.destroy(sem);
     }
     
     for(auto &fence : _display_fences) {
-        ::vkDestroyFence(_device, fence, nullptr);
+        _device.destroy(fence);
     }
 }

@@ -112,11 +112,11 @@ void Swapchain::init_extent(const vk::Extent2D &extent) {
     // Don't exceed the maximum image count, however. Zero is a special maximum
     // indicating unlimiated images
     if(surface_capabilities.maxImageCount != 0u &&
-       MAX_IMAGES >= surface_capabilities.maxImageCount)
+       FRAME_OVERLAP >= surface_capabilities.maxImageCount)
     {
         CONSOLE_CRITICAL(
             "Configured image count {} exceeds surface max of {}",
-            MAX_IMAGES,
+            FRAME_OVERLAP,
             surface_capabilities.maxImageCount
         );
     }
@@ -150,7 +150,7 @@ void Swapchain::init_swapchain(const CommandQueues &queues) {
     // now we've got everything we need to actually create the swapchain
     vk::SwapchainCreateInfoKHR swapchain_info {
         .surface          = _surface,
-        .minImageCount    = MAX_IMAGES,
+        .minImageCount    = FRAME_OVERLAP,
         .imageFormat      = _color_format,
         .imageColorSpace  = _color_space,
         .imageExtent      = _extent,
@@ -202,10 +202,10 @@ void Swapchain::init_swapchain_images() {
     CONSOLE_INFO("");
 
     _images = _instance.logical_device().getSwapchainImagesKHR(_swapchain);
-    if(_images.size() < MAX_IMAGES) {
+    if(_images.size() < FRAME_OVERLAP) {
         CONSOLE_ERROR(
             "Swapchain only supports {} images, while {} requested",
-            _images.size(), MAX_IMAGES
+            _images.size(), FRAME_OVERLAP
         );
     }
 }
@@ -214,8 +214,8 @@ void Swapchain::init_swapchain_images() {
 void Swapchain::init_image_views() {
     CONSOLE_INFO("");
 
-    _image_views.resize(MAX_IMAGES);    
-    for(size_t image = 0; image < MAX_IMAGES; ++image) {
+    _image_views.resize(FRAME_OVERLAP);    
+    for(size_t image = 0; image < FRAME_OVERLAP; ++image) {
         _image_views[image] = ImageTools::init_view(
             _images[image],
             _color_format,

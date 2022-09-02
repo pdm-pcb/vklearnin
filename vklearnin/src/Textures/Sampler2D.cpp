@@ -42,5 +42,5 @@ Sampler2D::Sampler2D(const vk::Device &device) :
 Sampler2D::~Sampler2D() {
     CONSOLE_INFO("");
 
-    ::vkDestroySampler(_device, _sampler, nullptr);
+    _device.destroy(_sampler);
 }

@@ -47,9 +47,9 @@ public:
     ~RenderLoop();
 
 private:
-    std::array<vk::Semaphore, MAX_IMAGES> _image_available_sems;
-    std::array<vk::Semaphore, MAX_IMAGES> _draw_complete_sems;
-    std::array<vk::Fence, MAX_IMAGES>     _display_fences;
+    std::array<vk::Semaphore, FRAME_OVERLAP> _image_available_sems;
+    std::array<vk::Semaphore, FRAME_OVERLAP> _draw_complete_sems;
+    std::array<vk::Fence, FRAME_OVERLAP>     _display_fences;
 
     const vk::Device &_device;
     Window           &_window;

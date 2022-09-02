@@ -47,7 +47,7 @@ void Framebuffers::destroy() {
     CONSOLE_INFO("");
 
     for(auto buffer : _buffers) {
-        ::vkDestroyFramebuffer(_device, buffer, nullptr);
+        _device.destroy(buffer);
     }
 }
 

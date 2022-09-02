@@ -100,7 +100,7 @@ int main() {
 
     // =========================================================================
     // Uniform Buffer Object(s)
-    UniformBufferObject ubo(sizeof(MVPMatrices), MAX_IMAGES, instance);
+    UniformBufferObject ubo(sizeof(MVPMatrices), FRAME_OVERLAP, instance);
     ubo.init_buffers();
 
     // =========================================================================

@@ -42,16 +42,16 @@ void DescriptorSet::init_pool() {
     vk::DescriptorPoolSize pool_size[] {
         {
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = MAX_IMAGES
+            .descriptorCount = FRAME_OVERLAP
         },
         {
             .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = MAX_IMAGES
+            .descriptorCount = FRAME_OVERLAP
         },
     };
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = MAX_IMAGES,
+        .maxSets = FRAME_OVERLAP,
         .poolSizeCount = static_cast<uint32_t>(std::size(pool_size)),
         .pPoolSizes = pool_size
     };
@@ -64,17 +64,17 @@ void DescriptorSet::init_sets(UniformBufferObject &ubo, Texture2D &texture) {
     CONSOLE_INFO("");
 
     std::vector<vk::DescriptorSetLayout>
-        set_layouts(MAX_IMAGES, _layout);
+        set_layouts(FRAME_OVERLAP, _layout);
 
     vk::DescriptorSetAllocateInfo alloc_info {
         .descriptorPool = _pool,
-        .descriptorSetCount = MAX_IMAGES,
+        .descriptorSetCount = FRAME_OVERLAP,
         .pSetLayouts = set_layouts.data()
     };
 
     _sets = _device.allocateDescriptorSets(alloc_info);
 
-    for(uint32_t frame = 0; frame < MAX_IMAGES; ++frame) {
+    for(uint32_t frame = 0; frame < FRAME_OVERLAP; ++frame) {
         vk::DescriptorBufferInfo buffer_info {
             .buffer = ubo.buffer_handles()[frame],
             .offset = 0u,
@@ -120,10 +120,10 @@ DescriptorSet::DescriptorSet(const vk::Device &device) :
 {
     CONSOLE_INFO("");
 
-    _sets.resize(MAX_IMAGES);
+    _sets.resize(FRAME_OVERLAP);
 }
 
 DescriptorSet::~DescriptorSet() {
-    ::vkDestroyDescriptorSetLayout(_device, _layout, nullptr);
-    ::vkDestroyDescriptorPool(_device, _pool, nullptr);
+    _device.destroy(_layout);
+    _device.destroy(_pool);
 }

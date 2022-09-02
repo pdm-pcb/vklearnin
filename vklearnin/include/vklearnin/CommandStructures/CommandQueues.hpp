@@ -70,7 +70,7 @@ private:
     vk::Queue  _present_queue;
 
     vk::CommandPool _command_pool;
-    std::array<vk::CommandBuffer, MAX_IMAGES> _command_buffers;
+    std::array<vk::CommandBuffer, FRAME_OVERLAP> _command_buffers;
 
     const vk::SurfaceKHR &_surface;
     const Instance       &_instance;

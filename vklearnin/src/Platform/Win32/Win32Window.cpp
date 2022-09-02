@@ -196,7 +196,7 @@ Win32Window::Win32Window(const vk::Instance &instance,
 Win32Window::~Win32Window() {
     CONSOLE_INFO("");
 
-    ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
+    _instance.destroy(_surface);
 }
 
 #endif // WIN32
