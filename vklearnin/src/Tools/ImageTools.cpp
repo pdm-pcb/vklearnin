@@ -49,8 +49,6 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         nullptr
     );
 
-    CONSOLE_ERROR("{}", fmt::ptr(&image_handle));
-
     // auto result = instance.logical_device().createImage(
     //     &image_info,
     //     nullptr,

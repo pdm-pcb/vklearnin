@@ -45,8 +45,6 @@ int main() {
     // device can be created
     instance.init_logical_device(command_queue);
 
-    Allocator::init(instance);
-
     // now that there's a logical device in place, go a head and initialize a
     // command pool, queue, and command buffer
     command_queue.init_pools();
@@ -150,8 +148,6 @@ int main() {
 
         // ...!
     }
-
-    // Allocator::shutdown();
 
     return 0;
 }

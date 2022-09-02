@@ -39,8 +39,6 @@ void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
         nullptr
     );
 
-    CONSOLE_ERROR("{}", fmt::ptr(&buffer));
-
     // buffer = instance.logical_device().createBuffer(buffer_info);
 
     // allocate_memory(buffer, memory, memory_flags, instance);

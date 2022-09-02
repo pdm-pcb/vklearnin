@@ -260,6 +260,8 @@ void Instance::init_logical_device(const CommandQueues &command_queue) {
     }
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_logical_device);
+
+    Allocator::init(*this);
 }
 
 // =============================================================================
@@ -287,6 +289,7 @@ Instance::~Instance() {
     VKDebugger::shutdown(_instance);
 #endif
 
+    Allocator::shutdown();
     _logical_device.destroy();
     _instance.destroy();
 }
