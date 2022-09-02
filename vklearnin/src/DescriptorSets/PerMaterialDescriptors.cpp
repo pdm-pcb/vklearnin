@@ -49,8 +49,9 @@ void PerMaterialDescriptors::init_sets(const std::vector<Texture2D *> &textures)
     CONSOLE_INFO("");
 
     for(size_t tex_index = 0; tex_index < _material_count; ++tex_index) {
-        std::vector<vk::DescriptorSetLayout>
-            set_layouts(FRAME_OVERLAP, _layout);
+        std::vector<vk::DescriptorSetLayout> set_layouts;
+        set_layouts.resize(FRAME_OVERLAP);
+        std::fill(set_layouts.begin(), set_layouts.end(), _layout);
 
         vk::DescriptorSetAllocateInfo alloc_info {
             .descriptorPool = _pool,
