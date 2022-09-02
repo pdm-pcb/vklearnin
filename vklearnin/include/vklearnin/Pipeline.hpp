@@ -32,9 +32,9 @@ public:
 
         _viewport = vk::Viewport {
             .x = static_cast<float>(x),
-            .y = static_cast<float>(y),
+            .y = static_cast<float>(height),
             .width  = static_cast<float>(width),
-            .height = static_cast<float>(height),
+            .height = -static_cast<float>(height),
             .minDepth = 0.0f,
             .maxDepth = 1.0f,
         };

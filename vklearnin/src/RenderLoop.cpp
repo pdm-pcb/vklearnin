@@ -296,13 +296,13 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
     VPMatrices matrices { };
 
     matrices.view = glm::lookAt(
-        glm::vec3(0.0f, 2.0f, 10.0f),
+        glm::vec3(0.0f, 2.0f, 20.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
     matrices.proj = glm::perspective(
-        -0.7854f,
+        0.7854f,
         swapchain.aspect_ratio(),
         0.1f,
         1000.0f

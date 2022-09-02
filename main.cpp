@@ -55,7 +55,7 @@ int main() {
     // =========================================================================
     // Vertex data -------------------------------------------------------------
     Model gunship("../../assets/meshes/spaceships/gunship.gltf",
-                  glm::vec3{ 2.0f, 2.0f, 0.0f },
+                  glm::vec3{ 3.0f, 2.0f, 0.0f },
                   instance);
     gunship.populate_buffers(command_queue.command_pool(),
                              command_queue.graphics_queue());
