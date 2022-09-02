@@ -95,9 +95,9 @@ static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
 static constexpr uint32_t FRAME_OVERLAP = 3;
 
-static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_0;
+static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_2;
 
-#define VMA_VULKAN_VERSION VK_API_VER
+#define VMA_VULKAN_VERSION 1002000
 #include "vk_mem_alloc.h"
 
 #endif // VKLEARNIN_COMMON_HPP

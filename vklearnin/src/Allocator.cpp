@@ -4,7 +4,6 @@
 #include  "vklearnin/Instance.hpp"
 
 #define VMA_IMPLEMENTATION
-#define VMA_VULKAN_VERSION VK_API_VER
 #include "vk_mem_alloc.h"
 
 ::VmaAllocator Allocator::_allocator = nullptr;
