@@ -23,6 +23,12 @@ public:
     DepthBuffer(const Instance &instance, const Swapchain &swapchain);
     ~DepthBuffer();
 
+    DepthBuffer(DepthBuffer &&other) = delete;
+    DepthBuffer(const DepthBuffer &other) = delete;
+
+    DepthBuffer & operator=(DepthBuffer &&other) = delete;
+    DepthBuffer & operator=(const DepthBuffer &other) = delete;
+
 private:
     vk::Image     _image_handle;
     VmaAllocation _device_memory;

@@ -59,6 +59,12 @@ public:
 
     Swapchain() = delete;
 
+    Swapchain(Swapchain &&other) = delete;
+    Swapchain(const Swapchain &other) = delete;
+
+    Swapchain & operator=(Swapchain &&other) = delete;
+    Swapchain & operator=(const Swapchain &other) = delete;
+
 private:
     vk::Format        _color_format;
     vk::ColorSpaceKHR _color_space;

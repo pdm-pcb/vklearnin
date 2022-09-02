@@ -1,6 +1,17 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Models/Model.hpp"
 
+void
+Model::populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue) {
+    CONSOLE_INFO("");
+    
+    _vertex_buffer->populate_buffer(pool, queue);
+    _index_buffer->populate_buffer(pool, queue);
+
+    _vertex_buffers.emplace_back(_vertex_buffer->handle());
+    _vertex_buffer_offsets.emplace_back(0u);
+}
+
 void Model::_process_nodes(tinygltf::Model &model, tinygltf::Node  &node) {
     CONSOLE_INFO("");
 
@@ -83,7 +94,10 @@ void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
     }
 }
 
-Model::Model(const char *model_path) {
+Model::Model(const char *model_path, const Instance &instance) :
+    _vertex_buffer { nullptr },
+    _index_buffer  { nullptr }
+{
     CONSOLE_INFO("");
 
     tinygltf::TinyGLTF loader;
@@ -110,7 +124,14 @@ Model::Model(const char *model_path) {
     }
 
     CONSOLE_TRACE("Loaded model with {} vertices", _vertices.size());
+
+    _vertex_buffer = new BufferObject<Vertex>(_vertices, instance);
+    _index_buffer  = new BufferObject<Index>(_indices, instance);
 }
 
 Model::~Model() {
+    CONSOLE_INFO("");
+    
+    delete _vertex_buffer;
+    delete _index_buffer;
 }

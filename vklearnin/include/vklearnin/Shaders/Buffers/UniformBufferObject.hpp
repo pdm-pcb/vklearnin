@@ -28,6 +28,12 @@ public:
 
     UniformBufferObject() = delete;
 
+    UniformBufferObject(UniformBufferObject &&other) = delete;
+    UniformBufferObject(const UniformBufferObject &other) = delete;
+
+    UniformBufferObject & operator=(UniformBufferObject &&other) = delete;
+    UniformBufferObject & operator=(const UniformBufferObject &other) = delete;
+
 private:
     std::vector<vk::Buffer>    _buffer_handles;
     std::vector<VmaAllocation> _memory_handles;

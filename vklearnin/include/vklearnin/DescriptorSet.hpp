@@ -18,8 +18,16 @@ public:
     inline vk::DescriptorSetLayout layout() const { return _layout; }
     inline const std::vector<vk::DescriptorSet> & sets() const { return _sets; }
 
-    DescriptorSet(const vk::Device &device);
+    explicit DescriptorSet(const vk::Device &device);
     ~DescriptorSet();
+
+    DescriptorSet() = delete;
+
+    DescriptorSet(DescriptorSet &&other) = delete;
+    DescriptorSet(const DescriptorSet &other) = delete;
+
+    DescriptorSet & operator=(DescriptorSet &&other) = delete;
+    DescriptorSet & operator=(const DescriptorSet &other) = delete;
 
 private:
     vk::DescriptorSetLayout        _layout;

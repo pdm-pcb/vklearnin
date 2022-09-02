@@ -50,6 +50,14 @@ public:
     explicit Instance(const bool validate);
     ~Instance();
 
+    Instance() = delete;
+
+    Instance(Instance &&other) = delete;
+    Instance(const Instance &other) = delete;
+
+    Instance & operator=(Instance &&other) = delete;
+    Instance & operator=(const Instance &other) = delete;
+
 private:
     vk::DynamicLoader  _loader;
     vk::Instance       _instance;

@@ -9,6 +9,7 @@
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
 #include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
 #include "vklearnin/DescriptorSet.hpp"
+#include "vklearnin/Models/Model.hpp"
 
 #if defined(__linux__)
     #include "vklearnin/Platform/X11/X11Window.hpp"
@@ -20,9 +21,7 @@
 bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                      UniformBufferObject &ubo, Pipeline &pipeline,
                      DescriptorSet &descriptor_set, Framebuffers &framebuffers,
-                     const BufferObject<Index> &index_buffer,
-                     const std::vector<vk::Buffer> &vertex_buffers,
-                     const std::vector<vk::DeviceSize> &vertex_buffer_offsets)
+                     const std::vector<Model *> &models)
 {
     CONSOLE_INFO("");
 
@@ -80,7 +79,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
         // initial setup for the pass
         vk::ClearValue clear_values[] = {
-            { .color { std::array<float, 4> { 0.1f, 0.1f, 0.1f, 1.0f }}},
+            { .color { std::array<float, 4> { 0.01f, 0.01f, 0.01f, 1.0f }}},
             { .depthStencil  { 1.0f, 0u }}
         };
 
@@ -105,34 +104,37 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             command_buffer.setViewport(0u, 1u, &pipeline.viewport());
             command_buffer.setScissor(0u, 1u, &pipeline.scissor());
 
-            // time for some host-side vertex data!
-            command_buffer.bindVertexBuffers(
-                0u,
-                vertex_buffers,
-                vertex_buffer_offsets
-            );
-            // and indices while we're at it
-            command_buffer.bindIndexBuffer(
-                index_buffer.handle(),
-                0u,
-                IndexType
-            );
+            for(const auto *model : models) {
+                // time for some host-side vertex data!
+                command_buffer.bindVertexBuffers(
+                    0u,
+                    model->vertex_buffers(),
+                    model->vertex_buffer_offsets()
+                );
+                
+                // and indices while we're at it
+                command_buffer.bindIndexBuffer(
+                    model->index_buffer(),
+                    0u,
+                    IndexType
+                );
 
-            // time for some descriptor sets
-            command_buffer.bindDescriptorSets(
-                vk::PipelineBindPoint::eGraphics,
-                pipeline.layout(),
-                0u, 1u,
-                &descriptor_set.sets()[frame_index],
-                0u,
-                nullptr
-            );
+                // time for some descriptor sets
+                command_buffer.bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics,
+                    pipeline.layout(),
+                    0u, 1u,
+                    &descriptor_set.sets()[frame_index],
+                    0u,
+                    nullptr
+                );
 
-            // boom, draw.
-            command_buffer.drawIndexed(
-                static_cast<uint32_t>(index_buffer.count()),
-                1u, 0u, 0u, 0u
-            );
+                // boom, draw.
+                command_buffer.drawIndexed(
+                    static_cast<uint32_t>(model->index_count()),
+                    1u, 0u, 0u, 0u
+                );
+            }
 
         command_buffer.endRenderPass();
         command_buffer.end();

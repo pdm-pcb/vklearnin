@@ -15,6 +15,8 @@ public:
     SingleUseCommandBuffer(const vk::CommandPool &pool,
                            const Instance &instance);
 
+    SingleUseCommandBuffer() = delete;
+
 private:
     const vk::CommandPool &_pool;
     vk::CommandBuffer _buffer;

@@ -60,6 +60,12 @@ public:
 
     StagingBuffer() = delete;
 
+    StagingBuffer(StagingBuffer &&other) = delete;
+    StagingBuffer(const StagingBuffer &other) = delete;
+
+    StagingBuffer & operator=(StagingBuffer &&other) = delete;
+    StagingBuffer & operator=(const StagingBuffer &other) = delete;
+
 private:
     std::vector<Datum> _data;
     size_t _buffer_size;

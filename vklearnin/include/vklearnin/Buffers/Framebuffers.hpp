@@ -24,9 +24,17 @@ public:
         return _buffers[index];
     }
 
-    Framebuffers(const vk::Device &device);
+    explicit Framebuffers(const vk::Device &device);
     ~Framebuffers();
 
+    Framebuffers() = delete;
+
+    Framebuffers(Framebuffers &&other) = delete;
+    Framebuffers(const Framebuffers &other) = delete;
+
+    Framebuffers & operator=(Framebuffers &&other) = delete;
+    Framebuffers & operator=(const Framebuffers &other) = delete;
+    
 private:
     std::vector<vk::Framebuffer> _buffers;
 

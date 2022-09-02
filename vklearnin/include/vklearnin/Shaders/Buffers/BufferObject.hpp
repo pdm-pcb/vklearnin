@@ -72,6 +72,12 @@ public:
 
     BufferObject() = delete;
 
+    BufferObject(BufferObject &&other) = delete;
+    BufferObject(const BufferObject &other) = delete;
+
+    BufferObject & operator=(BufferObject &&other) = delete;
+    BufferObject & operator=(const BufferObject &other) = delete;
+
 private:
     StagingBuffer<Datum> *_staging_buffer;
     vk::Buffer    _buffer;

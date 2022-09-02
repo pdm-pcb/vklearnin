@@ -59,6 +59,12 @@ public:
 
     CommandQueues() = delete;
 
+    CommandQueues(CommandQueues &&other) = delete;
+    CommandQueues(const CommandQueues &other) = delete;
+
+    CommandQueues & operator=(CommandQueues &&other) = delete;
+    CommandQueues & operator=(const CommandQueues &other) = delete;
+
 private:
     std::optional<uint32_t> _graphics_family;
     std::optional<uint32_t> _present_family;

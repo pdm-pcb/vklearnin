@@ -1,9 +1,6 @@
 #ifndef VKLEARNIN_RENDERLOOP_HPP
 #define VKLEARNIN_RENDERLOOP_HPP
 
-#include "vklearnin/Shaders/Buffers/BufferObject.hpp"
-#include "vklearnin/Shaders/Index.hpp"
-
 #include <vulkan/vulkan.hpp>
 
 class Instance;
@@ -14,6 +11,9 @@ class Framebuffers;
 class UniformBufferObject;
 class DescriptorSet;
 class DepthBuffer;
+class Model;
+
+#include <vector>
 
 #if defined(__linux__)
     class X11Window;
@@ -35,9 +35,7 @@ public:
     bool run(const Instance &instance, Swapchain &swapchain,
              UniformBufferObject &ubo, Pipeline &pipeline,
              DescriptorSet &descriptor_set, Framebuffers &framebuffers,
-             const BufferObject<Index> &index_buffer,
-             const std::vector<vk::Buffer> &vertex_buffers,
-             const std::vector<vk::DeviceSize> &vertex_buffer_offsets);
+             const std::vector<Model *> &models);
 
     // -------------------------------------------------------------------------
     // Setup
@@ -45,6 +43,14 @@ public:
 
     RenderLoop(const vk::Device &device, Window &window, CommandQueues &queues);
     ~RenderLoop();
+
+    RenderLoop() = delete;
+
+    RenderLoop(RenderLoop &&other) = delete;
+    RenderLoop(const RenderLoop &other) = delete;
+
+    RenderLoop & operator=(RenderLoop &&other) = delete;
+    RenderLoop & operator=(const RenderLoop &other) = delete;
 
 private:
     std::array<vk::Semaphore, FRAME_OVERLAP> _image_available_sems;

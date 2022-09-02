@@ -57,8 +57,16 @@ public:
     inline const vk::PipelineLayout & layout() const { return _layout;        }
     inline const DepthBuffer & depth_buffer()  const { return *_depth_buffer; }
 
-    Pipeline(const Instance &instance);
+    explicit Pipeline(const Instance &instance);
     ~Pipeline();
+
+    Pipeline() = delete;
+
+    Pipeline(Pipeline &&other) = delete;
+    Pipeline(const Pipeline &other) = delete;
+
+    Pipeline & operator=(Pipeline &&other) = delete;
+    Pipeline & operator=(const Pipeline &other) = delete;
 
 private:
     vk::ShaderModule _vert;

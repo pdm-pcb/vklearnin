@@ -54,24 +54,18 @@ int main() {
 
     // =========================================================================
     // Vertex data -------------------------------------------------------------
-    Model viking_room("../../assets/meshes/spaceships/gunship.gltf");
-    BufferObject<Vertex> vertex_buffer(viking_room.vertices(), instance);
-    vertex_buffer.populate_buffer(command_queue.command_pool(),
-                                  command_queue.graphics_queue());
+    Model gunship("../../assets/meshes/spaceships/gunship.gltf", instance);
+    gunship.populate_buffers(command_queue.command_pool(),
+                             command_queue.graphics_queue());
 
-    std::vector<vk::Buffer> vertex_buffers {
-        vertex_buffer.handle()
+    std::vector<Model *> models {
+        &gunship
     };
 
-    BufferObject<Index> index_buffer(viking_room.indices(), instance);
-    index_buffer.populate_buffer(command_queue.command_pool(),
-                                 command_queue.graphics_queue());
-    
     // =========================================================================
     Texture2D texture(command_queue.command_pool(),
                       command_queue.graphics_queue(),
                       instance);
-    // texture.load_file("../../assets/textures/stone_wall01d.png");
     texture.load_file("../../assets/textures/spaceships/gunship_diffuse.png");
     texture.init_image_view();
     texture.init_sampler(
@@ -141,9 +135,7 @@ int main() {
             pipeline,
             descriptor_set,
             framebuffers,
-            index_buffer,
-            vertex_buffers,
-            { 0u }
+            models
         );
 
         // ...!

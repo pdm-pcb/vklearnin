@@ -13,10 +13,16 @@ public:
 
     inline vk::Sampler handle() const { return _sampler; }
 
-    Sampler2D(const vk::Device &device);
+    explicit Sampler2D(const vk::Device &device);
     ~Sampler2D();
 
     Sampler2D() = delete;
+
+    Sampler2D(Sampler2D &&other) = delete;
+    Sampler2D(const Sampler2D &other) = delete;
+
+    Sampler2D & operator=(Sampler2D &&other) = delete;
+    Sampler2D & operator=(const Sampler2D &other) = delete;
 
 private:
     vk::Sampler _sampler;
