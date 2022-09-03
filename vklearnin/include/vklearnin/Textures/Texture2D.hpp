@@ -68,7 +68,9 @@ private:
     void _generate_mipmaps(const vk::CommandBuffer &cmd_buffer);
     void _layout_transition(const vk::CommandBuffer &cmd_buffer,
                             const vk::ImageLayout &old_layout,
-                            const vk::ImageLayout &new_layout);
+                            const vk::ImageLayout &new_layout,
+                            const uint32_t base_mip_level = 0u,
+                            const uint32_t mip_levels = 1u);
 };
 
 #endif // VKLEARNIN_TEXTURES_TEXTURE2D_HPP

@@ -22,7 +22,7 @@ vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
 
 void layout_transition(const vk::CommandBuffer &command_buffer,
                        const vk::Image &image_handle,
-                       const vk::Format &image_format,
+                       const uint32_t base_mip_level,
                        const uint32_t mip_levels,
                        const vk::ImageLayout &old_layout,
                        const vk::ImageLayout &new_layout);

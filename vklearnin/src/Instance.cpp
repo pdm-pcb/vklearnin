@@ -192,13 +192,15 @@ void Instance::init_physical_device() {
             "\tDevice Type:    {}\n"
             "\tDriver Version: {}\n"
             "\tVRAM:           {}MB\n"
-            "\tMax Anisotropy: {}x\n"
+            "\tMax Anisotropy: x{}\n"
+            "\tMax MSAA      : x{}\n"
             "\tVulkan Version: {}.{}.{}\n",
             properties.deviceName,
             to_string(properties.deviceType),
             driver_props.driverInfo,
             vram,
             properties.limits.maxSamplerAnisotropy,
+            to_string(properties.limits.framebufferColorSampleCounts),
             VK_API_VERSION_MAJOR(properties.apiVersion),
             VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion)
@@ -207,6 +209,7 @@ void Instance::init_physical_device() {
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
         _max_anisotropy = properties.limits.maxSamplerAnisotropy;
+        _max_msaa = properties.limits.framebufferColorSampleCounts;
     }
 
     // TODO: this should actually be a choice, but whateva.

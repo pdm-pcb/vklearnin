@@ -122,7 +122,8 @@ void Texture2D::_upload_texture() {
 
     _layout_transition(command_buffer_handle,
                        vk::ImageLayout::eUndefined,
-                       vk::ImageLayout::eTransferDstOptimal);
+                       vk::ImageLayout::eTransferDstOptimal,
+                       0u, _mip_levels);
 
         vk::BufferImageCopy copy_region {
             .bufferOffset      = 0u,
@@ -186,9 +187,9 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
         .image = _image_handle,
         .subresourceRange {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
+            .levelCount = 1u,
+            .baseArrayLayer = 0u,
+            .layerCount = 1u,
         }
     };
 
@@ -198,7 +199,7 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
     for(uint32_t level = 1; level < _mip_levels; ++level) {
         CONSOLE_TRACE("Mip level {}", level);
 
-        image_barrier.subresourceRange.baseMipLevel = level - 1;
+        image_barrier.subresourceRange.baseMipLevel = level - 1u;
         image_barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         image_barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
         image_barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
@@ -284,15 +285,17 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
 // =============================================================================
 void Texture2D::_layout_transition(const vk::CommandBuffer &cmd_buffer,
                                    const vk::ImageLayout &old_layout,
-                                   const vk::ImageLayout &new_layout)
+                                   const vk::ImageLayout &new_layout,
+                                   const uint32_t base_mip_level,
+                                   const uint32_t mip_levels)
 {
     CONSOLE_INFO("");
 
     ImageTools::layout_transition(
         cmd_buffer,
         _image_handle,
-        _format,
-        _mip_levels,
+        base_mip_level,
+        mip_levels,
         old_layout,
         new_layout
     );
