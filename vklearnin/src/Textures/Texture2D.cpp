@@ -181,38 +181,18 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
         to_string(_format)
     );
 
-    vk::ImageMemoryBarrier image_barrier {
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = _image_handle,
-        .subresourceRange {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .levelCount = 1u,
-            .baseArrayLayer = 0u,
-            .layerCount = 1u,
-        }
-    };
-
     int32_t mip_width  = _extent.width;
     int32_t mip_height = _extent.height;
 
     for(uint32_t level = 1; level < _mip_levels; ++level) {
         CONSOLE_TRACE("Mip level {}", level);
 
-        image_barrier.subresourceRange.baseMipLevel = level - 1u;
-        image_barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-        image_barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
-        image_barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        image_barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
-
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eTransfer,
-            { }, { }, { },
-            { image_barrier }
+        _layout_transition(
+            cmd_buffer,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eTransferSrcOptimal,
+            level - 1u
         );
-
-        _layout = image_barrier.newLayout;
 
         vk::ImageBlit blit {
             .srcSubresource {
@@ -248,38 +228,23 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
             vk::Filter::eLinear
         );
 
-        image_barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-        image_barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        image_barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        image_barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            { }, { }, { },
-            { image_barrier }
+        _layout_transition(
+            cmd_buffer,
+            vk::ImageLayout::eTransferSrcOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            level - 1u
         );
-
-        _layout = image_barrier.newLayout;
 
         if(mip_width  > 1) { mip_width  /= 2; }
         if(mip_height > 1) { mip_height /= 2; }
     }
 
-    image_barrier.subresourceRange.baseMipLevel = _mip_levels - 1u;
-    image_barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-    image_barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-    image_barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-    image_barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-    cmd_buffer.pipelineBarrier(
-        vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eFragmentShader,
-        { }, { }, { },
-        { image_barrier }
+    _layout_transition(
+        cmd_buffer,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        _mip_levels - 1u
     );
-
-    _layout = image_barrier.newLayout;
 }
 
 // =============================================================================

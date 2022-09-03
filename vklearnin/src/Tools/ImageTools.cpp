@@ -132,15 +132,13 @@ void layout_transition(const vk::CommandBuffer &command_buffer,
     CONSOLE_INFO("");
 
     vk::ImageMemoryBarrier barrier {
-        .srcAccessMask = { },
-        .dstAccessMask = { },
         .oldLayout = old_layout,
         .newLayout = new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image_handle,
         .subresourceRange {
-            .aspectMask     = { },
+            .aspectMask     = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel   = base_mip_level,
             .levelCount     = mip_levels,
             .baseArrayLayer = 0u,
@@ -155,15 +153,14 @@ void layout_transition(const vk::CommandBuffer &command_buffer,
         if(new_layout == vk::ImageLayout::eTransferDstOptimal) {
             barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
 
-            barrier.subresourceRange.aspectMask =
-                vk::ImageAspectFlagBits::eColor;
-
             source_stage      = vk::PipelineStageFlagBits::eTopOfPipe;
             destination_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
-            CONSOLE_CRITICAL("Unsupported new image layout with old layout "
-                             "set to undefined");
+            CONSOLE_CRITICAL(
+                "Unsupported image layout transition: from {} to {}",
+                to_string(old_layout), to_string(new_layout)
+            );
         }
     }
     else if(old_layout == vk::ImageLayout::eTransferDstOptimal) {
@@ -171,19 +168,37 @@ void layout_transition(const vk::CommandBuffer &command_buffer,
             barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
-            barrier.subresourceRange.aspectMask =
-                vk::ImageAspectFlagBits::eColor;
+            source_stage      = vk::PipelineStageFlagBits::eTransfer;
+            destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        }
+        else if(new_layout == vk::ImageLayout::eTransferSrcOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+            source_stage      = vk::PipelineStageFlagBits::eTransfer;
+            destination_stage = vk::PipelineStageFlagBits::eTransfer;
+        }
+        else {
+            CONSOLE_CRITICAL(
+                "Unsupported image layout transition: from {} to {}",
+                to_string(old_layout), to_string(new_layout)
+            );
+        }
+    }
+    else if(old_layout == vk::ImageLayout::eTransferSrcOptimal) {
+        if(new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
             source_stage      = vk::PipelineStageFlagBits::eTransfer;
             destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
         }
-        else {
-            CONSOLE_CRITICAL("Unsupported new image layout with old layout "
-                             "set to transfer destination optimal");
-        }
     }
     else {
-        CONSOLE_CRITICAL("Unsupported old image layout");
+        CONSOLE_CRITICAL(
+            "Unsupported image layout transition: from {} to {}",
+            to_string(old_layout), to_string(new_layout)
+        );
     }
 
     vk::ImageMemoryBarrier image_barriers[] {
