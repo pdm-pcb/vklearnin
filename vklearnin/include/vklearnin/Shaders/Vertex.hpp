@@ -26,19 +26,19 @@ public:
             vk::VertexInputAttributeDescription {
                 .location = 0u,
                 .binding = 0u,
-                .format = vk::Format::eR32G32B32A32Sfloat,
+                .format = vk::Format::eR32G32B32Sfloat,
                 .offset = offsetof(Vertex, _position)
             },
             vk::VertexInputAttributeDescription {
                 .location = 1u,
                 .binding = 0u,
-                .format = vk::Format::eR32G32B32A32Sfloat,
+                .format = vk::Format::eR32G32B32Sfloat,
                 .offset = offsetof(Vertex, _color)
             },
             vk::VertexInputAttributeDescription {
                 .location = 2u,
                 .binding = 0u,
-                .format = vk::Format::eR32G32B32A32Sfloat,
+                .format = vk::Format::eR32G32Sfloat,
                 .offset = offsetof(Vertex, _texcoord)
             },
         };

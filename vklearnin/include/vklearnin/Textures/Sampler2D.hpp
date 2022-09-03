@@ -5,7 +5,9 @@
 
 class Sampler2D {
 public:
-    void init(const vk::Filter min_filter, const vk::Filter mag_filter,
+    void init(const vk::Filter min_filter,
+              const vk::Filter mag_filter,
+              const uint32_t mip_levels,
               const vk::SamplerMipmapMode mipmap_mode,
               const vk::SamplerAddressMode address_mode_u,
               const vk::SamplerAddressMode address_mode_v,

@@ -13,6 +13,10 @@ class Instance;
 
 class Model {
 public:
+    enum class Primitive {
+        XZPlane
+    };
+
     const glm::mat4 & update_model_matrix(float runtime);
 
     inline const std::vector<vk::Buffer> & vertex_buffers() const {
@@ -31,6 +35,12 @@ public:
     void populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue);
 
     Model(const char *model_path, glm::vec3 position, const Instance &instance);
+    Model(const Primitive primitive,
+          glm::vec3 position,
+          const Instance &instance,
+          const float scale = 1.0f,
+          const float u_repeat = 1.0f,
+          const float v_repeat = 1.0f);
     ~Model();
     Model() = delete;
 
@@ -55,6 +65,8 @@ private:
 
     void _process_nodes(tinygltf::Model &model, tinygltf::Node &node);
     void _process_mesh(tinygltf::Model &model,  tinygltf::Mesh &mesh);
+    void _build_xzplane(const float scale, const float u_repeat,
+                        const float v_repeat);
 };
 
 #endif // VKLEARNIN_MODELS_MODEL_HPP

@@ -7,7 +7,7 @@ namespace ImageTools {
 
 // =============================================================================
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
-                const vk::ImageTiling &tiling,
+                const vk::ImageTiling &tiling, const uint32_t mip_levels,
                 vk::Image &image_handle, const vk::ImageUsageFlags &usage,
                 VmaAllocation &memory, VmaMemoryUsage memory_usage,
                 uint32_t alloc_flags)
@@ -18,7 +18,7 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         .imageType = vk::ImageType::e2D,
         .format = format,
         .extent = extent,
-        .mipLevels   = 1u,
+        .mipLevels   = mip_levels,
         .arrayLayers = 1u,
         .samples     = vk::SampleCountFlagBits::e1,
         .tiling      = tiling,
@@ -91,6 +91,7 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
 
 // =============================================================================
 vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
+                        const uint32_t mip_levels,
                         const vk::ImageAspectFlags &aspect_flags,
                         const vk::Device &device)
 {
@@ -109,7 +110,7 @@ vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
         .subresourceRange {
             .aspectMask     = aspect_flags,
             .baseMipLevel   = 0u,
-            .levelCount     = 1u,
+            .levelCount     = mip_levels,
             .baseArrayLayer = 0u,
             .layerCount     = 1u
         }
@@ -124,6 +125,7 @@ vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
 void layout_transition(const vk::CommandBuffer &command_buffer,
                        const vk::Image &image_handle,
                        const vk::Format &image_format,
+                       const uint32_t mip_levels,
                        const vk::ImageLayout &old_layout,
                        const vk::ImageLayout &new_layout)
 {
@@ -140,7 +142,7 @@ void layout_transition(const vk::CommandBuffer &command_buffer,
         .subresourceRange {
             .aspectMask     = { },
             .baseMipLevel   = 0u,
-            .levelCount     = 1u,
+            .levelCount     = mip_levels,
             .baseArrayLayer = 0u,
             .layerCount     = 1u,
         }

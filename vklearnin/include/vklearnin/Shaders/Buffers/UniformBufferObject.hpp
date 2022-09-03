@@ -2,7 +2,7 @@
 #define VKLEARNIN_SHADERS_UNIFORMBUFFEROBJECT_HPP
 
 #include "vklearnin/Shaders/MVPMatrices.hpp"
-#include "vklearnin/Allocator.hpp"
+#include "vklearnin/Tools/Allocator.hpp"
 
 #include <vulkan/vulkan.hpp>
 

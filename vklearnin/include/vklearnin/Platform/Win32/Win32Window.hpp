@@ -12,6 +12,17 @@ class RenderLoop;
 
 class Win32Window {
 public:
+    static bool up;
+    static bool down;
+    static bool left;
+    static bool right;
+    static bool w;
+    static bool a;
+    static bool s;
+    static bool d;
+    static bool ctrl;
+    static bool space;
+
     bool message_loop();
 
     void init_window();
@@ -21,8 +32,8 @@ public:
     inline uint32_t width()  const    { return _width;   }
     inline uint32_t height() const    { return _height;  }
 
-    Win32Window(const vk::Instance &instance,
-                const uint32_t width = 0, const uint32_t height = 0);
+    explicit Win32Window(const vk::Instance &instance,
+                         const uint32_t width = 0, const uint32_t height = 0);
     ~Win32Window();
 
     Win32Window() = delete;

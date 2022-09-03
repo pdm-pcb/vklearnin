@@ -3,7 +3,7 @@
 
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
-#include "vklearnin/Allocator.hpp"
+#include "vklearnin/Tools/Allocator.hpp"
 
 #include <cstdint>
 
@@ -56,6 +56,8 @@ private:
     vk::Format      _format;
     vk::ImageLayout _layout;
 
+    uint32_t _mip_levels;
+
     StagingBuffer<uint8_t> *_staging;
     const vk::CommandPool  &_pool;
     const vk::Queue        &_queue;
@@ -63,6 +65,7 @@ private:
 
     void _create_image();
     void _upload_texture();
+    void _generate_mipmaps();
     void _layout_transition(const vk::ImageLayout &old_layout,
                             const vk::ImageLayout &new_layout);
 };

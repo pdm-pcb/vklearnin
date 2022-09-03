@@ -19,7 +19,7 @@
 #endif // DEBUG
 
 #include "vklearnin/Tools/ConsoleLog.hpp"
-#include "vklearnin/Allocator.hpp"
+#include "vklearnin/Tools/Allocator.hpp"
 #include "vklearnin/Tools/BufferTools.hpp"
 #include "vklearnin/Tools/ImageTools.hpp"
 #include "vklearnin/Shaders/Shader.hpp"
@@ -93,7 +93,7 @@ static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
 static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
 static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
-static constexpr uint32_t FRAME_OVERLAP = 3;
+static constexpr uint32_t FRAME_OVERLAP = 2;
 
 static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_1;
 

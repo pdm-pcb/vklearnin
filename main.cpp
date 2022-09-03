@@ -66,9 +66,16 @@ int main() {
     carrier.populate_buffers(command_queue.command_pool(),
                              command_queue.graphics_queue());
 
+    Model floor = Model(Model::Primitive::XZPlane,
+                        glm::vec3(0.0f, -5.0f, 0.0f), instance,
+                        300.0f, 25.0f, 25.0f);
+    floor.populate_buffers(command_queue.command_pool(),
+                           command_queue.graphics_queue());
+
     std::vector<Model *> models {
         &gunship,
-        &carrier
+        &carrier,
+        &floor
     };
 
     // =========================================================================
@@ -105,9 +112,24 @@ int main() {
         true, instance.max_anisotropy()
     );
 
+    Texture2D floor_texture(command_queue.command_pool(),
+                            command_queue.graphics_queue(),
+                            instance);
+    floor_texture.load_file("../../assets/textures/Asphalt_001s.jpg");
+    floor_texture.init_image_view();
+    floor_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        true, instance.max_anisotropy()
+    );
+
     std::vector<Texture2D *> textures {
         &gunship_texture,
-        &carrier_texture
+        &carrier_texture,
+        &floor_texture
     };
     
     // =========================================================================

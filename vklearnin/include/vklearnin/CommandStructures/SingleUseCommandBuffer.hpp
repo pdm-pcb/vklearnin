@@ -12,6 +12,8 @@ public:
     void end();
     void submit(const vk::Queue &queue);
 
+    const vk::CommandBuffer & handle() const { return _buffer; }
+
     SingleUseCommandBuffer(const vk::CommandPool &pool,
                            const Instance &instance);
 

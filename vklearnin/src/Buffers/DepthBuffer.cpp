@@ -16,7 +16,7 @@ void DepthBuffer::init_image(const vk::ImageTiling &tiling,
 
     ImageTools::init_image(
         { width, height, 1u },
-        _format, tiling,
+        _format, tiling, 1u,
         _image_handle,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         _device_memory,
@@ -31,7 +31,7 @@ void DepthBuffer::init_image_view() {
 
     _image_view = ImageTools::init_view(
         _image_handle,
-        _format,
+        _format, 1u,
         vk::ImageAspectFlagBits::eDepth,
         _instance.logical_device()
     );

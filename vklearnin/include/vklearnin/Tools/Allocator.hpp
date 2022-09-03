@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_ALLOCATOR_HPP
-#define VKLEARNIN_ALLOCATOR_HPP
+#ifndef VKLEARNIN_TOOLS_ALLOCATOR_HPP
+#define VKLEARNIN_TOOLS_ALLOCATOR_HPP
 
 #include <vulkan/vulkan.hpp>
 
@@ -20,4 +20,4 @@ private:
     static ::VmaAllocator _allocator;
 };
 
-#endif // VKLEARNIN_ALLOCATOR_HPP
+#endif // VKLEARNIN_TOOLS_ALLOCATOR_HPP

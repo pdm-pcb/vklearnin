@@ -8,13 +8,14 @@ const glm::mat4 & Model::update_model_matrix(float runtime) {
         _position
     );
 
-    auto R = glm::rotate(
-        glm::mat4(1.0f),
-        runtime * 0.7854f,
-        glm::vec3(0.0f, 1.0f, 0.0f)
-    );
+    // auto R = glm::rotate(
+    //     glm::mat4(1.0f),
+    //     runtime * 0.7854f,
+    //     glm::vec3(0.0f, 1.0f, 0.0f)
+    // );
 
-    _model_matrix = T * R;
+    // _model_matrix = T * R;
+     _model_matrix = T;
 
     return _model_matrix;
 }
@@ -116,6 +117,30 @@ void Model::_process_mesh(tinygltf::Model &model, tinygltf::Mesh  &mesh) {
 }
 
 // =============================================================================
+void Model::_build_xzplane(const float scale, const float u_repeat,
+                           const float v_repeat)
+{
+    _vertices = {
+        {{ -0.5f * scale, 0.0f, 0.5f * scale}, { 1.0f, 1.0f, 1.0f },
+         { 0.0f * u_repeat, 0.0f * v_repeat }},
+
+        {{  0.5f * scale, 0.0f, 0.5f * scale}, { 1.0f, 1.0f, 1.0f },
+         { 1.0f * u_repeat, 0.0f * v_repeat }},
+
+        {{  0.5f * scale, 0.0f, -0.5f * scale}, { 1.0f, 1.0f, 1.0f },
+         { 1.0f * u_repeat, 1.0f * v_repeat }},
+
+        {{ -0.5f * scale, 0.0f, -0.5f * scale}, { 1.0f, 1.0f, 1.0f },
+         { 0.0f * u_repeat, 1.0f * v_repeat }}
+    };
+
+    _indices = {
+        0, 1, 2,
+        2, 3, 0
+    };
+}
+
+// =============================================================================
 Model::Model(const char *model_path, glm::vec3 position,
              const Instance &instance) :
     _vertex_buffer { nullptr  },
@@ -149,6 +174,30 @@ Model::Model(const char *model_path, glm::vec3 position,
     }
 
     CONSOLE_TRACE("Loaded model with {} vertices", _vertices.size());
+
+    _vertex_buffer = new BufferObject<Vertex>(_vertices, instance);
+    _index_buffer  = new BufferObject<Index>(_indices, instance);
+}
+
+Model::Model(const Primitive primitive, glm::vec3 position,
+             const Instance &instance,
+             const float scale, const float u_repeat, const float v_repeat) :
+    _vertex_buffer { nullptr  },
+    _index_buffer  { nullptr  },
+    _position      { position },
+    _model_matrix  { 1.0f }
+{
+    CONSOLE_INFO("");
+
+    switch(primitive) {
+        case Primitive::XZPlane:
+            _vertices.reserve(4);
+            _indices.reserve(6);
+            _build_xzplane(scale, u_repeat, v_repeat);
+            break;
+    }
+
+    CONSOLE_TRACE("Generated model with {} vertices", _vertices.size());
 
     _vertex_buffer = new BufferObject<Vertex>(_vertices, instance);
     _index_buffer  = new BufferObject<Index>(_indices, instance);

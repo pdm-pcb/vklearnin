@@ -28,8 +28,8 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 {
     CONSOLE_INFO("");
 
-    uint32_t frame_index = 0u;
-    uint32_t image_index = 0u;
+    uint32_t current_buffer = 0u;
+    uint32_t next_image = 0u;
 
     while(_window.message_loop() == true) {
         using HRC = std::chrono::high_resolution_clock;
@@ -42,10 +42,10 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
-        frame_index = 1 - frame_index;
+        current_buffer = 1 - current_buffer;
 
         // wait your turn
-        auto result = _device.waitForFences(1u, &_display_fences[frame_index],
+        auto result = _device.waitForFences(1u, &_display_fences[current_buffer],
                                             VK_TRUE, UI64MAX);
 
         if(result != vk::Result::eSuccess) {
@@ -56,9 +56,9 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         result = _device.acquireNextImageKHR(
             swapchain.swapchain(),
             UI64MAX,
-            _image_available_sems[frame_index],
+            _image_available_sems[current_buffer],
             nullptr,
-            &image_index
+            &next_image
         );
 
         // if we need to resize everything, let's do it
@@ -70,22 +70,22 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // now send the fresh data to the UBOs. Im curious: how much does order
         // matter here? Should this be done after the fences are reset? Is
         // that even relevant? Guess I'll have to read the spec. =)
-        _update_ubo(ubo, swapchain, frame_index);
+        _update_ubo(ubo, swapchain, current_buffer);
 
         // clear out what needs clearing
-        result = _device.resetFences(1u, &_display_fences[frame_index]);
+        result = _device.resetFences(1u, &_display_fences[current_buffer]);
         if(result != vk::Result::eSuccess) {
             CONSOLE_CRITICAL("Could not reset device fences");
         }
 
         _queues.reset_command_buffer(
-            image_index,
+            next_image,
             static_cast<vk::CommandBufferResetFlagBits>(0u)
         );
 
         vk::CommandBufferBeginInfo begin_info { };
 
-        auto command_buffer = _queues.command_buffer(image_index);
+        auto command_buffer = _queues.command_buffer(next_image);
         command_buffer.begin(begin_info);
 
         // bind the pipeline so everything's current
@@ -98,7 +98,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             vk::PipelineBindPoint::eGraphics,
             pipeline.layout(),
             0u, 1u,
-            &per_frame_descriptors.sets()[frame_index],
+            &per_frame_descriptors.sets()[current_buffer],
             0u,
             nullptr
         );
@@ -111,7 +111,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
         vk::RenderPassBeginInfo pass_info {
             .renderPass = pipeline.renderpass(),
-            .framebuffer = framebuffers.buffer(image_index),
+            .framebuffer = framebuffers.buffer(next_image),
             .renderArea = swapchain.render_area(),
             .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
             .pClearValues = clear_values,
@@ -143,7 +143,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
                     1u, 1u,
-                    &per_material_descriptors.sets(model_idx)[frame_index],
+                    &per_material_descriptors.sets(model_idx)[current_buffer],
                     0u,
                     nullptr
                 );
@@ -169,7 +169,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // now wait again, but this time the signal and wait semephores are
         // reversed
         vk::Semaphore wait_sems[] = {
-            _image_available_sems[frame_index]
+            _image_available_sems[current_buffer]
         };
 
         vk::PipelineStageFlags wait_stage_masks[] {
@@ -177,7 +177,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         };
 
         vk::Semaphore signal_sems[] = {
-            _draw_complete_sems[frame_index]
+            _draw_complete_sems[current_buffer]
         };
 
         vk::SubmitInfo submit_info {
@@ -185,7 +185,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             .pWaitSemaphores = wait_sems,
             .pWaitDstStageMask = wait_stage_masks,
             .commandBufferCount = 1u,
-            .pCommandBuffers = &_queues.command_buffer(image_index),
+            .pCommandBuffers = &_queues.command_buffer(next_image),
             .signalSemaphoreCount =
                 static_cast<uint32_t>(std::size(signal_sems)),
             .pSignalSemaphores = signal_sems,
@@ -194,7 +194,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
         // submit the graphics command buffer
         _queues.graphics_queue().submit(
             submit_info,
-            _display_fences[frame_index]
+            _display_fences[current_buffer]
         );
 
         vk::SwapchainKHR swapchains[] = {
@@ -208,7 +208,7 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
             .pWaitSemaphores = signal_sems,
             .swapchainCount = static_cast<uint32_t>(std::size(swapchains)),
             .pSwapchains = swapchains,
-            .pImageIndices = &image_index,
+            .pImageIndices = &next_image,
         };
 
         // once more, do the thing and check to see if anything funky happened
@@ -291,14 +291,23 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
 // =============================================================================
 void RenderLoop::_update_ubo(UniformBufferObject &ubo,
                              const Swapchain &swapchain,
-                             const uint32_t image_index)
+                             const uint32_t next_image)
 {
+    static glm::vec3 camera_position { 0.0f, 0.0f, 20.0f };
+    static glm::vec3 camera_front    { -glm::normalize(camera_position) };
+    static glm::vec3 camera_up       { 0.0f, 1.0f, 0.0f };
+
+    if(Window::up)        { camera_position += 0.5f * camera_front; }
+    else if(Window::down) { camera_position -= 0.5f * camera_front; }
+
+    camera_front = -glm::normalize(camera_position);
+
     VPMatrices matrices { };
 
     matrices.view = glm::lookAt(
-        glm::vec3(0.0f, 2.0f, 20.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f)
+        camera_position,
+        camera_position + camera_front,
+        camera_up
     );
 
     matrices.proj = glm::perspective(
@@ -308,7 +317,7 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
         1000.0f
     );
 
-    ubo.update(&matrices, image_index);
+    ubo.update(&matrices, next_image);
 }
 
 // =============================================================================

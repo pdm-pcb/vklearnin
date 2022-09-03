@@ -1,7 +1,9 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
 
-void Sampler2D::init(const vk::Filter min_filter, const vk::Filter mag_filter,
+void Sampler2D::init(const vk::Filter min_filter,
+                     const vk::Filter mag_filter,
+                     const uint32_t mip_levels,
                      const vk::SamplerMipmapMode mipmap_mode,
                      const vk::SamplerAddressMode address_mode_u,
                      const vk::SamplerAddressMode address_mode_v,
@@ -24,7 +26,7 @@ void Sampler2D::init(const vk::Filter min_filter, const vk::Filter mag_filter,
         .compareEnable = false,
         .compareOp = vk::CompareOp::eNever,
         .minLod = 0.0f,
-        .maxLod = 0.0f,
+        .maxLod = static_cast<float>(mip_levels),
         .borderColor = vk::BorderColor::eIntOpaqueBlack,
         .unnormalizedCoordinates = false,
     };

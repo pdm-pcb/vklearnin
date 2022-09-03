@@ -219,6 +219,7 @@ void Swapchain::init_image_views() {
         _image_views[image] = ImageTools::init_view(
             _images[image],
             _color_format,
+            1u,
             vk::ImageAspectFlagBits::eColor,
             _instance.logical_device()
         );

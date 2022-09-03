@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_BUFFERS_DEPTHBUFFER_HPP
 #define VKLEARNIN_BUFFERS_DEPTHBUFFER_HPP
 
-#include "vklearnin/Allocator.hpp"
+#include "vklearnin/Tools/Allocator.hpp"
 
 #include <vulkan/vulkan.hpp>
 

@@ -6,6 +6,17 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/RenderLoop.hpp"
 
+bool Win32Window::up    = false;
+bool Win32Window::down  = false;
+bool Win32Window::left  = false;
+bool Win32Window::right = false;
+bool Win32Window::w     = false;
+bool Win32Window::a     = false;
+bool Win32Window::s     = false;
+bool Win32Window::d     = false;
+bool Win32Window::ctrl  = false;
+bool Win32Window::space = false;
+
 //==============================================================================
 bool Win32Window::message_loop() {
     ::MSG message { };
@@ -57,8 +68,24 @@ bool Win32Window::message_loop() {
 {
     switch(message) {
         case WM_KEYDOWN:
-            if(wparam == VK_ESCAPE) {
-                ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+            switch(wparam) {
+                case VK_ESCAPE:
+                    ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+                    break;
+
+                case VK_UP:    up    = true; break;
+                case VK_DOWN:  down  = true; break;
+                case VK_LEFT:  left  = true; break;
+                case VK_RIGHT: right = true; break;
+            }
+            break;
+
+        case WM_KEYUP:
+            switch(wparam) {
+                case VK_UP:    up    = false; break;
+                case VK_DOWN:  down  = false; break;
+                case VK_LEFT:  left  = false; break;
+                case VK_RIGHT: right = false; break;
             }
             break;
 
