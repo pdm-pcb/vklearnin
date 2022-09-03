@@ -6,6 +6,8 @@
 
 // =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {
+    CONSOLE_INFO("");
+    
     _vert = Shader::module_from_binary(filepath, _instance.logical_device());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -16,6 +18,8 @@ void Pipeline::vertex_from_binary(const char *filepath) {
 
 // =============================================================================
 void Pipeline::fragment_from_binary(const char *filepath) {
+    CONSOLE_INFO("");
+    
     _frag = Shader::module_from_binary(filepath, _instance.logical_device());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,
@@ -29,6 +33,7 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
 {
     CONSOLE_INFO("");
 
+    _init_color_buffer(swapchain);
     _init_depth_buffer(swapchain);
 
     vk::AttachmentReference color_refs[] {{
@@ -43,40 +48,56 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     };
 
+    vk::AttachmentReference resolve_ref {
+        .attachment = 2,
+        .layout = vk::ImageLayout::eColorAttachmentOptimal,
+    };
+
     vk::SubpassDescription subpasses[] {{
         .pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
         .inputAttachmentCount = 0u,
         .pInputAttachments    = nullptr,
         .colorAttachmentCount = static_cast<uint32_t>(std::size(color_refs)),
         .pColorAttachments    = color_refs,
-        .pResolveAttachments  = nullptr,
+        .pResolveAttachments     = &resolve_ref,
         .pDepthStencilAttachment = &depth_ref,
         .preserveAttachmentCount = 0u,
         .pPreserveAttachments    = 0u,
     }};
 
     vk::AttachmentDescription attachments[] {
-        // color attachment description
+        // color buffer (msaa) attachment description
         {
             .format         = swapchain.color_format(),
-            .samples        = vk::SampleCountFlagBits::e1,
+            .samples        = _instance.max_msaa(),
             .loadOp         = vk::AttachmentLoadOp::eClear,
             .storeOp        = vk::AttachmentStoreOp::eStore,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+            .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
         },
         // depth buffer attachment description
         {
             .format         = _depth_buffer->format(),
-            .samples        = vk::SampleCountFlagBits::e1,
+            .samples        = _instance.max_msaa(),
             .loadOp         = vk::AttachmentLoadOp::eClear,
             .storeOp        = vk::AttachmentStoreOp::eDontCare,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
             .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        },
+        // final presentation attachment
+        {
+            .format = swapchain.color_format(),
+            .samples = vk::SampleCountFlagBits::e1,
+            .loadOp = vk::AttachmentLoadOp::eDontCare,
+            .storeOp = vk::AttachmentStoreOp::eStore,
+            .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+            .initialLayout = vk::ImageLayout::eUndefined,
+            .finalLayout = vk::ImageLayout::ePresentSrcKHR,
         }
     };
 
@@ -211,7 +232,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
 
     // nothing to do here yet, but it'll be fun when we can
     vk::PipelineMultisampleStateCreateInfo multisampling {
-        .rasterizationSamples  = vk::SampleCountFlagBits::e1,
+        .rasterizationSamples  = _instance.max_msaa(),
         .sampleShadingEnable   = false,
         .minSampleShading      = 1.0f,
         .pSampleMask           = nullptr,
@@ -305,7 +326,37 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
 }
 
 // =============================================================================
+void Pipeline::_init_color_buffer(const Swapchain &swapchain) {
+    CONSOLE_INFO("");
+    
+    auto[width, height] = swapchain.extent();
+
+    ImageTools::init_image(
+        { width, height, 1u },
+        swapchain.color_format(),
+        vk::ImageTiling::eOptimal,
+        1u,
+        _instance.max_msaa(),
+        _color_buffer_handle,
+        vk::ImageUsageFlagBits::eTransientAttachment |
+        vk::ImageUsageFlagBits::eColorAttachment,
+        _color_buffer_alloc,
+        ::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
+    );
+
+    _color_buffer_view = ImageTools::init_view(
+        _color_buffer_handle,
+        swapchain.color_format(), 1u,
+        vk::ImageAspectFlagBits::eColor,
+        _instance.logical_device()
+    );
+}
+
+// =============================================================================
 void Pipeline::_init_depth_buffer(const Swapchain &swapchain) {
+    CONSOLE_INFO("");
+
     if(_depth_buffer != nullptr) {
         delete _depth_buffer;
     }
@@ -324,6 +375,9 @@ Pipeline::Pipeline(const Instance &instance) :
     _frag         { nullptr },
     _viewport     { },
     _scissor      { },
+    _color_buffer_handle { },
+    _color_buffer_alloc { nullptr },
+    _color_buffer_view { },
     _depth_buffer { nullptr },
     _renderpass   { nullptr },
     _layout       { nullptr },
@@ -335,6 +389,17 @@ Pipeline::Pipeline(const Instance &instance) :
 
 Pipeline::~Pipeline() {
     CONSOLE_INFO("");
+
+    CONSOLE_TRACE(
+        "Destroying pipeline image object {}",
+        fmt::ptr(&_color_buffer_handle)
+    );
+
+    vmaDestroyImage(
+        Allocator::allocator(),
+        _color_buffer_handle,
+        _color_buffer_alloc
+    );
 
     delete _depth_buffer;
 

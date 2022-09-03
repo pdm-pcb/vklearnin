@@ -19,8 +19,9 @@ void Framebuffers::init_buffers(const Swapchain &swapchain,
     // run through and associate one framebuffer per swapchain image
     for(size_t buffer_idx = 0; buffer_idx < _buffers.size(); ++buffer_idx) {
         vk::ImageView attachments[] = {
+            pipeline.color_buffer(),
+            pipeline.depth_buffer(),
             swapchain.image_views()[buffer_idx],
-            pipeline.depth_buffer().image_view()
         };
 
         vk::FramebufferCreateInfo buffer_info {

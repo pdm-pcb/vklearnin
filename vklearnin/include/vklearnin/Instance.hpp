@@ -46,8 +46,9 @@ public:
     inline float max_anisotropy() const {
         return _max_anisotropy;
     }
-    inline vk::SampleCountFlags max_msaa() const {
+    inline const vk::SampleCountFlagBits max_msaa() const {
         return _max_msaa;
+        // return vk::SampleCountFlagBits::e1;
     }
 
     explicit Instance(const bool validate);
@@ -68,7 +69,7 @@ private:
     vk::Device         _logical_device;
 
     float _max_anisotropy;
-    vk::SampleCountFlags _max_msaa;
+    vk::SampleCountFlagBits _max_msaa;
 
     bool _validate;
 };

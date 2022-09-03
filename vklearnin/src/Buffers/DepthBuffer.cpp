@@ -16,11 +16,14 @@ void DepthBuffer::init_image(const vk::ImageTiling &tiling,
 
     ImageTools::init_image(
         { width, height, 1u },
-        _format, tiling, 1u,
+        _format,
+        tiling,
+        1u,
+        _instance.max_msaa(),
         _image_handle,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         _device_memory,
-        ::VMA_MEMORY_USAGE_AUTO,
+        ::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
         ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
     );
 }
@@ -93,7 +96,7 @@ DepthBuffer::~DepthBuffer() {
     CONSOLE_INFO("");
 
         CONSOLE_TRACE(
-            "Destroying depth stencil image {}",
+            "Destroying depth stencil image object {}",
             fmt::ptr(&_image_handle)
         );
 

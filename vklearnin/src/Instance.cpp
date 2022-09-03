@@ -193,7 +193,7 @@ void Instance::init_physical_device() {
             "\tDriver Version: {}\n"
             "\tVRAM:           {}MB\n"
             "\tMax Anisotropy: x{}\n"
-            "\tMax MSAA      : x{}\n"
+            "\tMSAA samples  : {}\n"
             "\tVulkan Version: {}.{}.{}\n",
             properties.deviceName,
             to_string(properties.deviceType),
@@ -209,7 +209,31 @@ void Instance::init_physical_device() {
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
         _max_anisotropy = properties.limits.maxSamplerAnisotropy;
-        _max_msaa = properties.limits.framebufferColorSampleCounts;
+
+        auto sample_bits = properties.limits.framebufferColorSampleCounts &
+                           properties.limits.framebufferDepthSampleCounts;
+
+        if(sample_bits & vk::SampleCountFlagBits::e64) {
+            _max_msaa = vk::SampleCountFlagBits::e64;
+        }
+        else if(sample_bits & vk::SampleCountFlagBits::e32) {
+            _max_msaa = vk::SampleCountFlagBits::e32;
+        }
+        else if(sample_bits & vk::SampleCountFlagBits::e16) {
+            _max_msaa = vk::SampleCountFlagBits::e16;
+        }
+        else if(sample_bits & vk::SampleCountFlagBits::e8) {
+            _max_msaa = vk::SampleCountFlagBits::e8;
+        }
+        else if(sample_bits & vk::SampleCountFlagBits::e4) {
+            _max_msaa = vk::SampleCountFlagBits::e4;
+        }
+        else if(sample_bits & vk::SampleCountFlagBits::e2) {
+            _max_msaa = vk::SampleCountFlagBits::e2;
+        }
+        else {
+            _max_msaa = vk::SampleCountFlagBits::e1;
+        }
     }
 
     // TODO: this should actually be a choice, but whateva.
@@ -292,7 +316,7 @@ Instance::~Instance() {
     VKDebugger::shutdown(_instance);
 #endif
 
-    Allocator::shutdown();
+    // Allocator::shutdown();
     _logical_device.destroy();
     _instance.destroy();
 }

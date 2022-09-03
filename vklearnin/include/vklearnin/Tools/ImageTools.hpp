@@ -11,6 +11,7 @@ namespace ImageTools {
 
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
                 const vk::ImageTiling &tiling, const uint32_t mip_levels,
+                const vk::SampleCountFlagBits &sample_flag_bits,
                 vk::Image &image_handle, const vk::ImageUsageFlags &usage,
                 VmaAllocation &memory, VmaMemoryUsage memory_usage,
                 uint32_t alloc_flags = 0u);

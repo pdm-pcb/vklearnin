@@ -102,6 +102,7 @@ void Texture2D::_create_image() {
         _format,
         vk::ImageTiling::eOptimal,
         _mip_levels,
+        vk::SampleCountFlagBits::e1,
         _image_handle,
         vk::ImageUsageFlagBits::eTransferSrc |
         vk::ImageUsageFlagBits::eTransferDst |
@@ -289,7 +290,7 @@ Texture2D::~Texture2D() {
     CONSOLE_INFO("");
 
         CONSOLE_TRACE(
-            "Destroying texture image {}",
+            "Destroying texture image object {}",
             fmt::ptr(&_image_handle)
         );
 

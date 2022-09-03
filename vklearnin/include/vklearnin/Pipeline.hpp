@@ -44,18 +44,25 @@ public:
             .extent = { width, height },
         };
 
+        _init_color_buffer(swapchain);
         _init_depth_buffer(swapchain);
     }
 
     // -------------------------------------------------------------------------
     // For those concerned with pipeline atributes
 
-    inline const vk::RenderPass & renderpass() const { return _renderpass;    }
-    inline const vk::Pipeline   & pipeline()   const { return _pipeline;      }
-    inline const vk::Viewport   & viewport()   const { return _viewport;      }
-    inline const vk::Rect2D     & scissor()    const { return _scissor;       }
-    inline const vk::PipelineLayout & layout() const { return _layout;        }
-    inline const DepthBuffer & depth_buffer()  const { return *_depth_buffer; }
+    inline const vk::RenderPass     & renderpass() const { return _renderpass; }
+    inline const vk::Pipeline       & pipeline()   const { return _pipeline;   }
+    inline const vk::Viewport       & viewport()   const { return _viewport;   }
+    inline const vk::Rect2D         & scissor()    const { return _scissor;    }
+    inline const vk::PipelineLayout & layout()     const { return _layout;     }
+
+    inline const vk::ImageView & depth_buffer() const {
+        return _depth_buffer->image_view();
+    }
+    inline const vk::ImageView & color_buffer() const {
+        return _color_buffer_view;
+    }
 
     explicit Pipeline(const Instance &instance);
     ~Pipeline();
@@ -76,6 +83,10 @@ private:
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;
 
+    vk::Image     _color_buffer_handle;
+    VmaAllocation _color_buffer_alloc;
+    vk::ImageView _color_buffer_view;
+
     DepthBuffer *_depth_buffer;
 
     vk::RenderPass     _renderpass;
@@ -84,6 +95,7 @@ private:
 
     const Instance &_instance;
 
+    void _init_color_buffer(const Swapchain &swapchain);
     void _init_depth_buffer(const Swapchain &swapchain);
 };
 

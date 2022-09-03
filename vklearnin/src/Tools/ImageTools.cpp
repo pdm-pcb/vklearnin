@@ -8,6 +8,7 @@ namespace ImageTools {
 // =============================================================================
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
                 const vk::ImageTiling &tiling, const uint32_t mip_levels,
+                const vk::SampleCountFlagBits &sample_flag_bits,
                 vk::Image &image_handle, const vk::ImageUsageFlags &usage,
                 VmaAllocation &memory, VmaMemoryUsage memory_usage,
                 uint32_t alloc_flags)
@@ -20,7 +21,7 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         .extent = extent,
         .mipLevels   = mip_levels,
         .arrayLayers = 1u,
-        .samples     = vk::SampleCountFlagBits::e1,
+        .samples     = sample_flag_bits,
         .tiling      = tiling,
         .usage       = usage,
         .sharingMode = vk::SharingMode::eExclusive,
@@ -48,6 +49,8 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         &memory,
         nullptr
     );
+
+    CONSOLE_ERROR("Image object {}", fmt::ptr(&image_handle));
 
     // auto result = instance.logical_device().createImage(
     //     &image_info,

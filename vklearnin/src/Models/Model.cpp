@@ -8,14 +8,14 @@ const glm::mat4 & Model::update_model_matrix(float runtime) {
         _position
     );
 
-    // auto R = glm::rotate(
-    //     glm::mat4(1.0f),
-    //     runtime * 0.7854f,
-    //     glm::vec3(0.0f, 1.0f, 0.0f)
-    // );
+    auto R = glm::rotate(
+        glm::mat4(1.0f),
+        runtime * 0.7854f,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
 
-    // _model_matrix = T * R;
-     _model_matrix = T;
+    _model_matrix = T * R;
+    // _model_matrix = T;
 
     return _model_matrix;
 }
