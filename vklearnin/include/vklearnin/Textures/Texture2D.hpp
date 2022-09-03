@@ -65,8 +65,9 @@ private:
 
     void _create_image();
     void _upload_texture();
-    void _generate_mipmaps();
-    void _layout_transition(const vk::ImageLayout &old_layout,
+    void _generate_mipmaps(const vk::CommandBuffer &cmd_buffer);
+    void _layout_transition(const vk::CommandBuffer &cmd_buffer,
+                            const vk::ImageLayout &old_layout,
                             const vk::ImageLayout &new_layout);
 };
 
