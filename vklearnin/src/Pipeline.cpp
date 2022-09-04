@@ -71,7 +71,7 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
             .format         = swapchain.color_format(),
             .samples        = _instance.max_msaa(),
             .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eStore,
+            .storeOp        = vk::AttachmentStoreOp::eDontCare,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
