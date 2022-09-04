@@ -6,9 +6,8 @@
 #include "vklearnin/Buffers/Framebuffers.hpp"
 #include "vklearnin/RenderLoop.hpp"
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
-#include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
-#include "vklearnin/DescriptorSets/PerFrameDescriptors.hpp"
-#include "vklearnin/DescriptorSets/PerMaterialDescriptors.hpp"
+#include "vklearnin/Shaders/Buffers/UBOList.hpp"
+#include "vklearnin/DescriptorSets/DescriptorSets.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 #include "vklearnin/Buffers/DepthBuffer.hpp"
 #include "vklearnin/Models/Model.hpp"
@@ -134,23 +133,58 @@ int main() {
 
     // =========================================================================
     // Uniform Buffer Object(s)
-    UniformBufferObject ubo(sizeof(VPMatrices), FRAME_OVERLAP, instance);
-    ubo.init_buffers("ubo");
+    UniformBufferObject per_frame_ubo(sizeof(VPMatrices), 0u, instance);
+    per_frame_ubo.init_buffers("per_frame_ubo");
+
+    // calculate what we need for the dynamic UBO to work
+	auto min_ubo_alignment = instance.min_ubo_alignment();
+	auto offset = sizeof(glm::mat4);
+	if(min_ubo_alignment > 0u) {
+		offset =
+            (offset + min_ubo_alignment - 1) &
+            ~(min_ubo_alignment - 1);
+	}
+	size_t buffer_size = models.size() * offset;
+
+    UniformBufferObject per_object_ubo(buffer_size, offset, instance);
+    per_object_ubo.init_buffers("per_object_ubo");
+
+    UBOList ubo_list {
+        per_frame_ubo,
+        per_object_ubo
+    };
 
     // =========================================================================
     // Descriptor Sets
-    PerFrameDescriptors per_frame_descriptors(instance.logical_device());
-    per_frame_descriptors.init_layout();
-    per_frame_descriptors.init_pool();
-    per_frame_descriptors.init_sets(ubo);
+    PerFrameDescriptors per_frame_descs(instance.logical_device());
+    per_frame_descs.init_layout();
+    per_frame_descs.init_pool();
+    per_frame_descs.init_sets(per_frame_ubo);
+    
+    PerPassDescriptors per_pass_descs;
 
-    PerMaterialDescriptors per_material_descriptors(
+    PerMaterialDescriptors per_material_descs(
         static_cast<uint32_t>(textures.size()),
         instance.logical_device()
     );
-    per_material_descriptors.init_layout();
-    per_material_descriptors.init_pool();
-    per_material_descriptors.init_sets(textures);
+    per_material_descs.init_layout();
+    per_material_descs.init_pool();
+    per_material_descs.init_sets(textures);
+    
+    PerObjectDescriptors per_object_descs(
+        static_cast<uint32_t>(models.size()),
+        instance.logical_device()
+    );
+    per_object_descs.init_layout();
+    per_object_descs.init_pool();
+    per_object_descs.init_sets(per_object_ubo);
+
+    DescriptorSets desc_sets {
+        per_frame_descs,
+        per_pass_descs,
+        per_material_descs,
+        per_object_descs
+    };
 
     // =========================================================================
     // shaderc's Compiler::Compiler() appears to have an 80 byte memory leak,
@@ -161,8 +195,9 @@ int main() {
 
     pipeline.init_render_passes(swapchain, MSAA_SAMPLES);
     pipeline.init_layout({
-        per_frame_descriptors.layout(),
-        per_material_descriptors.layout()
+        desc_sets.per_frame.layout(),
+        desc_sets.per_material.layout(),
+        desc_sets.per_object.layout()
     });
     pipeline.init_pipeline(swapchain);
 
@@ -170,7 +205,6 @@ int main() {
     // Only need two render targets for now
     Framebuffers framebuffers(instance.logical_device());
     framebuffers.init_buffers(swapchain, pipeline);
-
 
     // =========================================================================
     // The business end
@@ -182,11 +216,10 @@ int main() {
         carry_on = render_loop.run(
             instance,
             swapchain,
-            ubo,
+            ubo_list,
             pipeline,
             framebuffers,
-            per_frame_descriptors,
-            per_material_descriptors,
+            desc_sets,
             models
         );
 

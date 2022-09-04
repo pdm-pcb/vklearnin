@@ -8,9 +8,9 @@ class CommandQueues;
 class Swapchain;
 class Pipeline;
 class Framebuffers;
+struct UBOList;
 class UniformBufferObject;
-class PerFrameDescriptors;
-class PerMaterialDescriptors;
+struct DescriptorSets;
 class DepthBuffer;
 class Model;
 
@@ -35,11 +35,10 @@ public:
     // main render loop: window events, then draw
     bool run(const Instance &instance,
              Swapchain &swapchain,
-             UniformBufferObject &ubo,
+             UBOList &ubo_list,
              Pipeline &pipeline,
              Framebuffers &framebuffers,
-             PerFrameDescriptors &per_frame_descriptors,
-             PerMaterialDescriptors &per_material_descriptors,
+             DescriptorSets &descriptor_sets,
              const std::vector<Model *> &models);
 
     // -------------------------------------------------------------------------
@@ -69,8 +68,13 @@ private:
     void _image_resized(const Instance &instance, Swapchain &swapchain,
                         Pipeline &pipeline, Framebuffers &framebuffers);
 
-    void _update_ubo(UniformBufferObject &ubo, const Swapchain &swapchain,
-                     const uint32_t frame_index);
+    void _update_per_frame(UniformBufferObject &ubo, const Swapchain &swapchain,
+                           const uint32_t frame_index);
+
+    void _update_per_object(UniformBufferObject &ubo,
+                            const std::vector<Model *> &models,
+                            const float runtime,
+                            const uint32_t frame_index);
 };
 
 #endif // VKLEARNIN_RENDERLOOP_HPP

@@ -3,8 +3,6 @@
 
 #include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
 
-static constexpr uint32_t CAM_UBO_BINDING = 0u;
-
 // =============================================================================
 void PerFrameDescriptors::init_layout() {
     CONSOLE_INFO("");

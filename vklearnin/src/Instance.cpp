@@ -194,6 +194,7 @@ void Instance::init_physical_device() {
             "\tVRAM:           {}MB\n"
             "\tMax Anisotropy: x{}\n"
             "\tMSAA samples  : {}\n"
+            "\tUBO alignment : {} bytes\n"
             "\tVulkan Version: {}.{}.{}\n",
             properties.deviceName,
             to_string(properties.deviceType),
@@ -201,6 +202,7 @@ void Instance::init_physical_device() {
             vram,
             properties.limits.maxSamplerAnisotropy,
             to_string(properties.limits.framebufferColorSampleCounts),
+            properties.limits.minUniformBufferOffsetAlignment,
             VK_API_VERSION_MAJOR(properties.apiVersion),
             VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion)
@@ -208,8 +210,9 @@ void Instance::init_physical_device() {
 
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
-        _max_anisotropy = properties.limits.maxSamplerAnisotropy;
-        _supported_msaa = properties.limits.framebufferColorSampleCounts;
+        _max_anisotropy    = properties.limits.maxSamplerAnisotropy;
+        _supported_msaa    = properties.limits.framebufferColorSampleCounts;
+        _min_ubo_alignment = properties.limits.minUniformBufferOffsetAlignment;
     }
 
     // TODO: this should actually be a choice, but whateva.
@@ -275,11 +278,13 @@ void Instance::init_logical_device(const CommandQueues &command_queue) {
 
 // =============================================================================
 Instance::Instance(const bool validate) :
-    _instance        { nullptr },
-    _physical_device { nullptr },
-    _logical_device  { nullptr },
-    _max_anisotropy  { 0.0f },
-    _validate        { validate }
+    _instance          { nullptr },
+    _physical_device   { nullptr },
+    _logical_device    { nullptr },
+    _max_anisotropy    { 0.0f },
+    _supported_msaa    { vk::SampleCountFlagBits::e1 },
+    _min_ubo_alignment { 0u },
+    _validate          { validate }
 {    
     CONSOLE_INFO("");
 

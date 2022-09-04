@@ -3,8 +3,6 @@
 
 #include "vklearnin/Textures/Texture2D.hpp"
 
-static constexpr uint32_t SAMPLER_BINDING = 0u;
-
 // =============================================================================
 void PerMaterialDescriptors::init_layout() {
     CONSOLE_INFO("");

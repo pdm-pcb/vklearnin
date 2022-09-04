@@ -7,9 +7,8 @@
 #include "vklearnin/Pipeline.hpp"
 #include "vklearnin/Buffers/Framebuffers.hpp"
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
-#include "vklearnin/Shaders/Buffers/UniformBufferObject.hpp"
-#include "vklearnin/DescriptorSets/PerFrameDescriptors.hpp"
-#include "vklearnin/DescriptorSets/PerMaterialDescriptors.hpp"
+#include "vklearnin/Shaders/Buffers/UBOList.hpp"
+#include "vklearnin/DescriptorSets/DescriptorSets.hpp"
 #include "vklearnin/Models/Model.hpp"
 
 #if defined(__linux__)
@@ -21,11 +20,10 @@
 // =============================================================================
 bool RenderLoop::run(const Instance &instance,
                      Swapchain &swapchain,
-                     UniformBufferObject &ubo,
+                     UBOList &ubo_list,
                      Pipeline &pipeline,
                      Framebuffers &framebuffers,
-                     PerFrameDescriptors &per_frame_descriptors,
-                     PerMaterialDescriptors &per_material_descriptors,
+                     DescriptorSets &descriptor_sets,
                      const std::vector<Model *> &models)
 {
     CONSOLE_INFO("");
@@ -72,7 +70,8 @@ bool RenderLoop::run(const Instance &instance,
         // now send the fresh data to the UBOs. Im curious: how much does order
         // matter here? Should this be done after the fences are reset? Is
         // that even relevant? Guess I'll have to read the spec. =)
-        _update_ubo(ubo, swapchain, current_buffer);
+        _update_per_frame(ubo_list.per_frame, swapchain, current_buffer);
+        _update_per_object(ubo_list.per_object, models, runtime, current_buffer);
 
         // clear out what needs clearing
         result = _device.resetFences(1u, &_display_fences[current_buffer]);
@@ -100,7 +99,7 @@ bool RenderLoop::run(const Instance &instance,
             vk::PipelineBindPoint::eGraphics,
             pipeline.layout(),
             0u, 1u,
-            &per_frame_descriptors.sets()[current_buffer],
+            &descriptor_sets.per_frame.sets()[current_buffer],
             0u,
             nullptr
         );
@@ -141,21 +140,26 @@ bool RenderLoop::run(const Instance &instance,
                     IndexType
                 );
 
+                auto dynamic_offset = static_cast<uint32_t>(
+                    ubo_list.per_object.offset() * model_idx
+                );
+
+                command_buffer.bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics,
+                    pipeline.layout(),
+                    2u, 1u,
+                    &descriptor_sets.per_object.sets(model_idx)[current_buffer],
+                    1u,
+                    &dynamic_offset
+                );
+
                 command_buffer.bindDescriptorSets(
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
                     1u, 1u,
-                    &per_material_descriptors.sets(model_idx)[current_buffer],
+                    &descriptor_sets.per_material.sets(model_idx)[current_buffer],
                     0u,
                     nullptr
-                );
-
-                command_buffer.pushConstants(
-                    pipeline.layout(),
-                    vk::ShaderStageFlagBits::eVertex,
-                    0u,
-                    sizeof(glm::mat4),
-                    &models[model_idx]->update_model_matrix(runtime)
                 );
 
                 // boom, draw.
@@ -293,9 +297,9 @@ void RenderLoop::_image_resized(const Instance &instance, Swapchain &swapchain,
 }
 
 // =============================================================================
-void RenderLoop::_update_ubo(UniformBufferObject &ubo,
-                             const Swapchain &swapchain,
-                             const uint32_t next_image)
+void RenderLoop::_update_per_frame(UniformBufferObject &ubo,
+                                   const Swapchain &swapchain,
+                                   const uint32_t next_image)
 {
     static glm::vec3 camera_position { 0.0f, 0.0f, 20.0f };
     static glm::vec3 camera_front    { -glm::normalize(camera_position) };
@@ -320,6 +324,22 @@ void RenderLoop::_update_ubo(UniformBufferObject &ubo,
         0.1f,
         1000.0f
     );
+
+    ubo.update(&matrices, next_image);
+}
+
+// =============================================================================
+void RenderLoop::_update_per_object(UniformBufferObject &ubo,
+                                    const std::vector<Model *> &models,
+                                    const float runtime,
+                                    const uint32_t next_image)
+{
+    std::vector<glm::mat4> matrices;
+    matrices.reserve(models.size());
+
+    for(auto &model : models) {
+        matrices.emplace_back(model->update_model_matrix(runtime));
+    }
 
     ubo.update(&matrices, next_image);
 }

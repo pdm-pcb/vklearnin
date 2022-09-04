@@ -18,8 +18,10 @@ public:
         return _buffer_handles;
     }
 
+    inline size_t offset() { return _offset; }
+
     UniformBufferObject(const size_t data_size,
-                        const size_t frames_in_flight,
+                        const size_t offset,
                         const Instance &instance);
     ~UniformBufferObject();
 
@@ -34,8 +36,9 @@ public:
 private:
     std::vector<vk::Buffer>    _buffer_handles;
     std::vector<VmaAllocation> _memory_handles;
-    
+
     const size_t    _data_size;
+    const size_t    _offset;
     const Instance &_instance;
 };
 
