@@ -19,8 +19,10 @@
 #endif
 
 // =============================================================================
-bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
-                     UniformBufferObject &ubo, Pipeline &pipeline,
+bool RenderLoop::run(const Instance &instance,
+                     Swapchain &swapchain,
+                     UniformBufferObject &ubo,
+                     Pipeline &pipeline,
                      Framebuffers &framebuffers,
                      PerFrameDescriptors &per_frame_descriptors,
                      PerMaterialDescriptors &per_material_descriptors,
@@ -128,13 +130,13 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
                 // time for some host-side vertex data!
                 command_buffer.bindVertexBuffers(
                     0u,
-                    models[model_idx]->vertex_buffers(),
-                    models[model_idx]->vertex_buffer_offsets()
+                    models[model_idx]->mesh()->vertex_buffers(),
+                    models[model_idx]->mesh()->vertex_buffer_offsets()
                 );
                 
                 // and indices while we're at it
                 command_buffer.bindIndexBuffer(
-                    models[model_idx]->index_buffer(),
+                    models[model_idx]->mesh()->index_buffer(),
                     0u,
                     IndexType
                 );
@@ -158,7 +160,9 @@ bool RenderLoop::run(const Instance &instance, Swapchain &swapchain,
 
                 // boom, draw.
                 command_buffer.drawIndexed(
-                    static_cast<uint32_t>(models[model_idx]->index_count()),
+                    static_cast<uint32_t>(
+                        models[model_idx]->mesh()->index_count()
+                    ),
                     1u, 0u, 0u, 0u
                 );
             }

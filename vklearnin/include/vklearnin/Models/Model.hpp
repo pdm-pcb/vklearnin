@@ -2,42 +2,38 @@
 #define VKLEARNIN_MODELS_MODEL_HPP
 
 #include "vklearnin/pch.hpp"
-#include "vklearnin/Shaders/Vertex.hpp"
-#include "vklearnin/Shaders/Index.hpp"
-#include "vklearnin/Shaders/Buffers/BufferObject.hpp"
+#include "vklearnin/Models/Mesh.hpp"
 
-#include "tiny_gltf.h"
-
-#include <glm/glm.hpp>
-
+class Texture2D;
+class CommandQueues;
 class Instance;
 
 class Model {
 public:
-    enum class Primitive {
-        XZPlane
-    };
-
     const glm::mat4 & update_model_matrix(float runtime);
 
-    inline const std::vector<vk::Buffer> & vertex_buffers() const {
-        return _vertex_buffers;
-    }
-    inline const std::vector<vk::DeviceSize> & vertex_buffer_offsets() const {
-        return _vertex_buffer_offsets;
-    }
-    inline vk::Buffer index_buffer() const {
-        return _index_buffer->handle();
-    }
-    inline size_t index_count() const {
-        return _index_buffer->count();
-    }
+    Mesh      const * mesh()    const { return _mesh;    }
+    Texture2D const * texture() const { return _texture; }
 
-    void populate_buffers(const vk::CommandPool &pool, const vk::Queue &queue);
+    void populate_buffers();
+    void init_texture_image_view();
+    void init_texture_sampler(
+        const vk::Filter min_filter = vk::Filter::eLinear,
+        const vk::Filter mag_filter = vk::Filter::eLinear,
+        const vk::SamplerMipmapMode mipmap_mode =
+            vk::SamplerMipmapMode::eLinear,
+        const vk::SamplerAddressMode address_mode_u =
+            vk::SamplerAddressMode::eRepeat,
+        const vk::SamplerAddressMode address_mode_v =
+            vk::SamplerAddressMode::eRepeat,
+        const vk::Bool32 enable_anisotropy = true
+    );
 
-    Model(const char *model_path, glm::vec3 position, const Instance &instance);
-    Model(const Primitive primitive,
-          glm::vec3 position,
+    Model(const char *model_path, glm::vec3 position,
+          const char *texture_path, const CommandQueues &command_queues,
+          const Instance &instance);
+    Model(const Mesh::Primitive primitive, glm::vec3 position,
+          const char *texture_path, const CommandQueues &command_queues,
           const Instance &instance,
           const float scale = 1.0f,
           const float u_repeat = 1.0f,
@@ -52,23 +48,14 @@ public:
     Model & operator=(const Model &other) = delete;
 
 private:
-    std::vector<Vertex> _vertices;
-    std::vector<Index>  _indices;
-
-    std::vector<vk::Buffer>     _vertex_buffers;
-    std::vector<vk::DeviceSize> _vertex_buffer_offsets;
-
-    BufferObject<Vertex> *_vertex_buffer;
-    BufferObject<Index>  *_index_buffer;
+    Mesh      *_mesh;
+    Texture2D *_texture;
 
     glm::vec3 _position;
     glm::mat4 _model_matrix;
 
-    void _process_nodes(tinygltf::Model &model, tinygltf::Node &node);
-    void _process_mesh(tinygltf::Model &model,  tinygltf::Mesh &mesh);
-    void _build_xzplane(const float scale, const float u_repeat,
-                        const float v_repeat);
-    void _create_buffer_objects(const Instance &instance);
+    const CommandQueues &_command_queues;
+    const Instance &_instance;
 };
 
 #endif // VKLEARNIN_MODELS_MODEL_HPP

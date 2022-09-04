@@ -6,6 +6,7 @@
 #include "vklearnin/Textures/Sampler2D.hpp"
 #include "vklearnin/Tools/Allocator.hpp"
 
+class CommandQueues;
 class Instance;
 
 class Texture2D {
@@ -19,20 +20,21 @@ public:
 
     void load_file(const char *filepath, const bool flip_vertical = false);
     void init_image_view();
-    void init_sampler(const vk::Filter min_filter, const vk::Filter mag_filter,
-                      const vk::SamplerMipmapMode mipmap_mode,
-                      const vk::SamplerAddressMode address_mode_u,
-                      const vk::SamplerAddressMode address_mode_v,
-                      const vk::Bool32 enable_anisotropy,
-                      const float max_anisotropy);
+    void init_sampler(
+        const vk::Filter min_filter,
+        const vk::Filter mag_filter,
+        const vk::SamplerMipmapMode mipmap_mode,
+        const vk::SamplerAddressMode address_mode_u,
+        const vk::SamplerAddressMode address_mode_v,
+        const vk::Bool32 enable_anisotropy
+    );
 
     inline vk::Sampler     sampler() const { return _sampler.handle(); }
     inline vk::ImageView   view()    const { return _image_view; }
     inline vk::Format      format()  const { return _format; }
     inline vk::ImageLayout layout()  const { return _layout; }
 
-    Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
-              const Instance &instance);
+    Texture2D(const CommandQueues &command_queues, const Instance &instance);
     ~Texture2D();
 
     Texture2D() = delete;

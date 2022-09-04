@@ -1,6 +1,7 @@
 #include "vklearnin/common.hpp"
 #include "vklearnin/Textures/Texture2D.hpp"
 
+#include "vklearnin/CommandStructures/CommandQueues.hpp"
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/CommandStructures/SingleUseCommandBuffer.hpp"
 
@@ -86,14 +87,13 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
                              const vk::SamplerMipmapMode mipmap_mode,
                              const vk::SamplerAddressMode address_mode_u,
                              const vk::SamplerAddressMode address_mode_v,
-                             const vk::Bool32 enable_anisotropy,
-                             const float max_anisotropy)
+                             const vk::Bool32 enable_anisotropy)
 {
     CONSOLE_INFO("");
 
     _sampler.init(min_filter, mag_filter, _mip_levels, mipmap_mode,
                   address_mode_u, address_mode_v, enable_anisotropy,
-                  max_anisotropy);
+                  _instance.max_anisotropy());
 }
 
 // =============================================================================
@@ -274,7 +274,7 @@ void Texture2D::_layout_transition(const vk::CommandBuffer &cmd_buffer,
 }
 
 // =============================================================================
-Texture2D::Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
+Texture2D::Texture2D(const CommandQueues &command_queues,
                      const Instance &instance) :
     _offset       { 0, 0, 0 },
     _extent       { 0u, 0u, 1u },
@@ -283,8 +283,8 @@ Texture2D::Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
     _layout       { vk::ImageLayout::eUndefined },
     _mip_levels   { 1u },
     _staging      { nullptr },
-    _pool         { pool },
-    _queue        { queue },
+    _pool         { command_queues.command_pool() },
+    _queue        { command_queues.graphics_queue() },
     _instance     { instance }
 {
     CONSOLE_INFO("");

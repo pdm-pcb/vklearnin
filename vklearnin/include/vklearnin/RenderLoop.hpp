@@ -33,8 +33,10 @@ class RenderLoop {
 
 public:
     // main render loop: window events, then draw
-    bool run(const Instance &instance, Swapchain &swapchain,
-             UniformBufferObject &ubo, Pipeline &pipeline,
+    bool run(const Instance &instance,
+             Swapchain &swapchain,
+             UniformBufferObject &ubo,
+             Pipeline &pipeline,
              Framebuffers &framebuffers,
              PerFrameDescriptors &per_frame_descriptors,
              PerMaterialDescriptors &per_material_descriptors,

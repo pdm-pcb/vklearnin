@@ -44,7 +44,8 @@ void PerMaterialDescriptors::init_pool() {
 }
 
 // =============================================================================
-void PerMaterialDescriptors::init_sets(const std::vector<Texture2D *> &textures)
+void PerMaterialDescriptors::init_sets(
+    const std::vector<Texture2D const *> &textures)
 {
     CONSOLE_INFO("");
 

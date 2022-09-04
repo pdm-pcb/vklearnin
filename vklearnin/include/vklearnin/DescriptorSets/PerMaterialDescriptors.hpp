@@ -9,7 +9,7 @@ class PerMaterialDescriptors {
 public:
     void init_layout();
     void init_pool();
-    void init_sets(const std::vector<Texture2D *> &textures);
+    void init_sets(const std::vector<Texture2D const *> &textures);
 
     inline vk::DescriptorSetLayout layout() const { return _layout; }
     inline const std::vector<vk::DescriptorSet> &
