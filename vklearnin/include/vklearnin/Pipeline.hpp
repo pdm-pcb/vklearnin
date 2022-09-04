@@ -15,7 +15,8 @@ public:
     void fragment_from_binary(const char *filepath);
 
     // create a suitable default layout
-    void init_render_passes(const Swapchain &swapchain);
+    void init_render_passes(const Swapchain &swapchain,
+                            const uint32_t msaa_sample_count);
     void init_ubos(const vk::Device &device, const size_t count);
     void init_layout(const std::vector<vk::DescriptorSetLayout> &desc_layouts);
     void init_pipeline(const Swapchain &swapchain);
@@ -61,6 +62,8 @@ public:
         return _color_buffer_view;
     }
 
+    inline const uint32_t sample_count() const { return _sample_count; }
+
     explicit Pipeline(const Instance &instance);
     ~Pipeline();
 
@@ -80,11 +83,16 @@ private:
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;
 
+    vk::SampleCountFlagBits _sample_flags;
+    uint32_t _sample_count;
+
     vk::Image     _color_buffer_handle;
     VmaAllocation _color_buffer_alloc;
     vk::ImageView _color_buffer_view;
 
     DepthBuffer *_depth_buffer;
+
+    std::vector<vk::AttachmentDescription> _attachments;
 
     vk::RenderPass     _renderpass;
     vk::PipelineLayout _layout;
@@ -92,6 +100,7 @@ private:
 
     const Instance &_instance;
 
+    void _check_msaa(const uint32_t msaa_sample_count);
     void _init_color_buffer(const Swapchain &swapchain);
     void _init_depth_buffer(const Swapchain &swapchain);
 };

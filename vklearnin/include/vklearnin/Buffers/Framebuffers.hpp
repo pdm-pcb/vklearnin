@@ -36,6 +36,7 @@ public:
     Framebuffers & operator=(const Framebuffers &other) = delete;
     
 private:
+    std::vector<vk::ImageView> _attachments;
     std::vector<vk::Framebuffer> _buffers;
 
     const vk::Device &_device;

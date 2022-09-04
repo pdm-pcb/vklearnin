@@ -209,31 +209,7 @@ void Instance::init_physical_device() {
         // TODO: likewise with the below, and any features that get enabled
         //       later - this needs to be reliably configurable
         _max_anisotropy = properties.limits.maxSamplerAnisotropy;
-
-        auto sample_bits = properties.limits.framebufferColorSampleCounts &
-                           properties.limits.framebufferDepthSampleCounts;
-
-        if(sample_bits & vk::SampleCountFlagBits::e64) {
-            _max_msaa = vk::SampleCountFlagBits::e64;
-        }
-        else if(sample_bits & vk::SampleCountFlagBits::e32) {
-            _max_msaa = vk::SampleCountFlagBits::e32;
-        }
-        else if(sample_bits & vk::SampleCountFlagBits::e16) {
-            _max_msaa = vk::SampleCountFlagBits::e16;
-        }
-        else if(sample_bits & vk::SampleCountFlagBits::e8) {
-            _max_msaa = vk::SampleCountFlagBits::e8;
-        }
-        else if(sample_bits & vk::SampleCountFlagBits::e4) {
-            _max_msaa = vk::SampleCountFlagBits::e4;
-        }
-        else if(sample_bits & vk::SampleCountFlagBits::e2) {
-            _max_msaa = vk::SampleCountFlagBits::e2;
-        }
-        else {
-            _max_msaa = vk::SampleCountFlagBits::e1;
-        }
+        _supported_msaa = properties.limits.framebufferColorSampleCounts;
     }
 
     // TODO: this should actually be a choice, but whateva.

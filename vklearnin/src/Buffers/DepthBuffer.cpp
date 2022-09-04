@@ -19,7 +19,7 @@ void DepthBuffer::init_image(const vk::ImageTiling &tiling,
         _format,
         tiling,
         1u,
-        _instance.max_msaa(),
+        _samples,
         _image_handle,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         _device_memory,
@@ -39,6 +39,20 @@ void DepthBuffer::init_image_view() {
         vk::ImageAspectFlagBits::eDepth,
         _instance.logical_device()
     );
+}
+
+// =============================================================================
+vk::AttachmentDescription DepthBuffer::attachment_desc() {
+    return {
+        .format         = _format,
+        .samples        = _samples,
+        .loadOp         = vk::AttachmentLoadOp::eClear,
+        .storeOp        = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    };
 }
 
 // =============================================================================
@@ -82,11 +96,13 @@ void DepthBuffer::_choose_format(const vk::ImageTiling &tiling,
 }
 
 // =============================================================================
-DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
+DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain,
+                         const vk::SampleCountFlagBits samples) :
     _image_handle  { },
     _device_memory { },
     _image_view    { },
     _format        { vk::Format::eUndefined },
+    _samples       { samples },
     _instance      { instance  },
     _swapchain     { swapchain }
 {

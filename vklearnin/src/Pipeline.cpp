@@ -29,27 +29,28 @@ void Pipeline::fragment_from_binary(const char *filepath) {
 }
 
 // =============================================================================
-void Pipeline::init_render_passes(const Swapchain &swapchain)
+void Pipeline::init_render_passes(const Swapchain &swapchain,
+                                  const uint32_t msaa_sample_count)
 {
     CONSOLE_INFO("");
 
-    _init_color_buffer(swapchain);
+    _attachments.clear();
+
+    _check_msaa(msaa_sample_count);
     _init_depth_buffer(swapchain);
 
     vk::AttachmentReference color_refs[] {{
-        // the zeroth attachment is the fragment shader's outColor layout
-        // location
         .attachment = 0u,
         .layout     = vk::ImageLayout::eColorAttachmentOptimal,
     }};
 
     vk::AttachmentReference depth_ref {
-        .attachment = 1,
+        .attachment = 1u,
         .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     };
 
     vk::AttachmentReference resolve_ref {
-        .attachment = 2,
+        .attachment = 2u,
         .layout = vk::ImageLayout::eColorAttachmentOptimal,
     };
 
@@ -59,47 +60,59 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
         .pInputAttachments    = nullptr,
         .colorAttachmentCount = static_cast<uint32_t>(std::size(color_refs)),
         .pColorAttachments    = color_refs,
-        .pResolveAttachments     = &resolve_ref,
+        .pResolveAttachments =
+            (_sample_count > 1u ? &resolve_ref : nullptr),
         .pDepthStencilAttachment = &depth_ref,
         .preserveAttachmentCount = 0u,
         .pPreserveAttachments    = 0u,
     }};
 
-    vk::AttachmentDescription attachments[] {
+    if(_sample_count > 1u) {
+        _init_color_buffer(swapchain);
+
         // color buffer (msaa) attachment description
-        {
+        _attachments.emplace_back(vk::AttachmentDescription {
             .format         = swapchain.color_format(),
-            .samples        = _instance.max_msaa(),
+            .samples        = _sample_flags,
             .loadOp         = vk::AttachmentLoadOp::eClear,
             .storeOp        = vk::AttachmentStoreOp::eDontCare,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
             .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
-        },
+        });
+
         // depth buffer attachment description
-        {
-            .format         = _depth_buffer->format(),
-            .samples        = _instance.max_msaa(),
-            .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eDontCare,
+        _attachments.emplace_back(_depth_buffer->attachment_desc());
+
+        // final presentation attachment
+        _attachments.emplace_back(vk::AttachmentDescription {
+            .format         = swapchain.color_format(),
+            .samples        = vk::SampleCountFlagBits::e1,
+            .loadOp         = vk::AttachmentLoadOp::eDontCare,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        },
-        // final presentation attachment
-        {
-            .format = swapchain.color_format(),
-            .samples = vk::SampleCountFlagBits::e1,
-            .loadOp = vk::AttachmentLoadOp::eDontCare,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+        });
+    }
+    else {
+        // render target attachment
+        _attachments.emplace_back(vk::AttachmentDescription {
+            .format         = swapchain.color_format(),
+            .samples        = vk::SampleCountFlagBits::e1,
+            .loadOp         = vk::AttachmentLoadOp::eClear,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
+            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-            .initialLayout = vk::ImageLayout::eUndefined,
-            .finalLayout = vk::ImageLayout::ePresentSrcKHR,
-        }
-    };
+            .initialLayout  = vk::ImageLayout::eUndefined,
+            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+        });
+
+        // depth buffer attachment description
+        _attachments.emplace_back(_depth_buffer->attachment_desc());
+    }
 
     // given the single render pass for this setup, specifying the following
     // dependency ensures the render pass doesn't begin until there's an image
@@ -118,8 +131,8 @@ void Pipeline::init_render_passes(const Swapchain &swapchain)
     }};
 
     vk::RenderPassCreateInfo renderpass_info {
-        .attachmentCount = static_cast<uint32_t>(std::size(attachments)),
-        .pAttachments    = attachments,
+        .attachmentCount = static_cast<uint32_t>(_attachments.size()),
+        .pAttachments    = _attachments.data(),
         .subpassCount    = static_cast<uint32_t>(std::size(subpasses)),
         .pSubpasses      = subpasses,
         .dependencyCount = static_cast<uint32_t>(std::size(dependencies)),
@@ -232,7 +245,7 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
 
     // nothing to do here yet, but it'll be fun when we can
     vk::PipelineMultisampleStateCreateInfo multisampling {
-        .rasterizationSamples  = _instance.max_msaa(),
+        .rasterizationSamples  = _sample_flags,
         .sampleShadingEnable   = false,
         .minSampleShading      = 1.0f,
         .pSampleMask           = nullptr,
@@ -325,6 +338,34 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
     _pipeline = pipeline_return.value;
 }
 
+void Pipeline::_check_msaa(const uint32_t msaa_sample_count) {
+    switch(msaa_sample_count) {
+        case 1u:  break;
+        case 2u:  _sample_flags = vk::SampleCountFlagBits::e2;  break;
+        case 4u:  _sample_flags = vk::SampleCountFlagBits::e4;  break;
+        case 8u:  _sample_flags = vk::SampleCountFlagBits::e8;  break;
+        case 16u: _sample_flags = vk::SampleCountFlagBits::e16; break;
+        case 32u: _sample_flags = vk::SampleCountFlagBits::e32; break;
+        case 64u: _sample_flags = vk::SampleCountFlagBits::e64; break;
+        default:
+            CONSOLE_CRITICAL(
+                "Unknown MSAA pass count {} requested",
+                msaa_sample_count
+            );
+            break;
+    }
+
+    if((_sample_flags & _instance.supported_msaa()) != _sample_flags)
+    {
+        CONSOLE_CRITICAL(
+            "Requested MSAA level {} is not compatible with selected device.",
+            msaa_sample_count
+        );
+    }
+
+    _sample_count = msaa_sample_count;
+}
+
 // =============================================================================
 void Pipeline::_init_color_buffer(const Swapchain &swapchain) {
     CONSOLE_INFO("");
@@ -342,7 +383,7 @@ void Pipeline::_init_color_buffer(const Swapchain &swapchain) {
         swapchain.color_format(),
         vk::ImageTiling::eOptimal,
         1u,
-        _instance.max_msaa(),
+        _sample_flags,
         _color_buffer_handle,
         vk::ImageUsageFlagBits::eTransientAttachment |
         vk::ImageUsageFlagBits::eColorAttachment,
@@ -368,7 +409,7 @@ void Pipeline::_init_depth_buffer(const Swapchain &swapchain) {
         delete _depth_buffer;
     }
 
-    _depth_buffer = new DepthBuffer(_instance, swapchain);
+    _depth_buffer = new DepthBuffer(_instance, swapchain, _sample_flags);
     _depth_buffer->init_image(
         vk::ImageTiling::eOptimal,
         vk::FormatFeatureFlagBits::eDepthStencilAttachment
@@ -378,20 +419,24 @@ void Pipeline::_init_depth_buffer(const Swapchain &swapchain) {
 
 // =============================================================================
 Pipeline::Pipeline(const Instance &instance) :
-    _vert         { nullptr },
-    _frag         { nullptr },
-    _viewport     { },
-    _scissor      { },
+    _vert     { nullptr },
+    _frag     { nullptr },
+    _viewport { },
+    _scissor  { },
+    _sample_flags { vk::SampleCountFlagBits::e1 },
+    _sample_count { 1u },
     _color_buffer_handle { },
-    _color_buffer_alloc { nullptr },
-    _color_buffer_view { },
+    _color_buffer_alloc  { nullptr },
+    _color_buffer_view   { },
     _depth_buffer { nullptr },
-    _renderpass   { nullptr },
-    _layout       { nullptr },
-    _pipeline     { nullptr },
-    _instance     { instance }
+    _renderpass { nullptr },
+    _layout     { nullptr },
+    _pipeline   { nullptr },
+    _instance   { instance }
 {
     CONSOLE_INFO("");
+
+    _attachments.reserve(10);
 }
 
 Pipeline::~Pipeline() {

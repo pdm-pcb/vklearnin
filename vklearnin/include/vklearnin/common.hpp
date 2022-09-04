@@ -13,4 +13,16 @@
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/MVPMatrices.hpp"
 
+static constexpr char APP_NAME[] { "Learnin'" };
+static constexpr char ENGINE_NAME[] { "Vulkan Learnin'" };
+static constexpr uint32_t APP_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
+static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
+
+static constexpr uint32_t UI32MAX = std::numeric_limits<uint32_t>::max();
+static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
+static constexpr uint32_t FRAME_OVERLAP = 2u;
+static constexpr uint32_t MSAA_SAMPLES = 8u;
+
+static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_1;
+
 #endif // VKLEARNIN_COMMON_HPP

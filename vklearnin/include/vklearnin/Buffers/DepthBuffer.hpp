@@ -19,8 +19,10 @@ public:
 
     inline vk::Format    format()     const { return _format; }
     inline vk::ImageView image_view() const { return _image_view; }
+    vk::AttachmentDescription attachment_desc();
 
-    DepthBuffer(const Instance &instance, const Swapchain &swapchain);
+    DepthBuffer(const Instance &instance, const Swapchain &swapchain,
+                const vk::SampleCountFlagBits samples);
     ~DepthBuffer();
 
     DepthBuffer(DepthBuffer &&other) = delete;
@@ -34,6 +36,8 @@ private:
     VmaAllocation _device_memory;
     vk::ImageView _image_view;
     vk::Format    _format;
+
+    vk::SampleCountFlagBits _samples;
 
     const Instance  &_instance;
     const Swapchain &_swapchain;

@@ -174,7 +174,7 @@ int main() {
     pipeline.vertex_from_binary("../../assets/shaders/shader.vert.spv");
     pipeline.fragment_from_binary("../../assets/shaders/shader.frag.spv");
 
-    pipeline.init_render_passes(swapchain);
+    pipeline.init_render_passes(swapchain, MSAA_SAMPLES);
     pipeline.init_layout({
         per_frame_descriptors.layout(),
         per_material_descriptors.layout()
