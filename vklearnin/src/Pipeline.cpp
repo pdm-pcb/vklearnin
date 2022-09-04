@@ -274,7 +274,6 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
         .maxDepthBounds = 1.0f,
     };
 
-    // likewise here - transparency is a luxury I cannot yet afford
     vk::PipelineColorBlendAttachmentState blend_attachments[] = {{
         .blendEnable = false,
 

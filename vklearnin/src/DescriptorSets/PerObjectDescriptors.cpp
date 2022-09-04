@@ -6,6 +6,7 @@
 // =============================================================================
 void PerObjectDescriptors::init_layout() {
     CONSOLE_INFO("");
+
     std::vector<vk::DescriptorSetLayoutBinding> bindings {{
         .binding            = MODEL_MATRIX_BINDING,
         .descriptorType     = vk::DescriptorType::eUniformBufferDynamic,
@@ -14,7 +15,6 @@ void PerObjectDescriptors::init_layout() {
         .pImmutableSamplers = nullptr
     }};
 
-    // now build the above descriptor set
     vk::DescriptorSetLayoutCreateInfo desc_layout_info {
         .bindingCount = static_cast<uint32_t>(bindings.size()),
         .pBindings = bindings.data(),
