@@ -9,6 +9,7 @@ class Allocator {
 public:
     static void init(const Instance &instance);
     static ::VmaAllocator & allocator();
+    static void snapshot();
     static void shutdown();
 
 private:

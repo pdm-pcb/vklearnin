@@ -9,9 +9,11 @@ namespace ImageTools {
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
                 const vk::ImageTiling &tiling, const uint32_t mip_levels,
                 const vk::SampleCountFlagBits &sample_flag_bits,
-                vk::Image &image_handle, const vk::ImageUsageFlags &usage,
+                vk::Image &image, const vk::ImageUsageFlags &usage,
                 VmaAllocation &memory, VmaMemoryUsage memory_usage,
-                uint32_t alloc_flags = 0u);
+                uint32_t alloc_flags = 0u, const char *alloc_name = nullptr);
+
+void destroy_image(vk::Image &image, ::VmaAllocation &memory);
 
 vk::ImageView init_view(const vk::Image &image, const vk::Format &color_format,
                         const uint32_t mip_levels,

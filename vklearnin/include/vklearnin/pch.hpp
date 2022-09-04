@@ -69,6 +69,7 @@
 #include <utility>
 #include <optional>
 #include <chrono>
+#include <fstream>
 
 static constexpr char APP_NAME[] { "Learnin'" };
 static constexpr char ENGINE_NAME[] { "Vulkan Learnin'" };

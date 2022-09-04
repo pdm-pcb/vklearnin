@@ -331,6 +331,12 @@ void Pipeline::_init_color_buffer(const Swapchain &swapchain) {
     
     auto[width, height] = swapchain.extent();
 
+    if(_color_buffer_alloc != nullptr) {
+        _instance.logical_device().destroy(_color_buffer_view);
+        ImageTools::destroy_image(_color_buffer_handle, _color_buffer_alloc);
+        _color_buffer_alloc = nullptr;
+    }
+
     ImageTools::init_image(
         { width, height, 1u },
         swapchain.color_format(),
@@ -342,7 +348,8 @@ void Pipeline::_init_color_buffer(const Swapchain &swapchain) {
         vk::ImageUsageFlagBits::eColorAttachment,
         _color_buffer_alloc,
         ::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+        "color_buffer"
     );
 
     _color_buffer_view = ImageTools::init_view(
@@ -390,18 +397,10 @@ Pipeline::Pipeline(const Instance &instance) :
 Pipeline::~Pipeline() {
     CONSOLE_INFO("");
 
-    CONSOLE_TRACE(
-        "Destroying pipeline image object {}",
-        fmt::ptr(&_color_buffer_handle)
-    );
-
-    vmaDestroyImage(
-        Allocator::allocator(),
-        _color_buffer_handle,
-        _color_buffer_alloc
-    );
-
     delete _depth_buffer;
+
+    _instance.logical_device().destroy(_color_buffer_view);
+    ImageTools::destroy_image(_color_buffer_handle, _color_buffer_alloc);
 
     _instance.logical_device().destroy(_vert);
     _instance.logical_device().destroy(_frag);

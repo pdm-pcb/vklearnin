@@ -35,10 +35,13 @@ void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
 
     auto image_size = static_cast<size_t>(width * height * BPC::RGBA);
 
+    auto staging_name = fmt::format("{}.staging", filepath);
+
     _staging = new StagingBuffer<uint8_t>(
         image_data,
         image_data + image_size,
-        _instance
+        _instance,
+        staging_name.c_str()
     );
 
     ::stbi_image_free(image_data);
@@ -60,7 +63,7 @@ void Texture2D::load_file(const char *filepath, const bool flip_vertical) {
     )) + 1u;
     CONSOLE_TRACE("Set {} mip levels for '{}'", _mip_levels, filepath);
 
-    _create_image();
+    _create_image(filepath);
     _upload_texture();
 }
 
@@ -94,7 +97,7 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
 }
 
 // =============================================================================
-void Texture2D::_create_image() {
+void Texture2D::_create_image(const char *alloc_name) {
     CONSOLE_INFO("");
 
     ImageTools::init_image(
@@ -109,7 +112,8 @@ void Texture2D::_create_image() {
         vk::ImageUsageFlagBits::eSampled,
         _device_memory,
         ::VMA_MEMORY_USAGE_GPU_ONLY,
-        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+        alloc_name
     );
 }
 
@@ -289,11 +293,6 @@ Texture2D::Texture2D(const vk::CommandPool &pool, const vk::Queue &queue,
 Texture2D::~Texture2D() {
     CONSOLE_INFO("");
 
-        CONSOLE_TRACE(
-            "Destroying texture image object {}",
-            fmt::ptr(&_image_handle)
-        );
-
     _instance.logical_device().destroy(_image_view);
-    ::vmaDestroyImage(Allocator::allocator(), _image_handle, _device_memory);
+    ImageTools::destroy_image(_image_handle, _device_memory);
 }

@@ -62,7 +62,7 @@ private:
     const vk::Queue        &_queue;
     const Instance         &_instance;
 
-    void _create_image();
+    void _create_image(const char *alloc_name);
     void _upload_texture();
     void _generate_mipmaps(const vk::CommandBuffer &cmd_buffer);
     void _layout_transition(const vk::CommandBuffer &cmd_buffer,

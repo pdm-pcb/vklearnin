@@ -8,8 +8,10 @@ namespace BufferTools {
 
 void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
                    const vk::BufferUsageFlags buffer_usage_flags,
-                   VmaAllocation &memory, VmaMemoryUsage memory_usage,
-                   uint32_t alloc_flags = 0u);
+                   ::VmaAllocation &memory, ::VmaMemoryUsage memory_usage,
+                   uint32_t alloc_flags = 0u, const char *alloc_name = nullptr);
+
+void destroy_buffer(vk::Buffer &buffer, ::VmaAllocation &memory);
 
 // void allocate_memory(const vk::Buffer &buffer, vk::DeviceMemory &memory,
 //                      const vk::MemoryPropertyFlags type_flags,

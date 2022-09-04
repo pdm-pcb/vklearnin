@@ -316,7 +316,8 @@ Instance::~Instance() {
     VKDebugger::shutdown(_instance);
 #endif
 
-    // Allocator::shutdown();
+    Allocator::shutdown();
+
     _logical_device.destroy();
     _instance.destroy();
 }

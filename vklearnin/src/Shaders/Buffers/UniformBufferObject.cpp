@@ -19,7 +19,7 @@ void UniformBufferObject::update(const void *data, const uint32_t frame_index)
 }
 
 // =============================================================================
-void UniformBufferObject::init_buffers() {
+void UniformBufferObject::init_buffers(const char *alloc_name) {
     CONSOLE_INFO("");
 
     for(size_t frame = 0; (frame < _buffer_handles.size() &&
@@ -31,7 +31,8 @@ void UniformBufferObject::init_buffers() {
             vk::BufferUsageFlagBits::eUniformBuffer,
             _memory_handles[frame],
             ::VMA_MEMORY_USAGE_AUTO,
-            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+            fmt::format("{}.{}", alloc_name, frame).c_str()
         );
     }
 }
@@ -54,12 +55,7 @@ UniformBufferObject::~UniformBufferObject() {
 
     assert(_buffer_handles.size() == _memory_handles.size());
     for(size_t index = 0; index < _buffer_handles.size(); ++index) {
-        CONSOLE_TRACE(
-            "Destroying UBO buffer {}",
-            fmt::ptr(&_buffer_handles[index])
-        );
-        ::vmaDestroyBuffer(
-            Allocator::allocator(),
+        BufferTools::destroy_buffer(
             _buffer_handles[index],
             _memory_handles[index]
         );

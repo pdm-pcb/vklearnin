@@ -46,8 +46,9 @@ public:
     inline size_t count()      const { return _data.size();   }
 
 // =============================================================================
-    BufferObject(const std::vector<Datum> &data, const Instance &instance) :
-        _staging_buffer { new StagingBuffer<Datum>(data, instance) },
+    BufferObject(const std::vector<Datum> &data, const Instance &instance,
+                 const char *alloc_name) :
+        _staging_buffer { nullptr },
         _buffer         { nullptr },
         _memory         { nullptr },
         _data           { data },
@@ -56,18 +57,17 @@ public:
     {
         CONSOLE_INFO("");
 
-        _create_device_buffer();
+        auto staging_name = fmt::format("{}.staging", alloc_name);
+        _staging_buffer =
+            new StagingBuffer<Datum>(data, instance, staging_name.c_str());
+
+        _create_device_buffer(alloc_name);
     }
  
     ~BufferObject() {
         CONSOLE_INFO("");
 
-        CONSOLE_TRACE(
-            "Destroying buffer object {}",
-            fmt::ptr(&_buffer)
-        );
-
-        ::vmaDestroyBuffer(Allocator::allocator(), _buffer, _memory);
+        BufferTools::destroy_buffer(_buffer, _memory);
     }
 
     BufferObject() = delete;
@@ -89,7 +89,7 @@ private:
     const Instance &_instance;
 
     //==========================================================================
-    void _create_device_buffer() {
+    void _create_device_buffer(const char *alloc_name) {
         CONSOLE_INFO("");
 
         vk::BufferUsageFlagBits buffer_type;
@@ -102,9 +102,13 @@ private:
         }
 
         BufferTools::create_buffer(
-            _buffer, _buffer_size,
+            _buffer,
+            _buffer_size,
             vk::BufferUsageFlagBits::eTransferDst | buffer_type,
-            _memory, ::VMA_MEMORY_USAGE_CPU_TO_GPU
+            _memory,
+            ::VMA_MEMORY_USAGE_CPU_TO_GPU,
+            0u,
+            alloc_name
         );
     }
 };

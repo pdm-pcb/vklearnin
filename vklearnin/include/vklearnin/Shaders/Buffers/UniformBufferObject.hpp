@@ -12,7 +12,7 @@ class UniformBufferObject {
 public:
     void update(const void *data, const uint32_t frame_index);
 
-    void init_buffers();
+    void init_buffers(const char *alloc_name);
 
     inline std::vector<vk::Buffer> & buffer_handles() {
         return _buffer_handles;

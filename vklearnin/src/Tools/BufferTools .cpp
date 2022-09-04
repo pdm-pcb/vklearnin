@@ -9,7 +9,7 @@ namespace BufferTools {
 void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
                    const vk::BufferUsageFlags buffer_usage_flags,
                    ::VmaAllocation &memory, VmaMemoryUsage memory_usage,
-                   uint32_t alloc_flags)
+                   uint32_t alloc_flags, const char *alloc_name)
 {
     CONSOLE_INFO("");
 
@@ -39,7 +39,15 @@ void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
         nullptr
     );
 
-    CONSOLE_ERROR("Buffer object {}", fmt::ptr(&buffer));
+    // CONSOLE_ERROR("Creating buffer {}", alloc_name);
+
+    if(alloc_name != nullptr) {
+        ::vmaSetAllocationName(
+            Allocator::allocator(),
+            memory,
+            alloc_name
+        );
+    }
 
     // buffer = instance.logical_device().createBuffer(buffer_info);
 
@@ -50,6 +58,14 @@ void create_buffer(vk::Buffer &buffer, const size_t buffer_size,
     //     buffer, memory,
     //     0u
     // );
+}
+
+void destroy_buffer(vk::Buffer &buffer, ::VmaAllocation &memory) {
+    // ::VmaAllocationInfo info;
+    // ::vmaGetAllocationInfo(Allocator::allocator(), memory, &info);
+    // CONSOLE_ERROR("Destroying buffer {}", info.pName);
+
+    ::vmaDestroyBuffer(Allocator::allocator(), buffer, memory);
 }
 
 /*

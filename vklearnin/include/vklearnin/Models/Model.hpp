@@ -68,6 +68,7 @@ private:
     void _process_mesh(tinygltf::Model &model,  tinygltf::Mesh &mesh);
     void _build_xzplane(const float scale, const float u_repeat,
                         const float v_repeat);
+    void _create_buffer_objects(const Instance &instance);
 };
 
 #endif // VKLEARNIN_MODELS_MODEL_HPP

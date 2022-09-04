@@ -12,7 +12,8 @@ public:
     inline vk::Buffer handle() const { return _staging_buffer; }
 
 // =============================================================================
-    StagingBuffer(const std::vector<Datum> &data, const Instance &instance) :
+    StagingBuffer(const std::vector<Datum> &data, const Instance &instance,
+                  const char *alloc_name) :
         _data           { data },
         _buffer_size    { _data.size() * sizeof(Datum) },
         _staging_buffer { nullptr },
@@ -21,12 +22,12 @@ public:
     {
         CONSOLE_INFO("");
 
-        _create_staging_buffer();
+        _create_staging_buffer(alloc_name);
         _populate_staging_buffer();
     }
 
     StagingBuffer(const Datum *data_begin, const Datum *data_end,
-                  const Instance &instance) :
+                  const Instance &instance, const char *alloc_name) :
         _data           { data_begin, data_end },
         _buffer_size    { _data.size() * sizeof(Datum) },
         _staging_buffer { nullptr },
@@ -35,23 +36,14 @@ public:
     {
         CONSOLE_INFO("");
 
-        _create_staging_buffer();
+        _create_staging_buffer(alloc_name);
         _populate_staging_buffer();
     }
 
     ~StagingBuffer() {
         CONSOLE_INFO("");
 
-        CONSOLE_TRACE(
-            "Destroying staging buffer {}",
-            fmt::ptr(&_staging_buffer)
-        );
-
-        ::vmaDestroyBuffer(
-            Allocator::allocator(),
-            _staging_buffer,
-            _staging_memory
-        );
+        BufferTools::destroy_buffer(_staging_buffer, _staging_memory);
     }
 
     StagingBuffer() = delete;
@@ -72,7 +64,7 @@ private:
     const Instance  &_instance;
 
 // =============================================================================
-    void _create_staging_buffer() {
+    void _create_staging_buffer(const char *alloc_name) {
         CONSOLE_INFO("");
 
         BufferTools::create_buffer(
@@ -80,7 +72,8 @@ private:
             vk::BufferUsageFlagBits::eTransferSrc,
             _staging_memory,
             ::VMA_MEMORY_USAGE_CPU_ONLY,
-            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+            ::VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+            alloc_name
         );
     }
 

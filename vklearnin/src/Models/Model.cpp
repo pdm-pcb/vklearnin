@@ -141,6 +141,12 @@ void Model::_build_xzplane(const float scale, const float u_repeat,
 }
 
 // =============================================================================
+void Model::_create_buffer_objects(const Instance &instance) {
+    _vertex_buffer = new BufferObject<Vertex>(_vertices, instance, "vbo");
+    _index_buffer  = new BufferObject<Index>(_indices, instance, "ibo");
+}
+
+// =============================================================================
 Model::Model(const char *model_path, glm::vec3 position,
              const Instance &instance) :
     _vertex_buffer { nullptr  },
@@ -174,9 +180,7 @@ Model::Model(const char *model_path, glm::vec3 position,
     }
 
     CONSOLE_TRACE("Loaded model with {} vertices", _vertices.size());
-
-    _vertex_buffer = new BufferObject<Vertex>(_vertices, instance);
-    _index_buffer  = new BufferObject<Index>(_indices, instance);
+    _create_buffer_objects(instance);
 }
 
 Model::Model(const Primitive primitive, glm::vec3 position,
@@ -198,9 +202,7 @@ Model::Model(const Primitive primitive, glm::vec3 position,
     }
 
     CONSOLE_TRACE("Generated model with {} vertices", _vertices.size());
-
-    _vertex_buffer = new BufferObject<Vertex>(_vertices, instance);
-    _index_buffer  = new BufferObject<Index>(_indices, instance);
+    _create_buffer_objects(instance);
 }
 
 Model::~Model() {

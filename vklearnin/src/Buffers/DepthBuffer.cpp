@@ -24,7 +24,8 @@ void DepthBuffer::init_image(const vk::ImageTiling &tiling,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         _device_memory,
         ::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
+        ::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+        "depth_buffer"
     );
 }
 
@@ -95,11 +96,6 @@ DepthBuffer::DepthBuffer(const Instance &instance, const Swapchain &swapchain) :
 DepthBuffer::~DepthBuffer() {
     CONSOLE_INFO("");
 
-        CONSOLE_TRACE(
-            "Destroying depth stencil image object {}",
-            fmt::ptr(&_image_handle)
-        );
-
     _instance.logical_device().destroy(_image_view);
-    ::vmaDestroyImage(Allocator::allocator(), _image_handle, _device_memory);
+    ImageTools::destroy_image(_image_handle, _device_memory);
 }

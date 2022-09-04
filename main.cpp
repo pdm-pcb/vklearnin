@@ -150,7 +150,7 @@ int main() {
     // =========================================================================
     // Uniform Buffer Object(s)
     UniformBufferObject ubo(sizeof(VPMatrices), FRAME_OVERLAP, instance);
-    ubo.init_buffers();
+    ubo.init_buffers("ubo");
 
     // =========================================================================
     // Descriptor Sets

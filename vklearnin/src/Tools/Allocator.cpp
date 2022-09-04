@@ -31,6 +31,29 @@ void Allocator::init(const Instance &instance) {
     return _allocator;
 }
 
+void Allocator::snapshot() {
+    static uint32_t count = 0u;
+
+    char *stats;
+    ::vmaBuildStatsString(_allocator, &stats, true);
+
+    auto filename = fmt::format("../../vma_stats.{}.json", ++count);
+
+    std::ofstream outfile;
+    outfile.open(filename);
+    if(!outfile.good()) {
+        CONSOLE_CRITICAL("Could not open {}?", filename);
+    }
+    else {
+        CONSOLE_TRACE("Allocator snapshot being written to {}", filename);
+    }
+
+    outfile << stats;
+    outfile.close();
+
+    ::vmaFreeStatsString(_allocator, stats);
+}
+
 void Allocator::shutdown() {
     ::vmaDestroyAllocator(_allocator);
 }

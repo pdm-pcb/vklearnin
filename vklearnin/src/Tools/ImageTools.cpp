@@ -9,9 +9,9 @@ namespace ImageTools {
 void init_image(const vk::Extent3D &extent, const vk::Format &format,
                 const vk::ImageTiling &tiling, const uint32_t mip_levels,
                 const vk::SampleCountFlagBits &sample_flag_bits,
-                vk::Image &image_handle, const vk::ImageUsageFlags &usage,
+                vk::Image &image, const vk::ImageUsageFlags &usage,
                 VmaAllocation &memory, VmaMemoryUsage memory_usage,
-                uint32_t alloc_flags)
+                uint32_t alloc_flags, const char *alloc_name)
 {
     CONSOLE_INFO("");
 
@@ -45,12 +45,20 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
         Allocator::allocator(),
         &static_cast<::VkImageCreateInfo &>(image_info),
         &vma_info,
-        &reinterpret_cast<::VkImage &>(image_handle),
+        &reinterpret_cast<::VkImage &>(image),
         &memory,
         nullptr
     );
 
-    CONSOLE_ERROR("Image object {}", fmt::ptr(&image_handle));
+    // CONSOLE_ERROR("Creating image {}", alloc_name);
+
+    if(alloc_name != nullptr) {
+        ::vmaSetAllocationName(
+            Allocator::allocator(),
+            memory,
+            alloc_name
+        );
+    }
 
     // auto result = instance.logical_device().createImage(
     //     &image_info,
@@ -90,6 +98,14 @@ void init_image(const vk::Extent3D &extent, const vk::Format &format,
     //     device_memory,
     //     0u
     // );
+}
+
+void destroy_image(vk::Image &image, ::VmaAllocation &memory) {
+    // ::VmaAllocationInfo info;
+    // ::vmaGetAllocationInfo(Allocator::allocator(), memory, &info);
+    // CONSOLE_ERROR("Destroying image {}", info.pName);
+
+    ::vmaDestroyImage(Allocator::allocator(), image, memory);
 }
 
 // =============================================================================
