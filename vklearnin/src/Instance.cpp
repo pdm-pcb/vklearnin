@@ -229,12 +229,18 @@ void Instance::init_logical_device(const CommandQueues &command_queue) {
     _physical_device.getFeatures(&supported_features);
 
     if(supported_features.samplerAnisotropy == false) {
-        CONSOLE_ERROR("Hardware device does not support anisotropic "
-                      "filtering.");
+        CONSOLE_CRITICAL("Hardware device does not support "
+                         "anisotropic filtering.");
+    }
+
+    if(supported_features.sampleRateShading == false) {
+        CONSOLE_CRITICAL("Hardware device does not support "
+                         "sample rate shading.");
     }
 
     vk::PhysicalDeviceFeatures enabled_features { };
     enabled_features.samplerAnisotropy = true;
+    enabled_features.sampleRateShading = true;
 
     std::vector<const char *> layers;
     if(_validate) {

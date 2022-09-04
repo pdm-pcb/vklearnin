@@ -11,7 +11,8 @@ public:
               const vk::SamplerMipmapMode mipmap_mode,
               const vk::SamplerAddressMode address_mode_u,
               const vk::SamplerAddressMode address_mode_v,
-              const vk::Bool32 enable_anisotropy, const float max_anisotropy);
+              const vk::Bool32 enable_anisotropy,
+              const float max_anisotropy);
 
     inline vk::Sampler handle() const { return _sampler; }
 

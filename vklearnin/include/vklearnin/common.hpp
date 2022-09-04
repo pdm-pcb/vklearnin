@@ -23,6 +23,8 @@ static constexpr uint64_t UI64MAX = std::numeric_limits<uint64_t>::max();
 static constexpr uint32_t FRAME_OVERLAP = 2u;
 static constexpr uint32_t MSAA_SAMPLES = 8u;
 
+static constexpr float SAMPLE_SHADING_RATE = 1.0f;
+
 static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_1;
 
 #endif // VKLEARNIN_COMMON_HPP

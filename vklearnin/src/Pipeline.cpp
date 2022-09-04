@@ -243,11 +243,10 @@ void Pipeline::init_pipeline(const Swapchain &swapchain)
         .lineWidth = 1.0f,
     };
 
-    // nothing to do here yet, but it'll be fun when we can
     vk::PipelineMultisampleStateCreateInfo multisampling {
         .rasterizationSamples  = _sample_flags,
-        .sampleShadingEnable   = false,
-        .minSampleShading      = 1.0f,
+        .sampleShadingEnable   = true,
+        .minSampleShading      = SAMPLE_SHADING_RATE,
         .pSampleMask           = nullptr,
         .alphaToCoverageEnable = false,
         .alphaToOneEnable      = false,
