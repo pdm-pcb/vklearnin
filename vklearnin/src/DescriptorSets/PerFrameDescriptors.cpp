@@ -27,15 +27,15 @@ void PerFrameDescriptors::init_layout() {
 void PerFrameDescriptors::init_pool() {
     CONSOLE_INFO("");
 
-    vk::DescriptorPoolSize pool_size[] {{
+    vk::DescriptorPoolSize pool_sizes[] {{
         .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = FRAME_OVERLAP
+        .descriptorCount = 1u * FRAME_OVERLAP
     }};
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = FRAME_OVERLAP,
-        .poolSizeCount = static_cast<uint32_t>(std::size(pool_size)),
-        .pPoolSizes = pool_size
+        .maxSets = 1u * FRAME_OVERLAP,
+        .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
+        .pPoolSizes = pool_sizes
     };
 
     _pool = _device.createDescriptorPool(pool_info);

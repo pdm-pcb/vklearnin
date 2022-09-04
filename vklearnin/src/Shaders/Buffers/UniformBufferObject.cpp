@@ -35,6 +35,13 @@ void UniformBufferObject::init_buffers(const char *alloc_name) {
             fmt::format("{}.{}", alloc_name, frame).c_str()
         );
     }
+
+    CONSOLE_TRACE(
+        "Created {} with size {} and offset {}",
+        alloc_name,
+        _data_size,
+        _offset
+    );
 }
 
 // =============================================================================

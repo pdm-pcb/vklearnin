@@ -27,15 +27,15 @@ void PerMaterialDescriptors::init_layout() {
 void PerMaterialDescriptors::init_pool() {
     CONSOLE_INFO("");
 
-    vk::DescriptorPoolSize pool_size[] {{
+    vk::DescriptorPoolSize pool_sizes[] {{
         .type = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = FRAME_OVERLAP * _material_count,
+        .descriptorCount = _material_count * FRAME_OVERLAP,
     }};
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = FRAME_OVERLAP * _material_count,
-        .poolSizeCount = static_cast<uint32_t>(std::size(pool_size)),
-        .pPoolSizes = pool_size
+        .maxSets = _material_count * FRAME_OVERLAP,
+        .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
+        .pPoolSizes = pool_sizes
     };
 
     _pool = _device.createDescriptorPool(pool_info);

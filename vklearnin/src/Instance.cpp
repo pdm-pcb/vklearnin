@@ -145,8 +145,12 @@ void Instance::init_physical_device() {
     // -------------------------------------------------------------------------
     // Iterate and detail each physical device
 
+    std::vector<vk::PhysicalDeviceProperties> props_list;
+    props_list.reserve(devices.size());
+
     for(const auto &device : devices) {
-        auto properties = device.getProperties();
+        props_list.emplace_back(device.getProperties());
+        auto properties = props_list.back();
 
         // grabbing the VRAM amount in proper megabytes
         auto memory = device.getMemoryProperties();
@@ -207,16 +211,13 @@ void Instance::init_physical_device() {
             VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion)
         );
-
-        // TODO: likewise with the below, and any features that get enabled
-        //       later - this needs to be reliably configurable
-        _max_anisotropy    = properties.limits.maxSamplerAnisotropy;
-        _supported_msaa    = properties.limits.framebufferColorSampleCounts;
-        _min_ubo_alignment = properties.limits.minUniformBufferOffsetAlignment;
     }
 
     // TODO: this should actually be a choice, but whateva.
-    _physical_device = devices[0];
+    _physical_device   = devices[0];
+    _max_anisotropy    = props_list[0].limits.maxSamplerAnisotropy;
+    _supported_msaa    = props_list[0].limits.framebufferColorSampleCounts;
+    _min_ubo_alignment = props_list[0].limits.minUniformBufferOffsetAlignment;
 }
 
 // =============================================================================

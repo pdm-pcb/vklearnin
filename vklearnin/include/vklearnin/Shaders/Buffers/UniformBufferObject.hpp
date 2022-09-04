@@ -18,7 +18,8 @@ public:
         return _buffer_handles;
     }
 
-    inline size_t offset() { return _offset; }
+    inline size_t data_size() { return _data_size; }
+    inline size_t offset()    { return _offset;    }
 
     UniformBufferObject(const size_t data_size,
                         const size_t offset,
