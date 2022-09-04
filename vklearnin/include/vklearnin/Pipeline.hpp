@@ -1,12 +1,9 @@
 #ifndef VKLEARNIN_PIPELINE_HPP
 #define VKLEARNIN_PIPELINE_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/Swapchain.hpp"
 #include "vklearnin/Buffers/DepthBuffer.hpp"
-
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
 
 class Instance;
 class DepthBuffer;

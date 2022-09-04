@@ -1,13 +1,9 @@
 #ifndef VKLEARNIN_STAGEDBUFFER_HPP
 #define VKLEARNIN_STAGEDBUFFER_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/common.hpp"
 #include "vklearnin/Instance.hpp"
-#include "vklearnin/common.hpp"
-
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
 
 template <typename Datum>
 class StagingBuffer {

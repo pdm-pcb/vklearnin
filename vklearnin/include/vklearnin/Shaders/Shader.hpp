@@ -1,9 +1,7 @@
 #ifndef VKLEARNIN_SHADER_HPP
 #define VKLEARNIN_SHADER_HPP
 
-#include <vulkan/vulkan.hpp>
-
-#include <string>
+#include "vklearnin/pch.hpp"
 
 // =============================================================================
 class Shader {

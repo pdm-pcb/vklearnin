@@ -1,11 +1,8 @@
 #ifndef VKLEARNIN_TOOLS_HPP
 #define VKLEARNIN_TOOLS_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/Tools/Allocator.hpp"
-
-#include <vulkan/vulkan.hpp>
-
-enum VmaMemoryUsage;
 
 namespace ImageTools {
 

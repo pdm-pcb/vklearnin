@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_MVPMATRICES_HPP
 #define VKLEARNIN_MVPMATRICES_HPP
 
-#include <glm/glm.hpp>
+#include "vklearnin/pch.hpp"
 
 struct VPMatrices {
     glm::mat4 view;

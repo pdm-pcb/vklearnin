@@ -1,14 +1,9 @@
 #ifndef VKLEARNIN_TOOLS_ALLOCATOR_HPP
 #define VKLEARNIN_TOOLS_ALLOCATOR_HPP
 
-#include <vulkan/vulkan.hpp>
+#include "vklearnin/pch.hpp"
 
 class Instance;
-
-struct VmaAllocator_T;
-VK_DEFINE_HANDLE(VmaAllocator);
-struct VmaAllocation_T;
-VK_DEFINE_HANDLE(VmaAllocation);
 
 class Allocator {
 public:

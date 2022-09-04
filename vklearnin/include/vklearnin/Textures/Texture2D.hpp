@@ -1,11 +1,10 @@
 #ifndef VKLEARNIN_TEXTURES_TEXTURE2D_HPP
 #define VKLEARNIN_TEXTURES_TEXTURE2D_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"
 #include "vklearnin/Textures/Sampler2D.hpp"
 #include "vklearnin/Tools/Allocator.hpp"
-
-#include <cstdint>
 
 class Instance;
 

@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_TEXTURES_SAMPLER2D_HPP
 #define VKLEARNIN_TEXTURES_SAMPLER2D_HPP
 
-#include <vulkan/vulkan.hpp>
+#include "vklearnin/pch.hpp"
 
 class Sampler2D {
 public:

@@ -2,11 +2,7 @@
 #ifndef VKLEARNIN_WIN32WINDOW_HPP
 #define VKLEARNIN_WIN32WINDOW_HPP
 
-#include <vulkan/vulkan.hpp>
-#include <Windows.h>
-
-#include <cstdint>
-#include <utility>
+#include "vklearnin/pch.hpp"
 
 class RenderLoop;
 

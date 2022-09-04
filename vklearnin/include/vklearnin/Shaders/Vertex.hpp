@@ -1,10 +1,7 @@
 #ifndef VKLEARNIN_VERTEX_HPP
 #define VKLEARNIN_VERTEX_HPP
 
-#include <glm/glm.hpp>
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
+#include "vklearnin/pch.hpp"
 
 class Vertex final {
 public:

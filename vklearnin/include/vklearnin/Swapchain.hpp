@@ -1,9 +1,7 @@
 #ifndef VKLEARNIN_SWAPCHAIN_HPP
 #define VKLEARNIN_SWAPCHAIN_HPP
 
-#include "vklearnin/common.hpp"
-
-#include <vulkan/vulkan.hpp>
+#include "vklearnin/pch.hpp"
 
 class Instance;
 class CommandQueues;

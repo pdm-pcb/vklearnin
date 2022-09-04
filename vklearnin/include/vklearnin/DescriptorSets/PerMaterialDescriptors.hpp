@@ -1,9 +1,7 @@
 #ifndef VKLEARNIN_DESCRIPTORS_PERMATERIALDESCRIPTORS_HPP
 #define VKLEARNIN_DESCRIPTORS_PERMATERIALDESCRIPTORS_HPP
 
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
+#include "vklearnin/pch.hpp"
 
 class Texture2D;
 

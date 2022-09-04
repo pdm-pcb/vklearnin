@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_INSTANCE_HPP
 #define VKLEARNIN_INSTANCE_HPP
 
-#include <vulkan/vulkan.hpp>
+#include "vklearnin/pch.hpp"
 
 class CommandQueues;
 class Pipeline;

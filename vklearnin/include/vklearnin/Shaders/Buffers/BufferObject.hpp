@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
 #define VKLEARNIN_SHADERS_BUFFERS_BUFFEROBJECT_HPP
 
-#include "vklearnin/common.hpp"
+#include "vklearnin/pch.hpp"
 
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/Shaders/Buffers/StagingBuffer.hpp"

@@ -1,9 +1,7 @@
 #ifndef VKLEARNIN_DESCRIPTORS_PERFRAMEDESCRIPTORS_HPP
 #define VKLEARNIN_DESCRIPTORS_PERFRAMEDESCRIPTORS_HPP
 
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
+#include "vklearnin/pch.hpp"
 
 class UniformBufferObject;
 

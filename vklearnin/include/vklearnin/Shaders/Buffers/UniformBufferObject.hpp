@@ -1,12 +1,9 @@
 #ifndef VKLEARNIN_SHADERS_UNIFORMBUFFEROBJECT_HPP
 #define VKLEARNIN_SHADERS_UNIFORMBUFFEROBJECT_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/Shaders/MVPMatrices.hpp"
 #include "vklearnin/Tools/Allocator.hpp"
-
-#include <vulkan/vulkan.hpp>
-
-#include <vector>
 
 class Instance;
 

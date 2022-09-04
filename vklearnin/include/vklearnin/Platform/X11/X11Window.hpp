@@ -2,10 +2,7 @@
 #ifndef VKLEARNIN_X11WINDOW_HPP
 #define VKLEARNIN_X11WINDOW_HPP
 
-#include <xcb/xcb.h>
-#include <vulkan/vulkan.hpp>
-
-#include <cstdint>
+#include "vklearnin/pch.hpp"
 
 class RenderLoop;
 

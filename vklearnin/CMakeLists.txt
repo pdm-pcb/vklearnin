@@ -36,6 +36,7 @@ target_include_directories(
 
 target_precompile_headers(
     vklearnin PUBLIC
+    "include/vklearnin/pch.hpp"
     "include/vklearnin/common.hpp"
 )
 

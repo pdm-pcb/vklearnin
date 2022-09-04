@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_VKDEBUGGER_HPP
 #define VKLEARNIN_VKDEBUGGER_HPP
 
-#include <vulkan/vulkan.hpp>
+#include "vklearnin/pch.hpp"
 
 class Instance;
 

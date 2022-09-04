@@ -1,6 +1,7 @@
 #ifndef VKLEARNIN_MODELS_MODEL_HPP
 #define VKLEARNIN_MODELS_MODEL_HPP
 
+#include "vklearnin/pch.hpp"
 #include "vklearnin/Shaders/Vertex.hpp"
 #include "vklearnin/Shaders/Index.hpp"
 #include "vklearnin/Shaders/Buffers/BufferObject.hpp"
