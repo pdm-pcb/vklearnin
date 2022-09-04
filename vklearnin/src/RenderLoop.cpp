@@ -107,7 +107,7 @@ bool RenderLoop::run(const Instance &instance,
 
         // initial setup for the pass
         vk::ClearValue clear_values[] = {
-            { .color { std::array<float, 4> { 0.01f, 0.01f, 0.01f, 1.0f }}},
+            { .color { std::array<float, 4> { 0.005f, 0.005f, 0.01f, 1.0f }}},
             { .depthStencil  { 1.0f, 0u }}
         };
 

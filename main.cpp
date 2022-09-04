@@ -55,49 +55,66 @@ int main() {
 
     // =========================================================================
     // Model vertex/texture data -----------------------------------------------
-    Model gunship(
-        "../../assets/meshes/spaceships/gunship.gltf",
-        glm::vec3{ 3.0f, 2.0f, 0.0f},
-        "../../assets/textures/spaceships/gunship_diffuse.png",
+    Model asteroid01(
+        "../../assets/meshes/asteroids/asteroid01.gltf",
+        glm::vec3{ -6.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid01_diffuse.png",
         command_queues,
         instance
     );
 
-    gunship.populate_buffers(),
-    gunship.init_texture_image_view();
-    gunship.init_texture_sampler();
+    asteroid01.populate_buffers(),
+    asteroid01.init_texture_image_view();
+    asteroid01.init_texture_sampler();
 
-    Model carrier(
-        "../../assets/meshes/spaceships/carrier.gltf",
-        glm::vec3{ -2.0f, -2.0f, 0.0f },
-        "../../assets/textures/spaceships/carrier_diffuse.png",
+    Model asteroid02(
+        "../../assets/meshes/asteroids/asteroid02.gltf",
+        glm::vec3{ -2.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid02_diffuse.png",
         command_queues,
         instance
     );
 
-    carrier.populate_buffers(),
-    carrier.init_texture_image_view();
-    carrier.init_texture_sampler();
+    asteroid02.populate_buffers(),
+    asteroid02.init_texture_image_view();
+    asteroid02.init_texture_sampler();
+    
+    Model asteroid03(
+        "../../assets/meshes/asteroids/asteroid03.gltf",
+        glm::vec3{ 2.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid03_diffuse.png",
+        command_queues,
+        instance
+    );
 
-    Model floor = Model(Mesh::Primitive::XZPlane, glm::vec3(0.0f, -5.0f, 0.0f),
-                        "../../assets/textures/Asphalt_001s.jpg",
-                        command_queues, instance,
-                        300.0f, 25.0f, 25.0f);
+    asteroid03.populate_buffers(),
+    asteroid03.init_texture_image_view();
+    asteroid03.init_texture_sampler();
+    
+    Model asteroid04(
+        "../../assets/meshes/asteroids/asteroid04.gltf",
+        glm::vec3{ 6.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid04_diffuse.png",
+        command_queues,
+        instance
+    );
 
-    floor.populate_buffers(),
-    floor.init_texture_image_view();
-    floor.init_texture_sampler();
+    asteroid04.populate_buffers(),
+    asteroid04.init_texture_image_view();
+    asteroid04.init_texture_sampler();
 
     std::vector<Model *> models {
-        &gunship,
-        &carrier,
-        &floor
+        &asteroid01,
+        &asteroid02,
+        &asteroid03,
+        &asteroid04
     };
 
     std::vector<Texture2D const *> textures {
-        gunship.texture(),
-        carrier.texture(),
-        floor.texture()
+        asteroid01.texture(),
+        asteroid02.texture(),
+        asteroid03.texture(),
+        asteroid04.texture()
     };
     
     // =========================================================================
