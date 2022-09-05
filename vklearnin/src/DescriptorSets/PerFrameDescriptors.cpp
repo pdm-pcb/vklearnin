@@ -29,11 +29,11 @@ void PerFrameDescriptors::init_pool() {
 
     vk::DescriptorPoolSize pool_sizes[] {{
         .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1u * FRAME_OVERLAP
+        .descriptorCount = FRAME_OVERLAP
     }};
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = 1u * FRAME_OVERLAP,
+        .maxSets = FRAME_OVERLAP,
         .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
         .pPoolSizes = pool_sizes
     };

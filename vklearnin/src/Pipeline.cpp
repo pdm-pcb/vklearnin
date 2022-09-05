@@ -156,11 +156,17 @@ Pipeline::init_layout(const std::vector<vk::DescriptorSetLayout> &desc_layouts)
 {
     CONSOLE_INFO("");
 
+	vk::PushConstantRange push_range {
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .offset = 0u,
+        .size = sizeof(glm::mat4)
+    };
+
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
         .setLayoutCount = static_cast<uint32_t>(desc_layouts.size()),
         .pSetLayouts = desc_layouts.data(),
-        .pushConstantRangeCount = 0u,
-        .pPushConstantRanges = nullptr
+        .pushConstantRangeCount = 1u,
+        .pPushConstantRanges = &push_range
     };
 
     _layout =

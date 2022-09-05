@@ -66,54 +66,54 @@ int main() {
     asteroid01.init_texture_image_view();
     asteroid01.init_texture_sampler();
 
-    // Model asteroid02(
-    //     "../../assets/meshes/asteroids/asteroid02.gltf",
-    //     glm::vec3{ -2.0f, 0.0f, 0.0f},
-    //     "../../assets/textures/asteroids/asteroid02_diffuse.png",
-    //     command_queues,
-    //     instance
-    // );
+    Model asteroid02(
+        "../../assets/meshes/asteroids/asteroid02.gltf",
+        glm::vec3{ -2.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid02_diffuse.png",
+        command_queues,
+        instance
+    );
 
-    // asteroid02.populate_buffers(),
-    // asteroid02.init_texture_image_view();
-    // asteroid02.init_texture_sampler();
+    asteroid02.populate_buffers(),
+    asteroid02.init_texture_image_view();
+    asteroid02.init_texture_sampler();
     
-    // Model asteroid03(
-    //     "../../assets/meshes/asteroids/asteroid03.gltf",
-    //     glm::vec3{ 2.0f, 0.0f, 0.0f},
-    //     "../../assets/textures/asteroids/asteroid03_diffuse.png",
-    //     command_queues,
-    //     instance
-    // );
+    Model asteroid03(
+        "../../assets/meshes/asteroids/asteroid03.gltf",
+        glm::vec3{ 2.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid03_diffuse.png",
+        command_queues,
+        instance
+    );
 
-    // asteroid03.populate_buffers(),
-    // asteroid03.init_texture_image_view();
-    // asteroid03.init_texture_sampler();
+    asteroid03.populate_buffers(),
+    asteroid03.init_texture_image_view();
+    asteroid03.init_texture_sampler();
     
-    // Model asteroid04(
-    //     "../../assets/meshes/asteroids/asteroid04.gltf",
-    //     glm::vec3{ 6.0f, 0.0f, 0.0f},
-    //     "../../assets/textures/asteroids/asteroid04_diffuse.png",
-    //     command_queues,
-    //     instance
-    // );
+    Model asteroid04(
+        "../../assets/meshes/asteroids/asteroid04.gltf",
+        glm::vec3{ 6.0f, 0.0f, 0.0f},
+        "../../assets/textures/asteroids/asteroid04_diffuse.png",
+        command_queues,
+        instance
+    );
 
-    // asteroid04.populate_buffers(),
-    // asteroid04.init_texture_image_view();
-    // asteroid04.init_texture_sampler();
+    asteroid04.populate_buffers(),
+    asteroid04.init_texture_image_view();
+    asteroid04.init_texture_sampler();
 
     std::vector<Model *> models {
         &asteroid01,
-        // &asteroid02,
-        // &asteroid03,
-        // &asteroid04
+        &asteroid02,
+        &asteroid03,
+        &asteroid04
     };
 
     std::vector<Texture2D const *> textures {
         asteroid01.texture(),
-        // asteroid02.texture(),
-        // asteroid03.texture(),
-        // asteroid04.texture()
+        asteroid02.texture(),
+        asteroid03.texture(),
+        asteroid04.texture()
     };
     
     // =========================================================================
@@ -197,7 +197,7 @@ int main() {
     pipeline.init_layout({
         desc_sets.per_frame.layout(),
         desc_sets.per_material.layout(),
-        desc_sets.per_object.layout()
+        // desc_sets.per_object.layout(),
     });
     pipeline.init_pipeline(swapchain);
 

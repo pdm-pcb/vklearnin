@@ -140,17 +140,12 @@ bool RenderLoop::run(const Instance &instance,
                     IndexType
                 );
 
-                auto dynamic_offset = static_cast<uint32_t>(
-                    ubo_list.per_object.offset() * model_idx
-                );
-
-                command_buffer.bindDescriptorSets(
-                    vk::PipelineBindPoint::eGraphics,
+                command_buffer.pushConstants(
                     pipeline.layout(),
-                    2u, 1u,
-                    &descriptor_sets.per_object.sets(model_idx)[current_buffer],
-                    1u,
-                    &dynamic_offset
+                    vk::ShaderStageFlagBits::eVertex,
+                    0u,
+                    sizeof(glm::mat4),
+                    &models[model_idx]->update_model_matrix(runtime)
                 );
 
                 command_buffer.bindDescriptorSets(

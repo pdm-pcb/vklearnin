@@ -5,7 +5,7 @@ layout(set = 0, binding = 0) uniform VPMatrices {
     mat4 proj;
 };
 
-layout(set = 2, binding = 0) uniform ModelMatrix {
+layout(push_constant) uniform ModelMatrix {
     mat4 model;
 };
 
