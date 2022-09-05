@@ -51,3 +51,10 @@ target_compile_definitions(
     "JSON_NOEXCEPTION"
     "TINYGLTF_USE_CPP14"
 )
+
+set_target_properties(
+    tinygltf PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
