@@ -62,7 +62,7 @@ public:
         return _color_buffer_view;
     }
 
-    inline const uint32_t sample_count() const { return _sample_count; }
+    inline uint32_t sample_count() const { return _sample_count; }
 
     explicit Pipeline(const Instance &instance);
     ~Pipeline();

@@ -186,8 +186,8 @@ void Texture2D::_generate_mipmaps(const vk::CommandBuffer &cmd_buffer) {
         to_string(_format)
     );
 
-    int32_t mip_width  = _extent.width;
-    int32_t mip_height = _extent.height;
+    int32_t mip_width  = static_cast<int32_t>(_extent.width);
+    int32_t mip_height = static_cast<int32_t>(_extent.height);
 
     for(uint32_t level = 1; level < _mip_levels; ++level) {
         CONSOLE_TRACE("Mip level {}", level);
