@@ -6,6 +6,17 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/RenderLoop.hpp"
 
+bool X11Window::up    = false;
+bool X11Window::down  = false;
+bool X11Window::left  = false;
+bool X11Window::right = false;
+bool X11Window::w     = false;
+bool X11Window::a     = false;
+bool X11Window::s     = false;
+bool X11Window::d     = false;
+bool X11Window::ctrl  = false;
+bool X11Window::space = false;
+
 using client_msg        = ::xcb_client_message_event_t *;
 using config_notify     = ::xcb_configure_notify_event_t *;
 using keypress_notify   = ::xcb_key_press_event_t *;
@@ -184,26 +195,14 @@ void X11Window::init_window() {
 void X11Window::init_surface() {
     CONSOLE_INFO("");
 
-    if(_surface != nullptr) {
-        ::vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        _surface = nullptr;
-    }
+    _instance.destroy(_surface);
 
-    vk::XcbSurfaceCreateInfoKHR surface_info { };
-    surface_info.sType = ::VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-    surface_info.connection = _connection;
-    surface_info.window = _window;
+    vk::XcbSurfaceCreateInfoKHR surface_info {
+        .connection = _connection,
+        .window = _window,
+    };
 
-    auto result = ::vkCreateXcbSurfaceKHR(
-        _instance,
-        &surface_info,
-        nullptr,
-        &_surface
-    );
-
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_ERROR("Unable to create XCB surface.");
-    }
+    _surface = _instance.createXcbSurfaceKHR(surface_info);
 }
 
 //==============================================================================
@@ -428,7 +427,7 @@ X11Window::X11Window(const vk::Instance &instance,
     _wm_state_atom    { 0u },
     _fullscreen_atom  { 0u },
     _fullscreen_event { },
-    _surface          { 0u },
+    _surface          { },
     _width            { width  },
     _height           { height },
     _screen_width     { 0u },

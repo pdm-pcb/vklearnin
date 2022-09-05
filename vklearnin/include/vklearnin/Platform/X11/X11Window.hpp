@@ -8,6 +8,17 @@ class RenderLoop;
 
 class X11Window {
 public:
+    static bool up;
+    static bool down;
+    static bool left;
+    static bool right;
+    static bool w;
+    static bool a;
+    static bool s;
+    static bool d;
+    static bool ctrl;
+    static bool space;
+
     bool message_loop();
 
     void init_window();
