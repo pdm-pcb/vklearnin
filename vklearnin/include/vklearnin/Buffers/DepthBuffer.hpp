@@ -17,8 +17,8 @@ public:
                     const vk::FormatFeatureFlags &flags);
     void init_image_view();
 
-    inline vk::Format    format()     const { return _format; }
-    inline vk::ImageView image_view() const { return _image_view; }
+    inline const vk::Format    & format()     const { return _format; }
+    inline const vk::ImageView & image_view() const { return _image_view; }
     vk::AttachmentDescription attachment_desc();
 
     DepthBuffer(const Instance &instance, const Swapchain &swapchain,

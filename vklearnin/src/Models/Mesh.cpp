@@ -140,8 +140,7 @@ void Mesh::_create_buffer_objects(const Instance &instance) {
 }
 
 // =============================================================================
-Mesh::Mesh(const char *mesh_path, glm::vec3 position,
-             const Instance &instance) :
+Mesh::Mesh(const char *mesh_path, const Instance &instance) :
     _vertex_buffer { nullptr  },
     _index_buffer  { nullptr  }
 {
@@ -174,8 +173,7 @@ Mesh::Mesh(const char *mesh_path, glm::vec3 position,
     _create_buffer_objects(instance);
 }
 
-Mesh::Mesh(const Primitive primitive, glm::vec3 position,
-           const Instance &instance,
+Mesh::Mesh(const Primitive primitive, const Instance &instance,
            const float scale, const float u_repeat, const float v_repeat) :
     _vertex_buffer { nullptr  },
     _index_buffer  { nullptr  }

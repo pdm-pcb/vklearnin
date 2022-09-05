@@ -34,10 +34,9 @@ public:
 
     void populate_buffers(const CommandQueues &command_queues);
 
-    Mesh(const char *mesh_path, glm::vec3 position, const Instance &instance);
-    Mesh(const Primitive primitive, glm::vec3 position,
-          const Instance &instance,
-          const float scale, const float u_repeat, const float v_repeat);
+    Mesh(const char *mesh_path, const Instance &instance);
+    Mesh(const Primitive primitive, const Instance &instance,
+         const float scale, const float u_repeat, const float v_repeat);
     ~Mesh();
     Mesh() = delete;
 
