@@ -197,7 +197,7 @@ int main() {
     pipeline.init_layout({
         desc_sets.per_frame.layout(),
         desc_sets.per_material.layout(),
-        // desc_sets.per_object.layout(),
+        desc_sets.per_object.layout(),
     });
     pipeline.init_pipeline(swapchain);
 

@@ -13,6 +13,10 @@ void UniformBufferObject::update(const void *data, const uint32_t frame_index)
         &destination
     );
 
+    if(destination == nullptr) {
+        CONSOLE_CRITICAL("Failed to map UBO from GPU");
+    }
+
     memcpy(destination, data, _data_size);
 
     ::vmaUnmapMemory(Allocator::allocator(), _memory_handles[frame_index]);

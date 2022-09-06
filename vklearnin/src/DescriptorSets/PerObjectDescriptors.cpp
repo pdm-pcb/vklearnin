@@ -29,11 +29,11 @@ void PerObjectDescriptors::init_pool() {
 
     vk::DescriptorPoolSize pool_sizes[] {{
         .type = vk::DescriptorType::eUniformBufferDynamic,
-        .descriptorCount = _object_count * FRAME_OVERLAP,
+        .descriptorCount = MAX_DESC_COUNT,
     }};
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = _object_count * FRAME_OVERLAP,
+        .maxSets = MAX_DESC_SETS,
         .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
         .pPoolSizes = pool_sizes
     };
@@ -84,7 +84,7 @@ void PerObjectDescriptors::init_sets(UniformBufferObject &ubo)
 
 // =============================================================================
 PerObjectDescriptors::PerObjectDescriptors(const uint32_t material_count,
-                                               const vk::Device &device) :
+                                           const vk::Device &device) :
     _object_count { material_count },
     _device { device }
 {

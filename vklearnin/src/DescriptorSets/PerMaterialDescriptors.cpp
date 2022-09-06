@@ -6,6 +6,7 @@
 // =============================================================================
 void PerMaterialDescriptors::init_layout() {
     CONSOLE_INFO("");
+
     std::vector<vk::DescriptorSetLayoutBinding> bindings {{
         .binding            = SAMPLER_BINDING,
         .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
@@ -14,7 +15,6 @@ void PerMaterialDescriptors::init_layout() {
         .pImmutableSamplers = nullptr
     }};
 
-    // now build the above descriptor set
     vk::DescriptorSetLayoutCreateInfo desc_layout_info {
         .bindingCount = static_cast<uint32_t>(bindings.size()),
         .pBindings = bindings.data(),
@@ -29,11 +29,11 @@ void PerMaterialDescriptors::init_pool() {
 
     vk::DescriptorPoolSize pool_sizes[] {{
         .type = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = _material_count * FRAME_OVERLAP,
+        .descriptorCount = MAX_DESC_COUNT,
     }};
 
     vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = _material_count * FRAME_OVERLAP,
+        .maxSets = MAX_DESC_SETS,
         .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
         .pPoolSizes = pool_sizes
     };

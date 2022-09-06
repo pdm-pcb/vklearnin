@@ -11,9 +11,10 @@ public:
     void init_pool();
     void init_sets(UniformBufferObject &ubo);
 
-    inline vk::DescriptorSetLayout layout() const { return _layout; }
+    inline const vk::DescriptorSetLayout layout() const { return _layout; }
+    
     inline const std::vector<vk::DescriptorSet> &
-    sets(const size_t material) const { return _sets[material]; }
+    sets(const size_t object) const { return _sets[object]; }
 
     PerObjectDescriptors(const uint32_t object_count, const vk::Device &device);
     ~PerObjectDescriptors();

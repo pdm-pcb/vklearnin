@@ -155,7 +155,7 @@ void Instance::init_physical_device() {
         // grabbing the VRAM amount in proper megabytes
         auto memory = device.getMemoryProperties();
         vk::DeviceSize vram = 0u;
-        for(uint32_t index = 0; index < memory.memoryHeapCount; ++index) {
+        for(uint32_t index = 0u; index < memory.memoryHeapCount; ++index) {
             auto flags = memory.memoryHeaps[index].flags;
             if((flags & vk::MemoryHeapFlagBits::eDeviceLocal) == flags) {
                 vram = memory.memoryHeaps[index].size / 1000 / 1000;

@@ -27,6 +27,8 @@ static constexpr uint32_t MSAA_SAMPLES = 8u;
 
 static constexpr float SAMPLE_SHADING_RATE = 1.0f;
 
+static constexpr uint32_t MAX_DESC_SETS        = 1024u;
+static constexpr uint32_t MAX_DESC_COUNT       = 1024u;
 static constexpr uint32_t CAM_UBO_BINDING      = 0u;
 static constexpr uint32_t SAMPLER_BINDING      = 0u;
 static constexpr uint32_t MODEL_MATRIX_BINDING = 0u;

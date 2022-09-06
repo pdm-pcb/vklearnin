@@ -12,8 +12,9 @@ public:
     void init_sets(const std::vector<Texture2D const *> &textures);
 
     inline vk::DescriptorSetLayout layout() const { return _layout; }
+
     inline const std::vector<vk::DescriptorSet> &
-    sets(const size_t material) const { return _sets[material]; }
+        sets(const size_t material) const { return _sets[material]; }
 
     PerMaterialDescriptors(const uint32_t material_count,
                            const vk::Device &device);

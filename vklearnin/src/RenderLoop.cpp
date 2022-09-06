@@ -67,12 +67,6 @@ bool RenderLoop::run(const Instance &instance,
             continue;   // be sure to continue so eveything updates
         }
 
-        // now send the fresh data to the UBOs. Im curious: how much does order
-        // matter here? Should this be done after the fences are reset? Is
-        // that even relevant? Guess I'll have to read the spec. =)
-        _update_per_frame(ubo_list.per_frame, swapchain, current_buffer);
-        _update_per_object(ubo_list.per_object, models, runtime, current_buffer);
-
         // clear out what needs clearing
         result = _device.resetFences(1u, &_display_fences[current_buffer]);
         if(result != vk::Result::eSuccess) {
@@ -83,6 +77,9 @@ bool RenderLoop::run(const Instance &instance,
             next_image,
             static_cast<vk::CommandBufferResetFlagBits>(0u)
         );
+
+        _update_per_frame(ubo_list.per_frame, swapchain, current_buffer);
+        _update_per_object(ubo_list.per_object, models, runtime, current_buffer);
 
         vk::CommandBufferBeginInfo begin_info { };
 
@@ -140,14 +137,6 @@ bool RenderLoop::run(const Instance &instance,
                     IndexType
                 );
 
-                command_buffer.pushConstants(
-                    pipeline.layout(),
-                    vk::ShaderStageFlagBits::eVertex,
-                    0u,
-                    sizeof(glm::mat4),
-                    &models[model_idx]->update_model_matrix(runtime)
-                );
-
                 command_buffer.bindDescriptorSets(
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
@@ -156,6 +145,27 @@ bool RenderLoop::run(const Instance &instance,
                     0u,
                     nullptr
                 );
+
+                uint32_t offset = model_idx * ubo_list.per_object.offset();
+
+                command_buffer.bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics,
+                    pipeline.layout(),
+                    2u, 1u,
+                    &descriptor_sets.per_object.sets(model_idx)[current_buffer],
+                    1u,
+                    &offset
+                );
+
+                // // I'll keep this around for posterity, as I'm sure I'll want
+                // // to use push constants at some point in the future
+                // command_buffer.pushConstants(
+                //     pipeline.layout(),
+                //     vk::ShaderStageFlagBits::eVertex,
+                //     0u,
+                //     sizeof(glm::mat4),
+                //     &models[model_idx]->update_model_matrix(runtime)
+                // );
 
                 // boom, draw.
                 command_buffer.drawIndexed(
@@ -336,7 +346,7 @@ void RenderLoop::_update_per_object(UniformBufferObject &ubo,
         matrices.emplace_back(model->update_model_matrix(runtime));
     }
 
-    ubo.update(&matrices, next_image);
+    ubo.update(matrices.data(), next_image);
 }
 
 // =============================================================================

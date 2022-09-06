@@ -205,7 +205,7 @@ Win32Window::Win32Window(const vk::Instance &instance,
                          const uint32_t width, const uint32_t height) :
     _hinstance       { nullptr },
     _hwindow         { nullptr },
-    _surface         { nullptr },
+    _surface         { },
     _width           { width  },
     _height          { height },
     _screen_width    { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
