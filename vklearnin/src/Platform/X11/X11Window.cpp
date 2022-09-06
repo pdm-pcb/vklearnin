@@ -132,6 +132,9 @@ bool X11Window::message_loop() {
                 }
                 break;
             }
+
+            case XCB_GE_GENERIC:
+                break;
             
             default:
                 CONSOLE_WARN("Unknown XCB message? '{}'", event_type);
