@@ -16,6 +16,7 @@ void Allocator::init(const Instance &instance) {
         .preferredLargeHeapBlockSize = 0u,
         .pAllocationCallbacks = nullptr,
         .pDeviceMemoryCallbacks = nullptr,
+        .pHeapSizeLimit = nullptr,
         .pVulkanFunctions = nullptr,
         .instance = instance.vulkan_instance(),
         .vulkanApiVersion = VK_API_VER,
