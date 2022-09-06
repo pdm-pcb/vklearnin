@@ -138,13 +138,13 @@ int main() {
 
     // calculate what we need for the dynamic UBO to work
 	auto min_ubo_alignment = instance.min_ubo_alignment();
-	auto offset = sizeof(glm::mat4);
+	auto offset = static_cast<uint32_t>(sizeof(glm::mat4));
 	if(min_ubo_alignment > 0u) {
 		offset =
             (offset + min_ubo_alignment - 1) &
             ~(min_ubo_alignment - 1);
 	}
-	size_t buffer_size = models.size() * offset;
+	auto buffer_size = static_cast<uint32_t>(models.size() * offset);
 
     UniformBufferObject per_object_ubo(buffer_size, offset, instance);
     per_object_ubo.init_buffers("per_object_ubo");

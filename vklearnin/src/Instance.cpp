@@ -15,8 +15,7 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 // =============================================================================
-void Instance::init_instance()
-{
+void Instance::init_instance() {
     CONSOLE_INFO("");
     
     // -------------------------------------------------------------------------
@@ -214,10 +213,12 @@ void Instance::init_physical_device() {
     }
 
     // TODO: this should actually be a choice, but whateva.
-    _physical_device   = devices[0];
-    _max_anisotropy    = props_list[0].limits.maxSamplerAnisotropy;
-    _supported_msaa    = props_list[0].limits.framebufferColorSampleCounts;
-    _min_ubo_alignment = props_list[0].limits.minUniformBufferOffsetAlignment;
+    _physical_device   = devices[PHYSICAL_DEVICE];
+    _max_anisotropy    = props_list[PHYSICAL_DEVICE].limits.maxSamplerAnisotropy;
+    _supported_msaa    = props_list[PHYSICAL_DEVICE].limits.framebufferColorSampleCounts;
+    _min_ubo_alignment = static_cast<uint32_t>(
+        props_list[PHYSICAL_DEVICE].limits.minUniformBufferOffsetAlignment
+    );
 }
 
 // =============================================================================

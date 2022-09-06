@@ -70,13 +70,13 @@ void Swapchain::init_present_modes() {
 
     // default to immediate/unsynchronized presentations if there's nothing
     // else
-    if(_present_mode != vk::PresentModeKHR::eFifo) {
+    // if(_present_mode != vk::PresentModeKHR::eFifo) {
         _present_mode = vk::PresentModeKHR::eImmediate;
         CONSOLE_WARN("Assigning default immedate presentation mode.");
-    }
-    else {
-        CONSOLE_TRACE("FIFO present mode chosen");
-    }
+    // }
+    // else {
+    //     CONSOLE_TRACE("FIFO present mode chosen");
+    // }
 }
 
 //==============================================================================

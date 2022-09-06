@@ -49,7 +49,7 @@ public:
     inline const vk::SampleCountFlags supported_msaa() const {
         return _supported_msaa;
     }
-    inline size_t min_ubo_alignment() const {
+    inline uint32_t min_ubo_alignment() const {
         return _min_ubo_alignment;
     }
 
@@ -72,7 +72,7 @@ private:
 
     float _max_anisotropy;
     vk::SampleCountFlags _supported_msaa;
-    size_t _min_ubo_alignment;
+    uint32_t _min_ubo_alignment;
 
     bool _validate;
 };

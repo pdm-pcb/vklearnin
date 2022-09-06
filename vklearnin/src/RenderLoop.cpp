@@ -37,8 +37,24 @@ bool RenderLoop::run(const Instance &instance,
         using duration_seconds = std::chrono::duration<float, second_period>;
 
         static auto start = HRC::now();
+        static auto last_frametime = start;
         auto now = HRC::now();
+        auto frametime = duration_seconds(now - last_frametime).count();
         auto runtime = duration_seconds(now - start).count();
+        last_frametime = now;
+
+        static uint32_t frames = 0u;
+        static auto total_frametime = frametime;
+        ++frames;
+        total_frametime += frametime;
+        if(total_frametime >= 0.5f) {
+            CONSOLE_TRACE(
+                "Average FPS: {}",
+                static_cast<uint32_t>(frames / total_frametime)
+            );
+            frames = 0u;
+            total_frametime = 0.0f;
+        }
 
         // flip between zero and one, without a mod operation
         // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
@@ -122,17 +138,17 @@ bool RenderLoop::run(const Instance &instance,
             command_buffer.setViewport(0u, 1u, &pipeline.viewport());
             command_buffer.setScissor(0u, 1u, &pipeline.scissor());
 
-            for(size_t model_idx = 0; model_idx < models.size(); ++model_idx) {
+            for(size_t object_idx = 0; object_idx < models.size(); ++object_idx) {
                 // time for some host-side vertex data!
                 command_buffer.bindVertexBuffers(
                     0u,
-                    models[model_idx]->mesh()->vertex_buffers(),
-                    models[model_idx]->mesh()->vertex_buffer_offsets()
+                    models[object_idx]->mesh()->vertex_buffers(),
+                    models[object_idx]->mesh()->vertex_buffer_offsets()
                 );
                 
                 // and indices while we're at it
                 command_buffer.bindIndexBuffer(
-                    models[model_idx]->mesh()->index_buffer(),
+                    models[object_idx]->mesh()->index_buffer(),
                     0u,
                     IndexType
                 );
@@ -141,18 +157,20 @@ bool RenderLoop::run(const Instance &instance,
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
                     1u, 1u,
-                    &descriptor_sets.per_material.sets(model_idx)[current_buffer],
+                    &descriptor_sets.per_material.sets(object_idx)[current_buffer],
                     0u,
                     nullptr
                 );
 
-                uint32_t offset = model_idx * ubo_list.per_object.offset();
+                uint32_t offset =
+                    static_cast<uint32_t>(object_idx) *
+                    ubo_list.per_object.offset();
 
                 command_buffer.bindDescriptorSets(
                     vk::PipelineBindPoint::eGraphics,
                     pipeline.layout(),
                     2u, 1u,
-                    &descriptor_sets.per_object.sets(model_idx)[current_buffer],
+                    &descriptor_sets.per_object.sets(object_idx)[current_buffer],
                     1u,
                     &offset
                 );
@@ -164,13 +182,13 @@ bool RenderLoop::run(const Instance &instance,
                 //     vk::ShaderStageFlagBits::eVertex,
                 //     0u,
                 //     sizeof(glm::mat4),
-                //     &models[model_idx]->update_model_matrix(runtime)
+                //     &models[object_idx]->update_model_matrix(runtime)
                 // );
 
                 // boom, draw.
                 command_buffer.drawIndexed(
                     static_cast<uint32_t>(
-                        models[model_idx]->mesh()->index_count()
+                        models[object_idx]->mesh()->index_count()
                     ),
                     1u, 0u, 0u, 0u
                 );

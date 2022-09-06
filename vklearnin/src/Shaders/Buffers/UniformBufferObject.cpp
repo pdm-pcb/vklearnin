@@ -49,8 +49,8 @@ void UniformBufferObject::init_buffers(const char *alloc_name) {
 }
 
 // =============================================================================
-UniformBufferObject::UniformBufferObject(const size_t data_size,
-                                         const size_t offset,
+UniformBufferObject::UniformBufferObject(const uint32_t data_size,
+                                         const uint32_t offset,
                                          const Instance &instance) :
     _data_size { data_size },
     _offset    { offset    },

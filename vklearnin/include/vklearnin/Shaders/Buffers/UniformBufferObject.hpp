@@ -18,11 +18,11 @@ public:
         return _buffer_handles;
     }
 
-    inline size_t data_size() { return _data_size; }
-    inline size_t offset()    { return _offset;    }
+    inline uint32_t data_size() { return _data_size; }
+    inline uint32_t offset()    { return _offset;    }
 
-    UniformBufferObject(const size_t data_size,
-                        const size_t offset,
+    UniformBufferObject(const uint32_t data_size,
+                        const uint32_t offset,
                         const Instance &instance);
     ~UniformBufferObject();
 
@@ -38,8 +38,8 @@ private:
     std::vector<vk::Buffer>    _buffer_handles;
     std::vector<VmaAllocation> _memory_handles;
 
-    const size_t    _data_size;
-    const size_t    _offset;
+    const uint32_t    _data_size;
+    const uint32_t    _offset;
     const Instance &_instance;
 };
 
