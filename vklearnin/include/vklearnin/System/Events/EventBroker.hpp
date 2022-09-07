@@ -8,16 +8,18 @@ class EventBroker {
 using CallbackLists = std::vector<EventCallbacksBase *>;
 public:
     template<typename Event, typename Callback>
-    static EventListenerHandle subscribe(Callback callback)
-    {
+    static EventListenerHandle subscribe(Callback callback) {
+        assert(_initialized);
+
         return static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()])->add(callback);
     }
 
     template<typename Event, typename Handler, typename Callback>
     static EventListenerHandle
-    subscribe(Handler *handler, Callback callback)
-    {
+    subscribe(Handler *handler, Callback callback) {
+        assert(_initialized);
+
         return static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()])->add(
             [handler, callback](const Event &event) {
@@ -28,6 +30,8 @@ public:
 
     template<typename Event, typename... EventParams>
     static void emit(EventParams ...event_args) {
+        assert(_initialized);
+
         Event event { event_args... };
         static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()]
@@ -50,7 +54,8 @@ public:
 
 private:
     static CallbackLists _callbacks;
-    static uint32_t      _next_event_id;
+    static uint32_t _next_event_id;
+    static bool _initialized;
 
     template<typename Event>
     static uint32_t _event_id() {
