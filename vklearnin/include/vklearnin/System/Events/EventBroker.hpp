@@ -4,20 +4,21 @@
 #include "vklearnin/pch.hpp"
 #include "vklearnin/System/Events/EventCallbackSet.hpp"
 
-#include "vklearnin/System/Events/KeyboardEvent.hpp"
-
 class EventBroker {
-using CallbackSets = std::vector<EventCallbackBase *>;
+using CallbackLists = std::vector<EventCallbacksBase *>;
 public:
     template<typename Event, typename Callback>
-    static EventListener & subscribe(Callback callback) {
-        return static_cast<EventCallbackSet<Event> *>(
+    static EventListenerHandle subscribe(Callback callback)
+    {
+        return static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()])->add(callback);
     }
 
     template<typename Event, typename Handler, typename Callback>
-    static EventListener & subscribe(Handler *handler, Callback callback) {
-        return static_cast<EventCallbackSet<Event> *>(
+    static EventListenerHandle
+    subscribe(Handler *handler, Callback callback)
+    {
+        return static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()])->add(
             [handler, callback](const Event &event) {
                 (handler->*callback)(event);
@@ -28,15 +29,12 @@ public:
     template<typename Event, typename... EventParams>
     static void emit(EventParams ...event_args) {
         Event event { event_args... };
-        const auto &callbacks = 
-            static_cast<EventCallbackSet<Event> *>(
-                _callbacks[_event_id<Event>()])->callbacks();
-        for(const auto &callback : callbacks) {
-            callback(event);
-        }
+        static_cast<EventCallbacks<Event> *>(
+            _callbacks[_event_id<Event>()]
+        )->emit(event);
     }
 
-    static void unsubscribe(const EventListener &handle);
+    static void unsubscribe(const EventListenerHandle &handle);
 
     static void init();
     static void shutdown();
@@ -51,8 +49,8 @@ public:
     EventBroker & operator=(const EventBroker &other) = delete;
 
 private:
-    static CallbackSets _callbacks;
-    static uint32_t     _next_event_id;
+    static CallbackLists _callbacks;
+    static uint32_t      _next_event_id;
 
     template<typename Event>
     static uint32_t _event_id() {
@@ -62,7 +60,7 @@ private:
 
     template<typename Event>
     static uint32_t _register_event() {
-        _callbacks.emplace_back(new EventCallbackSet<Event>(_next_event_id));
+        _callbacks.emplace_back(new EventCallbacks<Event>(_next_event_id));
         return _next_event_id++;
     }
 };

@@ -10,7 +10,7 @@
 #include "vklearnin/Tools/ImageTools.hpp"
 
 #include "vklearnin/System/Events/EventBroker.hpp"
-#include "vklearnin/System/Events/KeyboardEvent.hpp"
+// #include "vklearnin/System/Events/KeyboardEvent.hpp"
 
 #include "vklearnin/Shaders/Shader.hpp"
 #include "vklearnin/Shaders/Index.hpp"
