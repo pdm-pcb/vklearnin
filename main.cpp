@@ -24,8 +24,6 @@ int main() {
     ConsoleLog::init();
     EventBroker::init();
 
-///////////////////////////////////////////////////////////////////////////////
-
     Instance instance(true);
     instance.init_instance();
     instance.init_physical_device();

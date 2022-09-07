@@ -27,6 +27,10 @@ add_library(
 target_include_directories(
     vklearnin PUBLIC
     "include/"
+)
+
+target_include_directories(
+    vklearnin SYSTEM PUBLIC
     "${fmt_SOURCE_DIR}"
     "${spdlog_SOURCE_DIR}"
     "${glm_SOURCE_DIR}"
