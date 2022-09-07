@@ -6,26 +6,13 @@
 #include "vklearnin/Instance.hpp"
 #include "vklearnin/RenderLoop.hpp"
 
-bool Win32Window::up    = false;
-bool Win32Window::down  = false;
-bool Win32Window::left  = false;
-bool Win32Window::right = false;
-bool Win32Window::w     = false;
-bool Win32Window::a     = false;
-bool Win32Window::s     = false;
-bool Win32Window::d     = false;
-bool Win32Window::ctrl  = false;
-bool Win32Window::space = false;
-
 //==============================================================================
-bool Win32Window::message_loop() {
+void Win32Window::message_loop() {
     ::MSG message { };
     while(::PeekMessageA(&message, _hwindow, 0u, 0u, PM_REMOVE)) {
         ::TranslateMessage(&message);
         ::DispatchMessageA(&message);
     }
-
-    return _running;
 }
 
 //==============================================================================
@@ -71,21 +58,22 @@ bool Win32Window::message_loop() {
             switch(wparam) {
                 case VK_ESCAPE:
                     ::SendMessageA(_hwindow, WM_CLOSE, 0u, 0);
+                    EventBroker::emit<KeyPressEvent>(wparam);
                     break;
 
-                case VK_UP:    up    = true; break;
-                case VK_DOWN:  down  = true; break;
-                case VK_LEFT:  left  = true; break;
-                case VK_RIGHT: right = true; break;
+                case VK_UP:    EventBroker::emit<KeyPressEvent>(wparam); break;
+                case VK_DOWN:  EventBroker::emit<KeyPressEvent>(wparam); break;
+                case VK_LEFT:  EventBroker::emit<KeyPressEvent>(wparam); break;
+                case VK_RIGHT: EventBroker::emit<KeyPressEvent>(wparam); break;
             }
             break;
 
         case WM_KEYUP:
             switch(wparam) {
-                case VK_UP:    up    = false; break;
-                case VK_DOWN:  down  = false; break;
-                case VK_LEFT:  left  = false; break;
-                case VK_RIGHT: right = false; break;
+                case VK_UP:    EventBroker::emit<KeyReleaseEvent>(wparam); break;
+                case VK_DOWN:  EventBroker::emit<KeyReleaseEvent>(wparam); break;
+                case VK_LEFT:  EventBroker::emit<KeyReleaseEvent>(wparam); break;
+                case VK_RIGHT: EventBroker::emit<KeyReleaseEvent>(wparam); break;
             }
             break;
 
@@ -120,7 +108,6 @@ bool Win32Window::message_loop() {
             return 0;
 
         case WM_DESTROY:
-            _running = false;
             ::PostQuitMessage(0);
             return 0;
 
@@ -168,7 +155,6 @@ void Win32Window::init_window() {
     }
 
     _size_and_center(_width, _height);
-    _running = true;
 }
 
 //==============================================================================
@@ -211,7 +197,6 @@ Win32Window::Win32Window(const vk::Instance &instance,
     _screen_width    { static_cast<uint32_t>(::GetSystemMetrics(SM_CXSCREEN)) },
     _screen_height   { static_cast<uint32_t>(::GetSystemMetrics(SM_CYSCREEN)) },
     _fullscreen      { false },
-    _running         { false },
     _instance        { instance }
 {
     if(_width == 0 || _height == 0) {

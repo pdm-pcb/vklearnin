@@ -3,6 +3,8 @@
 
 #include "vklearnin/pch.hpp"
 
+#include "vklearnin/System/Events/KeyboardEvent.hpp"
+
 class Instance;
 class CommandQueues;
 class Swapchain;
@@ -41,6 +43,9 @@ public:
              DescriptorSets &descriptor_sets,
              const std::vector<Model *> &models);
 
+    void on_keypress(const KeyPressEvent &event);
+    void on_keyrelease(const KeyReleaseEvent &event);
+
     // -------------------------------------------------------------------------
     // Setup
     void init_synchronization();
@@ -60,6 +65,10 @@ private:
     std::array<vk::Semaphore, FRAME_OVERLAP> _image_available_sems;
     std::array<vk::Semaphore, FRAME_OVERLAP> _draw_complete_sems;
     std::array<vk::Fence, FRAME_OVERLAP>     _display_fences;
+
+    bool _running;
+    bool _up;
+    bool _down;
 
     const vk::Device &_device;
     Window           &_window;

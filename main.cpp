@@ -22,6 +22,9 @@
 
 int main() {
     ConsoleLog::init();
+    EventBroker::init();
+
+///////////////////////////////////////////////////////////////////////////////
 
     Instance instance(true);
     instance.init_instance();
@@ -225,6 +228,8 @@ int main() {
 
         // ...!
     }
+
+    EventBroker::shutdown();
 
     return 0;
 }

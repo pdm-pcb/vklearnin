@@ -31,10 +31,17 @@ bool RenderLoop::run(const Instance &instance,
     uint32_t current_buffer = 0u;
     uint32_t next_image = 0u;
 
-    while(_window.message_loop() == true) {
+    EventBroker::subscribe<KeyPressEvent>(this, &RenderLoop::on_keypress);
+    EventBroker::subscribe<KeyReleaseEvent>(this, &RenderLoop::on_keyrelease);
+
+    _running = true;
+
+    while(_running) {
         using HRC = std::chrono::high_resolution_clock;
         using second_period = std::chrono::seconds::period;
         using duration_seconds = std::chrono::duration<float, second_period>;
+
+        _window.message_loop();
 
         static auto start = HRC::now();
         static auto last_frametime = start;
@@ -258,6 +265,23 @@ bool RenderLoop::run(const Instance &instance,
 }
 
 // =============================================================================
+void RenderLoop::on_keypress(const KeyPressEvent &event) {
+    switch(event.keycode) {
+        case 0x1b: _running = false; break;
+        case 0x26: _up   = true; break;
+        case 0x28: _down = true; break;
+    }
+}
+
+// =============================================================================
+void RenderLoop::on_keyrelease(const KeyReleaseEvent &event) {
+    switch(event.keycode) {
+        case 0x26: _up   = false; break;
+        case 0x28: _down = false; break;
+    }
+}
+
+// =============================================================================
 void RenderLoop::init_synchronization() {
     CONSOLE_INFO("");
 
@@ -328,8 +352,8 @@ void RenderLoop::_update_per_frame(UniformBufferObject &ubo,
     static glm::vec3 camera_front    { -glm::normalize(camera_position) };
     static glm::vec3 camera_up       { 0.0f, 1.0f, 0.0f };
 
-    if(Window::up)        { camera_position += 0.5f * camera_front; }
-    else if(Window::down) { camera_position -= 0.5f * camera_front; }
+    if(_up)        { camera_position += 0.5f * camera_front; }
+    else if(_down) { camera_position -= 0.5f * camera_front; }
 
     camera_front = -glm::normalize(camera_position);
 
@@ -370,6 +394,9 @@ void RenderLoop::_update_per_object(UniformBufferObject &ubo,
 // =============================================================================
 RenderLoop::RenderLoop(const vk::Device &device, Window &window,
                        CommandQueues &queues) :
+    _running { false },
+    _up      { false },
+    _down    { false },
     _device  { device },
     _window  { window },
     _queues  { queues }

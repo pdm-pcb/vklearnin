@@ -8,18 +8,7 @@ class RenderLoop;
 
 class Win32Window {
 public:
-    static bool up;
-    static bool down;
-    static bool left;
-    static bool right;
-    static bool w;
-    static bool a;
-    static bool s;
-    static bool d;
-    static bool ctrl;
-    static bool space;
-
-    bool message_loop();
+    void message_loop();
 
     void init_window();
     void init_surface();
@@ -46,7 +35,6 @@ private:
     uint32_t _screen_height;
 
     bool _fullscreen;
-    bool _running;
 
     const vk::Instance &_instance;
 
