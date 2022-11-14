@@ -1,12 +1,12 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/rendering/Pipeline.hpp"
+#include "vklearnin/engine/Pipeline.hpp"
 
 #include "vklearnin/rendering/LogicalDevice.hpp"
 
 #include "vklearnin/tools/ShaderTools.hpp"
 #include "vklearnin/mesh/Vertex.hpp"
 #include "vklearnin/mesh/XZPlane.hpp"
-#include "vklearnin/rendering/CameraData.hpp"
+#include "vklearnin/engine/CameraData.hpp"
 
 namespace vkl {
 

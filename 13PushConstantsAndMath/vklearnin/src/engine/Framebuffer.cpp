@@ -1,9 +1,9 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/rendering/Framebuffer.hpp"
+#include "vklearnin/engine/Framebuffer.hpp"
 
 #include "vklearnin/rendering/LogicalDevice.hpp"
-#include "vklearnin/rendering/Swapchain.hpp"
-#include "vklearnin/rendering/Pipeline.hpp"
+#include "vklearnin/engine/Swapchain.hpp"
+#include "vklearnin/engine/Pipeline.hpp"
 
 namespace vkl {
 

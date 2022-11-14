@@ -3,6 +3,8 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/Win32TargetWindow.hpp"
 
+#include "vklearnin/rendering/GraphicsInstance.hpp"
+
 namespace vkl {
 
 ::HWND   Win32TargetWindow::_window       = nullptr;

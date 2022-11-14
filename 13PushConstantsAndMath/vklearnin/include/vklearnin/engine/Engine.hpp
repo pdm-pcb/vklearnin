@@ -2,8 +2,8 @@
 #define VKLEARNIN_ENGINE_ENGINE_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/rendering/Framebuffer.hpp"
-#include "vklearnin/rendering/CameraData.hpp"
+#include "vklearnin/engine/Framebuffer.hpp"
+#include "vklearnin/engine/CameraData.hpp"
 
 namespace vkl {
 

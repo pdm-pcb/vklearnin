@@ -6,9 +6,8 @@
 #include "vklearnin/tools/ConsoleLog.hpp"
 #include "vklearnin/tools/VKDebugger.hpp"
 #include "vklearnin/system/Application.hpp"
-#include "vklearnin/system/RenderConfig.hpp"
 
-#include "vklearnin/rendering/GraphicsInstance.hpp"
+#include "vklearnin/rendering/RenderConfig.hpp"
 
 #include "vklearnin/tools/ImageTools.hpp"
 #include "vklearnin/tools/BufferTools.hpp"

@@ -3,10 +3,10 @@
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
 #include "vklearnin/rendering/LogicalDevice.hpp"
-#include "vklearnin/rendering/Framebuffer.hpp"
+#include "vklearnin/engine/Framebuffer.hpp"
 #include "vklearnin/rendering/DeviceQueue.hpp"
-#include "vklearnin/rendering/Swapchain.hpp"
-#include "vklearnin/rendering/Pipeline.hpp"
+#include "vklearnin/engine/Swapchain.hpp"
+#include "vklearnin/engine/Pipeline.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move up to Application/Engine

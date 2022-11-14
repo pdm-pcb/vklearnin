@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RENDERING_CAMERADATA_HPP
-#define VKLEARNIN_RENDERING_CAMERADATA_HPP
+#ifndef VKLEARNIN_ENGINE_CAMERADATA_HPP
+#define VKLEARNIN_ENGINE_CAMERADATA_HPP
 
 #include "vklearnin/system/pch.hpp"
 
@@ -12,4 +12,4 @@ struct CameraData {
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDERING_CAMERADATA_HPP
+#endif // VKLEARNIN_ENGINE_CAMERADATA_HPP

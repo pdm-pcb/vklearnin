@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/system/RenderConfig.hpp"
+#include "vklearnin/rendering/RenderConfig.hpp"
 
 namespace vkl {
 

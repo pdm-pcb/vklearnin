@@ -1,8 +1,8 @@
-#ifndef BRASSTACKS_ENGINE_PIPELINE_HPP
-#define BRASSTACKS_ENGINE_PIPELINE_HPP
+#ifndef VKLEARNIN_ENGINE_PIPELINE_HPP
+#define VKLEARNIN_ENGINE_PIPELINE_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/rendering/Swapchain.hpp"
+#include "vklearnin/engine/Swapchain.hpp"
 
 namespace vkl {
 
@@ -102,4 +102,4 @@ private:
 
 } // namespace vkl
 
-#endif // BRASSTACKS_PIPELINE_HPP
+#endif // VKLEARNIN_ENGINE_PIPELINE_HPP
