@@ -8,11 +8,9 @@ namespace vkl {
 // =============================================================================
 // Arguably, this isn't enough to be a function on its own, but for now it seems
 // like the logical choice
-void DeviceQueue::request_queues(vk::Device const *const logical_device) {
-    // We'll be using this
-    _logical_device = logical_device;
+void DeviceQueue::request_queues() {
     for(auto &queue : _cmd_queues) {
-        queue = _logical_device->getQueue(_family_index, 0u);
+        queue = LogicalDevice::native().getQueue(_family_index, 0u);
         if(!queue) {
             CONSOLE_CRITICAL("Could not get device queue");
         }
@@ -30,7 +28,7 @@ void DeviceQueue::create_pools() {
     };
 
     for(auto &pool : _cmd_pools) {
-        auto result = _logical_device->createCommandPool(
+        auto result = LogicalDevice::native().createCommandPool(
             &pool_info,
             nullptr,
             &pool
@@ -60,7 +58,7 @@ void DeviceQueue::allocate_cmd_buffers() {
             .commandBufferCount = 1u,
         };
 
-        auto result = _logical_device->allocateCommandBuffers(
+        auto result = LogicalDevice::native().allocateCommandBuffers(
             &buffer_info,
             &_cmd_buffers[image]
         );
@@ -77,8 +75,7 @@ void DeviceQueue::allocate_cmd_buffers() {
 // owns it
 DeviceQueue::DeviceQueue(const uint32_t family_index, const float priority) :
     _family_index   { family_index },
-    _queue_priority { priority },
-    _logical_device { nullptr }
+    _queue_priority { priority }
 {
     _queue_create_info = vk::DeviceQueueCreateInfo {
         .queueFamilyIndex = _family_index,
@@ -104,9 +101,9 @@ DeviceQueue::~DeviceQueue() {
             "Destroying command pool {:#x}.",
             reinterpret_cast<uint64_t>(VkCommandPool(_cmd_pools[image]))
         );
-        _logical_device->freeCommandBuffers(_cmd_pools[image],
-                                            _cmd_buffers[image]);
-        _logical_device->destroyCommandPool(_cmd_pools[image]);
+        LogicalDevice::native().freeCommandBuffers(_cmd_pools[image],
+                                                   _cmd_buffers[image]);
+        LogicalDevice::native().destroyCommandPool(_cmd_pools[image]);
     }
 }
 
@@ -115,8 +112,7 @@ DeviceQueue::DeviceQueue(DeviceQueue &&other) :
     _queue_priority    { std::move(other._queue_priority)    },
     _cmd_queues        { std::move(other._cmd_queues)        },
     _cmd_pools         { std::move(other._cmd_pools)         },
-    _cmd_buffers       { std::move(other._cmd_buffers)       },
-    _logical_device    { std::move(other._logical_device)    }
+    _cmd_buffers       { std::move(other._cmd_buffers)       }
 { }
 
 } // namespace vkl

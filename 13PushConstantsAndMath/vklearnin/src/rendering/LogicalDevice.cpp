@@ -36,13 +36,13 @@ void LogicalDevice::create() {
     };
 
     vk::DeviceCreateInfo device_info {
-        .queueCreateInfoCount = static_cast<uint32_t>(queue_info.size()),
-        .pQueueCreateInfos = queue_info.data(),
-        .enabledLayerCount = static_cast<uint32_t>(layers.size()),
-        .ppEnabledLayerNames = layers.data(),
-        .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+        .queueCreateInfoCount    = static_cast<uint32_t>(queue_info.size()),
+        .pQueueCreateInfos       = queue_info.data(),
+        .enabledLayerCount       = static_cast<uint32_t>(layers.size()),
+        .ppEnabledLayerNames     = layers.data(),
+        .enabledExtensionCount   = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
-        .pEnabledFeatures = nullptr,
+        .pEnabledFeatures        = nullptr,
     };
 
     auto result = PhysicalDevice::native().createDevice(

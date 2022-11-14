@@ -2,23 +2,21 @@
 #define VKLEARNIN_RENDERING_DEVICEQUEUE_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/rendering/LogicalDevice.hpp"
 
 namespace vkl {
 
 class DeviceQueue final {
 public:
-    // Queue into which commands will be placed
-    void request_queues(vk::Device const *const logical_device);
-    // Memory from which the buffers will be allocated
-    void create_pools();
-    // Buffers which shall hold the commands
-    void allocate_cmd_buffers();
+    void request_queues(); // Queue into which commands will be placed
+    void create_pools();   // Memory from which the buffers will be allocated
+    void allocate_cmd_buffers(); // Buffers which shall hold the commands
 
     inline void reset_cmd_pool(
         const uint32_t index,
         const vk::CommandPoolResetFlags flags = { }) const
     {
-        _logical_device->resetCommandPool(_cmd_pools[index], flags);
+        LogicalDevice::native().resetCommandPool(_cmd_pools[index], flags);
     }
 
     // For those concerned with the internal state of DeviceQueue
@@ -56,8 +54,6 @@ private:
     std::vector<vk::Queue>         _cmd_queues;
     std::vector<vk::CommandPool>   _cmd_pools;
     std::vector<vk::CommandBuffer> _cmd_buffers;
-
-    const vk::Device *_logical_device;
 };
 
 } // namespace vkl
