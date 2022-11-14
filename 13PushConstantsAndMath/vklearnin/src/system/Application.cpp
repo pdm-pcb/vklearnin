@@ -215,6 +215,8 @@ void Application::_image_invalid() {
                             _pipeline->renderpass());
     }
 
+    _pipeline->update_dimensions();
+
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
         RenderConfig::aspect_ratio,
