@@ -174,6 +174,15 @@ void Pipeline::create() {
 }
 
 // =============================================================================
+void Pipeline::destroy() {
+    LogicalDevice::native().destroy(_vert);
+    LogicalDevice::native().destroy(_frag);
+    LogicalDevice::native().destroy(_renderpass);
+    LogicalDevice::native().destroy(_layout);
+    LogicalDevice::native().destroy(_pipeline);
+}
+
+// =============================================================================
 void Pipeline::_init_dynamic_states() {
     _dynamic_states = { 
         vk::DynamicState::eViewport,
@@ -281,14 +290,6 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _swapchain      { swapchain }
 {    
     _attachments.reserve(10);
-}
-
-Pipeline::~Pipeline() {
-    LogicalDevice::native().destroy(_vert);
-    LogicalDevice::native().destroy(_frag);
-    LogicalDevice::native().destroy(_renderpass);
-    LogicalDevice::native().destroy(_layout);
-    LogicalDevice::native().destroy(_pipeline);
 }
 
 } // namespace vkl

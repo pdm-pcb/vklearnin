@@ -15,8 +15,8 @@ public:
     // Setting up and shutting down the native window
     static void spawn_window(const uint16_t width = 0u,
                              const uint16_t height = 0u);
-    static void init_surface();
-    static void shutdown();
+    static void create_surface();
+    static void destroy_surface();
 
     // For those who would like to know
     inline static vk::SurfaceKHR & surface() { return _surface; }

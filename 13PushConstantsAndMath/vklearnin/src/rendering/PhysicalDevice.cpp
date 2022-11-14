@@ -2,15 +2,9 @@
 #include "vklearnin/rendering/PhysicalDevice.hpp"
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
-#include "vklearnin/system/Win32TargetWindow.hpp"
+#include "vklearnin/system/TargetWindow.hpp"
 
 namespace vkl {
-
-#if defined(__linux__)
-    using TargetWindow = XCBTargetWindow;
-#elif defined(_WIN32)
-    using TargetWindow = Win32TargetWindow;
-#endif
 
 constexpr auto MAX_U32 = std::numeric_limits<uint32_t>::max();
 
@@ -21,7 +15,9 @@ uint32_t                   PhysicalDevice::_present_queue_index  = MAX_U32;
 std::vector<uint32_t>      PhysicalDevice::_family_indices;
 
 // =============================================================================
-void PhysicalDevice::init() {
+void PhysicalDevice::query_devices() {
+    CONSOLE_TRACE("");
+    
     const auto &graphics_instance = GraphicsInstance::native();
 
     // Query and populate the list of physical devices
@@ -107,15 +103,13 @@ void PhysicalDevice::init() {
             properties.vkapi_version
         );
     }
-
-    _select_device();
 }
 
 // =============================================================================
 // In order to render, we need to ensure the graphics card support receiving
 // two types of commands: graphics and present. The latter requires an existing
 // surface to query, so here we go.
-void PhysicalDevice::_select_device() {
+void PhysicalDevice::select_device() {
     const auto &surface = TargetWindow::surface();
 
     // Reverse sort the devices based on amount of VRAM

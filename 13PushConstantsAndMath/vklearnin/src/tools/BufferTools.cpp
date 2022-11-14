@@ -84,6 +84,9 @@ void destroy_buffer(BufferObject &buffer) {
     const auto &logical_device = LogicalDevice::native();
     logical_device.destroy(buffer.buffer);
     logical_device.freeMemory(buffer.memory);
+
+    buffer.buffer = nullptr;
+    buffer.memory = nullptr;
 }
 
 void fill_buffer(const void *data, const BufferObject &dest_buffer)

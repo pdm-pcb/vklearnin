@@ -3,7 +3,6 @@
 
 int main() {
     vkl::Application *app = new Demo;
-    app->init();
     app->run();
     delete app;
 

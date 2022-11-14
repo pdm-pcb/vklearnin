@@ -1,12 +1,12 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/Swapchain.hpp"
 
-#include "vklearnin/system/Win32TargetWindow.hpp"
-
 #include "vklearnin/rendering/PhysicalDevice.hpp"
 #include "vklearnin/rendering/LogicalDevice.hpp"
 #include "vklearnin/rendering/Pipeline.hpp"
 #include "vklearnin/rendering/DeviceQueue.hpp"
+
+#include "vklearnin/system/TargetWindow.hpp"
 
 namespace vkl {
 

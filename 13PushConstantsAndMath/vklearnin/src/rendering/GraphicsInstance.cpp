@@ -1,7 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/GraphicsInstance.hpp"
 
-#include "vklearnin/system/Win32TargetWindow.hpp"
+#include "vklearnin/system/TargetWindow.hpp"
 #include "vklearnin/rendering/PhysicalDevice.hpp"
 #include "vklearnin/rendering/LogicalDevice.hpp"
 
@@ -11,12 +11,6 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace vkl {
-
-#if defined(__linux__)
-    using TargetWindow = XCBTargetWindow;
-#elif defined(_WIN32)
-    using TargetWindow = Win32TargetWindow;
-#endif
 
 vk::DynamicLoader         GraphicsInstance::_loader { };
 vk::Instance              GraphicsInstance::_graphics_instance { };
@@ -29,6 +23,8 @@ vk::InstanceCreateInfo    GraphicsInstance::_instance_create_info { };
 
 // =============================================================================
 void GraphicsInstance::init() {
+    CONSOLE_TRACE("");
+    
     _init_dynamic_loader(); // The first step for using the dynamic loader
     _init_app_info();       // Provide hints about this program to the driver
     _init_layers();         // Of the many layers, we'll stick with validation
@@ -110,17 +106,37 @@ void GraphicsInstance::init() {
 
 // =============================================================================
 void GraphicsInstance::init_devices() {
-    PhysicalDevice::init();
-    LogicalDevice::init();
+    PhysicalDevice::query_devices();
+    PhysicalDevice::select_device();
+    LogicalDevice::create();
+}
+
+// =============================================================================
+void GraphicsInstance::wait_idle() {
+    CONSOLE_TRACE(
+        "Waiting for idle of {:#x}",
+        reinterpret_cast<uint64_t>(VkDevice(LogicalDevice::native()))
+    );
+
+    auto result = LogicalDevice::native().waitIdle();
+
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Failed to wait for idle of device {:#x}",
+            reinterpret_cast<uint64_t>(VkDevice(LogicalDevice::native()))
+        );
+    }
 }
 
 // =============================================================================
 void GraphicsInstance::shutdown() {
+    CONSOLE_TRACE("");
+
 #ifdef VKL_DEBUG
     VKDebugger::shutdown(_graphics_instance);
 #endif // VKL_DEBUG
 
-    LogicalDevice::shutdown();
+    LogicalDevice::destroy();
     _graphics_instance.destroy();
 }
 // =============================================================================

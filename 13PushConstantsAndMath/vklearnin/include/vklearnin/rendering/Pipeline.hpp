@@ -16,6 +16,7 @@ public:
     void init_layout();
     void init_render_passes();
     void create();
+    void destroy();
 
     // -------------------------------------------------------------------------
     // Update if the swapchain has changed size
@@ -55,7 +56,7 @@ public:
     inline const auto & layout()     const { return _layout;     }
 
     explicit Pipeline(const Swapchain &swapchain);
-    ~Pipeline();
+    ~Pipeline() = default;
 
     Pipeline() = delete;
 

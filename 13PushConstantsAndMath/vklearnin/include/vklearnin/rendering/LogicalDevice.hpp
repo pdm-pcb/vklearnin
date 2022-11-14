@@ -9,8 +9,8 @@ namespace vkl {
 
 class LogicalDevice final {
 public:
-    static void init();
-    static void shutdown();
+    static void create();
+    static void destroy();
 
     inline static auto & native() { return _logical_device; }
     inline static auto & queues() { return _device_queues; }

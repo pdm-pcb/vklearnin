@@ -5,10 +5,13 @@
 
 namespace vkl {
 
+class Swapchain;
+class Pipeline;
+
 class Framebuffer final {
 public:
-    void create(const vk::Extent2D &extent, const vk::ImageView &image_view,
-                const vk::RenderPass &render_pass);
+    void create(const Swapchain &swapchain, const Pipeline &pipeline,
+                const uint32_t image_index);
     void destroy();
 
     const auto & native() const { return _framebuffer; }

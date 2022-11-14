@@ -8,17 +8,17 @@
 namespace vkl {
 
 // =============================================================================
-void Framebuffer::create(const vk::Extent2D &extent,
-                         const vk::ImageView &image_view,
-                         const vk::RenderPass &render_pass) {
+void Framebuffer::create(const Swapchain &swapchain, const Pipeline &pipeline,
+                         const uint32_t image_index)
+{
     // grab the new dimensions
-    auto [width, height] = extent;
+    auto [width, height] = swapchain.extent();
 
     _attachments.clear();
-    _attachments.emplace_back(image_view);
+    _attachments.emplace_back(swapchain.image_view(image_index));
     
     vk::FramebufferCreateInfo buffer_info {
-        .renderPass = render_pass,
+        .renderPass = pipeline.renderpass(),
         .attachmentCount = static_cast<uint32_t>(_attachments.size()),
         .pAttachments = _attachments.data(),
         .width = width,

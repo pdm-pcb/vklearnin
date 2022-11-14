@@ -8,7 +8,9 @@ vk::Device               LogicalDevice::_logical_device = nullptr;
 std::vector<DeviceQueue> LogicalDevice::_device_queues;
 
 // =============================================================================
-void LogicalDevice::init() {
+void LogicalDevice::create() {
+    CONSOLE_TRACE("");
+    
     // There's a strong probability that on a given device, these two indices
     // will have the same value. None the less, it's prudent to double-check,
     // and std::set lends a hand here
@@ -49,6 +51,11 @@ void LogicalDevice::init() {
         &_logical_device
     );
 
+    CONSOLE_TRACE(
+        "Created logical device {:#x}",
+        reinterpret_cast<uint64_t>(VkDevice(native()))
+    );
+
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to create logical device.");
     }
@@ -60,7 +67,12 @@ void LogicalDevice::init() {
 }
 
 // =============================================================================
-void LogicalDevice::shutdown() {
+void LogicalDevice::destroy() {
+    CONSOLE_TRACE(
+        "Destroying logical device {:#x}",
+        reinterpret_cast<uint64_t>(VkDevice(native()))
+    );
+
     // It's important to explicitly clear the vector so the DeviceQueue
     // destructor will be called
     _device_queues.clear();

@@ -11,6 +11,7 @@ public:
 
     static void init();
     static void init_devices();
+    static void wait_idle();
     static void shutdown();
 
     inline static const vk::Instance & native() { return _graphics_instance; }

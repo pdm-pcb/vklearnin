@@ -8,20 +8,12 @@
 #include "vklearnin/rendering/Swapchain.hpp"
 #include "vklearnin/rendering/Pipeline.hpp"
 
-#include "vklearnin/system/Win32TargetWindow.hpp"
-
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move up to Application/Engine
 #include "vklearnin/buffers/BufferObject.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace vkl {
-
-#if defined(__linux__)
-    using TargetWindow = XCBTargetWindow;
-#elif defined(_WIN32)
-    using TargetWindow = Win32TargetWindow;
-#endif
 
 // =============================================================================
 void Renderer::draw(const vk::CommandBuffer &command_buffer,

@@ -17,12 +17,17 @@ public:
 
     using DeviceList = std::vector<DeviceProperties>;
 
-    static void init();
+    static void query_devices();
+    static void select_device();
 
-    inline static auto graphics_queue_index() { return _graphics_queue_index; }
-    inline static auto present_queue_index()  { return _present_queue_index;  }
-    inline static const auto & family_indices() { return _family_indices;     }
-    inline static const auto & native()         { return _physical_device;    }
+    inline static auto graphics_queue_index() {
+        return _graphics_queue_index;
+    }
+    inline static auto present_queue_index() {
+        return _present_queue_index; 
+    }
+    inline static const auto & family_indices() { return _family_indices;  }
+    inline static const auto & native()         { return _physical_device; }
 
     PhysicalDevice() = delete;
     ~PhysicalDevice() = delete;
@@ -40,8 +45,6 @@ private:
     static uint32_t _graphics_queue_index;
     static uint32_t _present_queue_index;
     static std::vector<uint32_t> _family_indices;
-
-    static void _select_device();
 
     static void _store_physical_device(
         const vk::PhysicalDevice &device,

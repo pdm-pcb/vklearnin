@@ -188,18 +188,14 @@ void Win32TargetWindow::spawn_window(const uint16_t width,
 }
 
 //==============================================================================
-void Win32TargetWindow::init_surface() {
-    const auto &instance = GraphicsInstance::native();
-    // I'm asking the instance to destroy the existing surface, if  there is
-    // one, because it'll smooth out resizing the window later on.
-    instance.destroy(_surface);
-
+void Win32TargetWindow::create_surface() {
     vk::Win32SurfaceCreateInfoKHR surface_info {
         .hinstance = nullptr,
         .hwnd = _window,
     };
 
     // Create, check, assign
+    const auto &instance = GraphicsInstance::native();
     auto result = instance.createWin32SurfaceKHR(surface_info);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to create Win32 KHR surface");
@@ -213,7 +209,7 @@ void Win32TargetWindow::init_surface() {
 }
 
 //==============================================================================
-void Win32TargetWindow::shutdown() {
+void Win32TargetWindow::destroy_surface() {
     const auto &instance = GraphicsInstance::native();
     CONSOLE_TRACE(
         "Destroying Vulkan surface {:#x}",
