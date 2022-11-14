@@ -1,12 +1,15 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
 
+#include "vklearnin/tools/ShaderTools.hpp"
 #include "vklearnin/rendering/LogicalDevice.hpp"
 
-#include "vklearnin/tools/ShaderTools.hpp"
+////////////////////////////////////////////////////////////////////////////////
+// TODO: I feel like these really shouldn't be here, but...?
 #include "vklearnin/mesh/Vertex.hpp"
 #include "vklearnin/mesh/XZPlane.hpp"
 #include "vklearnin/engine/CameraData.hpp"
+////////////////////////////////////////////////////////////////////////////////
 
 namespace vkl {
 
@@ -171,10 +174,20 @@ void Pipeline::create() {
     }
 
     _pipeline = pipeline_return.value;
+
+    CONSOLE_TRACE(
+        "Created pipeline {:#x}",
+        reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
+    );
 }
 
 // =============================================================================
 void Pipeline::destroy() {
+    CONSOLE_TRACE(
+        "Destroying pipeline {:#x}",
+        reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
+    );
+
     LogicalDevice::native().destroy(_vert);
     LogicalDevice::native().destroy(_frag);
     LogicalDevice::native().destroy(_renderpass);

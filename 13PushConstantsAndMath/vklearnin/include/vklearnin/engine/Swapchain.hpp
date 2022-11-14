@@ -9,8 +9,8 @@ class DeviceQueue;
 
 class Swapchain final {
 public:
-    void reset_fences(const uint32_t framebuffer_index) const;
-    vk::Result next_image_index(const uint32_t framebuffer_index);
+    vk::Result next_image(const uint32_t framebuffer_index);
+    void reset_fence(const uint32_t framebuffer_index) const;
 
     void submit(const vk::CommandBuffer &command_buffer,
                 const DeviceQueue &graphics_queue,
@@ -72,6 +72,7 @@ private:
     void _set_extent(const vk::Extent2D &extent);
     void _get_images();
     void _create_image_views();
+    void _create_synchronization();
 };
 
 } // namespace vkl

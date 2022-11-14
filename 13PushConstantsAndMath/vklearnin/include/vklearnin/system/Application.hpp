@@ -12,7 +12,7 @@ public:
     void run();
 
     Application();
-    ~Application();
+    virtual ~Application();
 
     Application(Application &&) = delete;
     Application(const Application &) = delete;

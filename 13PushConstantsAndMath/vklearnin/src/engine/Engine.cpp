@@ -15,39 +15,55 @@
 
 namespace vkl {
 
+// Setting the framebuffer index to one initially permits the first operation
+// within render_loop() to be give us a zero index on the first time around.
+// To avoid magic numbers, and provide rationale, here we are.
+static constexpr uint32_t DEFAULT_FB = 1u;
+
 // =============================================================================
 void Engine::render_loop() {
-    // flip between zero and one, without a mod operation
-    // courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
-    _current_framebuffer = 1 - _current_framebuffer;
+    // As a first step, advance the framebuffer index.
+    _next_framebuffer();
 
-    auto result = _swapchain->next_image_index(_current_framebuffer);
-    if(result != vk::Result::eSuccess) {
+    // Next, advance the swapchain image index, which will block waiting for
+    // an image which has been drawn to screen and released
+    auto result = _swapchain->next_image(_current_framebuffer);
+
+    // If one of these two hit, it's because the swapchain images are no longer
+    // appropriately sized
+    if(result == vk::Result::eErrorOutOfDateKHR ||
+       result == vk::Result::eSuboptimalKHR )
+    {
         _image_invalid();
         return;
     }
 
-    _swapchain->reset_fences(_current_framebuffer);
+    // Un-signal the fence controlling this framebuffer; the GPU will signal
+    // when it's done again after we submit this buffer's work
+    _swapchain->reset_fence(_current_framebuffer);
 
+    // Clear out the frame's command pool
     const auto image_index = _swapchain->current_image_index();
     const auto &graphics_queue = LogicalDevice::graphics_queue();
     graphics_queue.reset_cmd_pool(image_index);
 
+    // No need for special flags for this application
     vk::CommandBufferBeginInfo begin_info { };
 
+    // Let the command buffer know we're ready to record
     auto &command_buffer = graphics_queue.cmd_buffer(image_index);
     result = command_buffer.begin(begin_info);
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Failed to begin command buffer recording.");
     }
 
-    // bind the pipeline so everything's current
+    // Binding the appropriate pipeline and marking it for drawing commands
     command_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         _pipeline->native()
     );
 
-    // initial setup for the pass
+    // Everybody loves the clear color
     vk::ClearValue clear_values[] = {
         { .color { std::array<float, 4> { 0.01f, 0.01f, 0.02f, 1.0f }}}
     };
@@ -60,13 +76,14 @@ void Engine::render_loop() {
         .pClearValues    = clear_values,
     };
 
-    // go time!
+    // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        // set the dynamic traits of the pipeline
+        // Establish the area we can draw to
         command_buffer.setViewport(0u, _pipeline->viewport());
         command_buffer.setScissor(0u, _pipeline->scissor());
 
+        // Send the view and projection matrices
         command_buffer.pushConstants<CameraData>(
             _pipeline->layout(),
             vk::ShaderStageFlagBits::eVertex,
@@ -74,6 +91,7 @@ void Engine::render_loop() {
             _camera_data
         );
 
+        // Hand the relevant data over to the renderer
         Renderer::draw(
             command_buffer,
             _xzplane->vertex_buffer(),
@@ -81,17 +99,28 @@ void Engine::render_loop() {
             static_cast<uint32_t>(_xzplane->indices().size())
         );
 
+    // With that out of the way, that's this pass handled
     command_buffer.endRenderPass();
+
+    // And the whole of this command buffer, too
     result = command_buffer.end();
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Failed to end command buffer recording.");
     }
 
+    // Give the swapchain back a full command buffer and set it loose
     _swapchain->submit(command_buffer, graphics_queue,
-                        _current_framebuffer);
+                       _current_framebuffer);
 
+    // Swap buffers
     result = _swapchain->present(_current_framebuffer);
-    if(result != vk::Result::eSuccess) {
+
+    // A present operation can return these two, too. Same approach as above -
+    // adjust the required stuff and continue. No need to return early, since
+    // we're already right here. ;)
+    if(result == vk::Result::eErrorOutOfDateKHR ||
+       result == vk::Result::eSuboptimalKHR )
+    {
         _image_invalid();
     }
 }
@@ -162,7 +191,7 @@ void Engine::_create_framebuffers() {
         framebuffer.create(*_swapchain, *_pipeline, image_index);
     }
 
-    _current_framebuffer = 1u;
+    _current_framebuffer = DEFAULT_FB;
 
     CONSOLE_TRACE("Created {} framebuffers", _framebuffers.size());
 }
@@ -184,7 +213,6 @@ void Engine::_image_invalid() {
     }
 
     _destroy_framebuffers();
-    _current_framebuffer = 1u;
 
     CONSOLE_WARN("Destroy swapchain");
     _swapchain->destroy();
@@ -209,10 +237,19 @@ void Engine::_image_invalid() {
 }
 
 // =============================================================================
+void Engine::_next_framebuffer() {
+    // The code below allows flipping between zero and one without the use of
+    // the mod operator.
+    // Courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
+    _current_framebuffer = 1 - _current_framebuffer;
+}
+
+// =============================================================================
 Engine::Engine() :
-    _swapchain { nullptr },
-    _pipeline  { nullptr },
-    _xzplane   { nullptr }
+    _swapchain           { nullptr },
+    _pipeline            { nullptr },
+    _current_framebuffer { DEFAULT_FB },
+    _xzplane             { nullptr }
 { }
 
 Engine::~Engine() {

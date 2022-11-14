@@ -17,6 +17,8 @@ class XZPlane;
 
 class Engine final {
 public:
+    using FBList = std::vector<Framebuffer>;
+
     void render_loop();
 
     void init();
@@ -35,7 +37,6 @@ private:
     Swapchain *_swapchain;
     Pipeline  *_pipeline;
 
-    using FBList = std::vector<Framebuffer>;
     FBList   _framebuffers;
     uint32_t _current_framebuffer;
 
@@ -46,6 +47,7 @@ private:
     void _create_framebuffers();
     void _destroy_framebuffers();
     void _image_invalid();
+    void _next_framebuffer();
 };
 
 } // namespace vkl

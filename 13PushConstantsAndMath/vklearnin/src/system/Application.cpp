@@ -32,8 +32,8 @@ Application::Application() :
 {
     ConsoleLog::init();
 
-    TargetWindow::spawn_window();
     GraphicsInstance::init();
+    TargetWindow::spawn_window();
     TargetWindow::create_surface();
     GraphicsInstance::init_devices();
 

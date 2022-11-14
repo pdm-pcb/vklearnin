@@ -17,18 +17,7 @@ namespace vkl {
 #endif
 
 //==============================================================================
-void Swapchain::reset_fences(const uint32_t framebuffer_index) const {
-    auto result = LogicalDevice::native().resetFences(
-        1u,
-        &_present_fences[framebuffer_index]
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not reset present fences");
-    }
-}
-
-//==============================================================================
-vk::Result Swapchain::next_image_index(const uint32_t framebuffer_index) {
+vk::Result Swapchain::next_image(const uint32_t framebuffer_index) {
     // wait for an image to become available to write to
     auto result = LogicalDevice::native().waitForFences(
         1u, // fence count
@@ -51,19 +40,25 @@ vk::Result Swapchain::next_image_index(const uint32_t framebuffer_index) {
         &_current_image_index
     );
 
-    if(result == vk::Result::eErrorOutOfDateKHR ||
-       result == vk::Result::eSuboptimalKHR)
-    {
-        CONSOLE_WARN("acquireNextImageKHR() returned '{}'", to_string(result));
-    }
-    else if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_WARN(
             "acquireNextImageKHR() failed with '{}'",
             to_string(result)
         );
     }
 
     return result;
+}
+
+//==============================================================================
+void Swapchain::reset_fence(const uint32_t framebuffer_index) const {
+    auto result = LogicalDevice::native().resetFences(
+        1u,
+        &_present_fences[framebuffer_index]
+    );
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Could not reset present fences");
+    }
 }
 
 // =============================================================================
@@ -147,53 +142,7 @@ void Swapchain::create() {
 
     _get_images();
     _create_image_views();
-
-    // Set aside the room for image-count-number of synchronization primitives
-    _image_available_sems.resize(RenderConfig::swapchain_image_count);
-    _draw_complete_sems.resize(RenderConfig::swapchain_image_count);
-    _present_fences.resize(RenderConfig::swapchain_image_count);
-
-    _current_image_index = 0u;
-
-    vk::SemaphoreCreateInfo sem_info { };
-    vk::Result sync_result;
-
-    // the semephores which will let us know when the swapchain has finished
-    // whatever it was doing with one of the images
-    for(auto &sem : _image_available_sems) {
-        std::tie(sync_result, sem) =
-            LogicalDevice::native().createSemaphore(sem_info);
-        if(sync_result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL("Unable to create image available semaphore");
-        }
-    }
-
-    // the semephores letting us know when a draw has completed to the back
-    // buffer/image
-    for(auto &sem : _draw_complete_sems) {
-        std::tie(sync_result, sem) =
-            LogicalDevice::native().createSemaphore(sem_info);
-        if(sync_result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL("Unable to create draw complete semaphore");
-        }
-    }
-
-    // Once there's a frame being written to the monitor and a frame on the
-    // back buffer, the CPU needs to wait on the GPU before more frames can be
-    // submitted.
-    vk::FenceCreateInfo fence_info {
-        .flags = vk::FenceCreateFlagBits::eSignaled
-    };
-
-    for(auto &fence : _present_fences) {
-        std::tie(sync_result, fence) =
-            LogicalDevice::native().createFence(fence_info);
-        if(sync_result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL("Unable to create display fence");
-        }
-    }
-
-    CONSOLE_TRACE("Created synchronization primitives");
+    _create_synchronization();
 }
 
 //==============================================================================
@@ -472,15 +421,62 @@ void Swapchain::_create_image_views() {
 }
 
 //==============================================================================
+void Swapchain::_create_synchronization() {
+    // Set aside the room for image-count-number of synchronization primitives
+    _image_available_sems.resize(RenderConfig::swapchain_image_count);
+    _draw_complete_sems.resize(RenderConfig::swapchain_image_count);
+    _present_fences.resize(RenderConfig::swapchain_image_count);
+
+    vk::SemaphoreCreateInfo sem_info { };
+    vk::Result sync_result;
+
+    // the semephores which will let us know when the swapchain has finished
+    // whatever it was doing with one of the images
+    for(auto &sem : _image_available_sems) {
+        std::tie(sync_result, sem) =
+            LogicalDevice::native().createSemaphore(sem_info);
+        if(sync_result != vk::Result::eSuccess) {
+            CONSOLE_CRITICAL("Unable to create image available semaphore");
+        }
+    }
+
+    // the semephores letting us know when a draw has completed to the back
+    // buffer/image
+    for(auto &sem : _draw_complete_sems) {
+        std::tie(sync_result, sem) =
+            LogicalDevice::native().createSemaphore(sem_info);
+        if(sync_result != vk::Result::eSuccess) {
+            CONSOLE_CRITICAL("Unable to create draw complete semaphore");
+        }
+    }
+
+    // Once there's a frame being written to the monitor and a frame on the
+    // back buffer, the CPU needs to wait on the GPU before more frames can be
+    // submitted.
+    vk::FenceCreateInfo fence_info {
+        .flags = vk::FenceCreateFlagBits::eSignaled
+    };
+
+    for(auto &fence : _present_fences) {
+        std::tie(sync_result, fence) =
+            LogicalDevice::native().createFence(fence_info);
+        if(sync_result != vk::Result::eSuccess) {
+            CONSOLE_CRITICAL("Unable to create display fence");
+        }
+    }
+
+    CONSOLE_TRACE("Created synchronization primitives");
+}
+
+//==============================================================================
 Swapchain::Swapchain() :
     _create_info         { },
     _swapchain           { },
     _surface_format      { vk::Format::eUndefined },
     _color_space         { vk::ColorSpaceKHR::eSrgbNonlinear },
-    _current_image_index { std::numeric_limits<uint32_t>::max() },
+    _current_image_index { 0u },
     _offset              { 0, 0 },
-    _extent              { std::numeric_limits<uint32_t>::max(),
-                           std::numeric_limits<uint32_t>::max() },
+    _extent              { 0u, 0u },
     _present_mode        { vk::PresentModeKHR::eImmediate }
 { }
 
