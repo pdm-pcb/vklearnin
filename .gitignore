@@ -1,15 +1,11 @@
-# let's give this a shot for the time being
-#.vscode/
-.vscode/settings.json
-*.code-workspace
 .vs/
-.idea/
-
-CMakeSettings.json
-compile_commands.json
-
+.vscode/
 build/
 debug/
 release/
-assets/shaders/*.d
-assets/shaders/*.spv
+
+**/*.spv
+**/*.d
+
+~$*
+*.tmp

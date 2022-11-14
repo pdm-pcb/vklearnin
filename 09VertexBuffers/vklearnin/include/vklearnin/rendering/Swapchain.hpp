@@ -1,0 +1,78 @@
+#ifndef VKLEARNIN_RENDERING_SWAPCHAIN_HPP
+#define VKLEARNIN_RENDERING_SWAPCHAIN_HPP
+
+#include "vklearnin/system/pch.hpp"
+
+namespace vkl {
+
+class LogicalDevice;
+
+class Swapchain final {
+public:
+    void create();
+    void destroy();
+
+    uint32_t next_image_index(const vk::Semaphore &semaphore);
+
+    using Extent = std::pair<uint16_t, uint16_t>;
+    using Offset = std::pair<int16_t, int16_t>;
+    inline const auto extent() const {
+        return Extent(_extent.width, _extent.height);
+    }
+    inline const auto offset() const {
+        return Offset(_offset.x, _offset.y);
+    }
+    inline const vk::Rect2D render_area() const {
+        return { _offset, _extent };
+    }
+
+    inline const auto & surface_format() const { return _surface_format; }
+    inline const auto & native()         const { return _swapchain;      }
+
+    inline const std::vector<vk::ImageView> & image_views() const {
+        return _image_views;
+    }
+
+    Swapchain(LogicalDevice  &logical_device,
+              const vk::SurfaceKHR &surface);
+    ~Swapchain() = default;
+
+    Swapchain() = delete;
+
+    Swapchain(Swapchain &&other) = delete;
+    Swapchain(const Swapchain &other) = delete;
+
+    Swapchain & operator=(Swapchain &&other) = delete;
+    Swapchain & operator=(const Swapchain &other) = delete;
+
+private:
+    vk::SwapchainCreateInfoKHR _create_info;
+
+    vk::Format        _surface_format;
+    vk::ColorSpaceKHR _color_space;
+
+    std::vector<vk::Image> _images;
+    std::vector<vk::ImageView> _image_views;
+    uint32_t _current_image_index;
+
+    vk::Offset2D _offset;
+    vk::Extent2D _extent;
+
+    vk::PresentModeKHR _present_mode;
+    vk::SwapchainKHR   _swapchain;
+
+    LogicalDevice        &_logical_device;
+    const vk::SurfaceKHR &_surface;
+
+    void _query_surface_capabilities();
+    void _query_surface_format();
+    void _query_surface_present_modes();
+    void _set_create_info();
+    void _set_extent(const vk::Extent2D &extent);
+    void _get_images();
+    void _create_image_views();
+};
+
+} // namespace vkl
+
+#endif // VKLEARNIN_RENDERING_SWAPCHAIN_HPP
