@@ -2,6 +2,7 @@
 #include "vklearnin/rendering/DeviceQueue.hpp"
 
 #include "vklearnin/rendering/PhysicalDevice.hpp"
+#include "vklearnin/rendering/LogicalDevice.hpp"
 
 namespace vkl {
 
@@ -67,6 +68,13 @@ void DeviceQueue::allocate_cmd_buffers() {
             CONSOLE_CRITICAL("Unable to allocate command buffer");
         }
     }
+}
+
+void DeviceQueue::reset_cmd_pool(
+    const uint32_t index,
+    const vk::CommandPoolResetFlags flags) const
+{
+    LogicalDevice::native().resetCommandPool(_cmd_pools[index], flags);
 }
 
 // =============================================================================

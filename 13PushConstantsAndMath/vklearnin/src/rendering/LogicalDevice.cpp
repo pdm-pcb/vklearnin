@@ -87,7 +87,7 @@ void LogicalDevice::_init_device_queues() {
     // For each queue associated with this device, proceed to create the thing,
     // as well as its associated buffers
     for(auto &queue : _device_queues) {
-        queue.request_queues(&_logical_device);
+        queue.request_queues();
         queue.create_pools();
         queue.allocate_cmd_buffers();
     }
