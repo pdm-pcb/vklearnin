@@ -21,9 +21,6 @@ public:
     inline static const DeviceQueue & present_queue() {
         return _device_queues[PhysicalDevice::present_queue_index()];
     }
-    inline static const DeviceQueue & default_queue() {
-        return _device_queues.front();
-    }
 
     LogicalDevice() = delete;
     ~LogicalDevice() = delete;

@@ -1,7 +1,6 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/LogicalDevice.hpp"
 
-
 namespace vkl {
 
 vk::Device               LogicalDevice::_logical_device = nullptr;

@@ -125,7 +125,7 @@ void fill_buffer(const void *data, const BufferObject &dest_buffer)
     // once more, to the device local buffer. A command buffer is required for
     // this operation
     vk::CommandBufferAllocateInfo create_info {
-        .commandPool = LogicalDevice::default_queue().cmd_pool(),
+        .commandPool = LogicalDevice::graphics_queue().cmd_pool(),
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1u,
     };
@@ -174,18 +174,18 @@ void fill_buffer(const void *data, const BufferObject &dest_buffer)
     };
 
     // Submit and wait
-    cmd_result = LogicalDevice::default_queue().native().submit(submit_info);
+    cmd_result = LogicalDevice::graphics_queue().native().submit(submit_info);
     if(cmd_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not submit command buffer for copying");
     }
 
-    cmd_result = LogicalDevice::default_queue().native().waitIdle();
+    cmd_result = LogicalDevice::graphics_queue().native().waitIdle();
     if(cmd_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to wait for device idle after buffer copy");
     }
 
     logical_device.freeCommandBuffers(
-        LogicalDevice::default_queue().cmd_pool(),
+        LogicalDevice::graphics_queue().cmd_pool(),
         command_buffer
     );
 
