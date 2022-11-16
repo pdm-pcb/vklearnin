@@ -2,8 +2,8 @@
 #include "vklearnin/rendering/GraphicsInstance.hpp"
 
 #include "vklearnin/system/TargetWindow.hpp"
-#include "vklearnin/rendering/PhysicalDevice.hpp"
-#include "vklearnin/rendering/LogicalDevice.hpp"
+#include "vklearnin/rendering/devices/PhysicalDevice.hpp"
+#include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
 // This (and more; see the link) does away with the explicit loading of each
 // function/extension

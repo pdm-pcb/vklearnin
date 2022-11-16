@@ -2,9 +2,9 @@
 #include "vklearnin/rendering/Renderer.hpp"
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
-#include "vklearnin/rendering/LogicalDevice.hpp"
+#include "vklearnin/rendering/devices/LogicalDevice.hpp"
 #include "vklearnin/engine/Framebuffer.hpp"
-#include "vklearnin/rendering/DeviceQueue.hpp"
+#include "vklearnin/rendering/devices/DeviceQueue.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
 

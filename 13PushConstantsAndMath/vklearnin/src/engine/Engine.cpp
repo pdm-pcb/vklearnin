@@ -2,8 +2,8 @@
 #include "vklearnin/engine/Engine.hpp"
 
 #include "vklearnin/system/TargetWindow.hpp"
-#include "vklearnin/rendering/LogicalDevice.hpp"
-#include "vklearnin/rendering/DeviceQueue.hpp"
+#include "vklearnin/rendering/devices/LogicalDevice.hpp"
+#include "vklearnin/rendering/devices/DeviceQueue.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
 #include "vklearnin/rendering/Renderer.hpp"

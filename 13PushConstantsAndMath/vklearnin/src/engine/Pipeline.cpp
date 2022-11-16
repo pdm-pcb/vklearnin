@@ -2,7 +2,7 @@
 #include "vklearnin/engine/Pipeline.hpp"
 
 #include "vklearnin/tools/ShaderTools.hpp"
-#include "vklearnin/rendering/LogicalDevice.hpp"
+#include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: I feel like these really shouldn't be here, but...?

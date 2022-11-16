@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/rendering/LogicalDevice.hpp"
+#include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
 namespace vkl {
 

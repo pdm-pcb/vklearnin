@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/rendering/PhysicalDevice.hpp"
+#include "vklearnin/rendering/devices/PhysicalDevice.hpp"
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
 #include "vklearnin/system/TargetWindow.hpp"
