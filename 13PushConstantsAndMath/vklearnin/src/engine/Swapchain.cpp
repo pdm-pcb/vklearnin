@@ -51,10 +51,10 @@ vk::Result Swapchain::next_image(const uint32_t frame_index) {
 }
 
 //==============================================================================
-void Swapchain::reset_fence(const uint32_t frame_index) const {
+void Swapchain::reset_fence() const {
     auto result = LogicalDevice::native().resetFences(
         1u,
-        &_present_fences[frame_index]
+        &_present_fences[_current_image_index]
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not reset present fences");
@@ -63,11 +63,10 @@ void Swapchain::reset_fence(const uint32_t frame_index) const {
 
 // =============================================================================
 void Swapchain::submit(const vk::CommandBuffer &command_buffer,
-                       const CmdQueue &cmd_queue,
-                       const uint32_t frame_index) const
+                       const CmdQueue &cmd_queue) const
 {
     vk::Semaphore wait_sems[] = {
-        _image_available_sems[frame_index]
+        _image_available_sems[_current_image_index]
     };
 
     vk::PipelineStageFlags wait_stage_masks[] {
@@ -75,7 +74,7 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
     };
 
     vk::Semaphore signal_sems[] = {
-        _draw_complete_sems[frame_index]
+        _draw_complete_sems[_current_image_index]
     };
 
     vk::SubmitInfo submit_info {
@@ -92,7 +91,7 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
     // submit the graphics command buffer
     auto result = cmd_queue.native().submit(
         submit_info,
-        _present_fences[frame_index]
+        _present_fences[_current_image_index]
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Could not submit command buffer to graphics queue.");
@@ -100,14 +99,14 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
 }
 
 // =============================================================================
-vk::Result Swapchain::present(const uint32_t frame_index) const {
+vk::Result Swapchain::present() const {
     const auto &cmd_queue = LogicalDevice::cmd_queue().native();
 
     // notify the present buffer that we're going to wait for the current
     // frame to finsh/for the next vertical refresh
     vk::PresentInfoKHR present_info {
         .waitSemaphoreCount = 1u,
-        .pWaitSemaphores = &_draw_complete_sems[frame_index],
+        .pWaitSemaphores = &_draw_complete_sems[_current_image_index],
         .swapchainCount = 1u,
         .pSwapchains = &_swapchain,
         .pImageIndices = &_current_image_index

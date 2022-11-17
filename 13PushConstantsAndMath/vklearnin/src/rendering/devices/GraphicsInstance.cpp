@@ -22,9 +22,7 @@ vk::ValidationFeaturesEXT GraphicsInstance::_validation_extensions { };
 vk::InstanceCreateInfo    GraphicsInstance::_instance_create_info { };
 
 // =============================================================================
-void GraphicsInstance::init() {
-    CONSOLE_TRACE("");
-    
+void GraphicsInstance::init() {    
     _init_dynamic_loader(); // The first step for using the dynamic loader
     _init_app_info();       // Provide hints about this program to the driver
     _init_layers();         // Of the many layers, we'll stick with validation

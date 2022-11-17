@@ -16,18 +16,10 @@
 
 namespace vkl {
 
-// Setting the framebuffer index to one initially permits the first operation
-// within render_loop() to be give us a zero index on the first time around.
-// To avoid magic numbers, and provide rationale, here we are.
-static constexpr uint32_t DEFAULT_FRAME = 1u;
-
 // =============================================================================
 void Engine::render_loop() {
-    // As a first step, advance the framebuffer index.
-    _next_frame();
-
-    // Next, advance the swapchain image index, which will block waiting for
-    // an image which has been drawn to screen and released
+    // Advance the swapchain image index, which will block waiting for an image
+    // which has been drawn to screen and released
     auto result = _swapchain->next_image(_frame_index);
 
     // If one of these two hit, it's because the swapchain images are no longer
@@ -40,19 +32,21 @@ void Engine::render_loop() {
         return;
     }
 
-    // Un-signal the fence controlling this framebuffer; the GPU will signal
-    // when it's done again after we submit this buffer's work
-    _swapchain->reset_fence(_frame_index);
-
     // Clear out the frame's command pool
     const auto image_index = _swapchain->current_image_index();
-    _frames[image_index].cmd_pool().reset();
+    _frames[_frame_index].cmd_pool().reset();
+
+    assert(_frame_index == image_index);
+
+    // Un-signal the fence controlling this framebuffer; the GPU will signal
+    // when it's done again after we submit this buffer's work
+    _swapchain->reset_fence();
 
     // No need for special flags for this application
     vk::CommandBufferBeginInfo begin_info { };
 
     // Let the command buffer know we're ready to record
-    auto &command_buffer = _frames[image_index].cmd_buffer().native();
+    auto &command_buffer = _frames[_frame_index].cmd_buffer().native();
     result = command_buffer.begin(begin_info);
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Failed to begin command buffer recording.");
@@ -110,27 +104,26 @@ void Engine::render_loop() {
     }
 
     // Give the swapchain back a full command buffer and set it loose
-    _swapchain->submit(command_buffer, LogicalDevice::cmd_queue(),
-                       _frame_index);
+    _swapchain->submit(command_buffer, LogicalDevice::cmd_queue());
 
     // Swap buffers
-    result = _swapchain->present(_frame_index);
+    result = _swapchain->present();
 
     // A present operation can return these two, too. Same approach as above -
-    // adjust the required stuff and continue. No need to return early, since
-    // we're already right here. ;)
+    // adjust the required stuff and try again
     if(result == vk::Result::eErrorOutOfDateKHR ||
        result == vk::Result::eSuboptimalKHR)
     {
         CONSOLE_ERROR("Could not present frame {}", _frame_index);
         _image_invalid();
-    }
+        return;
+    }    
+    
+    _next_frame();
 }
 
 // =============================================================================
 void Engine::init() {
-    CONSOLE_TRACE("");
-
     // Finally on to the meat of Engine's own stuff. First, configure and
     // create a swapchain with the double buffering and surface details we
     // require
@@ -193,7 +186,7 @@ void Engine::_create_frames() {
         _pipeline->create_framebuffer(image_index);
     }
 
-    _frame_index = DEFAULT_FRAME;
+    _frame_index = 0u;
 
     CONSOLE_TRACE("Created {} frames", _frames.size());
 }
@@ -236,7 +229,7 @@ void Engine::_image_invalid() {
         1000.0f
     );
 
-    _frame_index = DEFAULT_FRAME;
+    _frame_index = 0u;
 }
 
 // =============================================================================
@@ -251,7 +244,7 @@ void Engine::_next_frame() {
 Engine::Engine() :
     _swapchain   { nullptr },
     _pipeline    { nullptr },
-    _frame_index { DEFAULT_FRAME },
+    _frame_index { 0u },
     _xzplane     { nullptr }
 { }
 

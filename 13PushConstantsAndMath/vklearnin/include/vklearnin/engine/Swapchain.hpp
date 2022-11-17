@@ -10,12 +10,11 @@ class CmdQueue;
 class Swapchain final {
 public:
     vk::Result next_image(const uint32_t frame_index);
-    void reset_fence(const uint32_t frame_index) const;
+    void reset_fence() const;
 
     void submit(const vk::CommandBuffer &command_buffer,
-                const CmdQueue &cmd_queue,
-                const uint32_t frame_index) const;
-    vk::Result present(const uint32_t frame_index) const;
+                const CmdQueue &cmd_queue) const;
+    vk::Result present() const;
 
     void create();
     void destroy();
