@@ -5,17 +5,18 @@
 
 namespace vkl {
 
-class CmdQueue {
+class CmdQueue final {
 public:
+    void populate_info(const uint32_t index, const float priority = 1.0f);
     void request_queue();
 
-    inline const auto family() const { return _family_index; }
-    inline const auto & native() const { return _queue; }
+    inline const auto & native()      const { return _queue;       }
+    inline const auto index()         const { return _index;       }
+    inline const auto priority()      const { return _priority;    }
+    inline const auto & create_info() const { return _create_info; }
 
-    CmdQueue(const uint32_t family_index, const float priority);
+    CmdQueue();
     ~CmdQueue() = default;
-
-    CmdQueue() = delete;
 
     CmdQueue(CmdQueue &&) = delete;
     CmdQueue(const CmdQueue &) = delete;
@@ -24,8 +25,7 @@ public:
     CmdQueue & operator=(const CmdQueue &) = delete;
 
 private:
-    // Creation-related information for the queue
-    uint32_t _family_index;
+    uint32_t _index;
     float    _priority;
     vk::DeviceQueueCreateInfo _create_info;
 

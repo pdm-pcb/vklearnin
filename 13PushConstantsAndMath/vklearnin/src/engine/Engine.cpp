@@ -3,10 +3,10 @@
 
 #include "vklearnin/system/TargetWindow.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
-#include "vklearnin/rendering/devices/DeviceQueue.hpp"
+#include "vklearnin/rendering/Renderer.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
-#include "vklearnin/rendering/Renderer.hpp"
+#include "vklearnin/engine/FrameData.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: replace with proper asset management
@@ -18,16 +18,16 @@ namespace vkl {
 // Setting the framebuffer index to one initially permits the first operation
 // within render_loop() to be give us a zero index on the first time around.
 // To avoid magic numbers, and provide rationale, here we are.
-static constexpr uint32_t DEFAULT_FB = 1u;
+static constexpr uint32_t DEFAULT_FRAME = 1u;
 
 // =============================================================================
 void Engine::render_loop() {
     // As a first step, advance the framebuffer index.
-    _next_framebuffer();
+    _next_frame();
 
     // Next, advance the swapchain image index, which will block waiting for
     // an image which has been drawn to screen and released
-    auto result = _swapchain->next_image(_current_framebuffer);
+    auto result = _swapchain->next_image(_frame_index);
 
     // If one of these two hit, it's because the swapchain images are no longer
     // appropriately sized
@@ -40,18 +40,17 @@ void Engine::render_loop() {
 
     // Un-signal the fence controlling this framebuffer; the GPU will signal
     // when it's done again after we submit this buffer's work
-    _swapchain->reset_fence(_current_framebuffer);
+    _swapchain->reset_fence(_frame_index);
 
     // Clear out the frame's command pool
     const auto image_index = _swapchain->current_image_index();
-    const auto &graphics_queue = LogicalDevice::graphics_queue();
-    graphics_queue.reset_cmd_pool(image_index);
+    _frames[image_index].cmd_pool().reset();
 
     // No need for special flags for this application
     vk::CommandBufferBeginInfo begin_info { };
 
     // Let the command buffer know we're ready to record
-    auto &command_buffer = graphics_queue.cmd_buffer(image_index);
+    auto &command_buffer = _frames[image_index].cmd_buffer().native();
     result = command_buffer.begin(begin_info);
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Failed to begin command buffer recording.");
@@ -68,9 +67,10 @@ void Engine::render_loop() {
         { .color { std::array<float, 4> { 0.01f, 0.01f, 0.02f, 1.0f }}}
     };
 
+    const auto &current_frame = _frames[_frame_index];
     vk::RenderPassBeginInfo pass_info {
         .renderPass      = _pipeline->renderpass(),
-        .framebuffer     = _framebuffers[_current_framebuffer].native(),
+        .framebuffer     = current_frame.framebuffer().native(),
         .renderArea      = _swapchain->render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
         .pClearValues    = clear_values,
@@ -109,11 +109,11 @@ void Engine::render_loop() {
     }
 
     // Give the swapchain back a full command buffer and set it loose
-    _swapchain->submit(command_buffer, graphics_queue,
-                       _current_framebuffer);
+    _swapchain->submit(command_buffer, LogicalDevice::cmd_queue(),
+                       _frame_index);
 
     // Swap buffers
-    result = _swapchain->present(_current_framebuffer);
+    result = _swapchain->present(_frame_index);
 
     // A present operation can return these two, too. Same approach as above -
     // adjust the required stuff and continue. No need to return early, since
@@ -149,7 +149,7 @@ void Engine::init() {
     _pipeline->create();
 
     // Framebuffers serve to tie the swapchain and the pipeline together
-    _create_framebuffers();
+    _create_frame_data();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
@@ -174,33 +174,32 @@ void Engine::shutdown() {
 
     _xzplane->destroy_buffers();
 
-    _destroy_framebuffers();
+    _destroy_frame_data();
     _pipeline->destroy();
     _swapchain->destroy();
 }
 
 // =============================================================================
-void Engine::_create_framebuffers() {
-    _framebuffers.resize(RenderConfig::swapchain_image_count);
+void Engine::_create_frame_data() {
+    _frames.resize(RenderConfig::swapchain_image_count);
 
     for(uint32_t image_index = 0;
         image_index < RenderConfig::swapchain_image_count;
         ++image_index)
     {
-        auto &framebuffer = _framebuffers[image_index];
-        framebuffer.create(*_swapchain, *_pipeline, image_index);
+        _frames[image_index].create(*_swapchain, *_pipeline, image_index);
     }
 
-    _current_framebuffer = DEFAULT_FB;
+    _frame_index = DEFAULT_FRAME;
 
-    CONSOLE_TRACE("Created {} framebuffers", _framebuffers.size());
+    CONSOLE_TRACE("Created {} framebuffers", _frames.size());
 }
 
 // =============================================================================
-void Engine::_destroy_framebuffers() {
+void Engine::_destroy_frame_data() {
     CONSOLE_TRACE("Destroy framebuffers");
-    for(auto &framebuffer : _framebuffers) {
-        framebuffer.destroy();
+    for(auto &frame : _frames) {
+        frame.destroy();
     }
 }
 
@@ -212,7 +211,7 @@ void Engine::_image_invalid() {
         CONSOLE_CRITICAL("Failed to wait for idle on image resize.");
     }
 
-    _destroy_framebuffers();
+    _destroy_frame_data();
 
     CONSOLE_WARN("Destroy swapchain");
     _swapchain->destroy();
@@ -224,7 +223,7 @@ void Engine::_image_invalid() {
     CONSOLE_WARN("Recreate swapchain");
     _swapchain->create();
 
-    _create_framebuffers();
+    _create_frame_data();
 
     _pipeline->update_dimensions();
 
@@ -237,19 +236,19 @@ void Engine::_image_invalid() {
 }
 
 // =============================================================================
-void Engine::_next_framebuffer() {
+void Engine::_next_frame() {
     // The code below allows flipping between zero and one without the use of
     // the mod operator.
     // Courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
-    _current_framebuffer = 1 - _current_framebuffer;
+    _frame_index = 1 - _frame_index;
 }
 
 // =============================================================================
 Engine::Engine() :
-    _swapchain           { nullptr },
-    _pipeline            { nullptr },
-    _current_framebuffer { DEFAULT_FB },
-    _xzplane             { nullptr }
+    _swapchain   { nullptr },
+    _pipeline    { nullptr },
+    _frame_index { DEFAULT_FRAME },
+    _xzplane     { nullptr }
 { }
 
 Engine::~Engine() {

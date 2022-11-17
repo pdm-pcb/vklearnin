@@ -10,8 +10,7 @@ constexpr auto MAX_U32 = std::numeric_limits<uint32_t>::max();
 
 PhysicalDevice::DeviceList PhysicalDevice::_available_devices;
 vk::PhysicalDevice         PhysicalDevice::_physical_device { };
-uint32_t                   PhysicalDevice::_graphics_queue_index = MAX_U32;
-uint32_t                   PhysicalDevice::_present_queue_index  = MAX_U32;
+uint32_t                   PhysicalDevice::_cmd_queue_index = MAX_U32;
 std::vector<uint32_t>      PhysicalDevice::_family_indices;
 
 // =============================================================================
@@ -183,13 +182,13 @@ void PhysicalDevice::select_device() {
            present_fam != std::numeric_limits<uint32_t>::max())
         {
             _physical_device      = _available_devices[device_index].device;
-            _graphics_queue_index = graphics_support[device_index].second;
-            _present_queue_index  = present_support[device_index].second;
+            _cmd_queue_index = graphics_support[device_index].second;
+            _cmd_queue_index  = present_support[device_index].second;
             CONSOLE_TRACE(
                 "Selected {}, queue {} for graphics and {} for present",
                 _available_devices[device_index].name,
-                _graphics_queue_index,
-                _present_queue_index
+                _cmd_queue_index,
+                _cmd_queue_index
             );
 
             // Just choose the first satisfactory device, as they're already
@@ -205,8 +204,8 @@ void PhysicalDevice::select_device() {
     }
     
     std::set<uint32_t> index_set {
-        _graphics_queue_index,
-        _present_queue_index
+        _cmd_queue_index,
+        _cmd_queue_index
     };
 
     _family_indices = std::vector<uint32_t>(index_set.begin(), index_set.end());

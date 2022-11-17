@@ -5,17 +5,17 @@
 
 namespace vkl {
 
-class DeviceQueue;
+class CmdQueue;
 
 class Swapchain final {
 public:
-    vk::Result next_image(const uint32_t framebuffer_index);
-    void reset_fence(const uint32_t framebuffer_index) const;
+    vk::Result next_image(const uint32_t frame_index);
+    void reset_fence(const uint32_t frame_index) const;
 
     void submit(const vk::CommandBuffer &command_buffer,
-                const DeviceQueue &graphics_queue,
-                const uint32_t framebuffer_index) const;
-    vk::Result present(const uint32_t framebuffer_index) const;
+                const CmdQueue &cmd_queue,
+                const uint32_t frame_index) const;
+    vk::Result present(const uint32_t frame_index) const;
 
     void create();
     void destroy();

@@ -4,7 +4,7 @@
 #include "vklearnin/rendering/devices/PhysicalDevice.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
-#include "vklearnin/rendering/devices/DeviceQueue.hpp"
+#include "vklearnin/rendering/devices/CmdQueue.hpp"
 
 #include "vklearnin/system/TargetWindow.hpp"
 
@@ -17,11 +17,11 @@ namespace vkl {
 #endif
 
 //==============================================================================
-vk::Result Swapchain::next_image(const uint32_t framebuffer_index) {
+vk::Result Swapchain::next_image(const uint32_t frame_index) {
     // wait for an image to become available to write to
     auto result = LogicalDevice::native().waitForFences(
         1u, // fence count
-        &_present_fences[framebuffer_index], // which fences to wait on
+        &_present_fences[frame_index], // which fences to wait on
         VK_TRUE, // signal on all or any of the fences?
         std::numeric_limits<int64_t>::max() // block effectively forever
     );
@@ -35,7 +35,7 @@ vk::Result Swapchain::next_image(const uint32_t framebuffer_index) {
     result = LogicalDevice::native().acquireNextImageKHR(
         { _swapchain },
         std::numeric_limits<int64_t>::max(),
-        _image_available_sems[framebuffer_index],
+        _image_available_sems[frame_index],
         nullptr,
         &_current_image_index
     );
@@ -51,10 +51,10 @@ vk::Result Swapchain::next_image(const uint32_t framebuffer_index) {
 }
 
 //==============================================================================
-void Swapchain::reset_fence(const uint32_t framebuffer_index) const {
+void Swapchain::reset_fence(const uint32_t frame_index) const {
     auto result = LogicalDevice::native().resetFences(
         1u,
-        &_present_fences[framebuffer_index]
+        &_present_fences[frame_index]
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not reset present fences");
@@ -63,11 +63,11 @@ void Swapchain::reset_fence(const uint32_t framebuffer_index) const {
 
 // =============================================================================
 void Swapchain::submit(const vk::CommandBuffer &command_buffer,
-                       const DeviceQueue &graphics_queue,
-                       const uint32_t framebuffer_index) const
+                       const CmdQueue &cmd_queue,
+                       const uint32_t frame_index) const
 {
     vk::Semaphore wait_sems[] = {
-        _image_available_sems[framebuffer_index]
+        _image_available_sems[frame_index]
     };
 
     vk::PipelineStageFlags wait_stage_masks[] {
@@ -75,7 +75,7 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
     };
 
     vk::Semaphore signal_sems[] = {
-        _draw_complete_sems[framebuffer_index]
+        _draw_complete_sems[frame_index]
     };
 
     vk::SubmitInfo submit_info {
@@ -90,9 +90,9 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
     };
 
     // submit the graphics command buffer
-    auto result = graphics_queue.native(_current_image_index).submit(
+    auto result = cmd_queue.native().submit(
         submit_info,
-        _present_fences[framebuffer_index]
+        _present_fences[frame_index]
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR("Could not submit command buffer to graphics queue.");
@@ -100,15 +100,14 @@ void Swapchain::submit(const vk::CommandBuffer &command_buffer,
 }
 
 // =============================================================================
-vk::Result Swapchain::present(const uint32_t framebuffer_index) const {
-    const auto &present_queue =
-        LogicalDevice::present_queue().native(_current_image_index);
+vk::Result Swapchain::present(const uint32_t frame_index) const {
+    const auto &cmd_queue = LogicalDevice::cmd_queue().native();
 
     // notify the present buffer that we're going to wait for the current
     // frame to finsh/for the next vertical refresh
     vk::PresentInfoKHR present_info {
         .waitSemaphoreCount = 1u,
-        .pWaitSemaphores = &_draw_complete_sems[framebuffer_index],
+        .pWaitSemaphores = &_draw_complete_sems[frame_index],
         .swapchainCount = 1u,
         .pSwapchains = &_swapchain,
         .pImageIndices = &_current_image_index
@@ -116,7 +115,7 @@ vk::Result Swapchain::present(const uint32_t framebuffer_index) const {
 
     // once more, do the thing and check to see if anything funky happened
     // along the way
-    auto result = present_queue.presentKHR(present_info);
+    auto result = cmd_queue.presentKHR(present_info);
     if(result == vk::Result::eErrorOutOfDateKHR ||
         result == vk::Result::eSuboptimalKHR)
     {
@@ -354,24 +353,11 @@ void Swapchain::_set_create_info() {
         .oldSwapchain = nullptr,
     };
 
-    // In the event that the graphics and present queues are in different
-    // families on this device, we'll bail for the time being
-    auto &dev_queues = LogicalDevice::queues();
-
-    if(dev_queues.size() == 1) {
-        // All is well and we don't have to worry about sharing this swapchain
-        // between separate device queues.
-        _create_info.imageSharingMode = vk::SharingMode::eExclusive;
-        _create_info.queueFamilyIndexCount = 0;
-        _create_info.pQueueFamilyIndices = nullptr;
-        CONSOLE_TRACE("Swapchain being created with exclusive sharing mode.");
-    }
-    else {
-        // Looks like there will be sharing required, so let the swapchain know
-        // it'll have to pay attention.
-        CONSOLE_CRITICAL("Swapchains using concurrent sharing mode are "
-                         "unsuspported");
-    }
+    // All is well and we don't have to worry about sharing this swapchain
+    // between separate device queues.
+    _create_info.imageSharingMode = vk::SharingMode::eExclusive;
+    _create_info.queueFamilyIndexCount = 0;
+    _create_info.pQueueFamilyIndices = nullptr;
 
     CONSOLE_TRACE(
         "\nSwapchain Create Info:"

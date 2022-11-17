@@ -5,24 +5,26 @@
 
 namespace vkl {
 
-void CmdQueue::request_queue() {
+void CmdQueue::populate_info(const uint32_t index, const float priority) {
+    _index = index;
+    _priority = priority;
+
     _create_info = vk::DeviceQueueCreateInfo {
-        .queueFamilyIndex = _family_index,
+        .queueFamilyIndex = _index,
         .queueCount = 1u,
         .pQueuePriorities = &_priority,
     };
+}
 
-    _queue = LogicalDevice::native().getQueue(_family_index, 0u);
+void CmdQueue::request_queue() {
+    _queue = LogicalDevice::native().getQueue(_index, 0u);
     if(!_queue) {
         CONSOLE_CRITICAL("Could not get device queue");
     }
 }
 
-CmdQueue::CmdQueue(const uint32_t family_index, const float priority) :
-    _family_index { family_index },
-    _priority     { priority },
-    _create_info  { },
-    _queue        { nullptr }
+CmdQueue::CmdQueue() :
+    _queue { nullptr }
 { }
 
 } // namespace vkl

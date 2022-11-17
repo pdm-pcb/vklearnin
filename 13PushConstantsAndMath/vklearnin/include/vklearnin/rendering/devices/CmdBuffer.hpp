@@ -5,14 +5,19 @@
 
 namespace vkl {
 
-class CmdBuffer {
+class CmdPool;
+
+class CmdBuffer final {
 public:
+    void create(const CmdPool &pool);
+    void destroy();
+
     inline const auto & native() const { return _buffer; }
 
     CmdBuffer() = default;
     ~CmdBuffer() = default;
 
-    CmdBuffer(CmdBuffer &&) = delete;
+    CmdBuffer(CmdBuffer &&);
     CmdBuffer(const CmdBuffer &) = delete;
 
     CmdBuffer & operator=(CmdBuffer &&) = delete;
@@ -20,6 +25,7 @@ public:
 
 private:
     vk::CommandBuffer _buffer;
+    vk::CommandPool   _pool;
 };
 
 } // namespace vkl

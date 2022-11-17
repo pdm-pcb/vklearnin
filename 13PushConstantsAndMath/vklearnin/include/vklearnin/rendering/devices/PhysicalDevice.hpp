@@ -20,11 +20,8 @@ public:
     static void query_devices();
     static void select_device();
 
-    inline static auto graphics_queue_index() {
-        return _graphics_queue_index;
-    }
-    inline static auto present_queue_index() {
-        return _present_queue_index; 
+    inline static auto cmd_queue_index() {
+        return _cmd_queue_index;
     }
     inline static const auto & family_indices() { return _family_indices;  }
     inline static const auto & native()         { return _physical_device; }
@@ -42,8 +39,7 @@ private:
     static DeviceList _available_devices;
     static vk::PhysicalDevice _physical_device;
 
-    static uint32_t _graphics_queue_index;
-    static uint32_t _present_queue_index;
+    static uint32_t _cmd_queue_index;
     static std::vector<uint32_t> _family_indices;
 
     static void _store_physical_device(

@@ -5,16 +5,19 @@
 
 namespace vkl {
 
-class CmdPool {
+class CmdPool final {
 public:
     void reset(const vk::CommandPoolResetFlags flags = { }) const;
+
+    void create();
+    void destroy();
 
     inline const auto & native() const { return _pool; }
 
     CmdPool() = default;
     ~CmdPool() = default;
 
-    CmdPool(CmdPool &&) = delete;
+    CmdPool(CmdPool &&);
     CmdPool(const CmdPool &) = delete;
 
     CmdPool & operator=(CmdPool &&) = delete;

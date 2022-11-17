@@ -2,13 +2,13 @@
 #define VKLEARNIN_ENGINE_ENGINE_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/engine/Framebuffer.hpp"
 #include "vklearnin/engine/CameraData.hpp"
 
 namespace vkl {
 
 class Swapchain;
 class Pipeline;
+class FrameData;
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: replace with proper asset management
@@ -17,8 +17,6 @@ class XZPlane;
 
 class Engine final {
 public:
-    using FBList = std::vector<Framebuffer>;
-
     void render_loop();
 
     void init();
@@ -37,17 +35,17 @@ private:
     Swapchain *_swapchain;
     Pipeline  *_pipeline;
 
-    FBList   _framebuffers;
-    uint32_t _current_framebuffer;
+    std::vector<FrameData> _frames;
+    uint32_t _frame_index;
 
     CameraData _camera_data;
 
     XZPlane *_xzplane;
 
-    void _create_framebuffers();
-    void _destroy_framebuffers();
+    void _create_frame_data();
+    void _destroy_frame_data();
     void _image_invalid();
-    void _next_framebuffer();
+    void _next_frame();
 };
 
 } // namespace vkl
