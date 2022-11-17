@@ -3,22 +3,27 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
+#include "vklearnin/engine/Framebuffer.hpp"
 
 namespace vkl {
 
-// =============================================================================
+class Framebuffer;
+
 class Pipeline final {
 public:
     void vertex_from_binary(const char *filepath);
     void fragment_from_binary(const char *filepath);
 
-    // create a suitable default layout
     void init_layout();
     void init_render_passes();
     void create();
     void destroy();
 
-    // -------------------------------------------------------------------------
+    void destroy_framebuffers();
+    void recreate_framebuffers();
+
+    void create_framebuffer(const uint32_t index);
+
     // Update if the swapchain has changed size
     inline void update_dimensions() {
         const auto [width, height] = _swapchain.extent(); 
@@ -47,13 +52,16 @@ public:
         );
     }
 
-    // -------------------------------------------------------------------------
-    // For those concerned with pipeline atributes
+    // For those concerned with pipeline attributes
     inline const auto & renderpass() const { return _renderpass; }
     inline const auto & native()     const { return _pipeline;   }
     inline const auto & viewport()   const { return _viewport;   }
     inline const auto & scissor()    const { return _scissor;    }
     inline const auto & layout()     const { return _layout;     }
+
+    inline const auto & framebuffer(const uint32_t index) const {
+        return _framebuffers[index];
+    }
 
     explicit Pipeline(const Swapchain &swapchain);
     ~Pipeline() = default;
@@ -88,7 +96,9 @@ private:
     vk::PipelineColorBlendStateCreateInfo    _blend_info;
     vk::PipelineRasterizationStateCreateInfo _raster_info;
 
-    vk::Pipeline       _pipeline;
+    vk::Pipeline _pipeline;
+
+    std::vector<Framebuffer> _framebuffers;
 
     const Swapchain  &_swapchain;
 

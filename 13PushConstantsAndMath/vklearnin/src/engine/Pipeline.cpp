@@ -179,6 +179,8 @@ void Pipeline::create() {
         "Created pipeline {:#x}",
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
+
+    _framebuffers.resize(RenderConfig::swapchain_image_count);
 }
 
 // =============================================================================
@@ -188,11 +190,38 @@ void Pipeline::destroy() {
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
 
+    destroy_framebuffers();
+
     LogicalDevice::native().destroy(_vert);
     LogicalDevice::native().destroy(_frag);
     LogicalDevice::native().destroy(_renderpass);
     LogicalDevice::native().destroy(_layout);
     LogicalDevice::native().destroy(_pipeline);
+}
+
+// =============================================================================
+void Pipeline::create_framebuffer(const uint32_t index) {
+    _framebuffers[index].create(_swapchain, *this, index);
+}
+
+// =============================================================================
+void Pipeline::destroy_framebuffers() {
+    for(auto &buffer : _framebuffers) {
+            buffer.destroy();
+        }
+}
+
+// =============================================================================
+void Pipeline::recreate_framebuffers() {
+
+    for(uint32_t image_index = 0;
+        image_index < RenderConfig::swapchain_image_count;
+        ++image_index)
+    {
+        _framebuffers[image_index].create(_swapchain, *this, image_index);
+    }
+    
+    update_dimensions();
 }
 
 // =============================================================================

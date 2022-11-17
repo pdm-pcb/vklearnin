@@ -42,8 +42,8 @@ private:
 
     XZPlane *_xzplane;
 
-    void _create_frame_data();
-    void _destroy_frame_data();
+    void _create_frames();
+    void _destroy_frames();
     void _image_invalid();
     void _next_frame();
 };

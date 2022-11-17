@@ -145,7 +145,7 @@ void Swapchain::create() {
 }
 
 //==============================================================================
-void Swapchain::destroy() {    
+void Swapchain::destroy() {
     for(auto &sem : _image_available_sems) {
         LogicalDevice::native().destroy(sem);
     }    

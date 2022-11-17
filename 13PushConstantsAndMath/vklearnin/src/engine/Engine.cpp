@@ -6,6 +6,7 @@
 #include "vklearnin/rendering/Renderer.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
+#include "vklearnin/engine/Framebuffer.hpp"
 #include "vklearnin/engine/FrameData.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,8 +33,9 @@ void Engine::render_loop() {
     // If one of these two hit, it's because the swapchain images are no longer
     // appropriately sized
     if(result == vk::Result::eErrorOutOfDateKHR ||
-       result == vk::Result::eSuboptimalKHR )
+       result == vk::Result::eSuboptimalKHR)
     {
+        CONSOLE_ERROR("Could not get next image on frame {}", _frame_index);
         _image_invalid();
         return;
     }
@@ -67,10 +69,9 @@ void Engine::render_loop() {
         { .color { std::array<float, 4> { 0.01f, 0.01f, 0.02f, 1.0f }}}
     };
 
-    const auto &current_frame = _frames[_frame_index];
     vk::RenderPassBeginInfo pass_info {
         .renderPass      = _pipeline->renderpass(),
-        .framebuffer     = current_frame.framebuffer().native(),
+        .framebuffer     = _pipeline->framebuffer(_frame_index).native(),
         .renderArea      = _swapchain->render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
         .pClearValues    = clear_values,
@@ -119,8 +120,9 @@ void Engine::render_loop() {
     // adjust the required stuff and continue. No need to return early, since
     // we're already right here. ;)
     if(result == vk::Result::eErrorOutOfDateKHR ||
-       result == vk::Result::eSuboptimalKHR )
+       result == vk::Result::eSuboptimalKHR)
     {
+        CONSOLE_ERROR("Could not present frame {}", _frame_index);
         _image_invalid();
     }
 }
@@ -149,7 +151,7 @@ void Engine::init() {
     _pipeline->create();
 
     // Framebuffers serve to tie the swapchain and the pipeline together
-    _create_frame_data();
+    _create_frames();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
@@ -174,30 +176,30 @@ void Engine::shutdown() {
 
     _xzplane->destroy_buffers();
 
-    _destroy_frame_data();
+    _destroy_frames();
     _pipeline->destroy();
     _swapchain->destroy();
 }
 
 // =============================================================================
-void Engine::_create_frame_data() {
+void Engine::_create_frames() {
     _frames.resize(RenderConfig::swapchain_image_count);
 
     for(uint32_t image_index = 0;
         image_index < RenderConfig::swapchain_image_count;
         ++image_index)
     {
-        _frames[image_index].create(*_swapchain, *_pipeline, image_index);
+        _frames[image_index].create();
+        _pipeline->create_framebuffer(image_index);
     }
 
     _frame_index = DEFAULT_FRAME;
 
-    CONSOLE_TRACE("Created {} framebuffers", _frames.size());
+    CONSOLE_TRACE("Created {} frames", _frames.size());
 }
 
 // =============================================================================
-void Engine::_destroy_frame_data() {
-    CONSOLE_TRACE("Destroy framebuffers");
+void Engine::_destroy_frames() {
     for(auto &frame : _frames) {
         frame.destroy();
     }
@@ -211,7 +213,8 @@ void Engine::_image_invalid() {
         CONSOLE_CRITICAL("Failed to wait for idle on image resize.");
     }
 
-    _destroy_frame_data();
+    CONSOLE_WARN("Destroy framebuffers");
+    _pipeline->destroy_framebuffers();
 
     CONSOLE_WARN("Destroy swapchain");
     _swapchain->destroy();
@@ -223,9 +226,8 @@ void Engine::_image_invalid() {
     CONSOLE_WARN("Recreate swapchain");
     _swapchain->create();
 
-    _create_frame_data();
-
-    _pipeline->update_dimensions();
+    CONSOLE_WARN("Recreate framebuffers");
+    _pipeline->recreate_framebuffers();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
@@ -233,6 +235,8 @@ void Engine::_image_invalid() {
         0.1f,
         1000.0f
     );
+
+    _frame_index = DEFAULT_FRAME;
 }
 
 // =============================================================================
