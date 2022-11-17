@@ -69,6 +69,17 @@ void Engine::render_loop() {
         .pClearValues    = clear_values,
     };
 
+    static auto start_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::high_resolution_clock::now() - start_time;
+    float runtime = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0f;
+
+    auto model_matrix = glm::rotate(
+        glm::mat4(1.0f),
+        runtime * math::pi_over_two,
+        { 0.0f, 0.0f, 1.0f }
+    );
+    _frames[_frame_index].update_ubo(model_matrix);
+
     // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
@@ -82,6 +93,14 @@ void Engine::render_loop() {
             vk::ShaderStageFlagBits::eVertex,
             0u,
             _camera_data
+        );
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipeline->layout(),
+            0u,
+            _frames[_frame_index].dsc_sets(),
+            { }
         );
 
         // Hand the relevant data over to the renderer
@@ -128,21 +147,18 @@ void Engine::init() {
     _swapchain = new Swapchain;
     _swapchain->create();
 
+    _create_frames();
+
     // Next, the pipeline we'll be using needs to load up the shaders modules
     // and configure itself based on the expected inputs
     _pipeline = new Pipeline(*_swapchain);
     _pipeline->vertex_from_binary(
-        "../../vklearnin/assets/shaders/03push_constant.vert-debug.spv"
+        "../../vklearnin/assets/shaders/04descriptor_ubo.vert-debug.spv"
     );
     _pipeline->fragment_from_binary(
         "../../vklearnin/assets/shaders/01fixed_color.frag-debug.spv"
     );
-    _pipeline->init_layout();
-    _pipeline->init_render_passes();
-    _pipeline->create();
-
-    // Framebuffers serve to tie the swapchain and the pipeline together
-    _create_frames();
+    _pipeline->create(_frames[0]);
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
@@ -181,7 +197,6 @@ void Engine::_create_frames() {
         ++image_index)
     {
         _frames[image_index].create();
-        _pipeline->create_framebuffer(image_index);
     }
 
     _frame_index = 0u;
@@ -218,7 +233,7 @@ void Engine::_image_invalid() {
     _swapchain->create();
 
     CONSOLE_WARN("Recreate framebuffers");
-    _pipeline->recreate_framebuffers();
+    _pipeline->create_framebuffers();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
