@@ -7,11 +7,12 @@
 
 namespace vkl {
 
+struct InstanceData;
+
 class FrameData {
 public:
-
     void image_changed();
-    void update_ubo(const glm::mat4 &model_matrix);
+    void update_instance_data(const InstanceData &data);
 
     void create();
     void destroy();

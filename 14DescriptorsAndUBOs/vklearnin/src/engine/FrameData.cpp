@@ -7,14 +7,14 @@
 namespace vkl {
 
 // =============================================================================
-void FrameData::update_ubo(const glm::mat4 &model_matrix) {
+void FrameData::update_instance_data(const InstanceData &data) {
     auto result = LogicalDevice::native().mapMemory(_ubo.memory, 0u, _ubo.size);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to map device memory");
     }
 
     void *map = result.value;
-        memcpy(map, &model_matrix, _ubo.size);
+        memcpy(map, &data, _ubo.size);
     LogicalDevice::native().unmapMemory(_ubo.memory);
 }
 

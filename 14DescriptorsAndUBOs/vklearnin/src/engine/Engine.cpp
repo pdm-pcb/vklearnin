@@ -8,6 +8,7 @@
 #include "vklearnin/engine/Pipeline.hpp"
 #include "vklearnin/engine/Framebuffer.hpp"
 #include "vklearnin/engine/FrameData.hpp"
+#include "vklearnin/shaders/InstanceData.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: replace with proper asset management
@@ -78,7 +79,9 @@ void Engine::render_loop() {
         runtime * math::pi_over_two,
         { 0.0f, 0.0f, 1.0f }
     );
-    _frames[_frame_index].update_ubo(model_matrix);
+    _frames[_frame_index].update_instance_data({
+        .model_matrix = model_matrix
+    });
 
     // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);

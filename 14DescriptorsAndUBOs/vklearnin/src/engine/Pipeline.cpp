@@ -114,8 +114,8 @@ void Pipeline::create_framebuffers() {
 // =============================================================================
 void Pipeline::destroy_framebuffers() {
     for(auto &buffer : _framebuffers) {
-            buffer.destroy();
-        }
+        buffer.destroy();
+    }
 }
 
 // =============================================================================
