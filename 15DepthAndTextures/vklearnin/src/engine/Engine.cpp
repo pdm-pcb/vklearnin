@@ -82,7 +82,7 @@ void Engine::render_loop() {
     auto model_matrix = glm::rotate(
         glm::mat4(1.0f),
         runtime * math::pi_over_two,
-        { 0.75f, 1.0f, 0.15f }
+        { 0.75f, 1.0f, 0.0f }
     );
     // auto model_matrix = glm::mat4(1.0f);
 
@@ -113,7 +113,6 @@ void Engine::render_loop() {
             { }
         );
 
-        // Hand the relevant data over to the renderer
         // Renderer::draw(
         //     command_buffer,
         //     _xz_unit_plane->vertex_buffer(),
