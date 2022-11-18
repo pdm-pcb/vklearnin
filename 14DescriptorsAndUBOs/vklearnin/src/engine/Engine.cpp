@@ -262,8 +262,7 @@ void Engine::_image_invalid() {
 
 // =============================================================================
 void Engine::_next_frame() {
-    // The code below allows flipping between zero and one without the use of
-    // the mod operator.
+    // Flipping between zero and one without the use of the mod operator.
     // Courtesy paxdiablo: https://stackoverflow.com/a/4084058/1464937
     _frame_index = 1 - _frame_index;
 }
