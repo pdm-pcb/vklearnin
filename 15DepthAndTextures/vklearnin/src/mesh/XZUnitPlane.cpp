@@ -52,7 +52,7 @@ XZUnitPlane::XZUnitPlane() :
         {{  0.5f,  0.5f,  0.5f, 1.0f }, { 0.0f,  0.0f,  0.25f, 1.0f }},
         {{ -0.5f,  0.5f,  0.5f, 1.0f }, { 0.25f, 0.16f, 0.0f,  1.0f }},
     },
-    _indices { 0u,   1u,  2u,  2u,  3u,  0u, }
+    _indices { 0u, 1u, 2u, 2u, 3u, 0u }
 { }
 
 } // namespace vkl
