@@ -6,8 +6,10 @@
 #include "vklearnin/rendering/Renderer.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
-#include "vklearnin/engine/Framebuffer.hpp"
+#include "vklearnin/rendering/Framebuffer.hpp"
+#include "vklearnin/rendering/RenderPass.hpp"
 #include "vklearnin/engine/FrameData.hpp"
+#include "vklearnin/shaders/CameraData.hpp"
 #include "vklearnin/shaders/InstanceData.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,9 +64,11 @@ void Engine::render_loop() {
         { .color { std::array<float, 4> { 0.01f, 0.01f, 0.02f, 1.0f }}}
     };
 
+    const auto &render_pass = _pipeline->render_pass();
+
     vk::RenderPassBeginInfo pass_info {
-        .renderPass      = _pipeline->renderpass(),
-        .framebuffer     = _pipeline->framebuffer(_frame_index).native(),
+        .renderPass      = render_pass.native(),
+        .framebuffer     = render_pass.framebuffer(_frame_index).native(),
         .renderArea      = _swapchain->render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
         .pClearValues    = clear_values,
@@ -77,7 +81,7 @@ void Engine::render_loop() {
     auto model_matrix = glm::rotate(
         glm::mat4(1.0f),
         runtime * math::pi_over_two,
-        { 0.0f, 0.0f, 1.0f }
+        { 0.0f, 0.5f, 1.0f }
     );
     _frames[_frame_index].update_instance_data({
         .model_matrix = model_matrix
@@ -102,7 +106,7 @@ void Engine::render_loop() {
             vk::PipelineBindPoint::eGraphics,
             _pipeline->layout(),
             0u,
-            _frames[_frame_index].dsc_sets(),
+            _frames[_frame_index].descriptor_set().native(),
             { }
         );
 
@@ -161,7 +165,13 @@ void Engine::init() {
     _pipeline->fragment_from_binary(
         "../../vklearnin/assets/shaders/01fixed_color.frag-debug.spv"
     );
-    _pipeline->create(_frames[0]);
+    _pipeline->set_push_constants({{
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .offset = 0u,
+        .size = sizeof(CameraData)
+    }});
+    _pipeline->set_layout({ _frames[0].descriptor_set_layout().native() });
+    _pipeline->create();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,
@@ -237,6 +247,8 @@ void Engine::_image_invalid() {
 
     CONSOLE_WARN("Recreate framebuffers");
     _pipeline->create_framebuffers();
+
+    _pipeline->update_dimensions();
 
     _camera_data.proj_matrix = glm::perspective(
         RenderConfig::fov_rad * 0.5f,

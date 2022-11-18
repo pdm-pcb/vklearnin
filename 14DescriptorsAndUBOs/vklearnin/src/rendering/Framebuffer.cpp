@@ -1,24 +1,23 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/engine/Framebuffer.hpp"
+#include "vklearnin/rendering/Framebuffer.hpp"
 
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
-#include "vklearnin/engine/Pipeline.hpp"
 
 namespace vkl {
 
 // =============================================================================
-void Framebuffer::create(const Swapchain &swapchain, const Pipeline &pipeline,
-                         const uint32_t image_index)
+void Framebuffer::create(const vk::Extent2D &extent,
+                         const vk::ImageView &image_view,
+                         const vk::RenderPass &render_pass)
 {
-    // grab the new dimensions
-    auto [width, height] = swapchain.extent();
+    auto [width, height] = extent;
 
     _attachments.clear();
-    _attachments.emplace_back(swapchain.image_view(image_index));
+    _attachments.emplace_back(image_view);
     
     vk::FramebufferCreateInfo buffer_info {
-        .renderPass = pipeline.renderpass(),
+        .renderPass = render_pass,
         .attachmentCount = static_cast<uint32_t>(_attachments.size()),
         .pAttachments = _attachments.data(),
         .width = width,

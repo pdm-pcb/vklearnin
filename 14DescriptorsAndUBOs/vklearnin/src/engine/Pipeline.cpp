@@ -8,9 +8,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: I feel like these really shouldn't be here, but...?
 #include "vklearnin/mesh/Vertex.hpp"
-#include "vklearnin/mesh/XZPlane.hpp"
-#include "vklearnin/shaders/CameraData.hpp"
-#include "vklearnin/shaders/InstanceData.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace vkl {
@@ -36,15 +33,42 @@ void Pipeline::fragment_from_binary(const char *filepath) {
 }
 
 // =============================================================================
-void Pipeline::create(const FrameData &frame_data) {
-    _init_layout(frame_data);
-    _init_render_passes();
-    _init_dynamic_states();
-    _init_viewport();
+void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
+    _push_constant_ranges.clear();
+    _push_constant_ranges = ranges;
+}
+
+// =============================================================================
+void Pipeline::set_layout(const DescriptorSetLayouts &descriptor_layouts) {
+    vk::PipelineLayoutCreateInfo pipeline_layout_info {
+        .setLayoutCount = static_cast<uint32_t>(descriptor_layouts.size()),
+        .pSetLayouts = descriptor_layouts.data(),
+        .pushConstantRangeCount =
+            static_cast<uint32_t>(_push_constant_ranges.size()),
+        .pPushConstantRanges = _push_constant_ranges.data()
+    };
+
+    auto pipeline_result =
+        LogicalDevice::native().createPipelineLayout(pipeline_layout_info);
+    if(pipeline_result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Could not create pipeline layout");
+    }
+    _layout = pipeline_result.value;
+
+    CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
+                  pipeline_layout_info.setLayoutCount);
+}
+
+// =============================================================================
+void Pipeline::create() {
     _init_vert_input();
     _init_assembly();
-    _init_blend();
+    _init_viewport();
     _init_raster();
+    _init_blend();
+    _init_dynamic_states();
+
+    _render_pass.create(_swapchain);
 
     vk::GraphicsPipelineCreateInfo pipeline_info {
         .stageCount = static_cast<uint32_t>(_shader_stages.size()),
@@ -59,7 +83,7 @@ void Pipeline::create(const FrameData &frame_data) {
         .pColorBlendState    = &_blend_info,
         .pDynamicState       = &_dynamic_state_info,
         .layout              = _layout,
-        .renderPass          = _renderpass,
+        .renderPass          = _render_pass.native(),
         .subpass             = 0u,
         .basePipelineHandle  = nullptr,
         .basePipelineIndex   = -1,
@@ -78,8 +102,6 @@ void Pipeline::create(const FrameData &frame_data) {
         "Created pipeline {:#x}",
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
-
-    create_framebuffers();
 }
 
 // =============================================================================
@@ -89,173 +111,50 @@ void Pipeline::destroy() {
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
 
-    destroy_framebuffers();
+    _render_pass.destroy();
 
     LogicalDevice::native().destroy(_vert);
     LogicalDevice::native().destroy(_frag);
-    LogicalDevice::native().destroy(_renderpass);
     LogicalDevice::native().destroy(_layout);
     LogicalDevice::native().destroy(_pipeline);
 }
 
 // =============================================================================
 void Pipeline::create_framebuffers() {
-
-    for(uint32_t image_index = 0;
-        image_index < RenderConfig::swapchain_image_count;
-        ++image_index)
-    {
-        _framebuffers[image_index].create(_swapchain, *this, image_index);
-    }
-    
-    update_dimensions();
+    _render_pass.create_framebuffers(_swapchain);
 }
 
 // =============================================================================
 void Pipeline::destroy_framebuffers() {
-    for(auto &buffer : _framebuffers) {
-        buffer.destroy();
-    }
+    _render_pass.destroy_framebuffers();
 }
 
 // =============================================================================
-void Pipeline::_init_layout(const FrameData &frame_data) {
-    vk::PushConstantRange push_constant_ranges[] {{
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .offset = 0u,
-        .size = sizeof(CameraData)
-    }};
+void Pipeline::update_dimensions() {
+    const auto [width, height] = _swapchain.extent();
+    const auto [x, y]          = _swapchain.offset();
 
-    vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount =
-            static_cast<uint32_t>(frame_data.dsc_set_layouts().size()),
-        .pSetLayouts = frame_data.dsc_set_layouts().data(),
-        .pushConstantRangeCount =
-            static_cast<uint32_t>(std::size(push_constant_ranges)),
-        .pPushConstantRanges = push_constant_ranges
+    _viewport = vk::Viewport {
+        .x = static_cast<float>(x),
+        .y = static_cast<float>(height),
+        .width  = static_cast<float>(width),
+        .height = -static_cast<float>(height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
     };
 
-    auto pipeline_result =
-        LogicalDevice::native().createPipelineLayout(pipeline_layout_info);
-    if(pipeline_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not create pipeline layout");
-    }
-    _layout = pipeline_result.value;
-
-    CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
-                  pipeline_layout_info.setLayoutCount);
-}
-
-// =============================================================================
-void Pipeline::_init_render_passes() {    
-    _attachments.clear();
-
-    vk::AttachmentReference color_attach[] {{
-        .attachment = 0u,
-        .layout     = vk::ImageLayout::eColorAttachmentOptimal,
-    }};
-
-    vk::SubpassDescription subpasses[] {{
-        .pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
-        .inputAttachmentCount = 0u,
-        .pInputAttachments    = nullptr,
-        .colorAttachmentCount = static_cast<uint32_t>(std::size(color_attach)),
-        .pColorAttachments    = color_attach,
-        .pResolveAttachments  = nullptr,
-        .pDepthStencilAttachment = nullptr,
-        .preserveAttachmentCount = 0u,
-        .pPreserveAttachments    = 0u,
-    }};
-
-    // render target attachment
-    _attachments.emplace_back(vk::AttachmentDescription {
-        .format         = _swapchain.surface_format(),
-        .samples        = vk::SampleCountFlagBits::e1,
-        .loadOp         = vk::AttachmentLoadOp::eClear,
-        .storeOp        = vk::AttachmentStoreOp::eStore,
-        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout  = vk::ImageLayout::eUndefined,
-        .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
-    });
-
-    // given the single render pass for this setup, specifying the following
-    // dependency ensures the render pass doesn't begin until there's an image
-    // available
-    vk::SubpassDependency dependencies[] {
-    {
-        .srcSubpass      = VK_SUBPASS_EXTERNAL,
-        .dstSubpass      = 0u,
-        .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
-        .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
-        .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-        .dependencyFlags = vk::DependencyFlagBits::eByRegion
-    },
-    {
-        .srcSubpass      = 0u,
-        .dstSubpass      = VK_SUBPASS_EXTERNAL,
-        .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        .dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
-        .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-        .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
-        .dependencyFlags = vk::DependencyFlagBits::eByRegion
-    }};
-
-    vk::RenderPassCreateInfo renderpass_info {
-        .attachmentCount = static_cast<uint32_t>(_attachments.size()),
-        .pAttachments    = _attachments.data(),
-        .subpassCount    = static_cast<uint32_t>(std::size(subpasses)),
-        .pSubpasses      = subpasses,
-        .dependencyCount = static_cast<uint32_t>(std::size(dependencies)),
-        .pDependencies   = dependencies,
+    _scissor = vk::Rect2D {
+        .offset = { x, y },
+        .extent = { width, height },
     };
 
     CONSOLE_TRACE(
-        "Creating render pass with {} {} and {} {}",
-        renderpass_info.attachmentCount,
-        renderpass_info.attachmentCount == 1 ? "attachment" : "attachments",
-        renderpass_info.subpassCount,
-        renderpass_info.subpassCount == 1 ? "subpass" : "subpasses"
+        "Pipeline viewport updated: {:.0f} by {:.0f} at ({:.0f}, {:.0f}) ",
+        _viewport.width,
+        _viewport.height,
+        _viewport.x,
+        _viewport.y
     );
-
-    auto result = LogicalDevice::native().createRenderPass(renderpass_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Failed to create render pass");
-    }
-    _renderpass = result.value;
-}
-
-// =============================================================================
-void Pipeline::_init_dynamic_states() {
-    _dynamic_states = { 
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor,
-    };
-
-    CONSOLE_TRACE("Dynamic state count: {}", _dynamic_states.size());
-
-    _dynamic_state_info = {
-        .dynamicStateCount = static_cast<uint32_t>(_dynamic_states.size()),
-        .pDynamicStates    = _dynamic_states.data(),
-    };
-}
-
-// =============================================================================
-void Pipeline::_init_viewport() {
-    _viewport_info = vk::PipelineViewportStateCreateInfo {
-        .viewportCount = 1u,
-        .pViewports = nullptr,
-        .scissorCount = 1u,
-        .pScissors = nullptr,
-    };
-
-    CONSOLE_TRACE("Viewport count: {}", _viewport_info.viewportCount);
-    CONSOLE_TRACE("Scissor count:  {}", _viewport_info.scissorCount);
-
-    // viewports and scissor rectangles are all sized the same as the surface
-    // at present
-    update_dimensions();
 }
 
 // =============================================================================
@@ -279,31 +178,20 @@ void Pipeline::_init_assembly() {
 }
 
 // =============================================================================
-void Pipeline::_init_blend() {
-    _blend_attachments = {{
-        .blendEnable = false,
-
-        .srcColorBlendFactor = vk::BlendFactor::eOne,
-        .dstColorBlendFactor = vk::BlendFactor::eZero,
-        .colorBlendOp        = vk::BlendOp::eAdd,
-
-        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
-        .dstAlphaBlendFactor = vk::BlendFactor::eZero,
-        .alphaBlendOp        = vk::BlendOp::eAdd,
-
-        .colorWriteMask = vk::ColorComponentFlagBits::eR |
-                          vk::ColorComponentFlagBits::eG |
-                          vk::ColorComponentFlagBits::eB |
-                          vk::ColorComponentFlagBits::eA
-    }};
-
-    _blend_info = {
-        .logicOpEnable   = false,
-        .logicOp         = vk::LogicOp::eAnd,
-        .attachmentCount = static_cast<uint32_t>(_blend_attachments.size()),
-        .pAttachments    = _blend_attachments.data(),
-        .blendConstants  = std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f }
+void Pipeline::_init_viewport() {
+    _viewport_info = vk::PipelineViewportStateCreateInfo {
+        .viewportCount = 1u,
+        .pViewports = nullptr,
+        .scissorCount = 1u,
+        .pScissors = nullptr,
     };
+
+    CONSOLE_TRACE("Viewport count: {}", _viewport_info.viewportCount);
+    CONSOLE_TRACE("Scissor count:  {}", _viewport_info.scissorCount);
+
+    // viewports and scissor rectangles are all sized the same as the surface
+    // at present
+    update_dimensions();
 }
 
 // =============================================================================
@@ -323,24 +211,64 @@ void Pipeline::_init_raster() {
 }
 
 // =============================================================================
+void Pipeline::_init_blend() {
+    _blend_states = {{
+        .blendEnable = false,
+
+        .srcColorBlendFactor = vk::BlendFactor::eOne,
+        .dstColorBlendFactor = vk::BlendFactor::eZero,
+        .colorBlendOp        = vk::BlendOp::eAdd,
+
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+        .alphaBlendOp        = vk::BlendOp::eAdd,
+
+        .colorWriteMask = vk::ColorComponentFlagBits::eR |
+                          vk::ColorComponentFlagBits::eG |
+                          vk::ColorComponentFlagBits::eB |
+                          vk::ColorComponentFlagBits::eA
+    }};
+
+    _blend_info = {
+        .logicOpEnable   = false,
+        .logicOp         = vk::LogicOp::eAnd,
+        .attachmentCount = static_cast<uint32_t>(_blend_states.size()),
+        .pAttachments    = _blend_states.data(),
+        .blendConstants  = std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f }
+    };
+}
+
+// =============================================================================
+void Pipeline::_init_dynamic_states() {
+    _dynamic_states = { 
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor,
+    };
+
+    CONSOLE_TRACE("Dynamic state count: {}", _dynamic_states.size());
+
+    _dynamic_state_info = {
+        .dynamicStateCount = static_cast<uint32_t>(_dynamic_states.size()),
+        .pDynamicStates    = _dynamic_states.data(),
+    };
+}
+
+// =============================================================================
 Pipeline::Pipeline(const Swapchain &swapchain) :
     _vert               { nullptr },
     _frag               { nullptr },
     _viewport           { },
     _scissor            { },
-    _layout             { nullptr },
-    _renderpass         { nullptr },
-    _dynamic_state_info { },
-    _viewport_info      { },
     _vert_input_info    { },
     _assembly_info      { },
-    _blend_info         { },
+    _viewport_info      { },
     _raster_info        { },
+    _blend_info         { },
+    _dynamic_state_info { },
+    _render_pass        { },
+    _layout             { nullptr },
     _pipeline           { nullptr },
     _swapchain          { swapchain }
-{    
-    _attachments.reserve(10);
-    _framebuffers.resize(RenderConfig::swapchain_image_count);
-}
+{ }
 
 } // namespace vkl

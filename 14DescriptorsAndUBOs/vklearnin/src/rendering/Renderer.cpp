@@ -3,7 +3,7 @@
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
-#include "vklearnin/engine/Framebuffer.hpp"
+#include "vklearnin/rendering/Framebuffer.hpp"
 #include "vklearnin/rendering/devices/CmdQueue.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/engine/Pipeline.hpp"

@@ -4,6 +4,9 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/rendering/devices/CmdPool.hpp"
 #include "vklearnin/rendering/devices/CmdBuffer.hpp"
+#include "vklearnin/shaders/DescriptorPool.hpp"
+#include "vklearnin/shaders/DescriptorSetLayout.hpp"
+#include "vklearnin/shaders/DescriptorSet.hpp"
 
 namespace vkl {
 
@@ -17,10 +20,12 @@ public:
     void create();
     void destroy();
 
-    inline const auto & cmd_pool()        const { return _cmd_pool; }
-    inline const auto & cmd_buffer()      const { return _cmd_buffer; }
-    inline const auto & dsc_set_layouts() const { return _set_layouts; }
-    inline const auto & dsc_sets()        const { return _sets; }
+    inline const auto & cmd_pool()   const { return _cmd_pool; }
+    inline const auto & cmd_buffer() const { return _cmd_buffer; }
+    inline const auto & descriptor_set_layout() const {
+        return _descriptor_set_layout;
+    }
+    inline const auto & descriptor_set() const { return _descriptor_set; }
 
     FrameData() = default;
     ~FrameData() = default;
@@ -35,14 +40,9 @@ private:
     CmdPool   _cmd_pool;
     CmdBuffer _cmd_buffer;
 
-    BufferObject _ubo;
-
-    vk::DescriptorPool _dsc_pool;
-
-    std::vector<vk::DescriptorSetLayout> _set_layouts;
-    std::vector<vk::DescriptorSet>       _sets;
-
-    void _init_descriptors();
+    DescriptorPool      _descriptor_pool;
+    DescriptorSetLayout _descriptor_set_layout;
+    DescriptorSet       _descriptor_set;
 };
 
 } // namespace vkl

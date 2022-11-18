@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_ENGINE_FRAMEBUFFER_HPP
-#define VKLEARNIN_ENGINE_FRAMEBUFFER_HPP
+#ifndef VKLEARNIN_RENDERING_FRAMEBUFFER_HPP
+#define VKLEARNIN_RENDERING_FRAMEBUFFER_HPP
 
 #include "vklearnin/system/pch.hpp"
 
@@ -10,8 +10,8 @@ class Pipeline;
 
 class Framebuffer final {
 public:
-    void create(const Swapchain &swapchain, const Pipeline &pipeline,
-                const uint32_t image_index);
+    void create(const vk::Extent2D &extent, const vk::ImageView &image_view,
+                const vk::RenderPass &render_pass);
     void destroy();
 
     const auto & native() const { return _framebuffer; }
@@ -32,4 +32,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_ENGINE_FRAMEBUFFER_HPP
+#endif // VKLEARNIN_RENDERING_FRAMEBUFFER_HPP
