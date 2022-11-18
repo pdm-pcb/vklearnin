@@ -252,7 +252,7 @@ void Swapchain::_query_surface_format() {
     _color_space    = formats[0].colorSpace;
 
     for(const auto &format : formats) {
-        if(format.format == vk::Format::eB8G8R8A8Srgb &&
+        if(format.format == vk::Format::eB8G8R8A8Unorm &&
            format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
         {
             _surface_format = format.format;

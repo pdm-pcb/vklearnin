@@ -62,7 +62,7 @@ void Engine::render_loop() {
 
     // Everybody loves the clear color
     vk::ClearValue clear_values[] = {
-        { .color { std::array<float, 4> { 0.01f, 0.01f, 0.02f, 1.0f }}}
+        { .color { std::array<float, 4> { 0.08f, 0.08f, 0.16f, 1.0f }}}
     };
 
     const auto &render_pass = _pipeline->render_pass();
