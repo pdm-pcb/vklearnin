@@ -53,8 +53,7 @@ void VKDebugger::init(vk::Instance &instance) {
         .messageType = (
             vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral     |
             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation  |
-            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
-            vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding
+            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
         ),
         .pfnUserCallback = VKDebugger::messenger
     };

@@ -5,7 +5,7 @@
 
 namespace vkl {
 
-struct Vertex {
+struct alignas(128) Vertex {
     std::array<float, 4> position;
     std::array<float, 4> color;
     std::array<float, 2> texcoord;
