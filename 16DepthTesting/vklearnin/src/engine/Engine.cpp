@@ -190,7 +190,7 @@ void Engine::init() {
     );
 
     _camera_data.view_matrix = glm::lookAt(
-        { 0.0f, 0.0f, 2.0f },
+        { 0.0f, 0.0f, 3.0f },
         math::forward_vec3,
         math::up_vec3
     );

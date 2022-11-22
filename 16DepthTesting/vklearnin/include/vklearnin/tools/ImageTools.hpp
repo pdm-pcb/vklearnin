@@ -14,6 +14,7 @@ ImageObject load_from_file(const char *filepath,
                            const bool flip_vertical = false);
 
 ImageObject create_image(const vk::Extent3D &extent,
+                         const uint8_t channels,
                          const vk::Format &color_format,
                          const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,

@@ -76,6 +76,7 @@ void RenderPass::_default_attachments(const Swapchain &swapchain) {
             .height = swapchain.extent().height,
             .depth = 1u
         },
+        1u,
         _find_depth_stencil_format(),
         vk::ImageAspectFlagBits::eDepth,
         vk::ImageTiling::eOptimal,

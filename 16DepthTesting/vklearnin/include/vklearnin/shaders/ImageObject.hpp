@@ -2,21 +2,22 @@
 #define VKLEARNIN_SHADERS_IMAGEOBJECT_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/tools/VKAllocator.hpp"
 
 namespace vkl {
 
 struct ImageObject {
-    vk::Image        image;
-    vk::ImageView    view;
-    vk::DeviceMemory memory;
-    vk::Format       format;
-    vk::ImageLayout  layout;
-    vk::Sampler      sampler;
+    vk::Image        image   { };
+    vk::ImageView    view    { };
+    vk::Format       format  { };
+    vk::ImageLayout  layout  { };
+    vk::Sampler      sampler { };
 
-    uint32_t width      = 0u;
-    uint32_t height     = 0u;
-    uint32_t channels   = 0u;
-    size_t   size_bytes = 0;
+    uint32_t width    = 0u;
+    uint32_t height   = 0u;
+    uint32_t channels = 0u;
+
+    VKAllocator::Alloc allocation;
 };
 
 } // namespace vkl

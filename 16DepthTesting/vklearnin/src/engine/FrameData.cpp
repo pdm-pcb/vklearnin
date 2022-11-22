@@ -11,17 +11,17 @@ void FrameData::update_instance_data(const InstanceData &data) {
     const auto &buffer = _descriptor_set.instance_buffer();
 
     auto result = LogicalDevice::native().mapMemory(
-        buffer.memory,
+        buffer.allocation.memory,
         0u,
-        buffer.size
+        buffer.allocation.size
     );
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to map device memory");
     }
 
     void *mapped = result.value;
-        memcpy(mapped, &data, buffer.size);
-    LogicalDevice::native().unmapMemory(buffer.memory);
+        memcpy(mapped, &data, buffer.allocation.size);
+    LogicalDevice::native().unmapMemory(buffer.allocation.memory);
 }
 
 // =============================================================================

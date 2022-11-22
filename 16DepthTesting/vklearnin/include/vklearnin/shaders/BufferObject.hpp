@@ -2,14 +2,14 @@
 #define VKLEARNIN_SHADERS_BUFFEROBJECT_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/tools/VKAllocator.hpp"
 
 namespace vkl {
 
 struct BufferObject {
-    vk::Buffer       buffer;
-    vk::DeviceMemory memory;
+    vk::Buffer buffer { };
 
-    size_t size = 0u;
+    VKAllocator::Alloc allocation;
 };
 
 } // namespace vkl

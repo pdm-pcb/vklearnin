@@ -3,14 +3,12 @@
 
 #include "vklearnin/rendering/devices/PhysicalDevice.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
+#include "vklearnin/tools/VKAllocator.hpp"
 
 #include <stb/stb_image.h>
 
 namespace vkl {
 namespace ImageTools {
-
-uint32_t find_memory_type(const vk::MemoryPropertyFlags &flags,
-                          const vk::MemoryRequirements &mem_reqs);
 
 // =============================================================================
 ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
@@ -44,6 +42,7 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
             .height = static_cast<uint32_t>(height),
             .depth  = 1u
         },
+        static_cast<uint8_t>(channels),
         vk::Format::eR8G8B8A8Unorm,
         vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
@@ -58,9 +57,9 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
     result.height = static_cast<uint32_t>(height);
     result.channels = static_cast<uint32_t>(channels);
 
-    result.size_bytes = result.width * result.height * ::STBI_rgb_alpha;
+    result.allocation.size = result.width * result.height * ::STBI_rgb_alpha;
     auto staging_buffer =
-        BufferTools::stage_data(result.size_bytes, image_data);
+        BufferTools::stage_data(result.allocation.size, image_data);
     ImageTools::move_to_device(
         staging_buffer,
         result,
@@ -84,6 +83,7 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
 
 // =============================================================================
 ImageObject create_image(const vk::Extent3D &extent,
+                         const uint8_t channels,
                          const vk::Format &color_format,
                          const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,
@@ -92,8 +92,6 @@ ImageObject create_image(const vk::Extent3D &extent,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties)
 {
-    ImageObject result { };
-
     vk::ImageCreateInfo image_info {
         .imageType   = vk::ImageType::e2D,
         .format      = color_format,
@@ -109,50 +107,24 @@ ImageObject create_image(const vk::Extent3D &extent,
         .initialLayout = vk::ImageLayout::eUndefined
     };
 
-    auto create_result = LogicalDevice::native().createImage(image_info);
-    if(create_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Failed to create image");
+    auto result = LogicalDevice::native().createImage(image_info);
+    if(result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Failed to create image. {}",
+                         to_string(result.result));
     }
 
-    vk::Image image = create_result.value;
-    
-    vk::MemoryRequirements mem_reqs;
-    LogicalDevice::native().getImageMemoryRequirements(image, &mem_reqs);
-    uint32_t type_index = find_memory_type(memory_properties, mem_reqs);
-
-    vk::MemoryAllocateInfo allocate_info {
-        .allocationSize = mem_reqs.size,
-        .memoryTypeIndex = type_index
-    };
-
-    auto alloc_result = LogicalDevice::native().allocateMemory(allocate_info);
-
-    if(alloc_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Failed to allocate image");
-    }
-    vk::DeviceMemory device_memory = alloc_result.value;
-
-    auto bind_result =
-        LogicalDevice::native().bindImageMemory(image, device_memory, 0u);
-
-    if(bind_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to bind image");
-    }
-
-    CONSOLE_TRACE(
-        "Created image {:#x}, device memory {:#x}",
-        reinterpret_cast<uint64_t>(VkImage(image)),
-        reinterpret_cast<uint64_t>(VkDeviceMemory(device_memory))
-    );
-
-    vk::ImageView view = create_view(image, color_format, image_aspect);
+    auto alloc = VKAllocator::allocate(result.value, memory_properties);
+    auto view = create_view(result.value, color_format, image_aspect);
 
     return {
-        .image  = image,
+        .image  = result.value,
         .view   = view,
-        .memory = device_memory,
         .format = color_format,
-        .layout = vk::ImageLayout::eUndefined
+        .layout = vk::ImageLayout::eUndefined,
+        .width  = extent.width,
+        .height = extent.height,
+        .channels = channels,
+        .allocation = alloc,
     };
 }
 
@@ -164,7 +136,14 @@ void destroy_image(const ImageObject &image) {
 
     LogicalDevice::native().destroy(image.image);
     LogicalDevice::native().destroy(image.view);
-    LogicalDevice::native().freeMemory(image.memory);
+    
+    VKAllocator::free({
+        .memory = image.allocation.memory,
+        .id     = 0u,
+        .size   = image.allocation.size,
+        .offset = 0,
+    });
+
     LogicalDevice::native().destroy(image.sampler);
 }
 
@@ -356,27 +335,6 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         );    
         BufferTools::end_oneshot_cmd_buffer(command_buffer);
     transition_layout(dest, vk::ImageLayout::eShaderReadOnlyOptimal);
-}
-
-// =============================================================================
-uint32_t find_memory_type(const vk::MemoryPropertyFlags &flags,
-                          const vk::MemoryRequirements &reqs)
-{
-    vk::PhysicalDeviceMemoryProperties mem_props;
-    PhysicalDevice::native().getMemoryProperties(&mem_props);
-
-    for(uint32_t type_index = 0;
-        type_index < mem_props.memoryTypeCount;
-        ++type_index)
-    {
-        if(reqs.memoryTypeBits & (1 << type_index)) {
-            if(mem_props.memoryTypes[type_index].propertyFlags & flags) {
-                return type_index;
-            }
-        }
-    }
-
-    return std::numeric_limits<uint32_t>::max();
 }
 
 } // namespace ImageTools
