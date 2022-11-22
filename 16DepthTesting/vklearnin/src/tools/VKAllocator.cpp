@@ -344,7 +344,7 @@ void VKAllocator::_print_alloc_state() {
         for(size_t block_idx = 0; block_idx < pool.blocks.size(); ++block_idx) {
             const auto &block = pool.blocks[block_idx];
 
-            state_stream << "\nBlock " << block_idx << ": "
+            state_stream << "\n  Block " << block_idx << ": "
                          << block.allocs.size() << " allocs. "
                          << _size_string(block.used_size) << " / "
                          << _size_string(block.free_size);
