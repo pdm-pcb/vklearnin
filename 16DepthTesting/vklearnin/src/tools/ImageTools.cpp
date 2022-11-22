@@ -137,12 +137,7 @@ void destroy_image(const ImageObject &image) {
     LogicalDevice::native().destroy(image.image);
     LogicalDevice::native().destroy(image.view);
     
-    VKAllocator::free({
-        .memory = image.allocation.memory,
-        .id     = 0u,
-        .size   = image.allocation.size,
-        .offset = 0,
-    });
+    VKAllocator::free(image.allocation);
 
     LogicalDevice::native().destroy(image.sampler);
 }

@@ -157,6 +157,8 @@ void Engine::render_loop() {
 
 // =============================================================================
 void Engine::init() {
+    VKAllocator::init();
+
     // Finally on to the meat of Engine's own stuff. First, configure and
     // create a swapchain with the double buffering and surface details we
     // require

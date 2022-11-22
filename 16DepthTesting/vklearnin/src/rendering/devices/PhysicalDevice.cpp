@@ -251,7 +251,7 @@ void PhysicalDevice::_store_physical_device(
 
 // =============================================================================
 void PhysicalDevice::_print_family_flags(const uint32_t family,
-                             const vk::QueueFlags flags)
+                                         const vk::QueueFlags flags)
 {
     std::stringstream flags_stream;
     flags_stream << family << ": ";
