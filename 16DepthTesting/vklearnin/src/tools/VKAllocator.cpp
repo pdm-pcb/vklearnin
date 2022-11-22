@@ -334,30 +334,30 @@ void VKAllocator::_print_memory_flags(const uint32_t type_index,
 }
 
 void VKAllocator::_print_alloc_state() {
-    std::stringstream state_stream;
+    // std::stringstream state_stream;
 
-    for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx) {
-        const auto &pool = _pools[pool_idx];
-        state_stream << "\nPool " << pool_idx << ": " << pool.blocks.size()
-                     << " blocks";
+    // for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx) {
+    //     const auto &pool = _pools[pool_idx];
+    //     state_stream << "\nPool " << pool_idx << ": " << pool.blocks.size()
+    //                  << " blocks";
 
-        for(size_t block_idx = 0; block_idx < pool.blocks.size(); ++block_idx) {
-            const auto &block = pool.blocks[block_idx];
+    //     for(size_t block_idx = 0; block_idx < pool.blocks.size(); ++block_idx) {
+    //         const auto &block = pool.blocks[block_idx];
 
-            state_stream << "\n  Block " << block_idx << ": "
-                         << block.allocs.size() << " allocs. "
-                         << _size_string(block.used_size) << " / "
-                         << _size_string(block.free_size);
+    //         state_stream << "\n  Block " << block_idx << ": "
+    //                      << block.allocs.size() << " allocs. "
+    //                      << _size_string(block.used_size) << " / "
+    //                      << _size_string(block.free_size);
 
-            for(const auto &alloc : block.allocs) {
-                state_stream << "\n\tAllocation: " << _size_string(alloc.size)
-                             << ",\tAlignment: "  << _size_string(alloc.align)
-                             << ",\tOffset: " << _size_string(alloc.offset);
-            }
-        }
-    }
+    //         for(const auto &alloc : block.allocs) {
+    //             state_stream << "\n\tAllocation: " << _size_string(alloc.size)
+    //                          << ",\tAlignment: "  << _size_string(alloc.align)
+    //                          << ",\tOffset: " << _size_string(alloc.offset);
+    //         }
+    //     }
+    // }
 
-    CONSOLE_INFO("{}", state_stream.str());
+    // CONSOLE_INFO("{}", state_stream.str());
 }
 
 } // namespace vkl
