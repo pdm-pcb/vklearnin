@@ -41,11 +41,11 @@ BufferObject create_buffer(const size_t size_bytes,
 
 // =============================================================================
 void destroy_buffer(BufferObject &buffer) {
-    CONSOLE_TRACE(
-        "Destroying buffer {:#x}, memory {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(buffer.buffer)),
-        reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.allocation.memory))
-    );
+    // CONSOLE_TRACE(
+    //     "Destroying buffer {:#x}, memory {:#x}",
+    //     reinterpret_cast<uint64_t>(VkBuffer(buffer.buffer)),
+    //     reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.allocation.memory))
+    // );
 
     VKAllocator::free(buffer.allocation);
     LogicalDevice::native().destroy(buffer.buffer);
@@ -84,24 +84,9 @@ BufferObject stage_data(const size_t size_bytes, const void *data) {
          vk::MemoryPropertyFlagBits::eHostCoherent)
     );
 
-    auto result = LogicalDevice::native().mapMemory(
-        staging_buffer.allocation.memory,
-        0u,
-        size_bytes
-    );
-
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not map device memory {:#x}",
-            reinterpret_cast<uint64_t>(
-                VkDeviceMemory(staging_buffer.allocation.memory)
-            )
-        );
-    }
-
-    void *destination = result.value;
+    void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
         memcpy(destination, data, size_bytes);
-    LogicalDevice::native().unmapMemory(staging_buffer.allocation.memory);
+    VKAllocator::unmap_buffer(staging_buffer.allocation);
 
     return staging_buffer;
 }

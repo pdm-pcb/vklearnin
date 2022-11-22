@@ -212,6 +212,8 @@ void Engine::shutdown() {
     _destroy_frames();
     _pipeline->destroy();
     _swapchain->destroy();
+
+    VKAllocator::shutdown();
 }
 
 // =============================================================================
