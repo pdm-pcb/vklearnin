@@ -9,6 +9,22 @@ namespace vkl {
 
 // =============================================================================
 void RenderPass::create_framebuffers(const Swapchain &swapchain) {
+    _depth_stencil = ImageTools::create_image(
+        {
+            .width = swapchain.extent().width,
+            .height = swapchain.extent().height,
+            .depth = 1u
+        },
+        1u,
+        _find_depth_stencil_format(),
+        vk::ImageAspectFlagBits::eDepth,
+        vk::ImageTiling::eOptimal,
+        1u,
+        vk::SampleCountFlagBits::e1,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        vk::MemoryPropertyFlagBits::eDeviceLocal
+    );
+
     for(uint32_t image_index = 0;
         image_index < RenderConfig::swapchain_image_count;
         ++image_index)
@@ -27,6 +43,8 @@ void RenderPass::destroy_framebuffers() {
     for(auto &framebuffer : _framebuffers) {
         framebuffer.destroy();
     }
+
+    ImageTools::destroy_image(_depth_stencil);
 }
 
 //==============================================================================
@@ -64,28 +82,11 @@ void RenderPass::create(const Swapchain &swapchain) {
 //==============================================================================
 void RenderPass::destroy() {
     destroy_framebuffers();
-    ImageTools::destroy_image(_depth_stencil);
     LogicalDevice::native().destroy(_render_pass);
 }
 
 //==============================================================================
 void RenderPass::_default_attachments(const Swapchain &swapchain) {
-    _depth_stencil = ImageTools::create_image(
-        {
-            .width = swapchain.extent().width,
-            .height = swapchain.extent().height,
-            .depth = 1u
-        },
-        1u,
-        _find_depth_stencil_format(),
-        vk::ImageAspectFlagBits::eDepth,
-        vk::ImageTiling::eOptimal,
-        1u,
-        vk::SampleCountFlagBits::e1,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal
-    );
-
     _attachments.clear();
     _attachments = {
         {

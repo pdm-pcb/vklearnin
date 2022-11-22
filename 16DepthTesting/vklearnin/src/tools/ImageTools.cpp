@@ -129,7 +129,7 @@ ImageObject create_image(const vk::Extent3D &extent,
 }
 
 // =============================================================================
-void destroy_image(const ImageObject &image) {
+void destroy_image(ImageObject &image) {
     CONSOLE_TRACE("Destroying image view {:#x}, sampler {:#x}",
                    reinterpret_cast<uint64_t>(::VkImageView(image.view)),
                    reinterpret_cast<uint64_t>(::VkSampler(image.sampler)));
@@ -140,6 +140,21 @@ void destroy_image(const ImageObject &image) {
     VKAllocator::free(image.allocation);
 
     LogicalDevice::native().destroy(image.sampler);
+
+
+    // // I want these here... but when they're not, they help catch double
+    // // deletions. =)
+    // image.image   = { nullptr };
+    // image.view    = { nullptr };
+    // image.format  = { };
+    // image.layout  = { };
+    // image.sampler = { nullptr };
+
+    // image.width    = 0u;
+    // image.height   = 0u;
+    // image.channels = 0u;
+
+    // image.allocation = { };
 }
 
 // =============================================================================

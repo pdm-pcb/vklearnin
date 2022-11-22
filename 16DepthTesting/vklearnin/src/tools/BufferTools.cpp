@@ -49,8 +49,6 @@ void destroy_buffer(BufferObject &buffer) {
 
     VKAllocator::free(buffer.allocation);
     LogicalDevice::native().destroy(buffer.buffer);
-
-    buffer.buffer = nullptr;
 }
 
 // =============================================================================

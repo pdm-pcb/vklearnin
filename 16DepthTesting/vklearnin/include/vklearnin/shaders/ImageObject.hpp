@@ -7,11 +7,11 @@
 namespace vkl {
 
 struct ImageObject {
-    vk::Image        image   { };
-    vk::ImageView    view    { };
+    vk::Image        image   { nullptr };
+    vk::ImageView    view    { nullptr };
     vk::Format       format  { };
     vk::ImageLayout  layout  { };
-    vk::Sampler      sampler { };
+    vk::Sampler      sampler { nullptr };
 
     uint32_t width    = 0u;
     uint32_t height   = 0u;

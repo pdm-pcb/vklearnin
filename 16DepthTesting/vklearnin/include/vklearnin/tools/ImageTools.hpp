@@ -23,7 +23,7 @@ ImageObject create_image(const vk::Extent3D &extent,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties);
 
-void destroy_image(const ImageObject &image);
+void destroy_image(ImageObject &image);
 
 vk::ImageView create_view(const vk::Image &image,
                           const vk::Format &color_format,

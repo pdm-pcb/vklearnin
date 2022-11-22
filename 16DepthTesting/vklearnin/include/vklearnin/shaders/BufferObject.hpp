@@ -7,7 +7,7 @@
 namespace vkl {
 
 struct BufferObject {
-    vk::Buffer buffer { };
+    vk::Buffer buffer { nullptr };
 
     VKAllocator::Alloc allocation;
 };
