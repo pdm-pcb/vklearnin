@@ -64,6 +64,7 @@ void RenderPass::create(const Swapchain &swapchain) {
 //==============================================================================
 void RenderPass::destroy() {
     destroy_framebuffers();
+    ImageTools::destroy_image(_depth_stencil);
     LogicalDevice::native().destroy(_render_pass);
 }
 

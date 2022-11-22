@@ -38,7 +38,6 @@ private:
     std::vector<vk::AttachmentReference>   _color_attachments;
     vk::AttachmentReference                _depth_attachment;
 
-    vk::Format _depth_stencil_format;
     ImageObject _depth_stencil;
 
     std::vector<Framebuffer> _framebuffers;
