@@ -11,7 +11,7 @@ void FrameData::update_instance_data(const InstanceData &data) {
     const auto &buffer = _descriptor_set.instance_buffer();
 
     void *mapped = VKAllocator::map_buffer(buffer.allocation);
-        memcpy(mapped, &data, buffer.allocation.size);
+        memcpy(mapped, &data, buffer.allocation->size);
     VKAllocator::unmap_buffer(buffer.allocation);
 }
 

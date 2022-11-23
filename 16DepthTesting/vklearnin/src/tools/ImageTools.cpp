@@ -57,9 +57,9 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
     result.height = static_cast<uint32_t>(height);
     result.channels = static_cast<uint32_t>(channels);
 
-    result.allocation.size = result.width * result.height * ::STBI_rgb_alpha;
+    result.size = result.width * result.height * ::STBI_rgb_alpha;
     auto staging_buffer =
-        BufferTools::stage_data(result.allocation.size, image_data);
+        BufferTools::stage_data(result.size, image_data);
     ImageTools::move_to_device(
         staging_buffer,
         result,

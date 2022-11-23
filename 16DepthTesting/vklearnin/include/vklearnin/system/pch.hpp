@@ -49,6 +49,7 @@
 #include <set>
 #include <fstream>
 #include <chrono>
+#include <format>
 
 #include "vklearnin/tools/math.hpp"
 

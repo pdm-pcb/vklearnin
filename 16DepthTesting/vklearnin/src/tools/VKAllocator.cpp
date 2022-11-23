@@ -6,13 +6,13 @@
 
 namespace vkl {
 
-const uint64_t VKAllocator::_block_size = 256u * 1024u * 1024u;
-const uint8_t  VKAllocator::_max_blocks = 4u;
-std::vector<VKAllocator::Pool> VKAllocator::_pools;
+const uint64_t VKAllocator::_max_alloc_size = 256u * 1024u * 1024u;
+const uint8_t  VKAllocator::_max_allocs = 4u;
+std::vector<VKAllocator::DevicePool> VKAllocator::_pools;
 vk::PhysicalDeviceMemoryProperties VKAllocator::_memory_properties { };
 
 // =============================================================================
-VKAllocator::Alloc VKAllocator::allocate(
+VKAllocator::BlockIter VKAllocator::allocate(
     const vk::Buffer &buffer,
     const vk::MemoryPropertyFlags memory_properties)
 {
@@ -20,37 +20,27 @@ VKAllocator::Alloc VKAllocator::allocate(
     LogicalDevice::native().getBufferMemoryRequirements(buffer, &mem_reqs);
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
-    Alloc user_data {
-        .size  = mem_reqs.size,
-        .align = mem_reqs.alignment,
-        .type  = type_index,
-    };
+    auto block_iter = _find_free_block(mem_reqs, type_index);
 
-    _find_free_block(user_data);
+    CONSOLE_INFO("");
+    _print_alloc_state();
 
-    auto &block = _pools[user_data.type].blocks[user_data.block_index];
-    CONSOLE_TRACE(
-        "Buffer {:#x}: {:#x} device memory, {} offset",
-        reinterpret_cast<uint64_t>(VkBuffer(buffer)),
-        reinterpret_cast<uint64_t>(VkDeviceMemory(block.memory)),
-        user_data.offset
-    );
-
+    auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
     auto bind_result = LogicalDevice::native().bindBufferMemory(
         buffer,
-        block.memory,
-        user_data.offset
+        alloc.memory,
+        block_iter->offset
     );
 
     if(bind_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to bind buffer", to_string(bind_result));
     }
 
-    return user_data;
+    return block_iter;
 }
 
 // =============================================================================
-VKAllocator::Alloc VKAllocator::allocate(
+VKAllocator::BlockIter VKAllocator::allocate(
     const vk::Image &image,
     const vk::MemoryPropertyFlags memory_properties)
 {    
@@ -58,42 +48,32 @@ VKAllocator::Alloc VKAllocator::allocate(
     LogicalDevice::native().getImageMemoryRequirements(image, &mem_reqs);
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
-    Alloc user_data {
-        .size  = mem_reqs.size,
-        .align = mem_reqs.alignment,
-        .type  = type_index,
-    };
+    auto block_iter = _find_free_block(mem_reqs, type_index);
 
-    _find_free_block(user_data);
+    CONSOLE_INFO("");
+    _print_alloc_state();
 
-    auto &block = _pools[user_data.type].blocks[user_data.block_index];
-    CONSOLE_TRACE(
-        "Image {:#x}: {:#x} device memory, {} offset",
-        reinterpret_cast<uint64_t>(VkImage(image)),
-        reinterpret_cast<uint64_t>(VkDeviceMemory(block.memory)),
-        user_data.offset
-    );
-
+    auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
     auto bind_result = LogicalDevice::native().bindImageMemory(
         image,
-        block.memory,
-        user_data.offset
+        alloc.memory,
+        block_iter->offset
     );
 
     if(bind_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to bind image", to_string(bind_result));
     }
 
-    return user_data;
+    return block_iter;
 }
 
 // =============================================================================
-void * VKAllocator::map_buffer(const Alloc &allocation) {
-    auto &block = _pools[allocation.type].blocks[allocation.block_index];
+void * VKAllocator::map_buffer(const BlockIter &block_iter) {
+    auto &block = _pools[block_iter->type_index].allocs[block_iter->alloc_index];
     auto result = LogicalDevice::native().mapMemory(
         block.memory,
-        allocation.offset,
-        allocation.size
+        block_iter->offset,
+        block_iter->size
     );
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to map device memory");
@@ -103,23 +83,94 @@ void * VKAllocator::map_buffer(const Alloc &allocation) {
 }
 
 // =============================================================================
-void VKAllocator::unmap_buffer(const Alloc &allocation) {
-    auto &block = _pools[allocation.type].blocks[allocation.block_index];
+void VKAllocator::unmap_buffer(const BlockIter &block_iter) {
+    auto &block = _pools[block_iter->type_index].allocs[block_iter->alloc_index];
     LogicalDevice::native().unmapMemory(block.memory);
 }
 
 // =============================================================================
-void VKAllocator::free(Alloc &allocation) {
-    auto &blocks = _pools[allocation.type].blocks;
-    auto &block = blocks[allocation.block_index];
+void VKAllocator::free(BlockIter &block_iter) {
+    auto &pool = _pools[block_iter->type_index];
+    auto &alloc = pool.allocs[block_iter->alloc_index];
+    auto &blocks = alloc.blocks;
 
-    block.allocs.erase(allocation.alloc_iter);
-    // Yeah... gotta do my own system-side allocator and then I'll come back
-    // to this
-    // block.free_size += allocation.size;
-    // block.used_size -= allocation.size;
-    
-    allocation = Alloc { };
+    auto block_size = block_iter->size;
+
+    CONSOLE_TRACE(
+        "// free {} from pool {}, alloc {}",
+        _size_string(block_size),
+        block_iter->type_index,
+        block_iter->alloc_index
+    );
+
+    BlockIter next_block = std::next(block_iter, 1);
+    if(block_iter == blocks.begin() && next_block != blocks.end()) {
+        CONSOLE_TRACE("// iter is begin and not end");
+        if(!next_block->free) {
+            CONSOLE_TRACE("// Nothing to do here but mark this block as free");
+            block_iter->free = true;
+        }
+        else {
+            CONSOLE_TRACE("// Absorb the block below");
+            next_block->size   += block_iter->size;
+            next_block->offset -= block_iter->size;
+
+            blocks.erase(block_iter);
+        }
+    }
+    else if(block_iter != blocks.begin() && next_block == blocks.end()) {
+        CONSOLE_TRACE("// iter is not begin and is end");
+        BlockIter prev_block = std::prev(block_iter, 1);
+        if(!prev_block->free) {
+            CONSOLE_TRACE("// Nothing to do here but mark this block as free");
+            block_iter->free = true;
+        }
+        else {
+            CONSOLE_TRACE("// Absorb the block above");
+            prev_block->size += block_iter->size;
+
+            blocks.erase(block_iter);
+        }
+    }
+    else if(block_iter == blocks.begin() && next_block == blocks.end()) {
+        CONSOLE_TRACE("// iter is both begin and end");
+        CONSOLE_TRACE("// Nothing to do here but mark this block as free");
+        block_iter->free = true;
+    }
+    else {
+        CONSOLE_TRACE("// iter is neither begin and nor end");
+        BlockIter prev_block = std::prev(block_iter, 1);
+        if(prev_block->free && !next_block->free) {
+            CONSOLE_TRACE("// Absorb the block above");
+            prev_block->size += block_iter->size;
+
+            blocks.erase(block_iter);
+        }
+        else if(!prev_block->free && next_block->free) {
+            CONSOLE_TRACE("// Absorb the block below");
+            next_block->size   += block_iter->size;
+            next_block->offset -= block_iter->size;
+
+            blocks.erase(block_iter);
+        }
+        else if(prev_block->free && next_block->free) {
+            CONSOLE_TRACE("// Absorb both blocks. Wow!");
+            prev_block->size += block_iter->size;
+            prev_block->size += next_block->size;
+
+            blocks.erase(next_block);
+            blocks.erase(block_iter);
+        }
+        else {
+            CONSOLE_TRACE("// Nothing to do here but mark this block as free");
+            block_iter->free = true;
+        }
+    }
+
+    alloc.used -= block_size;
+    alloc.free += block_size;
+
+    CONSOLE_INFO("");
     _print_alloc_state();
 }
 
@@ -134,8 +185,10 @@ void VKAllocator::init() {
     _pools.resize(_memory_properties.memoryTypeCount);
 
     for(auto &pool : _pools) {
-        pool.blocks.reserve(_max_blocks);
+        pool.allocs.reserve(_max_allocs);
     }
+
+    CONSOLE_TRACE("VKAllocator alloc size: {}", _size_string(_max_alloc_size));
 
 #ifdef VKL_DEBUG
     for(uint32_t heap = 0u; heap < _memory_properties.memoryHeapCount; ++heap) {
@@ -146,91 +199,136 @@ void VKAllocator::init() {
         const auto &mem_type = _memory_properties.memoryTypes[type];
         _print_memory_flags(type, mem_type.heapIndex, mem_type.propertyFlags);
     }
-#endif // VKL_DEBUG
 
-    CONSOLE_TRACE("VKAllocator page size: {}", _size_string(_block_size));
+    CONSOLE_INFO("");
     _print_alloc_state();
+#endif // VKL_DEBUG
 }
 
 // =============================================================================
 void VKAllocator::shutdown() {
     for(auto &pool : _pools) {
-        for(auto &block : pool.blocks) {
-            LogicalDevice::native().freeMemory(block.memory);
+        for(auto &dev_alloc : pool.allocs) {
+            LogicalDevice::native().freeMemory(dev_alloc.memory);
         }
     }
 }
 
 // =============================================================================
-void VKAllocator::_find_free_block(Alloc &user_data) {
-    auto size_reqd = ((user_data.size / user_data.align) + 1) * user_data.align;
+VKAllocator::BlockIter VKAllocator::_find_free_block(
+    const vk::MemoryRequirements &mem_reqs,
+    const uint32_t type_index)
+{
+    auto aligned_size =
+        ((mem_reqs.size / mem_reqs.alignment) + 1) * mem_reqs.alignment;
 
     CONSOLE_TRACE(
         "{:s} requested, {:s} alignment. {:s} required",
-        _size_string(user_data.size),
-        _size_string(user_data.align),
-        _size_string(size_reqd)
+        _size_string(mem_reqs.size),
+        _size_string(mem_reqs.alignment),
+        _size_string(aligned_size)
     );
 
-    assert(user_data.size <= size_reqd);
+    assert(mem_reqs.size <= aligned_size);
 
-    auto &blocks = _pools[user_data.type].blocks;
-    for(size_t block_index = 0; block_index < blocks.size(); ++block_index) {
-        auto &block = blocks[block_index];
-        if(block.free_size > size_reqd) {
-            uint64_t aligned_offset =
-                (block.used_size / user_data.align) * user_data.align;
+    Block new_block {
+        .type_index = type_index,
+        .size = mem_reqs.size,
+        .free = false
+    };
 
-            user_data.offset = aligned_offset;
-            user_data.block_index = block_index;
+    auto &allocs = _pools[type_index].allocs;
+    for(size_t alloc_index = 0; alloc_index < allocs.size(); ++alloc_index)
+    {
+        auto &alloc = allocs[alloc_index];
+        if(alloc.free >= aligned_size)
+        {
+            for(auto block = alloc.blocks.begin();
+                block != alloc.blocks.end();
+                std::advance(block, 1))
+            {
+                if(block->free && block->size >= aligned_size) {
+                    uint64_t aligned_offset =
+                        ((block->offset / mem_reqs.alignment) + 1) *
+                        mem_reqs.alignment;
 
-            block.allocs.emplace_back(user_data);
-            user_data.alloc_iter = std::prev(block.allocs.end());
+                    new_block.alloc_index = alloc_index;
+                    new_block.offset = aligned_offset;
 
-            block.free_size -= size_reqd;
-            block.used_size += size_reqd;
+                    auto new_iter = alloc.blocks.emplace(block, new_block);
 
-            break;
+                    block->offset += aligned_size;
+                    block->size   -= aligned_size;
+
+                    if(block->size == 0u) {
+                        alloc.blocks.erase(block);
+                    }
+
+                    alloc.used += aligned_size;
+                    alloc.free -= aligned_size;
+
+                    return new_iter;
+                }
+            }
         }
     }
 
-    if(user_data.block_index == std::numeric_limits<size_t>::max()) {
-        assert(blocks.size() < _max_blocks);
+    if(new_block.alloc_index == std::numeric_limits<size_t>::max()) {
+        assert(allocs.size() < _max_allocs);
 
         vk::MemoryAllocateInfo allocate_info {
-            .allocationSize = _block_size,
-            .memoryTypeIndex = user_data.type
+            .allocationSize = _max_alloc_size,
+            .memoryTypeIndex = type_index
         };
         
         auto result = LogicalDevice::native().allocateMemory(allocate_info);
 
         if(result.result != vk::Result::eSuccess) {
             CONSOLE_CRITICAL(
-                "Failed to allocate new block for type {}. {}",
-                user_data.type,
+                "Failed to allocate new device memory for type {}. {}",
+                type_index,
                 to_string(result.result)
             );
         }
         
-        CONSOLE_TRACE("Allocated new block for type {}.", user_data.type);
+        CONSOLE_TRACE("Allocated new device memory for type {}.", type_index);
 
-        user_data.offset = 0u;
-        user_data.block_index = blocks.size();
+        new_block.offset = 0u;
+        new_block.alloc_index = allocs.size();
 
-        blocks.emplace_back(DeviceBlock {
+        allocs.emplace_back(DeviceAllocation {
             .memory = result.value,
-            .free_size = _block_size,
-            .used_size = 0u,
+            .free = _max_alloc_size,
+            .used = 0u,
         });
 
-        blocks.back().allocs.emplace_back(user_data);
-        user_data.alloc_iter = blocks.back().allocs.begin();
+        auto &alloc = allocs.back();
 
-        blocks.back().free_size -= size_reqd;
-        blocks.back().used_size += size_reqd;
+        Block fresh_block {
+            .type_index  = type_index,
+            .alloc_index = allocs.size() - 1,
+            .size        = _max_alloc_size,
+            .offset      = 0u,
+            .free        = true,
+        };
+
+        alloc.blocks.emplace_front(fresh_block);
+        auto current_block = alloc.blocks.begin();
+
+        auto new_iter = alloc.blocks.emplace(current_block, new_block);
+
+        current_block->offset += aligned_size;
+        current_block->size -= aligned_size;
+
+        if(current_block->size == 0u) {
+            alloc.blocks.erase(current_block);
+        }
+
+        alloc.used += aligned_size;
+        alloc.free -= aligned_size;
+
+        return new_iter;
     }
-
-    _print_alloc_state();
 }
 
 // =============================================================================
@@ -250,22 +348,6 @@ uint32_t VKAllocator::_find_memory_type(const vk::MemoryPropertyFlags &flags,
     }
 
     return std::numeric_limits<uint32_t>::max();
-}
-
-// =============================================================================
-const std::string VKAllocator::_size_string(const uint64_t size) {
-    static constexpr uint64_t kb = 1 << 10;
-    static constexpr uint64_t mb = 1 << 20;
-    static constexpr uint64_t gb = 1 << 30;
-
-    static constexpr float   kbf = static_cast<float>(kb);
-    static constexpr float   mbf = static_cast<float>(mb);
-    static constexpr float   gbf = static_cast<float>(gb);
-
-    if     (size < kb) { return fmt::format("{}b", size); }
-    else if(size < mb) { return fmt::format("{:.1f}kb", size / kbf); }
-    else if(size < gb) { return fmt::format("{:.2f}mb", size / mbf); }
-    else               { return fmt::format("{:.3f}gb", size / gbf); }
 }
 
 // =============================================================================
@@ -333,30 +415,55 @@ void VKAllocator::_print_memory_flags(const uint32_t type_index,
 }
 
 void VKAllocator::_print_alloc_state() {
-    // std::stringstream state_stream;
+    std::stringstream state_stream;
 
-    // for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx) {
-    //     const auto &pool = _pools[pool_idx];
-    //     state_stream << "\nPool " << pool_idx << ": " << pool.blocks.size()
-    //                  << " blocks";
+    for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx)
+    {
+        const auto &pool = _pools[pool_idx];
+        state_stream << std::format("\n  Pool {}", pool_idx);
 
-    //     for(size_t block_idx = 0; block_idx < pool.blocks.size(); ++block_idx) {
-    //         const auto &block = pool.blocks[block_idx];
+        for(size_t alloc_idx = 0; alloc_idx < pool.allocs.size(); ++alloc_idx)
+        {
+            const auto &alloc = pool.allocs[alloc_idx];
+            state_stream << std::format(
+                "\n    Alloc {}: {} / {}; {} blocks",
+                alloc_idx,
+                _size_string(alloc.used),
+                _size_string(alloc.free),
+                alloc.blocks.size()
+            );
+            
+            for(const auto &block : alloc.blocks)
+            {
+                state_stream << std::format(
+                    "\n      offset {}\tsize {}\tfree {}",
+                    _size_string(block.offset),
+                    _size_string(block.size),
+                    block.free
+                );
+            }
 
-    //         state_stream << "\n  Block " << block_idx << ": "
-    //                      << block.allocs.size() << " allocs. "
-    //                      << _size_string(block.used_size) << " / "
-    //                      << _size_string(block.free_size);
+            state_stream << "\n";
+        }
+    }
 
-    //         for(const auto &alloc : block.allocs) {
-    //             state_stream << "\n\tAllocation: " << _size_string(alloc.size)
-    //                          << ",\tAlignment: "  << _size_string(alloc.align)
-    //                          << ",\tOffset: " << _size_string(alloc.offset);
-    //         }
-    //     }
-    // }
+    CONSOLE_INFO("{}", state_stream.str());
+}
 
-    // CONSOLE_INFO("{}", state_stream.str());
+// =============================================================================
+const std::string VKAllocator::_size_string(const uint64_t size) {
+    static constexpr uint64_t kb = 1 << 10;
+    static constexpr uint64_t mb = 1 << 20;
+    static constexpr uint64_t gb = 1 << 30;
+
+    static constexpr float   kbf = static_cast<float>(kb);
+    static constexpr float   mbf = static_cast<float>(mb);
+    static constexpr float   gbf = static_cast<float>(gb);
+
+    if     (size < kb) { return fmt::format("{} b", size); }
+    else if(size < mb) { return fmt::format("{:.1f}kb", size / kbf); }
+    else if(size < gb) { return fmt::format("{:.2f}mb", size / mbf); }
+    else               { return fmt::format("{:.3f}gb", size / gbf); }
 }
 
 } // namespace vkl

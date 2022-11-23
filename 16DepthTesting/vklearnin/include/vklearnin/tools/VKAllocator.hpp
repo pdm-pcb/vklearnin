@@ -7,26 +7,41 @@ namespace vkl {
 
 class VKAllocator final {
 public:
-    struct Alloc {
-        uint64_t size   = 0u;
-        uint64_t align  = 0u;
-        uint64_t offset = 0u;
-        uint32_t type   = 0u;
+    struct Block {
+        size_t type_index = std::numeric_limits<size_t>::max();
+        size_t alloc_index = std::numeric_limits<size_t>::max();
+
+        uint64_t size      = 0u;
+        uint64_t offset    = 0u;
         
-        size_t block_index = std::numeric_limits<size_t>::max();
-        std::list<Alloc>::iterator alloc_iter;
+        bool free = true;
     };
 
-    static Alloc allocate(const vk::Buffer &buffer,
-                          const vk::MemoryPropertyFlags memory_properties);
+    struct DeviceAllocation {
+        vk::DeviceMemory memory { };
+        
+        uint64_t free = 0u;
+        uint64_t used = 0u;
 
-    static Alloc allocate(const vk::Image &image,
-                          const vk::MemoryPropertyFlags memory_properties);
+        std::list<Block> blocks;
+    };
 
-    static void * map_buffer(const Alloc &allocation);
-    static void unmap_buffer(const Alloc &allocation);
+    struct DevicePool {
+        std::vector<DeviceAllocation> allocs;
+    };
 
-    static void free(Alloc &allocation);
+    using BlockIter = std::list<Block>::iterator;
+
+    static BlockIter allocate(const vk::Buffer &buffer,
+                             const vk::MemoryPropertyFlags memory_properties);
+
+    static BlockIter allocate(const vk::Image &image,
+                             const vk::MemoryPropertyFlags memory_properties);
+
+    static void * map_buffer(const BlockIter &block_iter);
+    static void unmap_buffer(const BlockIter &block_iter);
+
+    static void free(BlockIter &block_iter);
 
     static void init();
     static void shutdown();
@@ -41,31 +56,17 @@ public:
     VKAllocator & operator=(const VKAllocator &other) = delete;
 
 private:
-    struct DeviceBlock {
-        vk::DeviceMemory memory { };
-        
-        uint64_t free_size = 0u;
-        uint64_t used_size = 0u;
-
-        std::list<Alloc> allocs;
-    };
-
-    struct Pool {
-        std::vector<DeviceBlock> blocks;
-    };
-
-    static const uint64_t _block_size;
-    static const uint8_t  _max_blocks;
-    static std::vector<Pool> _pools;
+    static const uint64_t _max_alloc_size;
+    static const uint8_t  _max_allocs;
+    static std::vector<DevicePool> _pools;
 
     static vk::PhysicalDeviceMemoryProperties _memory_properties;
 
     static uint32_t _find_memory_type(const vk::MemoryPropertyFlags &flags,
                                       const vk::MemoryRequirements &reqs);
 
-    static void _find_free_block(Alloc &user_data);
-
-    static const std::string _size_string(const uint64_t size);
+    static BlockIter _find_free_block(const vk::MemoryRequirements &mem_reqs,
+                                      const uint32_t type_index);
 
     static void _print_heap_flags(const uint32_t heap_index,
                                   const vk::MemoryHeapFlags &flags);
@@ -75,6 +76,8 @@ private:
                                     const vk::MemoryPropertyFlags &flags);
 
     static void _print_alloc_state();
+
+    static const std::string _size_string(const uint64_t size);
 };
 
 } // namespace vkl

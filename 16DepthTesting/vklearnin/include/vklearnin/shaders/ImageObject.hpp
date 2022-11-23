@@ -16,8 +16,9 @@ struct ImageObject {
     uint32_t width    = 0u;
     uint32_t height   = 0u;
     uint32_t channels = 0u;
+    uint32_t size     = 0u;
 
-    VKAllocator::Alloc allocation;
+    VKAllocator::BlockIter allocation;
 };
 
 } // namespace vkl

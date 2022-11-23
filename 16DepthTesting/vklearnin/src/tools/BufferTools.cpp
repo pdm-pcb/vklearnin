@@ -53,15 +53,16 @@ void destroy_buffer(BufferObject &buffer) {
 
 // =============================================================================
 void move_to_device(const void *data, const BufferObject &dest_buffer) {
+    const auto &allocation = dest_buffer.allocation;
     // create the staging buffer
-    BufferObject staging_buffer = stage_data(dest_buffer.allocation.size, data);
+    BufferObject staging_buffer = stage_data(allocation->size, data);
     auto command_buffer = begin_oneshot_cmd_buffer();
 
     // No offsets for either, full size of the buffer
     vk::BufferCopy copy_regions {
         .srcOffset = 0u,
         .dstOffset = 0u,
-        .size = dest_buffer.allocation.size
+        .size = allocation->size
     };
 
     command_buffer.copyBuffer(
