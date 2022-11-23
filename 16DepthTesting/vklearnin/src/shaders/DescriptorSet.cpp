@@ -31,7 +31,8 @@ DescriptorSet::create(const DescriptorPool &descriptor_pool,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::SharingMode::eExclusive,
         (vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent)
+        vk::MemoryPropertyFlagBits::eHostCoherent),
+        "instance desc"
     );
     
     _texture = ImageTools::load_from_file(

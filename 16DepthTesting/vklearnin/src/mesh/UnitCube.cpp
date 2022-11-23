@@ -17,7 +17,8 @@ void UnitCube::create_buffers() {
         (vk::BufferUsageFlagBits::eTransferDst |
          vk::BufferUsageFlagBits::eVertexBuffer),
         vk::SharingMode::eExclusive,
-        vk::MemoryPropertyFlagBits::eDeviceLocal
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        "cube vertex"
     );
 
     _index_buffer = BufferTools::create_buffer(
@@ -25,7 +26,8 @@ void UnitCube::create_buffers() {
         (vk::BufferUsageFlagBits::eTransferDst |
          vk::BufferUsageFlagBits::eIndexBuffer),
         vk::SharingMode::eExclusive,
-        vk::MemoryPropertyFlagBits::eDeviceLocal
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        "cube index"
     );
 
     BufferTools::move_to_device(_vertices.data(), _vertex_buffer);

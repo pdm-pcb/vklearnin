@@ -36,8 +36,10 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
         return result;
     }
 
+    CONSOLE_TRACE("Loaded image '{}'", filepath);
+
     result = ImageTools::create_image(
-        {
+        vk::Extent3D {
             .width  = static_cast<uint32_t>(width),
             .height = static_cast<uint32_t>(height),
             .depth  = 1u
@@ -50,7 +52,8 @@ ImageObject load_from_file(const char *filepath, const bool flip_vertical) {
         vk::SampleCountFlagBits::e1,
         (vk::ImageUsageFlagBits::eTransferDst |
          vk::ImageUsageFlagBits::eSampled),
-        vk::MemoryPropertyFlagBits::eDeviceLocal
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        "tex from file"
     );
 
     result.width = static_cast<uint32_t>(width);
@@ -90,7 +93,8 @@ ImageObject create_image(const vk::Extent3D &extent,
                          const uint32_t mip_levels,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
-                         const vk::MemoryPropertyFlags memory_properties)
+                         const vk::MemoryPropertyFlags memory_properties,
+                         const char *image_name)
 {
     vk::ImageCreateInfo image_info {
         .imageType   = vk::ImageType::e2D,
@@ -113,7 +117,7 @@ ImageObject create_image(const vk::Extent3D &extent,
                          to_string(result.result));
     }
 
-    auto alloc = VKAllocator::allocate(result.value, memory_properties);
+    auto alloc = VKAllocator::allocate(result.value, memory_properties, image_name);
     auto view = create_view(result.value, color_format, image_aspect);
 
     return {

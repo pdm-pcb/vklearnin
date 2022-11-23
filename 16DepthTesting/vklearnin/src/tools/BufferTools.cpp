@@ -14,7 +14,8 @@ namespace BufferTools {
 BufferObject create_buffer(const size_t size_bytes,
                            const vk::BufferUsageFlags usage_flags,
                            const vk::SharingMode sharing_mode,
-                           const vk::MemoryPropertyFlags memory_properties)
+                           const vk::MemoryPropertyFlags memory_properties,
+                           const char *buffer_name)
 {
     const auto &family_indices = PhysicalDevice::family_indices();
     vk::BufferCreateInfo buffer_info {
@@ -35,7 +36,8 @@ BufferObject create_buffer(const size_t size_bytes,
     return {
         .buffer     = create_result.value,
         .allocation = VKAllocator::allocate(create_result.value,
-                                            memory_properties),
+                                            memory_properties,
+                                            buffer_name),
     };
 }
 
@@ -82,7 +84,8 @@ BufferObject stage_data(const size_t size_bytes, const void *data) {
         vk::BufferUsageFlagBits::eTransferSrc,
         vk::SharingMode::eExclusive,
         (vk::MemoryPropertyFlagBits::eHostVisible | 
-         vk::MemoryPropertyFlagBits::eHostCoherent)
+         vk::MemoryPropertyFlagBits::eHostCoherent),
+        "staging buf"
     );
 
     void *destination = VKAllocator::map_buffer(staging_buffer.allocation);

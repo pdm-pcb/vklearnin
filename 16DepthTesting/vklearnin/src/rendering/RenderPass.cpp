@@ -22,7 +22,8 @@ void RenderPass::create_framebuffers(const Swapchain &swapchain) {
         1u,
         vk::SampleCountFlagBits::e1,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        "framebuffer"
     );
 
     for(uint32_t image_index = 0;

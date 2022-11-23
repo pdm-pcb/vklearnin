@@ -21,7 +21,8 @@ ImageObject create_image(const vk::Extent3D &extent,
                          const uint32_t mip_levels,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
-                         const vk::MemoryPropertyFlags memory_properties);
+                         const vk::MemoryPropertyFlags memory_properties,
+                         const char *image_name);
 
 void destroy_image(ImageObject &image);
 

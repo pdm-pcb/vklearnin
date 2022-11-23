@@ -13,7 +13,8 @@ namespace BufferTools {
 BufferObject create_buffer(const size_t size_bytes,
                            const vk::BufferUsageFlags usage_flags,
                            const vk::SharingMode sharing_mode,
-                           const vk::MemoryPropertyFlags memory_properties);
+                           const vk::MemoryPropertyFlags memory_properties,
+                           const char *buffer_name);
 
 void destroy_buffer(BufferObject &buffer);
 

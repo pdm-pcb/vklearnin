@@ -11,10 +11,13 @@ public:
         size_t type_index = std::numeric_limits<size_t>::max();
         size_t alloc_index = std::numeric_limits<size_t>::max();
 
-        uint64_t size      = 0u;
-        uint64_t offset    = 0u;
+        uint64_t offset       = 0u;
+        uint64_t size         = 0u;
+        uint64_t aligned_size = 0u;
         
         bool free = true;
+
+        std::array<char, 64> name = { "unclaimed\0" };
     };
 
     struct DeviceAllocation {
@@ -33,10 +36,12 @@ public:
     using BlockIter = std::list<Block>::iterator;
 
     static BlockIter allocate(const vk::Buffer &buffer,
-                             const vk::MemoryPropertyFlags memory_properties);
+                             const vk::MemoryPropertyFlags memory_properties,
+                             const char *buffer_name);
 
     static BlockIter allocate(const vk::Image &image,
-                             const vk::MemoryPropertyFlags memory_properties);
+                             const vk::MemoryPropertyFlags memory_properties,
+                             const char *image_name);
 
     static void * map_buffer(const BlockIter &block_iter);
     static void unmap_buffer(const BlockIter &block_iter);
