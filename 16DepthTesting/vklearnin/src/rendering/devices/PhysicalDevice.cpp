@@ -94,10 +94,12 @@ void PhysicalDevice::query_devices() {
             "\n"
             "\tDevice Name:    {}\n"
             "\tVRAM:           {}MB\n"
+            "\tUBO Alignment:  {}\n"
             "\tDriver Version: {}\n"
             "\tVulkan Version: {}\n",
             properties.name,
             properties.vram_bytes / 1000 / 1000,
+            props.limits.minUniformBufferOffsetAlignment,
             properties.driver_version,
             properties.vkapi_version
         );
