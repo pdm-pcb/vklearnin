@@ -114,18 +114,18 @@ void Engine::render_loop() {
             { }
         );
 
-        // Renderer::draw(
-        //     command_buffer,
-        //     _xz_unit_plane->vertex_buffer(),
-        //     _xz_unit_plane->index_buffer(),
-        //     static_cast<uint32_t>(_xz_unit_plane->indices().size())
-        // );
         Renderer::draw(
             command_buffer,
-            _unit_cube->vertex_buffer(),
-            _unit_cube->index_buffer(),
-            static_cast<uint32_t>(_unit_cube->indices().size())
+            _xz_unit_plane->vertex_buffer(),
+            _xz_unit_plane->index_buffer(),
+            static_cast<uint32_t>(_xz_unit_plane->indices().size())
         );
+        // Renderer::draw(
+        //     command_buffer,
+        //     _unit_cube->vertex_buffer(),
+        //     _unit_cube->index_buffer(),
+        //     static_cast<uint32_t>(_unit_cube->indices().size())
+        // );
 
     // With that out of the way, that's this pass handled
     command_buffer.endRenderPass();
