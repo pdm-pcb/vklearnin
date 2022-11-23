@@ -56,6 +56,7 @@ private:
 
     static const uint64_t _block_size;
     static const uint8_t  _max_blocks;
+    static const uint64_t _min_align;
     static std::vector<Pool> _pools;
 
     static vk::PhysicalDeviceMemoryProperties _memory_properties;

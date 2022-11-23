@@ -7,7 +7,8 @@
 namespace vkl {
 
 const uint64_t VKAllocator::_block_size = 256u * 1024u * 1024u;
-const uint8_t VKAllocator::_max_blocks = 4u;
+const uint8_t  VKAllocator::_max_blocks = 4u;
+const uint64_t VKAllocator::_min_align  = 1024u;
 std::vector<VKAllocator::Pool> VKAllocator::_pools;
 vk::PhysicalDeviceMemoryProperties VKAllocator::_memory_properties { };
 
@@ -163,6 +164,10 @@ void VKAllocator::shutdown() {
 
 // =============================================================================
 void VKAllocator::_find_free_block(Alloc &user_data) {
+    if(user_data.align < _min_align) {
+        user_data.align = _min_align;
+    }
+
     auto size_reqd = ((user_data.size / user_data.align)) * user_data.align;
     if(size_reqd == 0u) {
         size_reqd = user_data.align;
