@@ -20,20 +20,20 @@ public:
         std::array<char, 64> name = { "\0" };
     };
 
+    using BlockIter = std::list<Block>::iterator;
+
     struct DeviceAllocation {
         vk::DeviceMemory memory { };
         
         uint64_t free = 0u;
         uint64_t used = 0u;
 
-        std::list<Block> blocks;
+        std::list<Block> blocks = { };
     };
 
     struct DevicePool {
-        std::vector<DeviceAllocation> allocs;
+        std::vector<DeviceAllocation> allocs = { };
     };
-
-    using BlockIter = std::list<Block>::iterator;
 
     static BlockIter allocate(const vk::Buffer &buffer,
                              const vk::MemoryPropertyFlags memory_properties,

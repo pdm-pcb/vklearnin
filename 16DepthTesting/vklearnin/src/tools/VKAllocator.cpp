@@ -24,7 +24,6 @@ VKAllocator::BlockIter VKAllocator::allocate(
     auto block_iter = _find_free_block(mem_reqs, type_index);
     // strncpy(block_iter->name.data(), buffer_name, block_iter->name.max_size());
 
-    CONSOLE_INFO("");
     _print_alloc_state();
 
     auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
@@ -54,7 +53,6 @@ VKAllocator::BlockIter VKAllocator::allocate(
     auto block_iter = _find_free_block(mem_reqs, type_index);
     // strncpy(block_iter->name.data(), image_name, block_iter->name.max_size());
 
-    CONSOLE_INFO("");
     _print_alloc_state();
 
     auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
@@ -182,7 +180,6 @@ void VKAllocator::free(BlockIter &block_iter) {
     alloc.used -= block_size;
     alloc.free += block_size;
 
-    CONSOLE_INFO("");
     _print_alloc_state();
 }
 
@@ -256,26 +253,27 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
         auto &alloc = allocs[alloc_index];
         if(alloc.free >= aligned_size)
         {
-            for(auto block = alloc.blocks.begin();
-                block != alloc.blocks.end();
-                std::advance(block, 1))
+            for(auto current_block = alloc.blocks.begin();
+                current_block != alloc.blocks.end();
+                std::advance(current_block, 1))
             {
-                if(block->free && block->size >= aligned_size) {
+                if(current_block->free && current_block->size >= aligned_size) {
                     uint64_t aligned_offset =
-                        (block->offset / mem_reqs.alignment) *
+                        (current_block->offset / mem_reqs.alignment) *
                         mem_reqs.alignment;
 
                     new_block.alloc_index = alloc_index;
                     new_block.offset = aligned_offset;
 
-                    auto new_iter = alloc.blocks.emplace(block, new_block);
+                    auto new_iter =
+                        alloc.blocks.emplace(current_block, new_block);
 
-                    block->offset       += aligned_size;
-                    block->size         -= aligned_size;
-                    block->aligned_size -= aligned_size;
+                    current_block->offset       += aligned_size;
+                    current_block->size         -= aligned_size;
+                    current_block->aligned_size -= aligned_size;
 
-                    if(block->size == 0u) {
-                        alloc.blocks.erase(block);
+                    if(current_block->size == 0u) {
+                        alloc.blocks.erase(current_block);
                     }
 
                     alloc.used += aligned_size;
@@ -476,21 +474,18 @@ void VKAllocator::_print_alloc_state() {
         }
     }
 
-    CONSOLE_INFO("{}", state_stream.str());
+    CONSOLE_TRACE("{}", state_stream.str());
 
-    for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx)
-    {
+    for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx) {
         const auto &pool = _pools[pool_idx];
 
-        for(size_t alloc_idx = 0; alloc_idx < pool.allocs.size(); ++alloc_idx)
-        {
+        for(size_t alloc_idx = 0; alloc_idx < pool.allocs.size(); ++alloc_idx) {
             const auto &alloc = pool.allocs[alloc_idx];
 
             uint64_t free = 0u;
             uint64_t free_aligned = 0u;
 
-            for(const auto &block : alloc.blocks)
-            {
+            for(const auto &block : alloc.blocks) {
                 if(block.free) {
                     free += block.size;
                     free_aligned += block.aligned_size;
