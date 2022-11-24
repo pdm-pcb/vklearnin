@@ -7,7 +7,7 @@ namespace vkl {
 
 // =============================================================================
 void FrameData::update_camera_ubo(const void *data) {
-    const auto &buffer = _descriptor_set.instance_buffer();
+    const auto &buffer = _descriptor_set.camera_ubo();
 
     void *mapped = VKAllocator::map_buffer(buffer.allocation);
         memcpy(mapped, data, buffer.allocation->size);
@@ -16,7 +16,7 @@ void FrameData::update_camera_ubo(const void *data) {
 
 // =============================================================================
 void FrameData::update_instance_ubo(const void *data) {
-    const auto &buffer = _descriptor_set.instance_buffer();
+    const auto &buffer = _descriptor_set.instance_ubo();
 
     void *mapped = VKAllocator::map_buffer(buffer.allocation);
         memcpy(mapped, data, buffer.allocation->size);

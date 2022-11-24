@@ -8,13 +8,13 @@
 namespace vkl {
 
 void DescriptorSet::add_ubo(const size_t size) {
-    _buffers.push_back(BufferTools::create_buffer(
+    _uniform_buffers.push_back(BufferTools::create_buffer(
         size,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::SharingMode::eExclusive,
         (vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent),
-        std::format("ubo {}", _buffers.size()).c_str()
+        std::format("ubo {}", _uniform_buffers.size()).c_str()
     ));
 }
 
@@ -40,8 +40,8 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     }
 
     std::vector<vk::DescriptorBufferInfo> buffer_info;
-    buffer_info.reserve(_buffers.size());
-    for(const auto &buffer : _buffers) {
+    buffer_info.reserve(_uniform_buffers.size());
+    for(const auto &buffer : _uniform_buffers) {
         buffer_info.push_back({
             .buffer = buffer.buffer,
             .offset = 0u,
@@ -86,7 +86,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
 }
 
 void DescriptorSet::destroy() {
-    for(auto &buffer : _buffers) {
+    for(auto &buffer : _uniform_buffers) {
         BufferTools::destroy_buffer(buffer);
     }
 
@@ -96,9 +96,9 @@ void DescriptorSet::destroy() {
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
-    _descriptor_set { std::move(other._descriptor_set)  },
-    _buffers  { std::move(other._buffers) },
-    _textures { std::move(other._textures) }
+    _descriptor_set  { std::move(other._descriptor_set) },
+    _uniform_buffers { std::move(other._uniform_buffers) },
+    _textures        { std::move(other._textures) }
 { }
 
 } // namespace vkl

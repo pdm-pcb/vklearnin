@@ -19,9 +19,9 @@ public:
                 const DescriptorSetLayout &layout);
     void destroy();
 
-    inline const auto & native()          const { return _descriptor_set;  }
-    inline const auto & camera_buffer()   const { return _buffers[0];      }
-    inline const auto & instance_buffer() const { return _buffers[1];      }
+    inline const auto & native()       const { return _descriptor_set; }
+    inline const auto & camera_ubo()   const { return _uniform_buffers[0]; }
+    inline const auto & instance_ubo() const { return _uniform_buffers[1]; }
 
     DescriptorSet() = default;
     ~DescriptorSet() = default;
@@ -34,7 +34,7 @@ public:
 
 private:
     vk::DescriptorSet         _descriptor_set;
-    std::vector<BufferObject> _buffers;
+    std::vector<BufferObject> _uniform_buffers;
     std::vector<ImageObject>  _textures;
 };
 
