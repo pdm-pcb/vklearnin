@@ -4,20 +4,42 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/rendering/RenderPass.hpp"
+#include "vklearnin/engine/FrameData.hpp"
 
 namespace vkl {
+
+struct InstanceData;
 
 class Pipeline final {
 public:
     using PushConstantRanges = std::vector<vk::PushConstantRange>;
+    using Bindings = std::vector<vk::DescriptorSetLayoutBinding>;
     using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
     using RenderPasses = std::vector<vk::RenderPass>;
+
+    inline void reset_command_pool(const uint32_t frame_index) const {
+        _frames[frame_index].command_pool().reset();
+    }
+
+    inline const auto & command_buffer(const uint32_t frame_index) const {
+        return _frames[frame_index].command_buffer().native();
+    }
+
+    inline void update_instance_data(const InstanceData &data,
+                                     const uint32_t frame_index)
+    {
+        _frames[frame_index].update_instance_data(data);
+    }
+
+    inline const auto & descriptor_sets(const uint32_t frame_index) const {
+        return _frames[frame_index].descriptor_set();
+    }
 
     void vertex_from_binary(const char *filepath);
     void fragment_from_binary(const char *filepath);
 
     void set_push_constants(const PushConstantRanges &ranges);
-    void set_layout(const DescriptorSetLayouts &descriptor_layouts);
+    void set_layout(const Bindings &bindings);
     void set_render_pass(const RenderPass &render_pass);
 
     void create();
@@ -64,6 +86,7 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
+    std::vector<FrameData> _frames;
     RenderPass  _render_pass;
 
     PushConstantRanges _push_constant_ranges;

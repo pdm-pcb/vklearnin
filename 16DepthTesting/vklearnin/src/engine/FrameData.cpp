@@ -17,8 +17,8 @@ void FrameData::update_instance_data(const InstanceData &data) {
 
 // =============================================================================
 void FrameData::create(const Bindings &bindings) {
-    _cmd_pool.create();
-    _cmd_buffer.create(_cmd_pool);
+    _command_pool.create();
+    _command_buffer.create(_command_pool);
 
     PoolSizes pool_sizes;
     pool_sizes.reserve(bindings.size());
@@ -39,8 +39,8 @@ void FrameData::create(const Bindings &bindings) {
 
 // =============================================================================
 void FrameData::destroy() {
-    _cmd_buffer.destroy();
-    _cmd_pool.destroy();
+    _command_buffer.destroy();
+    _command_pool.destroy();
 
     _descriptor_set_layout.destroy();
     _descriptor_pool.destroy();
@@ -49,8 +49,8 @@ void FrameData::destroy() {
 
 // =============================================================================
 FrameData::FrameData(FrameData &&other) :
-    _cmd_pool   { std::move(other._cmd_pool) },
-    _cmd_buffer { std::move(other._cmd_buffer) },
+    _command_pool          { std::move(other._command_pool) },
+    _command_buffer        { std::move(other._command_buffer) },
     _descriptor_pool       { std::move(other._descriptor_pool) },
     _descriptor_set_layout { std::move(other._descriptor_set_layout) },
     _descriptor_set        { std::move(other._descriptor_set) }

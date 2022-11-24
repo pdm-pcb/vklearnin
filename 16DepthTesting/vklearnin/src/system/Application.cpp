@@ -9,6 +9,8 @@ namespace vkl {
 
 // =============================================================================
 void Application::run() {
+    _engine->init();
+    this->init();
     _running = true;
 
     while(_running) {
@@ -20,6 +22,7 @@ void Application::run() {
     GraphicsInstance::wait_idle();
     CONSOLE_INFO("Shutting everything down");
 
+    this->shutdown();
     _engine->shutdown();
     TargetWindow::destroy_surface();
     GraphicsInstance::shutdown();
@@ -28,7 +31,7 @@ void Application::run() {
 // =============================================================================
 Application::Application() :
     _running { false },
-    _engine  { new Engine }
+    _engine  { new Engine(*this) }
 {
     ConsoleLog::init();
 
@@ -36,8 +39,6 @@ Application::Application() :
     TargetWindow::spawn_window();
     TargetWindow::create_surface();
     GraphicsInstance::init_devices();
-
-    _engine->init();
 }
 
 Application::~Application() {

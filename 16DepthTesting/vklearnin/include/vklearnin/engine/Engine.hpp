@@ -6,15 +6,9 @@
 
 namespace vkl {
 
+class Application;
 class Swapchain;
 class Pipeline;
-class FrameData;
-
-////////////////////////////////////////////////////////////////////////////////
-// TODO: replace with proper asset management
-class XZUnitPlane;
-class UnitCube;
-////////////////////////////////////////////////////////////////////////////////
 
 class Engine final {
 public:
@@ -23,8 +17,10 @@ public:
     void init();
     void shutdown();
 
-    Engine();
+    explicit Engine(Application &app);
     ~Engine();
+
+    Engine() = delete;
 
     Engine(Engine &&) = delete;
     Engine(const Engine &) = delete;
@@ -34,18 +30,12 @@ public:
 
 private:
     Swapchain *_swapchain;
-    Pipeline  *_pipeline;
+    std::vector<Pipeline *> _pipelines;
 
-    std::vector<FrameData> _frames;
     uint32_t _frame_index;
 
-    CameraData _camera_data;
+    Application &_application;
 
-    XZUnitPlane *_xz_unit_plane;
-    UnitCube    *_unit_cube;
-
-    void _create_frames();
-    void _destroy_frames();
     void _image_invalid();
     void _next_frame();
 };

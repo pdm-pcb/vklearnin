@@ -23,8 +23,8 @@ public:
     void create(const Bindings &bindings);
     void destroy();
 
-    inline const auto & cmd_pool()   const { return _cmd_pool; }
-    inline const auto & cmd_buffer() const { return _cmd_buffer; }
+    inline const auto & command_pool()   const { return _command_pool; }
+    inline const auto & command_buffer() const { return _command_buffer; }
     inline const auto & descriptor_set_layout() const {
         return _descriptor_set_layout;
     }
@@ -40,8 +40,8 @@ public:
     FrameData & operator=(const FrameData &other) = delete;
 
 private:
-    CmdPool   _cmd_pool;
-    CmdBuffer _cmd_buffer;
+    CmdPool   _command_pool;
+    CmdBuffer _command_buffer;
 
     DescriptorPool      _descriptor_pool;
     DescriptorSetLayout _descriptor_set_layout;

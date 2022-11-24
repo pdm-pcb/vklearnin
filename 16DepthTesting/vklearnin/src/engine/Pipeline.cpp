@@ -13,7 +13,7 @@
 namespace vkl {
 
 // =============================================================================
-void Pipeline::vertex_from_binary(const char *filepath) {        
+void Pipeline::vertex_from_binary(const char *filepath) {
     _vert = ShaderTools::module_from_binary(filepath, LogicalDevice::native());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -23,7 +23,7 @@ void Pipeline::vertex_from_binary(const char *filepath) {
 }
 
 // =============================================================================
-void Pipeline::fragment_from_binary(const char *filepath) {        
+void Pipeline::fragment_from_binary(const char *filepath) {
     _frag = ShaderTools::module_from_binary(filepath, LogicalDevice::native());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,
@@ -39,10 +39,20 @@ void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
 }
 
 // =============================================================================
-void Pipeline::set_layout(const DescriptorSetLayouts &descriptor_layouts) {
+void Pipeline::set_layout(const Bindings &bindings) {
+    _frames.resize(RenderConfig::swapchain_image_count);
+
+    for(uint32_t image_index = 0;
+        image_index < RenderConfig::swapchain_image_count;
+        ++image_index)
+    {
+        _frames[image_index].create(bindings);
+    }
+
+    const auto &descriptor_layout = _frames[0].descriptor_set_layout().native();
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount = static_cast<uint32_t>(descriptor_layouts.size()),
-        .pSetLayouts = descriptor_layouts.data(),
+        .setLayoutCount = 1u,
+        .pSetLayouts = &descriptor_layout,
         .pushConstantRangeCount =
             static_cast<uint32_t>(_push_constant_ranges.size()),
         .pPushConstantRanges = _push_constant_ranges.data()
@@ -112,6 +122,10 @@ void Pipeline::destroy() {
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
 
+    for(auto &frame : _frames) {
+        frame.destroy();
+    }
+
     _render_pass.destroy();
 
     LogicalDevice::native().destroy(_vert);
@@ -123,6 +137,7 @@ void Pipeline::destroy() {
 // =============================================================================
 void Pipeline::create_framebuffers() {
     _render_pass.create_framebuffers(_swapchain);
+    update_dimensions();
 }
 
 // =============================================================================
