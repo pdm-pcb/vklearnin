@@ -1,5 +1,6 @@
 #include "Demo.hpp"
 
+// =============================================================================
 std::vector<vkl::Pipeline *>
 Demo::create_pipelines(const vkl::Swapchain &swapchain)
 {
@@ -43,6 +44,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
     return _pipelines;
 }
 
+// =============================================================================
 const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
     _pipelines[0]->reset_command_pool(frame_index);
  
@@ -142,6 +144,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
     return command_buffer;
 }
 
+// =============================================================================
 void Demo::swapchain_image_invalid() {
     _camera_data.proj_matrix = glm::perspective(
         vkl::RenderConfig::fov_rad * 0.5f,
@@ -151,6 +154,7 @@ void Demo::swapchain_image_invalid() {
     );
 }
 
+// =============================================================================
 void Demo::init () {
     _camera_data.proj_matrix = glm::perspective(
         vkl::RenderConfig::fov_rad * 0.5f,
@@ -172,6 +176,7 @@ void Demo::init () {
     _unit_cube->create_buffers();
 }
 
+// =============================================================================
 void Demo::shutdown() {
     _xz_unit_plane->destroy_buffers();
     _unit_cube->destroy_buffers();
@@ -181,6 +186,7 @@ void Demo::shutdown() {
     }
 }
 
+// =============================================================================
 Demo::Demo() :
     vkl::Application(),
     _xz_unit_plane { nullptr },
