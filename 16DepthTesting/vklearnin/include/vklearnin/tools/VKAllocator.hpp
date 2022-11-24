@@ -17,7 +17,7 @@ public:
         
         bool free = true;
 
-        std::array<char, 64> name = { "unclaimed\0" };
+        std::array<char, 64> name = { "\0" };
     };
 
     struct DeviceAllocation {

@@ -85,7 +85,6 @@ void Engine::render_loop() {
         runtime * math::pi_over_four,
         { 0.75f, 1.0f, 0.0f }
     );
-    // auto model_matrix = glm::mat4(1.0f);
 
     _frames[_frame_index].update_instance_data({
         .model_matrix = model_matrix
@@ -114,18 +113,18 @@ void Engine::render_loop() {
             { }
         );
 
-        Renderer::draw(
-            command_buffer,
-            _xz_unit_plane->vertex_buffer(),
-            _xz_unit_plane->index_buffer(),
-            static_cast<uint32_t>(_xz_unit_plane->indices().size())
-        );
         // Renderer::draw(
         //     command_buffer,
-        //     _unit_cube->vertex_buffer(),
-        //     _unit_cube->index_buffer(),
-        //     static_cast<uint32_t>(_unit_cube->indices().size())
+        //     _xz_unit_plane->vertex_buffer(),
+        //     _xz_unit_plane->index_buffer(),
+        //     static_cast<uint32_t>(_xz_unit_plane->indices().size())
         // );
+        Renderer::draw(
+            command_buffer,
+            _unit_cube->vertex_buffer(),
+            _unit_cube->index_buffer(),
+            static_cast<uint32_t>(_unit_cube->indices().size())
+        );
 
     // With that out of the way, that's this pass handled
     command_buffer.endRenderPass();

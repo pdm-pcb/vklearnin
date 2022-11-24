@@ -15,14 +15,14 @@ vk::PhysicalDeviceMemoryProperties VKAllocator::_memory_properties { };
 VKAllocator::BlockIter VKAllocator::allocate(
     const vk::Buffer &buffer,
     const vk::MemoryPropertyFlags memory_properties,
-    const char *buffer_name)
+    [[maybe_unused]] const char *buffer_name)
 {
     vk::MemoryRequirements mem_reqs { };
     LogicalDevice::native().getBufferMemoryRequirements(buffer, &mem_reqs);
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
     auto block_iter = _find_free_block(mem_reqs, type_index);
-    strncpy(block_iter->name.data(), buffer_name, block_iter->name.max_size());
+    // strncpy(block_iter->name.data(), buffer_name, block_iter->name.max_size());
 
     CONSOLE_INFO("");
     _print_alloc_state();
@@ -45,14 +45,14 @@ VKAllocator::BlockIter VKAllocator::allocate(
 VKAllocator::BlockIter VKAllocator::allocate(
     const vk::Image &image,
     const vk::MemoryPropertyFlags memory_properties,
-    const char *image_name)
+    [[maybe_unused]] const char *image_name)
 {    
     vk::MemoryRequirements mem_reqs { };
     LogicalDevice::native().getImageMemoryRequirements(image, &mem_reqs);
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
     auto block_iter = _find_free_block(mem_reqs, type_index);
-    strncpy(block_iter->name.data(), image_name, block_iter->name.max_size());
+    // strncpy(block_iter->name.data(), image_name, block_iter->name.max_size());
 
     CONSOLE_INFO("");
     _print_alloc_state();
@@ -94,97 +94,96 @@ void VKAllocator::unmap_buffer(const BlockIter &block_iter) {
 
 // =============================================================================
 void VKAllocator::free(BlockIter &block_iter) {
-    block_iter = BlockIter { };
-    // auto &pool = _pools[block_iter->type_index];
-    // auto &alloc = pool.allocs[block_iter->alloc_index];
-    // auto &blocks = alloc.blocks;
+    auto &pool = _pools[block_iter->type_index];
+    auto &alloc = pool.allocs[block_iter->alloc_index];
+    auto &blocks = alloc.blocks;
 
-    // auto block_size = block_iter->aligned_size;
+    auto block_size = block_iter->aligned_size;
 
-    // CONSOLE_INFO(
-    //     "// free {} ({}) from pool {}, alloc {}",
-    //     block_iter->size,
-    //     block_iter->aligned_size,
-    //     block_iter->type_index,
-    //     block_iter->alloc_index
-    // );
+    CONSOLE_TRACE(
+        "free {} (aligned {}) from pool {}, alloc {}",
+        block_iter->size,
+        block_iter->aligned_size,
+        block_iter->type_index,
+        block_iter->alloc_index
+    );
 
-    // BlockIter next_block = std::next(block_iter, 1);
-    // if(block_iter == blocks.begin() && next_block != blocks.end()) {
-    //     CONSOLE_INFO("// iter is begin and not end");
-    //     if(!next_block->free) {
-    //         CONSOLE_INFO("// Nothing to do here but mark this block as free");
-    //         block_iter->free = true;
-    //         block_iter->size = block_iter->aligned_size;
-    //         block_iter = blocks.end();
-    //     }
-    //     else {
-    //         CONSOLE_INFO("// Absorb the block below");
-    //         next_block->offset       -= block_size;
-    //         next_block->size         += block_size;
-    //         next_block->aligned_size += block_size;
-    //     }
-    // }
-    // else if(block_iter != blocks.begin() && next_block == blocks.end()) {
-    //     CONSOLE_INFO("// iter is not begin and is end");
-    //     BlockIter prev_block = std::prev(block_iter, 1);
-    //     if(!prev_block->free) {
-    //         CONSOLE_INFO("// Nothing to do here but mark this block as free");
-    //         block_iter->free = true;
-    //         block_iter->size = block_iter->aligned_size;
-    //         block_iter = blocks.end();
-    //     }
-    //     else {
-    //         CONSOLE_INFO("// Absorb the block above");
-    //         prev_block->size += block_size;
-    //         prev_block->aligned_size += block_size;
-    //     }
-    // }
-    // else if(block_iter == blocks.begin() && next_block == blocks.end()) {
-    //     CONSOLE_INFO("// iter is both begin and end");
-    //     CONSOLE_INFO("// Nothing to do here but mark this block as free");
-    //     block_iter->free = true;
-    //     block_iter = blocks.end();
-    // }
-    // else {
-    //     CONSOLE_INFO("// iter is neither begin and nor end");
-    //     BlockIter prev_block = std::prev(block_iter, 1);
-    //     if(prev_block->free && !next_block->free) {
-    //         CONSOLE_INFO("// Absorb the block above");
-    //         prev_block->size += block_size;
-    //         prev_block->aligned_size += block_size;
+    BlockIter next_block = std::next(block_iter, 1);
+    if(block_iter == blocks.begin() && next_block != blocks.end()) {
+        // iter is begin and not end
+        if(!next_block->free) {
+            // Nothing to do here but mark this block as free
+            block_iter->free = true;
+            block_iter->size = block_iter->aligned_size;
+            block_iter = blocks.end();
+        }
+        else {
+            // Absorb the block below
+            next_block->offset       -= block_size;
+            next_block->size         += block_size;
+            next_block->aligned_size += block_size;
+        }
+    }
+    else if(block_iter != blocks.begin() && next_block == blocks.end()) {
+        // iter is not begin and is end
+        BlockIter prev_block = std::prev(block_iter, 1);
+        if(!prev_block->free) {
+            // Nothing to do here but mark this block as free
+            block_iter->free = true;
+            block_iter->size = block_iter->aligned_size;
+            block_iter = blocks.end();
+        }
+        else {
+            // Absorb the block above
+            prev_block->size += block_size;
+            prev_block->aligned_size += block_size;
+        }
+    }
+    else if(block_iter == blocks.begin() && next_block == blocks.end()) {
+        // iter is both begin and end
+        // Nothing to do here but mark this block as free
+        block_iter->free = true;
+        block_iter = blocks.end();
+    }
+    else {
+        // Iter is neither begin and nor end
+        BlockIter prev_block = std::prev(block_iter, 1);
+        if(prev_block->free && !next_block->free) {
+            // Absorb the block above
+            prev_block->size += block_size;
+            prev_block->aligned_size += block_size;
 
-    //         blocks.erase(block_iter);
-    //     }
-    //     else if(!prev_block->free && next_block->free) {
-    //         CONSOLE_INFO("// Absorb the block below");
-    //         next_block->offset       -= block_size;
-    //         next_block->size         += block_size;
-    //         next_block->aligned_size += block_size;
+            blocks.erase(block_iter);
+        }
+        else if(!prev_block->free && next_block->free) {
+            // Absorb the block below
+            next_block->offset       -= block_size;
+            next_block->size         += block_size;
+            next_block->aligned_size += block_size;
 
-    //         blocks.erase(block_iter);
-    //     }
-    //     else if(prev_block->free && next_block->free) {
-    //         CONSOLE_INFO("// Absorb both blocks. Wow!");
-    //         prev_block->size += block_size + next_block->size;
-    //         prev_block->aligned_size += block_size + next_block->size;
+            blocks.erase(block_iter);
+        }
+        else if(prev_block->free && next_block->free) {
+            // Absorb both blocks. Wow!
+            prev_block->size += block_size + next_block->size;
+            prev_block->aligned_size += block_size + next_block->size;
 
-    //         blocks.erase(block_iter);
-    //         blocks.erase(next_block);
-    //     }
-    //     else {
-    //         CONSOLE_INFO("// Nothing to do here but mark this block as free");
-    //         block_iter->free = true;
-    //         block_iter->size = block_iter->aligned_size;
-    //         block_iter = blocks.end();
-    //     }
-    // }
+            blocks.erase(block_iter);
+            blocks.erase(next_block);
+        }
+        else {
+            // Nothing to do here but mark this block as free
+            block_iter->free = true;
+            block_iter->size = block_iter->aligned_size;
+            block_iter = blocks.end();
+        }
+    }
 
-    // alloc.used -= block_size;
-    // alloc.free += block_size;
+    alloc.used -= block_size;
+    alloc.free += block_size;
 
-    // CONSOLE_INFO("");
-    // _print_alloc_state();
+    CONSOLE_INFO("");
+    _print_alloc_state();
 }
 
 // =============================================================================
@@ -263,7 +262,7 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
             {
                 if(block->free && block->size >= aligned_size) {
                     uint64_t aligned_offset =
-                        ((block->offset / mem_reqs.alignment) + 1) *
+                        ((block->offset / mem_reqs.alignment)) *
                         mem_reqs.alignment;
 
                     new_block.alloc_index = alloc_index;
@@ -441,6 +440,9 @@ void VKAllocator::_print_alloc_state() {
     for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx)
     {
         const auto &pool = _pools[pool_idx];
+        if(pool.allocs.size() == 0) {
+            continue;
+        }
         state_stream << std::format("\n  Pool {}", pool_idx);
 
         for(size_t alloc_idx = 0; alloc_idx < pool.allocs.size(); ++alloc_idx)
@@ -461,7 +463,7 @@ void VKAllocator::_print_alloc_state() {
                     "\toffset {}"
                     "\tsize {}"
                     "\taligned size {}"
-                    "\tfree {}",
+                    "\tfree? {}",
                     block.name.data(),
                     _size_string(block.offset),
                     _size_string(block.size),
@@ -499,12 +501,7 @@ void VKAllocator::_print_alloc_state() {
                 static_cast<int64_t>(free) - static_cast<int64_t>(free_aligned)
             );
 
-            CONSOLE_TRACE(
-                "alloc {}: free {} free align {}, diff {}",
-                alloc_idx, free, free_aligned, difference
-            );
-
-            assert(free == free_aligned);
+            assert(difference == 0);
         }
     }
 }
