@@ -7,16 +7,16 @@
 namespace vkl {
 
 // =============================================================================
-void FrameData::update_instance_data(const InstanceData &data) {
+void FrameData::update_instance_data(const void *data) {
     const auto &buffer = _descriptor_set.instance_buffer();
 
     void *mapped = VKAllocator::map_buffer(buffer.allocation);
-        memcpy(mapped, &data, buffer.allocation->size);
+        memcpy(mapped, data, buffer.allocation->size);
     VKAllocator::unmap_buffer(buffer.allocation);
 }
 
 // =============================================================================
-void FrameData::create(const Bindings &bindings) {
+void FrameData::init(const Bindings &bindings) {
     _command_pool.create();
     _command_buffer.create(_command_pool);
 
@@ -29,9 +29,12 @@ void FrameData::create(const Bindings &bindings) {
             .descriptorCount = 10u
         });
     }
-
     _descriptor_pool.create(pool_sizes);
     _descriptor_set_layout.create(bindings);
+}
+
+// =============================================================================
+void FrameData::create() {
     _descriptor_set.create(_descriptor_pool,
                            _descriptor_set_layout,
                            sizeof(InstanceData));

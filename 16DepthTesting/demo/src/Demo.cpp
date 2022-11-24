@@ -35,6 +35,9 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
             .pImmutableSamplers = nullptr
         },
     });
+    _pipelines[0]->add_texture2D(
+        "../../vklearnin/assets/textures/metal_panel.jpg"
+    );
     _pipelines[0]->create();
 
     return _pipelines;
@@ -85,12 +88,11 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
         { 0.75f, 1.0f, 0.0f }
     );
 
-    _pipelines[0]->update_instance_data(
-        {
-            .model_matrix = model_matrix
-        },
-        frame_index
-    );
+    vkl::InstanceData data {
+        .model_matrix = model_matrix
+    };
+
+    _pipelines[0]->update_instance_data(&data, frame_index);
 
     // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
@@ -111,7 +113,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
             0u,
-            _pipelines[0]->descriptor_sets(frame_index).native(),
+            _pipelines[0]->descriptor_set(frame_index).native(),
             { }
         );
 

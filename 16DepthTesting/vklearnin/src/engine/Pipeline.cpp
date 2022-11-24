@@ -40,16 +40,13 @@ void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
 
 // =============================================================================
 void Pipeline::set_layout(const Bindings &bindings) {
-    _frames.resize(RenderConfig::swapchain_image_count);
+    _frame_data.resize(RenderConfig::swapchain_image_count);
 
-    for(uint32_t image_index = 0;
-        image_index < RenderConfig::swapchain_image_count;
-        ++image_index)
-    {
-        _frames[image_index].create(bindings);
+    for(auto &frame_data : _frame_data) {
+        frame_data.init(bindings);
     }
 
-    const auto &descriptor_layout = _frames[0].descriptor_set_layout().native();
+    const auto &descriptor_layout = _frame_data[0].descriptor_set_layout().native();
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
         .setLayoutCount = 1u,
         .pSetLayouts = &descriptor_layout,
@@ -70,7 +67,18 @@ void Pipeline::set_layout(const Bindings &bindings) {
 }
 
 // =============================================================================
+void Pipeline::add_texture2D(const char *filepath) {
+    for(auto &frame_data : _frame_data) {
+        frame_data.descriptor_set().add_texture2D(filepath);
+    }
+}
+
+// =============================================================================
 void Pipeline::create() {
+    for(auto &frame_data : _frame_data) {
+        frame_data.create();
+    }
+
     _init_vert_input();
     _init_assembly();
     _init_viewport();
@@ -122,7 +130,7 @@ void Pipeline::destroy() {
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
 
-    for(auto &frame : _frames) {
+    for(auto &frame : _frame_data) {
         frame.destroy();
     }
 

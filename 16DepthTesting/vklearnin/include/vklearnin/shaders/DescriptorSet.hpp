@@ -12,6 +12,8 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
+    void add_texture2D(const char *filepath);
+
     void create(const DescriptorPool &descriptor_pool,
                 const DescriptorSetLayout &layout,
                 const size_t instance_buffer_size);
@@ -19,7 +21,6 @@ public:
 
     inline const auto & native()          const { return _descriptor_set;  }
     inline const auto & instance_buffer() const { return _instance_buffer; }
-    inline const auto & texture_image()   const { return _texture;         }
 
     DescriptorSet() = default;
     ~DescriptorSet() = default;
@@ -31,9 +32,9 @@ public:
     DescriptorSet & operator=(const DescriptorSet &other) = delete;
 
 private:
-    vk::DescriptorSet _descriptor_set;
-    BufferObject      _instance_buffer;
-    ImageObject       _texture;
+    vk::DescriptorSet         _descriptor_set;
+    BufferObject              _instance_buffer;
+    std::vector<ImageObject>  _textures;
 };
 
 } // namespace vkl

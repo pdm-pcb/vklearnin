@@ -10,17 +10,16 @@
 
 namespace vkl {
 
-struct InstanceData;
-
 class FrameData {
 public:
     using Bindings = std::vector<vk::DescriptorSetLayoutBinding>;
     using PoolSizes = std::vector<vk::DescriptorPoolSize>;
 
     void image_changed();
-    void update_instance_data(const InstanceData &data);
+    void update_instance_data(const void *data);
 
-    void create(const Bindings &bindings);
+    void init(const Bindings &bindings);
+    void create();
     void destroy();
 
     inline const auto & command_pool()   const { return _command_pool; }
@@ -28,7 +27,7 @@ public:
     inline const auto & descriptor_set_layout() const {
         return _descriptor_set_layout;
     }
-    inline const auto & descriptor_set() const { return _descriptor_set; }
+    inline auto & descriptor_set() { return _descriptor_set; }
 
     FrameData() = default;
     ~FrameData() = default;

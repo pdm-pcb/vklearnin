@@ -7,10 +7,13 @@
 
 namespace vkl {
 
-void
-DescriptorSet::create(const DescriptorPool &descriptor_pool,
-                      const DescriptorSetLayout &layout,
-                      const size_t instance_buffer_size)
+void DescriptorSet::add_texture2D(const char *filepath) {
+    _textures.push_back(ImageTools::load_from_file(filepath));
+}
+
+void DescriptorSet::create(const DescriptorPool &descriptor_pool,
+                           const DescriptorSetLayout &layout,
+                           const size_t instance_buffer_size)
 {
     vk::DescriptorSetAllocateInfo alloc_info {
         .descriptorPool = descriptor_pool.native(),
@@ -34,10 +37,6 @@ DescriptorSet::create(const DescriptorPool &descriptor_pool,
         vk::MemoryPropertyFlagBits::eHostCoherent),
         "instance desc"
     );
-    
-    _texture = ImageTools::load_from_file(
-        "../../vklearnin/assets/textures/metal_panel.jpg"
-    );
 
     vk::DescriptorBufferInfo buffer_info {
         .buffer = _instance_buffer.buffer,
@@ -45,11 +44,16 @@ DescriptorSet::create(const DescriptorPool &descriptor_pool,
         .range = instance_buffer_size
     };
 
-    vk::DescriptorImageInfo image_info {
-        .sampler = _texture.sampler,
-        .imageView = _texture.view,
-        .imageLayout = _texture.layout
-    };
+    std::vector<vk::DescriptorImageInfo> image_info;
+    image_info.reserve(_textures.size());
+    
+    for(const auto &texture : _textures) {
+        image_info.emplace_back(vk::DescriptorImageInfo {
+            .sampler     = texture.sampler,
+            .imageView   = texture.view,
+            .imageLayout = texture.layout
+        });
+    }
 
     vk::WriteDescriptorSet set_writes[] {
         {
@@ -66,9 +70,9 @@ DescriptorSet::create(const DescriptorPool &descriptor_pool,
             .dstSet = _descriptor_set,
             .dstBinding = 1u,
             .dstArrayElement = 0u,
-            .descriptorCount = 1u,
+            .descriptorCount = static_cast<uint32_t>(image_info.size()),
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &image_info,
+            .pImageInfo = image_info.data(),
             .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         },
@@ -79,7 +83,10 @@ DescriptorSet::create(const DescriptorPool &descriptor_pool,
 
 void DescriptorSet::destroy() {
     BufferTools::destroy_buffer(_instance_buffer);
-    ImageTools::destroy_image(_texture);
+
+    for(auto &texture : _textures) {
+        ImageTools::destroy_image(texture);
+    }
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :

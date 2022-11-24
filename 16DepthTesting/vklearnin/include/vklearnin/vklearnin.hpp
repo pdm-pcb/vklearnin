@@ -11,6 +11,8 @@
 #include "vklearnin/rendering/Renderer.hpp"
 #include "vklearnin/engine/Pipeline.hpp"
 #include "vklearnin/engine/Swapchain.hpp"
+#include "vklearnin/engine/FrameData.hpp"
+#include "vklearnin/shaders/DescriptorSet.hpp"
 
 #include "vklearnin/tools/ImageTools.hpp"
 #include "vklearnin/tools/BufferTools.hpp"
