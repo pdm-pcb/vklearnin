@@ -8,8 +8,8 @@
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
 using HRC = std::chrono::high_resolution_clock;
-using ms_period = std::chrono::milliseconds::period;
-using duration_ms = std::chrono::duration<float, ms_period>;
+using us_period = std::chrono::microseconds::period;
+using duration_us = std::chrono::duration<float, us_period>;
 
 namespace vkl {
 
@@ -36,13 +36,15 @@ void Engine::render_loop() {
     _swapchain->reset_fence();
 
     static HRC::time_point frame_end = HRC::now();
-    auto time_delta = 1e-3f * duration_ms(HRC::now() - frame_end).count();
+    auto time_delta = 1e-6f * duration_us(HRC::now() - frame_end).count();
+
         const auto &command_buffer = _application.run_pipelines(
             time_delta,
             _frame_index
         );
         _swapchain->submit(command_buffer, LogicalDevice::cmd_queue());
         result = _swapchain->present();
+
     frame_end = HRC::now();
 
     // A present operation can return these two, too. Same approach as above -
