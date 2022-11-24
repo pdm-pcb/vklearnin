@@ -7,7 +7,7 @@ void XZUnitPlane::create_buffers() {
     auto vertex_buffer_size = _vertices.size() * sizeof(Vertex);
     auto index_buffer_size = _indices.size() * sizeof(uint32_t);
 
-    CONSOLE_WARN(
+    CONSOLE_TRACE(
         "Allocating XZUnitPlane buffers: {}vb {}ib",
         vertex_buffer_size, index_buffer_size
     );

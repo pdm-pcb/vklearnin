@@ -262,7 +262,7 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
             {
                 if(block->free && block->size >= aligned_size) {
                     uint64_t aligned_offset =
-                        ((block->offset / mem_reqs.alignment)) *
+                        (block->offset / mem_reqs.alignment) *
                         mem_reqs.alignment;
 
                     new_block.alloc_index = alloc_index;
