@@ -2,12 +2,20 @@
 #include "vklearnin/engine/FrameData.hpp"
 
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
-#include "vklearnin/shaders/InstanceData.hpp"
 
 namespace vkl {
 
 // =============================================================================
-void FrameData::update_instance_data(const void *data) {
+void FrameData::update_camera_ubo(const void *data) {
+    const auto &buffer = _descriptor_set.instance_buffer();
+
+    void *mapped = VKAllocator::map_buffer(buffer.allocation);
+        memcpy(mapped, data, buffer.allocation->size);
+    VKAllocator::unmap_buffer(buffer.allocation);
+}
+
+// =============================================================================
+void FrameData::update_instance_ubo(const void *data) {
     const auto &buffer = _descriptor_set.instance_buffer();
 
     void *mapped = VKAllocator::map_buffer(buffer.allocation);
@@ -35,9 +43,7 @@ void FrameData::init(const Bindings &bindings) {
 
 // =============================================================================
 void FrameData::create() {
-    _descriptor_set.create(_descriptor_pool,
-                           _descriptor_set_layout,
-                           sizeof(InstanceData));
+    _descriptor_set.create(_descriptor_pool, _descriptor_set_layout);
 }
 
 // =============================================================================

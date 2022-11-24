@@ -67,6 +67,13 @@ void Pipeline::set_layout(const Bindings &bindings) {
 }
 
 // =============================================================================
+void Pipeline::add_ubo(const size_t size) {
+    for(auto &frame_data : _frame_data) {
+        frame_data.descriptor_set().add_ubo(size);
+    }
+}
+
+// =============================================================================
 void Pipeline::add_texture2D(const char *filepath) {
     for(auto &frame_data : _frame_data) {
         frame_data.descriptor_set().add_texture2D(filepath);

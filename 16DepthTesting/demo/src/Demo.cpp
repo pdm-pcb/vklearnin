@@ -13,13 +13,13 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
     _pipelines[0]->fragment_from_binary(
         "../../vklearnin/assets/shaders/05texture_sampler.frag-debug.spv"
     );
-    _pipelines[0]->set_push_constants({
-        {
-            .stageFlags = vk::ShaderStageFlagBits::eVertex,
-            .offset = 0u,
-            .size = sizeof(vkl::CameraData)
-        }
-    });
+    // _pipelines[0]->set_push_constants({
+    //     {
+    //         .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    //         .offset = 0u,
+    //         .size = sizeof(vkl::CameraData)
+    //     }
+    // });
     _pipelines[0]->set_layout({
         {
             .binding = 0u,
@@ -30,12 +30,21 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
         },
         {
             .binding = 1u,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 1u,
+            .stageFlags = vk::ShaderStageFlagBits::eVertex,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = 2u,
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
             .descriptorCount = 1u,
             .stageFlags = vk::ShaderStageFlagBits::eFragment,
             .pImmutableSamplers = nullptr
         },
     });
+    _pipelines[0]->add_ubo(sizeof(vkl::CameraData));
+    _pipelines[0]->add_ubo(sizeof(vkl::InstanceData));
     _pipelines[0]->add_texture2D(
         "../../vklearnin/assets/textures/metal_panel.jpg"
     );
@@ -91,11 +100,12 @@ const vk::CommandBuffer & Demo::run_pipelines(const float time_delta,
         { 0.75f, 1.0f, 0.0f }
     );
 
-    vkl::InstanceData data {
+    vkl::InstanceData instance_data {
         .model_matrix = model_matrix
     };
 
-    _pipelines[0]->update_instance_data(&data, frame_index);
+    _pipelines[0]->update_instance_ubo(&instance_data, frame_index);
+    _pipelines[0]->update_camera_ubo(&_camera_data, frame_index);
 
     // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
@@ -103,14 +113,6 @@ const vk::CommandBuffer & Demo::run_pipelines(const float time_delta,
         // Establish the area we can draw to
         command_buffer.setViewport(0u, _pipelines[0]->viewport());
         command_buffer.setScissor(0u, _pipelines[0]->scissor());
-
-        // Send the view and projection matrices
-        command_buffer.pushConstants<vkl::CameraData>(
-            _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            _camera_data
-        );
 
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,

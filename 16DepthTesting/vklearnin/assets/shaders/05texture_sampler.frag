@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(binding = 1) uniform sampler2D texture_sampler;
+layout(binding = 2) uniform sampler2D texture_sampler;
 
 layout(location = 0) in vec4 vs_out_color;
 layout(location = 1) in vec2 vs_out_texcoord;

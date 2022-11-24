@@ -16,7 +16,8 @@ public:
     using PoolSizes = std::vector<vk::DescriptorPoolSize>;
 
     void image_changed();
-    void update_instance_data(const void *data);
+    void update_camera_ubo(const void *data);
+    void update_instance_ubo(const void *data);
 
     void init(const Bindings &bindings);
     void create();

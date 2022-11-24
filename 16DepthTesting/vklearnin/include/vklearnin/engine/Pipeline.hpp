@@ -19,14 +19,19 @@ public:
         _frame_data[frame_index].command_pool().reset();
     }
 
-    inline const auto & command_buffer(const uint32_t frame_index) const {
-        return _frame_data[frame_index].command_buffer().native();
+    inline void update_instance_ubo(const void *data,
+                                    const uint32_t frame_index)
+    {
+        _frame_data[frame_index].update_instance_ubo(data);
     }
 
-    inline void update_instance_data(const void *data,
-                                     const uint32_t frame_index)
+    inline void update_camera_ubo(const void *data, const uint32_t frame_index)
     {
-        _frame_data[frame_index].update_instance_data(data);
+        _frame_data[frame_index].update_camera_ubo(data);
+    }
+
+    inline const auto & command_buffer(const uint32_t frame_index) const {
+        return _frame_data[frame_index].command_buffer().native();
     }
 
     inline const auto & descriptor_set(const uint32_t frame_index) {
@@ -40,6 +45,7 @@ public:
     void set_layout(const Bindings &bindings);
     void set_render_pass(const RenderPass &render_pass);
 
+    void add_ubo(const size_t size);
     void add_texture2D(const char *filepath);
 
     void create();

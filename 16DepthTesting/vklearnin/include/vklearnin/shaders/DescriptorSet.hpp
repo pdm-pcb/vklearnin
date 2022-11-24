@@ -12,15 +12,16 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
+    void add_ubo(const size_t size);
     void add_texture2D(const char *filepath);
 
     void create(const DescriptorPool &descriptor_pool,
-                const DescriptorSetLayout &layout,
-                const size_t instance_buffer_size);
+                const DescriptorSetLayout &layout);
     void destroy();
 
     inline const auto & native()          const { return _descriptor_set;  }
-    inline const auto & instance_buffer() const { return _instance_buffer; }
+    inline const auto & camera_buffer()   const { return _buffers[0];      }
+    inline const auto & instance_buffer() const { return _buffers[1];      }
 
     DescriptorSet() = default;
     ~DescriptorSet() = default;
@@ -33,7 +34,7 @@ public:
 
 private:
     vk::DescriptorSet         _descriptor_set;
-    BufferObject              _instance_buffer;
+    std::vector<BufferObject> _buffers;
     std::vector<ImageObject>  _textures;
 };
 

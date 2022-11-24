@@ -2,7 +2,6 @@
 #define VKLEARNIN_ENGINE_ENGINE_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/shaders/CameraData.hpp"
 
 namespace vkl {
 
@@ -12,6 +11,8 @@ class Pipeline;
 
 class Engine final {
 public:
+    using PipelineList = std::vector<Pipeline *>;
+
     void render_loop();
 
     void init();
@@ -30,11 +31,10 @@ public:
 
 private:
     Swapchain *_swapchain;
-    std::vector<Pipeline *> _pipelines;
-
-    uint32_t _frame_index;
+    uint32_t   _frame_index;
 
     Application &_application;
+    PipelineList _pipelines;
 
     void _image_invalid();
     void _next_frame();

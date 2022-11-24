@@ -7,13 +7,23 @@
 
 namespace vkl {
 
+void DescriptorSet::add_ubo(const size_t size) {
+    _buffers.push_back(BufferTools::create_buffer(
+        size,
+        vk::BufferUsageFlagBits::eUniformBuffer,
+        vk::SharingMode::eExclusive,
+        (vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent),
+        std::format("ubo {}", _buffers.size()).c_str()
+    ));
+}
+
 void DescriptorSet::add_texture2D(const char *filepath) {
     _textures.push_back(ImageTools::load_from_file(filepath));
 }
 
 void DescriptorSet::create(const DescriptorPool &descriptor_pool,
-                           const DescriptorSetLayout &layout,
-                           const size_t instance_buffer_size)
+                           const DescriptorSetLayout &layout)
 {
     vk::DescriptorSetAllocateInfo alloc_info {
         .descriptorPool = descriptor_pool.native(),
@@ -29,26 +39,20 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
         CONSOLE_CRITICAL("Could not allocate descriptor sets");
     }
 
-    _instance_buffer = BufferTools::create_buffer(
-        instance_buffer_size,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive,
-        (vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent),
-        "instance desc"
-    );
-
-    vk::DescriptorBufferInfo buffer_info {
-        .buffer = _instance_buffer.buffer,
-        .offset = 0u,
-        .range = instance_buffer_size
-    };
+    std::vector<vk::DescriptorBufferInfo> buffer_info;
+    buffer_info.reserve(_buffers.size());
+    for(const auto &buffer : _buffers) {
+        buffer_info.push_back({
+            .buffer = buffer.buffer,
+            .offset = 0u,
+            .range = buffer.allocation->size
+        });
+    }
 
     std::vector<vk::DescriptorImageInfo> image_info;
     image_info.reserve(_textures.size());
-    
     for(const auto &texture : _textures) {
-        image_info.emplace_back(vk::DescriptorImageInfo {
+        image_info.push_back({
             .sampler     = texture.sampler,
             .imageView   = texture.view,
             .imageLayout = texture.layout
@@ -60,15 +64,15 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
             .dstSet = _descriptor_set,
             .dstBinding = 0u,
             .dstArrayElement = 0u,
-            .descriptorCount = 1u,
+            .descriptorCount = static_cast<uint32_t>(buffer_info.size()),
             .descriptorType = vk::DescriptorType::eUniformBuffer,
             .pImageInfo = nullptr,
-            .pBufferInfo = &buffer_info,
+            .pBufferInfo = buffer_info.data(),
             .pTexelBufferView = nullptr
         },
         {
             .dstSet = _descriptor_set,
-            .dstBinding = 1u,
+            .dstBinding = static_cast<uint32_t>(buffer_info.size()),
             .dstArrayElement = 0u,
             .descriptorCount = static_cast<uint32_t>(image_info.size()),
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
@@ -82,7 +86,9 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
 }
 
 void DescriptorSet::destroy() {
-    BufferTools::destroy_buffer(_instance_buffer);
+    for(auto &buffer : _buffers) {
+        BufferTools::destroy_buffer(buffer);
+    }
 
     for(auto &texture : _textures) {
         ImageTools::destroy_image(texture);
@@ -90,8 +96,9 @@ void DescriptorSet::destroy() {
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
-    _descriptor_set  { std::move(other._descriptor_set)  },
-    _instance_buffer { std::move(other._instance_buffer) }
+    _descriptor_set { std::move(other._descriptor_set)  },
+    _buffers  { std::move(other._buffers) },
+    _textures { std::move(other._textures) }
 { }
 
 } // namespace vkl
