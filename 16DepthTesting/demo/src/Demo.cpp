@@ -45,7 +45,9 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
 }
 
 // =============================================================================
-const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
+const vk::CommandBuffer & Demo::run_pipelines(const float time_delta,
+                                              const uint32_t frame_index)
+{
     _pipelines[0]->reset_command_pool(frame_index);
  
     // No need for special flags for this application
@@ -80,9 +82,8 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
         .pClearValues    = clear_values,
     };
 
-    static auto start_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::high_resolution_clock::now() - start_time;
-    float runtime = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0f;
+    static float runtime = 0.0f;
+    runtime += time_delta;
 
     auto model_matrix = glm::rotate(
         glm::mat4(1.0f),

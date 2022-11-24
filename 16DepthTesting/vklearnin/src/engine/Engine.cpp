@@ -7,6 +7,10 @@
 #include "vklearnin/engine/Pipeline.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
+using HRC = std::chrono::high_resolution_clock;
+using ms_period = std::chrono::milliseconds::period;
+using duration_ms = std::chrono::duration<float, ms_period>;
+
 namespace vkl {
 
 // =============================================================================
@@ -31,14 +35,15 @@ void Engine::render_loop() {
     // when it's done again after we submit this buffer's work
     _swapchain->reset_fence();
 
-    const auto &command_buffer =
-        _application.execute_pipelines(_frame_index);
-
-    // Give the swapchain back a full command buffer and set it loose
-    _swapchain->submit(command_buffer, LogicalDevice::cmd_queue());
-
-    // Swap buffers
-    result = _swapchain->present();
+    static HRC::time_point frame_end = HRC::now();
+    auto time_delta = 1e-3f * duration_ms(HRC::now() - frame_end).count();
+        const auto &command_buffer = _application.run_pipelines(
+            time_delta,
+            _frame_index
+        );
+        _swapchain->submit(command_buffer, LogicalDevice::cmd_queue());
+        result = _swapchain->present();
+    frame_end = HRC::now();
 
     // A present operation can return these two, too. Same approach as above -
     // adjust the required stuff and try again
