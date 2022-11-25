@@ -11,8 +11,6 @@ class Pipeline;
 
 class Engine final {
 public:
-    using PipelineList = std::vector<Pipeline *>;
-
     void render_loop();
 
     void init();

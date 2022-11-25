@@ -12,15 +12,12 @@ namespace vkl {
 
 class FrameData {
 public:
-    using Bindings = std::vector<vk::DescriptorSetLayoutBinding>;
-    using PoolSizes = std::vector<vk::DescriptorPoolSize>;
-
     void image_changed();
     void update_camera_ubo(const void *data);
     void update_instance_ubo(const void *data);
 
-    void init(const Bindings &bindings);
-    void create();
+    void init(const BindingList &bindings, const BindingFlags &flags);
+    void create(const bool unbounded);
     void destroy();
 
     inline const auto & command_pool()   const { return _command_pool; }

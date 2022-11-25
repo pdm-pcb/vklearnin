@@ -10,11 +10,6 @@ namespace vkl {
 
 class Pipeline final {
 public:
-    using PushConstantRanges = std::vector<vk::PushConstantRange>;
-    using Bindings = std::vector<vk::DescriptorSetLayoutBinding>;
-    using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
-    using RenderPasses = std::vector<vk::RenderPass>;
-
     inline void reset_command_pool(const uint32_t frame_index) const {
         _frame_data[frame_index].command_pool().reset();
     }
@@ -42,11 +37,12 @@ public:
     void fragment_from_binary(const char *filepath);
 
     void set_push_constants(const PushConstantRanges &ranges);
-    void set_layout(const Bindings &bindings);
+    // void set_layout(const BindingList &bindings);
     void set_render_pass(const RenderPass &render_pass);
 
-    void add_ubo(const size_t size);
-    void add_texture2D(const char *filepath);
+    void add_ubo(const size_t size, const vk::ShaderStageFlagBits stages);
+    void add_textures2D(const std::vector<std::string> &filepaths,
+                        const vk::ShaderStageFlagBits stages);
 
     void create();
     void destroy();
@@ -78,6 +74,9 @@ private:
     vk::ShaderModule _frag;
     std::vector<vk::PipelineShaderStageCreateInfo> _shader_stages;
 
+    BindingList  _layout_bindings;
+    BindingFlags _binding_flags;
+
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;
 
@@ -101,6 +100,7 @@ private:
 
     const Swapchain  &_swapchain;
 
+    void _init_layout();
     void _init_vert_input();
     void _init_assembly();
     void _init_viewport();

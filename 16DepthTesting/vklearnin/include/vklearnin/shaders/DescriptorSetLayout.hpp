@@ -7,9 +7,7 @@ namespace vkl {
 
 class DescriptorSetLayout {
 public:
-    using Bindings = std::vector<vk::DescriptorSetLayoutBinding>;
-
-    void create(const Bindings &bindings);
+    void create(const BindingList &bindings, const BindingFlags &flags);
     void destroy();
 
     inline const auto & native() const { return _layout; }

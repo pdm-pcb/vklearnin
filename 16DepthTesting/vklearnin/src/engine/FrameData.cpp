@@ -24,7 +24,8 @@ void FrameData::update_instance_ubo(const void *data) {
 }
 
 // =============================================================================
-void FrameData::init(const Bindings &bindings) {
+void FrameData::init(const BindingList &bindings, const BindingFlags &flags) {
+    CONSOLE_INFO("");
     _command_pool.create();
     _command_buffer.create(_command_pool);
 
@@ -38,12 +39,13 @@ void FrameData::init(const Bindings &bindings) {
         });
     }
     _descriptor_pool.create(pool_sizes);
-    _descriptor_set_layout.create(bindings);
+    _descriptor_set_layout.create(bindings, flags);
 }
 
 // =============================================================================
-void FrameData::create() {
-    _descriptor_set.create(_descriptor_pool, _descriptor_set_layout);
+void FrameData::create(const bool unbounded) {
+    CONSOLE_INFO("");
+    _descriptor_set.create(_descriptor_pool, _descriptor_set_layout, unbounded);
 }
 
 // =============================================================================

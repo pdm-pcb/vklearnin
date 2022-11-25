@@ -13,8 +13,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: remove this and/or make it client-side exclusive
-#include "vklearnin/shaders/CameraData.hpp"
-#include "vklearnin/shaders/InstanceData.hpp"
+#include "vklearnin/shaders/CameraUBO.hpp"
+#include "vklearnin/shaders/InstanceUBO.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ public:
     create_pipelines(const vkl::Swapchain &swapchain) override;
 
     const vk::CommandBuffer &
-    run_pipelines(const float time_delta, const uint32_t frame_index) override;
+    execute_pipelines(const float time_delta, const uint32_t frame_index) override;
 
     void swapchain_image_invalid();
 
@@ -43,7 +43,7 @@ private:
     vkl::Swapchain const *_swapchain;
     std::vector<vkl::Pipeline *> _pipelines;
 
-    vkl::CameraData _camera_data;
+    vkl::CameraUBO _camera_data;
 
     vkl::XZUnitPlane *_xz_unit_plane;
     vkl::UnitCube    *_unit_cube;

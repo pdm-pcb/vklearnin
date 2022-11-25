@@ -53,4 +53,18 @@
 
 #include "vklearnin/tools/math.hpp"
 
+namespace vkl {
+
+class Pipeline;
+
+using PipelineList = std::vector<Pipeline *>;
+
+using PushConstantRanges = std::vector<vk::PushConstantRange>;
+using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
+
+using PoolSizes    = std::vector<vk::DescriptorPoolSize>;
+using BindingList  = std::vector<vk::DescriptorSetLayoutBinding>;
+using BindingFlags = std::vector<vk::DescriptorBindingFlags>;
+
+} // namespace vkl
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

@@ -39,53 +39,52 @@ void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
 }
 
 // =============================================================================
-void Pipeline::set_layout(const Bindings &bindings) {
-    _frame_data.resize(RenderConfig::swapchain_image_count);
-
-    for(auto &frame_data : _frame_data) {
-        frame_data.init(bindings);
-    }
-
-    const auto &descriptor_layout = _frame_data[0].descriptor_set_layout().native();
-    vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount = 1u,
-        .pSetLayouts = &descriptor_layout,
-        .pushConstantRangeCount =
-            static_cast<uint32_t>(_push_constant_ranges.size()),
-        .pPushConstantRanges = _push_constant_ranges.data()
-    };
-
-    auto pipeline_result =
-        LogicalDevice::native().createPipelineLayout(pipeline_layout_info);
-    if(pipeline_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not create pipeline layout");
-    }
-    _layout = pipeline_result.value;
-
-    CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
-                  pipeline_layout_info.setLayoutCount);
-}
-
-// =============================================================================
-void Pipeline::add_ubo(const size_t size) {
+void Pipeline::add_ubo(const size_t size, const vk::ShaderStageFlagBits stages)
+{
+    CONSOLE_TRACE("Add UBO");
     for(auto &frame_data : _frame_data) {
         frame_data.descriptor_set().add_ubo(size);
     }
+
+    _layout_bindings.push_back({
+        .binding            = static_cast<uint32_t>(_layout_bindings.size()),
+        .descriptorType     = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount    = 1u,
+        .stageFlags         = stages,
+        .pImmutableSamplers = nullptr
+    });
+
+    _binding_flags.push_back({ });
 }
 
 // =============================================================================
-void Pipeline::add_texture2D(const char *filepath) {
+void Pipeline::add_textures2D(const std::vector<std::string> &filepaths,
+                             const vk::ShaderStageFlagBits stages)
+{
+    CONSOLE_TRACE("Add Texture");
     for(auto &frame_data : _frame_data) {
-        frame_data.descriptor_set().add_texture2D(filepath);
+        for(const auto &filepath : filepaths) {
+            frame_data.descriptor_set().add_texture2D(filepath.c_str());
+        }
     }
+
+    _layout_bindings.push_back({
+        .binding            = static_cast<uint32_t>(_layout_bindings.size()),
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 2u,
+        .stageFlags         = stages,
+        .pImmutableSamplers = nullptr
+    });
+
+    _binding_flags.push_back({
+        vk::DescriptorBindingFlagBits::eVariableDescriptorCount |
+        vk::DescriptorBindingFlagBits::ePartiallyBound
+    });
 }
 
 // =============================================================================
 void Pipeline::create() {
-    for(auto &frame_data : _frame_data) {
-        frame_data.create();
-    }
-
+    _init_layout();
     _init_vert_input();
     _init_assembly();
     _init_viewport();
@@ -186,6 +185,33 @@ void Pipeline::update_dimensions() {
         _viewport.x,
         _viewport.y
     );
+}
+
+// =============================================================================
+void Pipeline::_init_layout() {
+    for(auto &frame_data : _frame_data) {
+        frame_data.init(_layout_bindings, _binding_flags);
+        frame_data.create(true);
+    }
+
+    const auto &descriptor_layout = _frame_data[0].descriptor_set_layout().native();
+    vk::PipelineLayoutCreateInfo pipeline_layout_info {
+        .setLayoutCount = 1u,
+        .pSetLayouts = &descriptor_layout,
+        .pushConstantRangeCount =
+            static_cast<uint32_t>(_push_constant_ranges.size()),
+        .pPushConstantRanges = _push_constant_ranges.data()
+    };
+
+    auto pipeline_result =
+        LogicalDevice::native().createPipelineLayout(pipeline_layout_info);
+    if(pipeline_result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Could not create pipeline layout");
+    }
+    _layout = pipeline_result.value;
+
+    CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
+                  pipeline_layout_info.setLayoutCount);
 }
 
 // =============================================================================
@@ -315,6 +341,8 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _layout             { nullptr },
     _pipeline           { nullptr },
     _swapchain          { swapchain }
-{ }
+{
+    _frame_data.resize(RenderConfig::swapchain_image_count);
+}
 
 } // namespace vkl

@@ -7,8 +7,6 @@ namespace vkl {
 
 class DescriptorPool {
 public:
-    using PoolSizes = std::vector<vk::DescriptorPoolSize>;
-
     void create(const PoolSizes &sizes);
     void destroy();
 

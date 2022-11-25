@@ -16,7 +16,7 @@ public:
     void add_texture2D(const char *filepath);
 
     void create(const DescriptorPool &descriptor_pool,
-                const DescriptorSetLayout &layout);
+                const DescriptorSetLayout &layout, const bool unbounded);
     void destroy();
 
     inline const auto & native()       const { return _descriptor_set; }

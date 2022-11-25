@@ -38,7 +38,7 @@ void Engine::render_loop() {
     static HRC::time_point frame_end = HRC::now();
     auto time_delta = 1e-6f * duration_us(HRC::now() - frame_end).count();
 
-        const auto &command_buffer = _application.run_pipelines(
+        const auto &command_buffer = _application.execute_pipelines(
             time_delta,
             _frame_index
         );

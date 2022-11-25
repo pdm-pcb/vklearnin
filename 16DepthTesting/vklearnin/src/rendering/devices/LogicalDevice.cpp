@@ -41,7 +41,14 @@ void LogicalDevice::create() {
     vk::PhysicalDeviceFeatures features { };
     features.samplerAnisotropy = true;
 
+    vk::PhysicalDeviceDescriptorIndexingFeatures descriptor_indexing { };
+    descriptor_indexing.shaderSampledImageArrayNonUniformIndexing = true;
+    descriptor_indexing.runtimeDescriptorArray                    = true;
+    descriptor_indexing.descriptorBindingVariableDescriptorCount  = true;
+    descriptor_indexing.descriptorBindingPartiallyBound           = true;
+
     vk::DeviceCreateInfo device_info {
+        .pNext                   = &descriptor_indexing,
         .queueCreateInfoCount    = static_cast<uint32_t>(std::size(queue_info)),
         .pQueueCreateInfos       = queue_info,
         .enabledLayerCount       = static_cast<uint32_t>(layers.size()),

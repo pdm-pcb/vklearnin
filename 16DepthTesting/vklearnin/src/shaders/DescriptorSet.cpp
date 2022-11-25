@@ -8,6 +8,7 @@
 namespace vkl {
 
 void DescriptorSet::add_ubo(const size_t size) {
+    CONSOLE_TRACE("Add UBO");
     _uniform_buffers.push_back(BufferTools::create_buffer(
         size,
         vk::BufferUsageFlagBits::eUniformBuffer,
@@ -19,13 +20,23 @@ void DescriptorSet::add_ubo(const size_t size) {
 }
 
 void DescriptorSet::add_texture2D(const char *filepath) {
+    CONSOLE_TRACE("Add Texture2D");
     _textures.push_back(ImageTools::load_from_file(filepath));
 }
 
 void DescriptorSet::create(const DescriptorPool &descriptor_pool,
-                           const DescriptorSetLayout &layout)
+                           const DescriptorSetLayout &layout,
+                           const bool unbounded)
 {
+    vk::DescriptorSetVariableDescriptorCountAllocateInfo variable_count { };
+    std::vector<uint32_t> descriptor_count = { 2u };
+    if(unbounded) {
+        variable_count.descriptorSetCount = 1u;
+        variable_count.pDescriptorCounts  = descriptor_count.data(); 
+    }
+
     vk::DescriptorSetAllocateInfo alloc_info {
+        .pNext = &variable_count,
         .descriptorPool = descriptor_pool.native(),
         .descriptorSetCount = 1u,
         .pSetLayouts = &layout.native()

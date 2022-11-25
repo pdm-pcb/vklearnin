@@ -5,8 +5,18 @@
 
 namespace vkl {
 
-void DescriptorSetLayout::create(const Bindings &bindings) {
+void DescriptorSetLayout::create(const BindingList &bindings,
+                                 const BindingFlags &flags)
+{
+    assert(bindings.size() == flags.size());
+
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo binding_flags {
+        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .pBindingFlags = flags.data(),
+    };
+
     vk::DescriptorSetLayoutCreateInfo descriptor_info {
+        .pNext = &binding_flags,
         .bindingCount = static_cast<uint32_t>(bindings.size()),
         .pBindings = bindings.data(),
     };

@@ -4,23 +4,21 @@ layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 color;
 layout(location = 2) in vec2 texcoord;
 
-layout(binding = 0) uniform CameraData {
+layout(binding = 0) uniform CameraUBO {
     mat4 view_matrix;
     mat4 proj_matrix;
-} camera_ubo;
+};
 
-layout(binding = 1) uniform InstanceData {
+layout(push_constant) uniform InstanceUBO {
     mat4 model_matrix;
-} instance_ubo;
+    int material_index;
+};
 
 layout(location = 0) out vec4 vs_out_color;
 layout(location = 1) out vec2 vs_out_texcoord;
 
 void main() {
-	gl_Position = camera_ubo.proj_matrix    *
-                  camera_ubo.view_matrix    *
-                  instance_ubo.model_matrix *
-                  position;
+	gl_Position = proj_matrix * view_matrix * model_matrix * position;
 
     vs_out_color = color;
     vs_out_texcoord = texcoord;

@@ -17,7 +17,7 @@ public:
     create_pipelines(const Swapchain &swapchain) = 0;
 
     virtual const vk::CommandBuffer &
-    run_pipelines(const float time_delta, const uint32_t frame_index) = 0;
+    execute_pipelines(const float time_delta, const uint32_t frame_index) = 0;
 
     virtual void swapchain_image_invalid() = 0;
 
