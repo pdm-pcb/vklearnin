@@ -56,7 +56,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
         buffer_info.push_back({
             .buffer = buffer.buffer,
             .offset = 0u,
-            .range = buffer.allocation->size
+            .range = VK_WHOLE_SIZE
         });
     }
 
