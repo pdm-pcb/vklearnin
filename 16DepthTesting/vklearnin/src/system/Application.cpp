@@ -14,8 +14,12 @@ void Application::run() {
     _running = true;
 
     while(_running) {
-        _engine->render_loop();
+        Timekeeper::frame_start();
+            _engine->render_loop();
+        Timekeeper::frame_end();
+
         _running = TargetWindow::message_loop();
+        Timekeeper::update();
     }
 
     // wait for current commands to run their course

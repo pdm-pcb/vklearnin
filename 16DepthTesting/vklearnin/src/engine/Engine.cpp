@@ -7,10 +7,6 @@
 #include "vklearnin/engine/Pipeline.hpp"
 #include "vklearnin/rendering/devices/LogicalDevice.hpp"
 
-using HRC = std::chrono::high_resolution_clock;
-using us_period = std::chrono::microseconds::period;
-using duration_us = std::chrono::duration<float, us_period>;
-
 namespace vkl {
 
 // =============================================================================
@@ -29,23 +25,15 @@ void Engine::render_loop() {
         return;
     }
 
-    static HRC::time_point frame_end = HRC::now();
-    auto time_delta = 1e-6f * duration_us(HRC::now() - frame_end).count();
-
     _frame_index = _swapchain->image_index();
 
     // Un-signal the fence controlling this framebuffer; the GPU will signal
     // when it's done again after we submit this buffer's work
     _swapchain->reset_fence();
 
-        const auto &command_buffer = _application.execute_pipelines(
-            time_delta,
-            _frame_index
-        );
+        auto &command_buffer = _application.execute_pipelines(_frame_index);
         _swapchain->submit(command_buffer, LogicalDevice::cmd_queue());
         result = _swapchain->present();
-
-    frame_end = HRC::now();
 
     // A present operation can return these two, too. Same approach as above -
     // adjust the required stuff and try again

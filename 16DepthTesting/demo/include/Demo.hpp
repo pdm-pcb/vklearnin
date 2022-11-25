@@ -29,8 +29,7 @@ public:
     create_pipelines(const vkl::Swapchain &swapchain) override;
 
     const vk::CommandBuffer &
-    execute_pipelines(const float time_delta,
-                      const uint32_t frame_index) override;
+    execute_pipelines(const uint32_t frame_index) override;
 
     void swapchain_image_invalid();
 
