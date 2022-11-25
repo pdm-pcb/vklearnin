@@ -59,7 +59,7 @@ void Pipeline::add_ubo(const size_t size, const vk::ShaderStageFlagBits stages)
 
 // =============================================================================
 void Pipeline::add_textures2D(const std::vector<std::string> &filepaths,
-                             const vk::ShaderStageFlagBits stages)
+                              const vk::ShaderStageFlagBits stages)
 {
     CONSOLE_TRACE("Add Texture");
     for(auto &frame_data : _frame_data) {
@@ -71,7 +71,7 @@ void Pipeline::add_textures2D(const std::vector<std::string> &filepaths,
     _layout_bindings.push_back({
         .binding            = static_cast<uint32_t>(_layout_bindings.size()),
         .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 2u,
+        .descriptorCount    = static_cast<uint32_t>(filepaths.size()),
         .stageFlags         = stages,
         .pImmutableSamplers = nullptr
     });

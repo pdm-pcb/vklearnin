@@ -32,7 +32,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
     // );
     _pipelines[0]->add_textures2D(
         { 
-            "../../vklearnin/assets/textures/metal_panel.jpg",
+            // "../../vklearnin/assets/textures/metal_panel.jpg",
             "../../vklearnin/assets/textures/wooden_wall.jpg"
         },
         vk::ShaderStageFlagBits::eFragment
@@ -44,7 +44,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
 
 // =============================================================================
 const vk::CommandBuffer & Demo::execute_pipelines(const float time_delta,
-                                              const uint32_t frame_index)
+                                                  const uint32_t frame_index)
 {
     _pipelines[0]->reset_command_pool(frame_index);
  
@@ -99,18 +99,55 @@ const vk::CommandBuffer & Demo::execute_pipelines(const float time_delta,
         );
 
         static float runtime = 0.0f;
+        static uint32_t frame_count = 0u;
         runtime += time_delta;
 
+        // CONSOLE_TRACE(
+        //     "frametime: {:.08f} / runtime: {:.08f} / frame: {}",
+        //     time_delta,
+        //     runtime,
+        //     ++frame_count
+        // );
+
+        vkl::InstanceUBO instance_data { };
+
+//------------------------------------------------------------------------------
+// Plane
+        // auto plane_matrix = glm::rotate(
+        //     glm::translate(glm::mat4(1.0f), { 1.0f, 0.0f, -1.0f }),
+        //     runtime * vkl::math::pi_over_four,
+        //     { 0.0f, 0.0f, 1.0f }
+        // );
+
+        // instance_data.model_matrix = plane_matrix;
+        // instance_data.material_index = 1u;
+
+        // command_buffer.pushConstants<vkl::InstanceUBO>(
+        //     _pipelines[0]->layout(),
+        //     vk::ShaderStageFlagBits::eVertex |
+        //     vk::ShaderStageFlagBits::eFragment,
+        //     0u,
+        //     instance_data
+        // );
+
+        // vkl::Renderer::draw(
+        //     command_buffer,
+        //     _xz_unit_plane->vertex_buffer(),
+        //     _xz_unit_plane->index_buffer(),
+        //     static_cast<uint32_t>(_xz_unit_plane->indices().size())
+        // );
+
+//------------------------------------------------------------------------------
+// Cube
         auto cube_matrix = glm::rotate(
-            glm::translate(glm::mat4(1.0f), { -1.0f, 0.0f, -1.0f }),
+            glm::mat4(1.0f),
+            // glm::translate(glm::mat4(1.0f), { -1.0f, 0.0f, -1.0f }),
             runtime * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
 
-        vkl::InstanceUBO instance_data {
-            .model_matrix = cube_matrix,
-            .material_index = 0u,
-        };
+        instance_data.model_matrix = cube_matrix,
+        instance_data.material_index = 0u,
 
         command_buffer.pushConstants<vkl::InstanceUBO>(
             _pipelines[0]->layout(),
@@ -127,29 +164,8 @@ const vk::CommandBuffer & Demo::execute_pipelines(const float time_delta,
             static_cast<uint32_t>(_unit_cube->indices().size())
         );
 
-        auto plane_matrix = glm::rotate(
-            glm::translate(glm::mat4(1.0f), { 1.0f, 0.0f, -1.0f }),
-            runtime * vkl::math::pi_over_four,
-            { 0.0f, 0.0f, 1.0f }
-        );
-
-        instance_data.model_matrix = plane_matrix;
-        instance_data.material_index = 1u;
-
-        command_buffer.pushConstants<vkl::InstanceUBO>(
-            _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex |
-            vk::ShaderStageFlagBits::eFragment,
-            0u,
-            instance_data
-        );
-
-        vkl::Renderer::draw(
-            command_buffer,
-            _xz_unit_plane->vertex_buffer(),
-            _xz_unit_plane->index_buffer(),
-            static_cast<uint32_t>(_xz_unit_plane->indices().size())
-        );
+// Done Drawing
+//------------------------------------------------------------------------------
 
     // With that out of the way, that's this pass handled
     command_buffer.endRenderPass();
@@ -197,8 +213,8 @@ void Demo::init () {
 
 // =============================================================================
 void Demo::shutdown() {
-    _xz_unit_plane->destroy_buffers();
-    _unit_cube->destroy_buffers();
+    if(_xz_unit_plane) _xz_unit_plane->destroy_buffers();
+    if(_unit_cube)     _unit_cube->destroy_buffers();
 
     for(auto *pipeline : _pipelines) {
         pipeline->destroy();
@@ -208,6 +224,8 @@ void Demo::shutdown() {
 // =============================================================================
 Demo::Demo() :
     vkl::Application(),
+    _swapchain     { nullptr },
+    _camera_data   { },
     _xz_unit_plane { nullptr },
     _unit_cube     { nullptr }
 { }

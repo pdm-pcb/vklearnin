@@ -44,7 +44,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
         .descriptorSetCount = 1u,
         .pSetLayouts = &layout.native()
     };
-    
+
     auto result = LogicalDevice::native().allocateDescriptorSets(
         &alloc_info,
         &_descriptor_set

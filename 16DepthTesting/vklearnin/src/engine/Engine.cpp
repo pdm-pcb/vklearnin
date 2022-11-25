@@ -29,14 +29,14 @@ void Engine::render_loop() {
         return;
     }
 
+    static HRC::time_point frame_end = HRC::now();
+    auto time_delta = 1e-6f * duration_us(HRC::now() - frame_end).count();
+
     _frame_index = _swapchain->image_index();
 
     // Un-signal the fence controlling this framebuffer; the GPU will signal
     // when it's done again after we submit this buffer's work
     _swapchain->reset_fence();
-
-    static HRC::time_point frame_end = HRC::now();
-    auto time_delta = 1e-6f * duration_us(HRC::now() - frame_end).count();
 
         const auto &command_buffer = _application.execute_pipelines(
             time_delta,

@@ -4,7 +4,7 @@ layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 color;
 layout(location = 2) in vec2 texcoord;
 
-layout(binding = 0) uniform CameraUBO {
+layout(set = 0, binding = 0) uniform CameraUBO {
     mat4 view_matrix;
     mat4 proj_matrix;
 };

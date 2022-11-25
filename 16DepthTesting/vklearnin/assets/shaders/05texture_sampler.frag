@@ -1,7 +1,7 @@
 #version 460 core
 #extension GL_EXT_nonuniform_qualifier : enable
 
-layout(binding = 1) uniform sampler2D texture_sampler;
+layout(set = 0, binding = 1) uniform sampler2D texture_sampler;
 
 layout(push_constant) uniform InstanceUBO {
     mat4 model_matrix;
