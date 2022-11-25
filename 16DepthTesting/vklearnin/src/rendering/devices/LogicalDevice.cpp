@@ -48,7 +48,7 @@ void LogicalDevice::create() {
     descriptor_indexing.descriptorBindingPartiallyBound           = true;
 
     vk::DeviceCreateInfo device_info {
-        .pNext                   = &descriptor_indexing,
+        // .pNext                   = &descriptor_indexing,
         .queueCreateInfoCount    = static_cast<uint32_t>(std::size(queue_info)),
         .pQueueCreateInfos       = queue_info,
         .enabledLayerCount       = static_cast<uint32_t>(layers.size()),
