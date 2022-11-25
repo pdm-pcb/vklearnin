@@ -7,6 +7,7 @@
 
 namespace vkl {
 
+//==============================================================================
 void DescriptorSet::add_ubo(const size_t size) {
     CONSOLE_TRACE("Add UBO");
     _uniform_buffers.push_back(BufferTools::create_buffer(
@@ -19,11 +20,13 @@ void DescriptorSet::add_ubo(const size_t size) {
     ));
 }
 
+//==============================================================================
 void DescriptorSet::add_texture2D(const char *filepath) {
     CONSOLE_TRACE("Add Texture2D");
     _textures.push_back(ImageTools::load_from_file(filepath));
 }
 
+//==============================================================================
 void DescriptorSet::create(const DescriptorPool &descriptor_pool,
                            const DescriptorSetLayout &layout,
                            const bool unbounded)
@@ -96,6 +99,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);
 }
 
+//==============================================================================
 void DescriptorSet::destroy() {
     for(auto &buffer : _uniform_buffers) {
         BufferTools::destroy_buffer(buffer);
@@ -106,6 +110,7 @@ void DescriptorSet::destroy() {
     }
 }
 
+//==============================================================================
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
     _descriptor_set  { std::move(other._descriptor_set) },
     _uniform_buffers { std::move(other._uniform_buffers) },

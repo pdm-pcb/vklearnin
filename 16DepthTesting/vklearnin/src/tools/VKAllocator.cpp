@@ -22,7 +22,7 @@ VKAllocator::BlockIter VKAllocator::allocate(
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
     auto block_iter = _find_free_block(mem_reqs, type_index);
-    // strncpy(block_iter->name.data(), buffer_name, block_iter->name.max_size());
+    strncpy(block_iter->name.data(), buffer_name, block_iter->name.max_size());
 
     _print_alloc_state();
 
@@ -51,7 +51,7 @@ VKAllocator::BlockIter VKAllocator::allocate(
     uint32_t type_index = _find_memory_type(memory_properties, mem_reqs);
 
     auto block_iter = _find_free_block(mem_reqs, type_index);
-    // strncpy(block_iter->name.data(), image_name, block_iter->name.max_size());
+    strncpy(block_iter->name.data(), image_name, block_iter->name.max_size());
 
     _print_alloc_state();
 
@@ -474,7 +474,7 @@ void VKAllocator::_print_alloc_state() {
         }
     }
 
-    CONSOLE_TRACE("{}", state_stream.str());
+    CONSOLE_INFO("{}", state_stream.str());
 
     for(size_t pool_idx = 0; pool_idx < _pools.size(); ++pool_idx) {
         const auto &pool = _pools[pool_idx];
