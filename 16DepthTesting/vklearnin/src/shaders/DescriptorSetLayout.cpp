@@ -16,7 +16,7 @@ void DescriptorSetLayout::create(const BindingList &bindings,
     };
 
     vk::DescriptorSetLayoutCreateInfo descriptor_info {
-        // .pNext = &binding_flags,
+        .pNext = &binding_flags,
         .bindingCount = static_cast<uint32_t>(bindings.size()),
         .pBindings = bindings.data(),
     };

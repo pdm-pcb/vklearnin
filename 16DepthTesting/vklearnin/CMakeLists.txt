@@ -70,7 +70,7 @@ endif()
 
 compile_shader(
     vklearnin
-    ENV vulkan1.1
+    ENV vulkan1.2
     SOURCES ${SHADER_SOURCE}
 )
 

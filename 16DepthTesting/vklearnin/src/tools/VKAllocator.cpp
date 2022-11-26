@@ -270,14 +270,16 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
                     assert(aligned_offset >= current_block->offset);
 
                     new_block.alloc_index = alloc_index;
-                    new_block.offset = aligned_offset;
+                    new_block.offset      = aligned_offset;
+
+                    auto align_pad = new_block.offset - current_block->offset;
 
                     auto new_iter =
                         alloc.blocks.emplace(current_block, new_block);
 
-                    current_block->offset       += aligned_size;
-                    current_block->size         -= aligned_size;
-                    current_block->aligned_size -= aligned_size;
+                    current_block->offset       += aligned_size + align_pad;
+                    current_block->size         -= aligned_size + align_pad;
+                    current_block->aligned_size -= aligned_size + align_pad;
 
                     if(current_block->size == 0u) {
                         alloc.blocks.erase(current_block);

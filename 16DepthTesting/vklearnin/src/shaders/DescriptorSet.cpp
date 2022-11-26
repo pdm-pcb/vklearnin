@@ -39,7 +39,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     }
 
     vk::DescriptorSetAllocateInfo alloc_info {
-        // .pNext = &variable_count,
+        .pNext = &variable_count,
         .descriptorPool = descriptor_pool.native(),
         .descriptorSetCount = 1u,
         .pSetLayouts = &layout.native()
