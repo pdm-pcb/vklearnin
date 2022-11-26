@@ -107,44 +107,9 @@ void VKAllocator::free(BlockIter &block_iter) {
     );
 
     BlockIter next_block = std::next(block_iter, 1);
-    if(block_iter == blocks.begin() && next_block != blocks.end()) {
-        // iter is begin and not end
-        if(!next_block->free) {
-            // Nothing to do here but mark this block as free
-            block_iter->free = true;
-            block_iter->size = block_iter->aligned_size;
-            block_iter = blocks.end();
-        }
-        else {
-            // Absorb the block below
-            next_block->offset       -= block_size;
-            next_block->size         += block_size;
-            next_block->aligned_size += block_size;
-        }
-    }
-    else if(block_iter != blocks.begin() && next_block == blocks.end()) {
-        // iter is not begin and is end
-        BlockIter prev_block = std::prev(block_iter, 1);
-        if(!prev_block->free) {
-            // Nothing to do here but mark this block as free
-            block_iter->free = true;
-            block_iter->size = block_iter->aligned_size;
-            block_iter = blocks.end();
-        }
-        else {
-            // Absorb the block above
-            prev_block->size += block_size;
-            prev_block->aligned_size += block_size;
-        }
-    }
-    else if(block_iter == blocks.begin() && next_block == blocks.end()) {
-        // iter is both begin and end
-        // Nothing to do here but mark this block as free
-        block_iter->free = true;
-        block_iter = blocks.end();
-    }
-    else {
-        // Iter is neither begin and nor end
+
+    if(block_iter != blocks.begin() && next_block != blocks.end()) {
+        // iter is somewhere in the middle
         BlockIter prev_block = std::prev(block_iter, 1);
         if(prev_block->free && !next_block->free) {
             // Absorb the block above
@@ -175,6 +140,42 @@ void VKAllocator::free(BlockIter &block_iter) {
             block_iter->size = block_iter->aligned_size;
             block_iter = blocks.end();
         }
+    }
+    else if(block_iter == blocks.begin() && next_block != blocks.end()) {
+        // iter is begin and not end
+        if(!next_block->free) {
+            // Nothing to do here but mark this block as free
+            block_iter->free = true;
+            block_iter->size = block_iter->aligned_size;
+            block_iter = blocks.end();
+        }
+        else {
+            // Absorb the block below
+            next_block->offset       -= block_size;
+            next_block->size         += block_size;
+            next_block->aligned_size += block_size;
+        }
+    }
+    else if(block_iter != blocks.begin() && next_block == blocks.end()) {
+        // iter is not begin and is end
+        BlockIter prev_block = std::prev(block_iter, 1);
+        if(!prev_block->free) {
+            // Nothing to do here but mark this block as free
+            block_iter->free = true;
+            block_iter->size = block_iter->aligned_size;
+            block_iter = blocks.end();
+        }
+        else {
+            // Absorb the block above
+            prev_block->size += block_size;
+            prev_block->aligned_size += block_size;
+        }
+    }
+    else {
+        // iter is the only one
+        // Nothing to do here but mark this block as free
+        block_iter->free = true;
+        block_iter = blocks.end();
     }
 
     alloc.used -= block_size;
@@ -228,8 +229,10 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
     const vk::MemoryRequirements &mem_reqs,
     const uint32_t type_index)
 {
-    auto aligned_size =
-        ((mem_reqs.size / mem_reqs.alignment) + 1) * mem_reqs.alignment;
+    auto aligned_size = static_cast<uint64_t>(
+        std::ceil(static_cast<float>(mem_reqs.size) / mem_reqs.alignment) *
+        mem_reqs.alignment
+    );
 
     CONSOLE_TRACE(
         "{:s} requested, {:s} alignment. {:s} required",
@@ -258,9 +261,13 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
                 std::advance(current_block, 1))
             {
                 if(current_block->free && current_block->size >= aligned_size) {
-                    uint64_t aligned_offset =
-                        (current_block->offset / mem_reqs.alignment) *
-                        mem_reqs.alignment;
+                    auto aligned_offset = static_cast<uint64_t>(
+                        std::ceil(static_cast<float>(current_block->offset) /
+                                  mem_reqs.alignment) *
+                        mem_reqs.alignment
+                    );
+
+                    assert(aligned_offset >= current_block->offset);
 
                     new_block.alloc_index = alloc_index;
                     new_block.offset = aligned_offset;
@@ -463,9 +470,9 @@ void VKAllocator::_print_alloc_state() {
                     "\taligned size {}"
                     "\tfree? {}",
                     block.name.data(),
-                    _size_string(block.offset),
-                    _size_string(block.size),
-                    _size_string(block.aligned_size),
+                    block.offset,
+                    block.size,
+                    block.aligned_size,
                     block.free
                 );
             }

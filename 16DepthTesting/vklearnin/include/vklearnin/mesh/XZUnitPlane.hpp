@@ -14,8 +14,6 @@ public:
     void create_buffers();
     void destroy_buffers();
 
-    void set_corner_colors(const std::array<std::array<float, 4>, 4> &colors);
-
     inline const auto & vertex_buffer() const { return _vertex_buffer; }
     inline auto & vertices() { return _vertices; }
 
