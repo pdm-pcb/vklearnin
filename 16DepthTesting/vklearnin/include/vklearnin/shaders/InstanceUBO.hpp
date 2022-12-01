@@ -7,7 +7,6 @@ namespace vkl {
 
 struct InstanceUBO {
     glm::mat4 model_matrix { 1.0f };
-    uint32_t material_index = 0u;
 };
 
 } // namespace vkl

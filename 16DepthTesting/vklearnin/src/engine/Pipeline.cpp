@@ -13,6 +13,31 @@
 namespace vkl {
 
 // =============================================================================
+void Pipeline::update_per_frame_ubo(const uint32_t frame_index,
+                                    const void *data)
+{
+    auto &buffer =
+        _frame_data[frame_index].per_frame_set().uniform_buffers()[0];
+
+    void *mapped = VKAllocator::map_buffer(buffer.allocation);
+        memcpy(mapped, data, buffer.allocation->size);
+    VKAllocator::unmap_buffer(buffer.allocation);
+}
+
+// =============================================================================
+void Pipeline::update_per_draw_ubo(const uint32_t frame_index,
+                                   const uint32_t set_index,
+                                   const void *data)
+{
+    auto &set = _frame_data[frame_index].per_draw_sets()[set_index];
+    auto &buffer = set.uniform_buffers()[0];
+
+    void *mapped = VKAllocator::map_buffer(buffer.allocation);
+        memcpy(mapped, data, buffer.allocation->size);
+    VKAllocator::unmap_buffer(buffer.allocation);
+}                                   
+
+// =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {
     _vert = ShaderTools::module_from_binary(filepath, LogicalDevice::native());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
@@ -39,47 +64,43 @@ void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
 }
 
 // =============================================================================
-void Pipeline::add_ubo(const size_t size, const vk::ShaderStageFlagBits stages)
+void Pipeline::set_per_frame_ubo(const size_t size,
+                                 const vk::ShaderStageFlags stages)
 {
-    CONSOLE_TRACE("Add UBO");
     for(auto &frame_data : _frame_data) {
-        frame_data.descriptor_set().add_ubo(size);
+        frame_data.per_frame_set().add_ubo(size, stages);
     }
-
-    _layout_bindings.push_back({
-        .binding            = static_cast<uint32_t>(_layout_bindings.size()),
-        .descriptorType     = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount    = 1u,
-        .stageFlags         = stages,
-        .pImmutableSamplers = nullptr
-    });
-
-    _binding_flags.push_back({ });
 }
 
 // =============================================================================
-void Pipeline::add_textures2D(const std::vector<std::string> &filepaths,
-                              const vk::ShaderStageFlagBits stages)
-{
-    CONSOLE_TRACE("Add Texture");
+void Pipeline::add_texture2D(const char *filepath) {
     for(auto &frame_data : _frame_data) {
-        for(const auto &filepath : filepaths) {
-            frame_data.descriptor_set().add_texture2D(filepath.c_str());
-        }
+        frame_data.per_material_sets().push_back(DescriptorSet());
+        auto &set = frame_data.per_material_sets().back();
+        set.add_texture2D(filepath);
     }
+}
 
-    _layout_bindings.push_back({
-        .binding            = static_cast<uint32_t>(_layout_bindings.size()),
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = static_cast<uint32_t>(filepaths.size()),
-        .stageFlags         = stages,
-        .pImmutableSamplers = nullptr
-    });
+// =============================================================================
+void Pipeline::add_per_material_ubo(const size_t size,
+                                    const vk::ShaderStageFlags stages)
+{
+    for(auto &frame_data : _frame_data) {
+        frame_data.per_material_sets().push_back(DescriptorSet());
+        auto &set = frame_data.per_material_sets().back();
+        set.add_ubo(size, stages);
+    }
+}
 
-    _binding_flags.push_back({
-        vk::DescriptorBindingFlagBits::eVariableDescriptorCount |
-        vk::DescriptorBindingFlagBits::ePartiallyBound
-    });
+// =============================================================================
+void Pipeline::add_per_draw_ubo(const size_t size,
+                                const vk::ShaderStageFlags stages)
+{
+    for(auto &frame_data : _frame_data) {
+        frame_data.per_draw_sets().push_back(DescriptorSet());
+        auto &set = frame_data.per_draw_sets().back();
+        set.add_ubo(size, stages);
+    }
 }
 
 // =============================================================================
@@ -190,14 +211,15 @@ void Pipeline::update_dimensions() {
 // =============================================================================
 void Pipeline::_init_layout() {
     for(auto &frame_data : _frame_data) {
-        frame_data.init(_layout_bindings, _binding_flags);
-        frame_data.create(true);
+        frame_data.init();
+        frame_data.create();
     }
 
-    const auto &descriptor_layout = _frame_data[0].descriptor_set_layout().native();
+    const auto &descriptor_layouts = _frame_data[0].layouts();
+
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount = 1u,
-        .pSetLayouts = &descriptor_layout,
+        .setLayoutCount = static_cast<uint32_t>(descriptor_layouts.size()),
+        .pSetLayouts = descriptor_layouts.data(),
         .pushConstantRangeCount =
             static_cast<uint32_t>(_push_constant_ranges.size()),
         .pPushConstantRanges = _push_constant_ranges.data()

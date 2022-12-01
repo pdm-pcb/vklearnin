@@ -14,35 +14,24 @@ public:
         _frame_data[frame_index].command_pool().reset();
     }
 
-    inline void update_instance_ubo(const void *data,
-                                    const uint32_t frame_index)
-    {
-        _frame_data[frame_index].update_instance_ubo(data);
-    }
-
-    inline void update_camera_ubo(const void *data, const uint32_t frame_index)
-    {
-        _frame_data[frame_index].update_camera_ubo(data);
-    }
-
-    inline const auto & command_buffer(const uint32_t frame_index) const {
-        return _frame_data[frame_index].command_buffer().native();
-    }
-
-    inline const auto & descriptor_set(const uint32_t frame_index) {
-        return _frame_data[frame_index].descriptor_set();
-    }
+    void update_per_frame_ubo(const uint32_t frame_index, const void *data);
+    void update_per_draw_ubo(const uint32_t frame_index,
+                             const uint32_t set_index,
+                             const void *data);
 
     void vertex_from_binary(const char *filepath);
     void fragment_from_binary(const char *filepath);
 
     void set_push_constants(const PushConstantRanges &ranges);
-    // void set_layout(const BindingList &bindings);
     void set_render_pass(const RenderPass &render_pass);
 
-    void add_ubo(const size_t size, const vk::ShaderStageFlagBits stages);
-    void add_textures2D(const std::vector<std::string> &filepaths,
-                        const vk::ShaderStageFlagBits stages);
+    void set_per_frame_ubo(const size_t size,
+                           const vk::ShaderStageFlags stages);
+    void add_per_material_ubo(const size_t size,
+                              const vk::ShaderStageFlags stages);
+    void add_texture2D(const char *filepath);
+    void add_per_draw_ubo(const size_t size,
+                          const vk::ShaderStageFlags stages);
 
     void create();
     void destroy();
@@ -57,6 +46,26 @@ public:
     inline const auto & viewport()    const { return _viewport;    }
     inline const auto & scissor()     const { return _scissor;     }
     inline const auto & layout()      const { return _layout;      }
+
+    inline auto & per_frame_set(const uint32_t frame_index)  {
+        return _frame_data[frame_index].per_frame_set().native();
+    }
+
+    inline auto & per_material_set(const uint32_t frame_index,
+                                   const uint32_t set_index) 
+    {
+        return _frame_data[frame_index].per_material_sets()[set_index].native();
+    }
+
+    inline auto & per_draw_set(const uint32_t frame_index,
+                               const uint32_t set_index) 
+    {
+        return _frame_data[frame_index].per_draw_sets()[set_index].native();
+    }
+
+    inline const auto & command_buffer(const uint32_t frame_index) const {
+        return _frame_data[frame_index].command_buffer().native();
+    }
 
     explicit Pipeline(const Swapchain &swapchain);
     ~Pipeline() = default;
@@ -73,9 +82,6 @@ private:
     vk::ShaderModule _vert;
     vk::ShaderModule _frag;
     std::vector<vk::PipelineShaderStageCreateInfo> _shader_stages;
-
-    BindingList  _layout_bindings;
-    BindingFlags _binding_flags;
 
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;

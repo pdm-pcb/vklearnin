@@ -5,20 +5,22 @@
 
 namespace vkl {
 
-void DescriptorSetLayout::create(const BindingList &bindings,
-                                 const BindingFlags &flags)
+void DescriptorSetLayout::add_binding(
+    const vk::DescriptorSetLayoutBinding &binding)
 {
-    assert(bindings.size() == flags.size());
+    _bindings.push_back(binding);
 
-    vk::DescriptorSetLayoutBindingFlagsCreateInfo binding_flags {
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
-        .pBindingFlags = flags.data(),
-    };
+    CONSOLE_TRACE(
+        "Adding Descriptor Type: {} Binding: {} ",
+        to_string(binding.descriptorType),
+        binding.binding
+    );
+}
 
+void DescriptorSetLayout::create() {
     vk::DescriptorSetLayoutCreateInfo descriptor_info {
-        .pNext = &binding_flags,
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
-        .pBindings = bindings.data(),
+        .bindingCount = static_cast<uint32_t>(_bindings.size()),
+        .pBindings = _bindings.data(),
     };
 
     auto desc_set_result = LogicalDevice::native().createDescriptorSetLayout(
@@ -26,6 +28,7 @@ void DescriptorSetLayout::create(const BindingList &bindings,
         nullptr,
         &_layout
     );
+
     if(desc_set_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to create descriptor set layout");
     }

@@ -2,41 +2,37 @@
 
 // =============================================================================
 std::vector<vkl::Pipeline *>
-Demo::create_pipelines(const vkl::Swapchain &swapchain)
-{
+Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     _swapchain = &swapchain;
-
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
+
     _pipelines[0]->vertex_from_binary(
         "../../vklearnin/assets/shaders/05texture_sampler.vert-debug.spv"
     );
     _pipelines[0]->fragment_from_binary(
         "../../vklearnin/assets/shaders/05texture_sampler.frag-debug.spv"
     );
+
     _pipelines[0]->set_push_constants({
         {
-            .stageFlags = vk::ShaderStageFlagBits::eVertex |
-                          vk::ShaderStageFlagBits::eFragment,
+            .stageFlags = vk::ShaderStageFlagBits::eVertex,
             .offset = 0u,
             .size = sizeof(vkl::InstanceUBO)
         }
     });
 
-    _pipelines[0]->add_ubo(
+    _pipelines[0]->set_per_frame_ubo(
         sizeof(vkl::CameraUBO),
         vk::ShaderStageFlagBits::eVertex
     );
-    // _pipelines[0]->add_ubo(
-    //     sizeof(vkl::InstanceUBO),
-    //     vk::ShaderStageFlagBits::eVertex
-    // );
-    _pipelines[0]->add_textures2D(
-        { 
-            "../../vklearnin/assets/textures/metal_panel.jpg",
-            "../../vklearnin/assets/textures/wooden_wall.jpg"
-        },
-        vk::ShaderStageFlagBits::eFragment
+
+    _pipelines[0]->add_texture2D(
+        "../../vklearnin/assets/textures/metal_panel.jpg"
     );
+    // _pipelines[0]->add_texture2D(
+    //     "../../vklearnin/assets/textures/wooden_wall.jpg"
+    // );
+
     _pipelines[0]->create();
 
     return _pipelines;
@@ -79,8 +75,14 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         .pClearValues    = clear_values,
     };
 
-    // _pipelines[0]->update_instance_ubo(&instance_data, frame_index);
-    _pipelines[0]->update_camera_ubo(&_camera_data, frame_index);
+    _pipelines[0]->update_per_frame_ubo(frame_index, &_camera_data);
+    command_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        _pipelines[0]->layout(),
+        0u,
+        _pipelines[0]->per_frame_set(frame_index),
+        { }
+    );
 
     // Go time!
     command_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
@@ -89,34 +91,31 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         command_buffer.setViewport(0u, _pipelines[0]->viewport());
         command_buffer.setScissor(0u, _pipelines[0]->scissor());
 
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _pipelines[0]->layout(),
-            0u,
-            _pipelines[0]->descriptor_set(frame_index).native(),
-            { }
-        );
-
         vkl::InstanceUBO instance_data { };
 
 //------------------------------------------------------------------------------
 // Cube
         auto cube_matrix = glm::rotate(
-            // glm::mat4(1.0f),
             glm::translate(glm::mat4(1.0f), { -1.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
 
-        instance_data.model_matrix = cube_matrix,
-        instance_data.material_index = 0u,
+        instance_data.model_matrix = cube_matrix;
 
         command_buffer.pushConstants<vkl::InstanceUBO>(
             _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex |
-            vk::ShaderStageFlagBits::eFragment,
+            vk::ShaderStageFlagBits::eVertex,
             0u,
             instance_data
+        );
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            1u,
+            _pipelines[0]->per_material_set(frame_index, 0u),
+            { }
         );
 
         vkl::Renderer::draw(
@@ -136,15 +135,21 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         instance_data.model_matrix = plane_matrix;
-        instance_data.material_index = 1u;
 
         command_buffer.pushConstants<vkl::InstanceUBO>(
             _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex |
-            vk::ShaderStageFlagBits::eFragment,
+            vk::ShaderStageFlagBits::eVertex,
             0u,
             instance_data
         );
+
+        // command_buffer.bindDescriptorSets(
+        //     vk::PipelineBindPoint::eGraphics,
+        //     _pipelines[0]->layout(),
+        //     1u,
+        //     _pipelines[0]->per_material_set(frame_index, 1u),
+        //     { }
+        // );
 
         vkl::Renderer::draw(
             command_buffer,

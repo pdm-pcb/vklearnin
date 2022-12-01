@@ -7,10 +7,13 @@ namespace vkl {
 
 class DescriptorSetLayout {
 public:
-    void create(const BindingList &bindings, const BindingFlags &flags);
+    void add_binding(const vk::DescriptorSetLayoutBinding &binding);
+
+    void create();
     void destroy();
 
-    inline const auto & native() const { return _layout; }
+    inline const auto & bindings() const { return _bindings; }
+    inline const auto & native()   const { return _layout;   }
 
     DescriptorSetLayout();
     ~DescriptorSetLayout() = default;
@@ -22,6 +25,7 @@ public:
     DescriptorSetLayout & operator=(const DescriptorSetLayout &other) = delete;
 
 private:
+    BindingList             _bindings;
     vk::DescriptorSetLayout _layout;
 };
 

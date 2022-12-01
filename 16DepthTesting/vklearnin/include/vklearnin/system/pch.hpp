@@ -64,7 +64,6 @@ using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
 
 using PoolSizes    = std::vector<vk::DescriptorPoolSize>;
 using BindingList  = std::vector<vk::DescriptorSetLayoutBinding>;
-using BindingFlags = std::vector<vk::DescriptorBindingFlags>;
 
 } // namespace vkl
 #endif // VKLEARNIN_SYSTEM_PCH_HPP
