@@ -25,6 +25,19 @@ void Pipeline::update_per_frame_ubo(const uint32_t frame_index,
 }
 
 // =============================================================================
+void Pipeline::update_per_material_ubo(const uint32_t frame_index,
+                                       const uint32_t set_index,
+                                       const void *data)
+{
+    auto &set = _frame_data[frame_index].per_material_sets()[set_index];
+    auto &buffer = set.uniform_buffers()[0];
+
+    void *mapped = VKAllocator::map_buffer(buffer.allocation);
+        memcpy(mapped, data, buffer.allocation->size);
+    VKAllocator::unmap_buffer(buffer.allocation);
+}   
+
+// =============================================================================
 void Pipeline::update_per_draw_ubo(const uint32_t frame_index,
                                    const uint32_t set_index,
                                    const void *data)
@@ -139,7 +152,8 @@ void Pipeline::create() {
         LogicalDevice::native().createGraphicsPipeline({ }, pipeline_info);
 
     if(pipeline_return.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to create graphics pipelines.");
+        CONSOLE_CRITICAL("Unable to create graphics pipelines: '{}'",
+                         to_string(pipeline_return.result));
     }
 
     _pipeline = pipeline_return.value;

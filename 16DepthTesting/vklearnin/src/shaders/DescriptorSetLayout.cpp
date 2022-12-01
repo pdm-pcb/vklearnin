@@ -18,6 +18,10 @@ void DescriptorSetLayout::add_binding(
 }
 
 void DescriptorSetLayout::create() {
+    if(_bindings.size() == 0) {
+        CONSOLE_CRITICAL("Cannot create an empty layout.");
+    }
+
     vk::DescriptorSetLayoutCreateInfo descriptor_info {
         .bindingCount = static_cast<uint32_t>(_bindings.size()),
         .pBindings = _bindings.data(),
@@ -43,7 +47,8 @@ DescriptorSetLayout::DescriptorSetLayout() :
 { }
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
-    _layout { std::move(other._layout) }
+    _bindings { std::move(other._bindings) },
+    _layout   { std::move(other._layout) }
 { }
 
 } // namespace vkl

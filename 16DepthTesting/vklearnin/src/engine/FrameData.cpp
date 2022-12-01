@@ -15,7 +15,7 @@ void FrameData::init() {
     {
         auto &layout = _per_frame.layout();
         for(const auto &binding : layout.bindings()) {
-            pool_sizes.push_back({
+            pool_sizes.insert({
                 .type = binding.descriptorType,
                 .descriptorCount = 10u
             });
@@ -27,7 +27,7 @@ void FrameData::init() {
     for(const auto &set : _per_material) {
         auto &layout = set.layout();
         for(const auto &binding : layout.bindings()) {
-            pool_sizes.push_back({
+            pool_sizes.insert({
                 .type = binding.descriptorType,
                 .descriptorCount = 10u
             });
@@ -39,7 +39,7 @@ void FrameData::init() {
     for(const auto &set : _per_draw) {
         auto &layout = set.layout();
         for(const auto &binding : layout.bindings()) {
-            pool_sizes.push_back({
+            pool_sizes.insert({
                 .type = binding.descriptorType,
                 .descriptorCount = 10u
             });

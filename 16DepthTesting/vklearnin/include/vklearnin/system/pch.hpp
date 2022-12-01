@@ -62,7 +62,7 @@ using PipelineList = std::vector<Pipeline *>;
 using PushConstantRanges = std::vector<vk::PushConstantRange>;
 using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
 
-using PoolSizes    = std::vector<vk::DescriptorPoolSize>;
+using PoolSizes    = std::set<vk::DescriptorPoolSize>;
 using BindingList  = std::vector<vk::DescriptorSetLayoutBinding>;
 
 } // namespace vkl

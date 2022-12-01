@@ -26,12 +26,22 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         vk::ShaderStageFlagBits::eVertex
     );
 
+    // _pipelines[0]->add_per_material_ubo(
+    //     sizeof(vkl::InstanceUBO),
+    //     vk::ShaderStageFlagBits::eVertex
+    // );
+
+    // _pipelines[0]->add_per_draw_ubo(
+    //     sizeof(vkl::InstanceUBO),
+    //     vk::ShaderStageFlagBits::eVertex
+    // );
+
     _pipelines[0]->add_texture2D(
         "../../vklearnin/assets/textures/metal_panel.jpg"
     );
-    // _pipelines[0]->add_texture2D(
-    //     "../../vklearnin/assets/textures/wooden_wall.jpg"
-    // );
+    _pipelines[0]->add_texture2D(
+        "../../vklearnin/assets/textures/wooden_wall.jpg"
+    );
 
     _pipelines[0]->create();
 
@@ -110,10 +120,19 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             instance_data
         );
 
+        // _pipelines[0]->update_per_material_ubo(frame_index, 0u, &instance_data);
+        // command_buffer.bindDescriptorSets(
+        //     vk::PipelineBindPoint::eGraphics,
+        //     _pipelines[0]->layout(),
+        //     1u,
+        //     _pipelines[0]->per_material_set(frame_index, 0u),
+        //     { }
+        // );
+
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
-            1u,
+            2u,
             _pipelines[0]->per_material_set(frame_index, 0u),
             { }
         );
@@ -143,13 +162,22 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             instance_data
         );
 
+        // _pipelines[0]->update_per_draw_ubo(frame_index, 1u, &instance_data);
         // command_buffer.bindDescriptorSets(
         //     vk::PipelineBindPoint::eGraphics,
         //     _pipelines[0]->layout(),
         //     1u,
-        //     _pipelines[0]->per_material_set(frame_index, 1u),
+        //     _pipelines[0]->per_draw_set(frame_index, 1u),
         //     { }
         // );
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            2u,
+            _pipelines[0]->per_material_set(frame_index, 1u),
+            { }
+        );
 
         vkl::Renderer::draw(
             command_buffer,

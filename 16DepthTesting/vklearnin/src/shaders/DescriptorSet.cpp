@@ -61,9 +61,9 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
     }
 
     uint32_t binding_point = 0u;
-    std::vector<vk::WriteDescriptorSet> set_writes;
+    std::vector<vk::WriteDescriptorSet>   set_writes;
     std::vector<vk::DescriptorBufferInfo> buffer_info;
-    std::vector<vk::DescriptorImageInfo> image_info;
+    std::vector<vk::DescriptorImageInfo>  image_info;
 
     if(_uniform_buffers.size() > 0) {
         CONSOLE_TRACE("Binding {} for UBOs", binding_point);
@@ -87,7 +87,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
             .pTexelBufferView = nullptr
         });
 
-        binding_point += buffer_info.size();
+        binding_point += static_cast<uint32_t>(image_info.size());
     }
 
     if(_textures.size() > 0) {
@@ -112,7 +112,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
             .pTexelBufferView = nullptr
         });
 
-        binding_point += image_info.size();
+        binding_point += static_cast<uint32_t>(image_info.size());
     }
 
     LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);

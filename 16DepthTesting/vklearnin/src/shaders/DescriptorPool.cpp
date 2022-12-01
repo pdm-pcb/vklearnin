@@ -7,11 +7,16 @@ namespace vkl {
 
 //==============================================================================
 void DescriptorPool::create(const PoolSizes &sizes) {
-    CONSOLE_TRACE("Creating descriptor pool for {} types", sizes.size());
+    std::vector<vk::DescriptorPoolSize> size_list {
+        sizes.begin(),
+        sizes.end()
+    };
+
+    CONSOLE_TRACE("Creating descriptor pool for {} types", size_list.size());
     vk::DescriptorPoolCreateInfo pool_info {
         .maxSets = 10u,
-        .poolSizeCount = static_cast<uint32_t>(sizes.size()),
-        .pPoolSizes = sizes.data()
+        .poolSizeCount = static_cast<uint32_t>(size_list.size()),
+        .pPoolSizes = size_list.data()
     };
 
     auto result = LogicalDevice::native().createDescriptorPool(

@@ -15,6 +15,9 @@ public:
     }
 
     void update_per_frame_ubo(const uint32_t frame_index, const void *data);
+    void update_per_material_ubo(const uint32_t frame_index,
+                                 const uint32_t set_index,
+                                 const void *data);
     void update_per_draw_ubo(const uint32_t frame_index,
                              const uint32_t set_index,
                              const void *data);
