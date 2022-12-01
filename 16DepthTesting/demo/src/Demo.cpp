@@ -1,5 +1,14 @@
 #include "Demo.hpp"
 
+// What doesn't work here is... well, basically anything not this. Per-Draw UBOs
+// can't be added at all (the validation layer claims they're inaccessible from
+// the shader stage they're intended for). Per-Material UBOs illustrate an
+// entirely different behavior, meaning the code paths are wildly divergent when
+// they shouldn't be. Also... All I'm doing right now is making my code more
+// bind-ful, so... Maybe just go back to the Cookbook and get my head around
+// their Vulkan code? Something.
+
+
 // =============================================================================
 std::vector<vkl::Pipeline *>
 Demo::create_pipelines(const vkl::Swapchain &swapchain) {
