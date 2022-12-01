@@ -472,9 +472,9 @@ void VKAllocator::_print_alloc_state() {
                     "\taligned size {}"
                     "\tfree? {}",
                     block.name.data(),
-                    block.offset,
-                    block.size,
-                    block.aligned_size,
+                    _size_string(block.offset),
+                    _size_string(block.size),
+                    _size_string(block.aligned_size),
                     block.free
                 );
             }

@@ -18,7 +18,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain)
             .stageFlags = vk::ShaderStageFlagBits::eVertex |
                           vk::ShaderStageFlagBits::eFragment,
             .offset = 0u,
-            .size = sizeof(vkl::CameraUBO)
+            .size = sizeof(vkl::InstanceUBO)
         }
     });
 

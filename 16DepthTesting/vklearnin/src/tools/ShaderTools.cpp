@@ -13,7 +13,8 @@ Binary _spirv_to_binary(const char *filepath);
 vk::ShaderModule
 module_from_binary(const char *filepath, const vk::Device &device) {
     if(filepath == nullptr) {
-        CONSOLE_ERROR("No file path provided for shader binary");
+        CONSOLE_CRITICAL("No file path provided for shader binary");
+        return { };
     }
 
     auto binary = _spirv_to_binary(filepath);
@@ -36,7 +37,7 @@ Binary _spirv_to_binary(const char *filepath) {
     std::ifstream input_file(filepath, std::ios::ate | std::ios::binary);
 
     if(!input_file.good()) {
-        CONSOLE_ERROR("Unable to open binary '{}'", filepath);
+        CONSOLE_CRITICAL("Unable to open binary '{}'", filepath);
         return Binary();
     }
 
