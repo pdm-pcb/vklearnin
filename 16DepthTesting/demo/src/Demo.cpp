@@ -30,13 +30,22 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         "../../vklearnin/assets/shaders/05texture_sampler.frag-debug.spv"
     );
 
-    _pipelines[0]->set_push_constants({{
-            .stageFlags = vk::ShaderStageFlagBits::eVertex,
-            .offset = 0u,
-            .size = sizeof(vkl::InstanceUBO)
-    }});
+    _per_object_sets.resize(2);
+    for(auto &object : _per_object_sets) {
+        for(auto &set : object) {
+            set.add_ubo(sizeof(vkl::InstanceUBO), vk::ShaderStageFlagBits::eVertex);
+            set.create(_descriptor_pool);
+        }
+    }
+
+    // _pipelines[0]->set_push_constants({{
+    //         .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    //         .offset = 0u,
+    //         .size = sizeof(vkl::InstanceUBO)
+    // }});
     _pipelines[0]->set_per_frame_layout(_per_frame_sets[0].layout().native());
     _pipelines[0]->set_per_material_layout(_cube_texture.layout().native());
+    _pipelines[0]->set_per_draw_layout(_per_object_sets[0][0].layout().native());
 
     _pipelines[0]->create();
     return _pipelines;
@@ -47,11 +56,11 @@ void Demo::create_descriptor_pool() {
     vkl::PoolSizes pool_sizes {
         {
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = 100u,
+            .descriptorCount = 10u,
         },
         {
             .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = 100u,
+            .descriptorCount = 10u,
         },
     };
 
@@ -123,21 +132,21 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         instance_data.model_matrix = cube_matrix;
 
-        command_buffer.pushConstants<vkl::InstanceUBO>(
-            _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
-
-        // _pipelines[0]->update_per_material_ubo(frame_index, 0u, &instance_data);
-        // command_buffer.bindDescriptorSets(
-        //     vk::PipelineBindPoint::eGraphics,
+        // command_buffer.pushConstants<vkl::InstanceUBO>(
         //     _pipelines[0]->layout(),
-        //     1u,
-        //     _pipelines[0]->per_material_set(frame_index, 0u),
-        //     { }
+        //     vk::ShaderStageFlagBits::eVertex,
+        //     0u,
+        //     instance_data
         // );
+
+        _per_object_sets[0][frame_index].update_ubo(0u, &instance_data);
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            2u,
+            _per_object_sets[0][frame_index].native(),
+            { }
+        );
 
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -165,21 +174,21 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         instance_data.model_matrix = plane_matrix;
 
-        command_buffer.pushConstants<vkl::InstanceUBO>(
-            _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
-
-        // _pipelines[0]->update_per_draw_ubo(frame_index, 1u, &instance_data);
-        // command_buffer.bindDescriptorSets(
-        //     vk::PipelineBindPoint::eGraphics,
+        // command_buffer.pushConstants<vkl::InstanceUBO>(
         //     _pipelines[0]->layout(),
-        //     1u,
-        //     _pipelines[0]->per_draw_set(frame_index, 1u),
-        //     { }
+        //     vk::ShaderStageFlagBits::eVertex,
+        //     0u,
+        //     instance_data
         // );
+
+        _per_object_sets[1][frame_index].update_ubo(0u, &instance_data);
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            2u,
+            _per_object_sets[1][frame_index].native(),
+            { }
+        );
 
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -253,6 +262,12 @@ void Demo::shutdown() {
 
     for(auto &set : _per_frame_sets) {
         set.destroy();
+    }
+
+    for(auto &object : _per_object_sets) {
+        for(auto &set : object) {
+            set.destroy();
+        }
     }
 
     _descriptor_pool.destroy();
