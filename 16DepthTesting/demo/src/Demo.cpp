@@ -30,22 +30,22 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         "../../vklearnin/assets/shaders/05texture_sampler.frag-debug.spv"
     );
 
-    _per_object_sets.resize(2);
-    for(auto &object : _per_object_sets) {
-        for(auto &set : object) {
-            set.add_ubo(sizeof(vkl::InstanceUBO), vk::ShaderStageFlagBits::eVertex);
-            set.create(_descriptor_pool);
-        }
-    }
+    // _per_object_sets.resize(2);
+    // for(auto &object : _per_object_sets) {
+    //     for(auto &set : object) {
+    //         set.add_ubo(sizeof(vkl::InstanceUBO), vk::ShaderStageFlagBits::eVertex);
+    //         set.create(_descriptor_pool);
+    //     }
+    // }
 
-    // _pipelines[0]->set_push_constants({{
-    //         .stageFlags = vk::ShaderStageFlagBits::eVertex,
-    //         .offset = 0u,
-    //         .size = sizeof(vkl::InstanceUBO)
-    // }});
+    _pipelines[0]->set_push_constants({{
+            .stageFlags = vk::ShaderStageFlagBits::eVertex,
+            .offset = 0u,
+            .size = sizeof(vkl::InstanceUBO)
+    }});
     _pipelines[0]->set_per_frame_layout(_per_frame_sets[0].layout().native());
     _pipelines[0]->set_per_material_layout(_cube_texture.layout().native());
-    _pipelines[0]->set_per_draw_layout(_per_object_sets[0][0].layout().native());
+    // _pipelines[0]->set_per_draw_layout(_per_object_sets[0][0].layout().native());
 
     _pipelines[0]->create();
     return _pipelines;
@@ -108,7 +108,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
     command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         _pipelines[0]->layout(),
-        0u,
+        vkl::Pipeline::BindingFreq::PER_FRAME,
         _per_frame_sets[frame_index].native(),
         { }
     );
@@ -132,26 +132,26 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         instance_data.model_matrix = cube_matrix;
 
-        // command_buffer.pushConstants<vkl::InstanceUBO>(
-        //     _pipelines[0]->layout(),
-        //     vk::ShaderStageFlagBits::eVertex,
-        //     0u,
-        //     instance_data
-        // );
-
-        _per_object_sets[0][frame_index].update_ubo(0u, &instance_data);
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
+        command_buffer.pushConstants<vkl::InstanceUBO>(
             _pipelines[0]->layout(),
-            2u,
-            _per_object_sets[0][frame_index].native(),
-            { }
+            vk::ShaderStageFlagBits::eVertex,
+            0u,
+            instance_data
         );
 
+        // _per_object_sets[0][frame_index].update_ubo(0u, &instance_data);
+        // command_buffer.bindDescriptorSets(
+        //     vk::PipelineBindPoint::eGraphics,
+        //     _pipelines[0]->layout(),
+        //     vkl::Pipeline::BindingFreq::PER_DRAW,
+        //     _per_object_sets[0][frame_index].native(),
+        //     { }
+        // );
+
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
-            1u,
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
             _cube_texture.native(),
             { }
         );
@@ -174,26 +174,26 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         instance_data.model_matrix = plane_matrix;
 
-        // command_buffer.pushConstants<vkl::InstanceUBO>(
-        //     _pipelines[0]->layout(),
-        //     vk::ShaderStageFlagBits::eVertex,
-        //     0u,
-        //     instance_data
-        // );
-
-        _per_object_sets[1][frame_index].update_ubo(0u, &instance_data);
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
+        command_buffer.pushConstants<vkl::InstanceUBO>(
             _pipelines[0]->layout(),
-            2u,
-            _per_object_sets[1][frame_index].native(),
-            { }
+            vk::ShaderStageFlagBits::eVertex,
+            0u,
+            instance_data
         );
 
+        // _per_object_sets[1][frame_index].update_ubo(0u, &instance_data);
+        // command_buffer.bindDescriptorSets(
+        //     vk::PipelineBindPoint::eGraphics,
+        //     _pipelines[0]->layout(),
+        //     vkl::Pipeline::BindingFreq::PER_DRAW,
+        //     _per_object_sets[1][frame_index].native(),
+        //     { }
+        // );
+
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
-            1u,
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
             _plane_texture.native(),
             { }
         );

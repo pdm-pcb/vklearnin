@@ -25,7 +25,7 @@ void DescriptorSet::add_ubo(const size_t size,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::SharingMode::eExclusive,
         (vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent),
+         vk::MemoryPropertyFlagBits::eHostCoherent),
         std::format("ubo {}", _ubos.size()).c_str()
     ));
 
