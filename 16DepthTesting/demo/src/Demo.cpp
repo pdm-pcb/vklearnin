@@ -124,12 +124,19 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
 //------------------------------------------------------------------------------
 // Cube
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
+            _cube_texture.native(),
+            { }
+        );
+
         auto cube_matrix = glm::rotate(
             glm::translate(glm::mat4(1.0f), { -1.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
-
         instance_data.model_matrix = cube_matrix;
 
         command_buffer.pushConstants<vkl::InstanceUBO>(
@@ -148,14 +155,6 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         //     { }
         // );
 
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _pipelines[0]->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _cube_texture.native(),
-            { }
-        );
-
         vkl::Renderer::draw(
             command_buffer,
             _unit_cube->vertex_buffer(),
@@ -165,13 +164,20 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
 //------------------------------------------------------------------------------
 // Plane
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
+            _plane_texture.native(),
+            { }
+        );
+
         auto plane_matrix = glm::rotate(
             // glm::mat4(1.0f),
             glm::translate(glm::mat4(1.0f), { 1.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.0f, 0.0f, 1.0f }
         );
-
         instance_data.model_matrix = plane_matrix;
 
         command_buffer.pushConstants<vkl::InstanceUBO>(
@@ -189,14 +195,6 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         //     _per_object_sets[1][frame_index].native(),
         //     { }
         // );
-
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _pipelines[0]->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _plane_texture.native(),
-            { }
-        );
 
         vkl::Renderer::draw(
             command_buffer,
