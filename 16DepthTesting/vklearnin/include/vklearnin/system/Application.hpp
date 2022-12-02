@@ -2,6 +2,7 @@
 #define VKLEARNIN_SYSTEM_APPLICATION_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/shaders/DescriptorPool.hpp"
 
 namespace vkl {
 
@@ -15,6 +16,7 @@ public:
 
     virtual std::vector<Pipeline *>
     create_pipelines(const Swapchain &swapchain) = 0;
+    virtual void create_descriptor_pool() = 0;
 
     virtual const vk::CommandBuffer &
     execute_pipelines(const uint32_t frame_index) = 0;
@@ -32,6 +34,9 @@ public:
 
     Application & operator=(Application &&) = delete;
     Application & operator=(const Application &) = delete;
+
+protected:
+    DescriptorPool _descriptor_pool;
 
 private:
     bool    _running;

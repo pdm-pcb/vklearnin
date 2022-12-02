@@ -13,6 +13,8 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
+    void update_ubo(const uint32_t buffer_index, const void *data);
+
     void add_ubo(const size_t size, const vk::ShaderStageFlags stages);
     void add_texture2D(const char *filepath);
 
@@ -20,9 +22,9 @@ public:
     void destroy();
 
     inline const auto & native() const { return _descriptor_set; }
-    inline const auto & layout() const { return _layout; }
 
-    inline auto & uniform_buffers() { return _uniform_buffers; }
+    inline auto & layout()          { return _layout;   }
+    inline auto & uniform_buffers() { return _ubos;     }
     inline auto & textures()        { return _textures; }
 
     DescriptorSet() = default;
@@ -35,9 +37,10 @@ public:
     DescriptorSet & operator=(const DescriptorSet &other) = delete;
 
 private:
-    std::vector<BufferObject> _uniform_buffers;
+    std::vector<BufferObject> _ubos;
     std::vector<ImageObject>  _textures;
     DescriptorSetLayout       _layout;
+
     vk::DescriptorSet         _descriptor_set;
 };
 

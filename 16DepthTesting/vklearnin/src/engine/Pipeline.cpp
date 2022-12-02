@@ -10,45 +10,7 @@
 #include "vklearnin/mesh/Vertex.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace vkl {
-
-// =============================================================================
-void Pipeline::update_per_frame_ubo(const uint32_t frame_index,
-                                    const void *data)
-{
-    auto &buffer =
-        _frame_data[frame_index].per_frame_set().uniform_buffers()[0];
-
-    void *mapped = VKAllocator::map_buffer(buffer.allocation);
-        memcpy(mapped, data, buffer.allocation->size);
-    VKAllocator::unmap_buffer(buffer.allocation);
-}
-
-// =============================================================================
-void Pipeline::update_per_material_ubo(const uint32_t frame_index,
-                                       const uint32_t set_index,
-                                       const void *data)
-{
-    auto &set = _frame_data[frame_index].per_material_sets()[set_index];
-    auto &buffer = set.uniform_buffers()[0];
-
-    void *mapped = VKAllocator::map_buffer(buffer.allocation);
-        memcpy(mapped, data, buffer.allocation->size);
-    VKAllocator::unmap_buffer(buffer.allocation);
-}   
-
-// =============================================================================
-void Pipeline::update_per_draw_ubo(const uint32_t frame_index,
-                                   const uint32_t set_index,
-                                   const void *data)
-{
-    auto &set = _frame_data[frame_index].per_draw_sets()[set_index];
-    auto &buffer = set.uniform_buffers()[0];
-
-    void *mapped = VKAllocator::map_buffer(buffer.allocation);
-        memcpy(mapped, data, buffer.allocation->size);
-    VKAllocator::unmap_buffer(buffer.allocation);
-}                                   
+namespace vkl {                               
 
 // =============================================================================
 void Pipeline::vertex_from_binary(const char *filepath) {
@@ -77,43 +39,27 @@ void Pipeline::set_push_constants(const PushConstantRanges &ranges) {
 }
 
 // =============================================================================
-void Pipeline::set_per_frame_ubo(const size_t size,
-                                 const vk::ShaderStageFlags stages)
-{
-    for(auto &frame_data : _frame_data) {
-        frame_data.per_frame_set().add_ubo(size, stages);
+void Pipeline::set_per_frame_layout(const vk::DescriptorSetLayout &layout) {
+    if(_set_layouts.size() <= BindingFreq::PER_FRAME) {
+        _set_layouts.resize(BindingFreq::PER_FRAME + 1);
     }
+    _set_layouts[BindingFreq::PER_FRAME] = layout;
 }
 
 // =============================================================================
-void Pipeline::add_texture2D(const char *filepath) {
-    for(auto &frame_data : _frame_data) {
-        frame_data.per_material_sets().push_back(DescriptorSet());
-        auto &set = frame_data.per_material_sets().back();
-        set.add_texture2D(filepath);
+void Pipeline::set_per_material_layout(const vk::DescriptorSetLayout &layout) {
+    if(_set_layouts.size() <= BindingFreq::PER_MATERIAL) {
+        _set_layouts.resize(BindingFreq::PER_MATERIAL + 1);
     }
+    _set_layouts[BindingFreq::PER_MATERIAL] = layout;
 }
 
 // =============================================================================
-void Pipeline::add_per_material_ubo(const size_t size,
-                                    const vk::ShaderStageFlags stages)
-{
-    for(auto &frame_data : _frame_data) {
-        frame_data.per_material_sets().push_back(DescriptorSet());
-        auto &set = frame_data.per_material_sets().back();
-        set.add_ubo(size, stages);
+void Pipeline::set_per_draw_layout(const vk::DescriptorSetLayout &layout) {
+    if(_set_layouts.size() <= BindingFreq::PER_DRAW) {
+        _set_layouts.resize(BindingFreq::PER_DRAW + 1);
     }
-}
-
-// =============================================================================
-void Pipeline::add_per_draw_ubo(const size_t size,
-                                const vk::ShaderStageFlags stages)
-{
-    for(auto &frame_data : _frame_data) {
-        frame_data.per_draw_sets().push_back(DescriptorSet());
-        auto &set = frame_data.per_draw_sets().back();
-        set.add_ubo(size, stages);
-    }
+    _set_layouts[BindingFreq::PER_DRAW] = layout;
 }
 
 // =============================================================================
@@ -141,7 +87,7 @@ void Pipeline::create() {
         .pDepthStencilState  = &_depth_stencil_info,
         .pColorBlendState    = &_blend_info,
         .pDynamicState       = &_dynamic_state_info,
-        .layout              = _layout,
+        .layout              = _pipeline_layout,
         .renderPass          = _render_pass.native(),
         .subpass             = 0u,
         .basePipelineHandle  = nullptr,
@@ -179,7 +125,7 @@ void Pipeline::destroy() {
 
     LogicalDevice::native().destroy(_vert);
     LogicalDevice::native().destroy(_frag);
-    LogicalDevice::native().destroy(_layout);
+    LogicalDevice::native().destroy(_pipeline_layout);
     LogicalDevice::native().destroy(_pipeline);
 }
 
@@ -225,15 +171,12 @@ void Pipeline::update_dimensions() {
 // =============================================================================
 void Pipeline::_init_layout() {
     for(auto &frame_data : _frame_data) {
-        frame_data.init();
         frame_data.create();
     }
 
-    const auto &descriptor_layouts = _frame_data[0].layouts();
-
     vk::PipelineLayoutCreateInfo pipeline_layout_info {
-        .setLayoutCount = static_cast<uint32_t>(descriptor_layouts.size()),
-        .pSetLayouts = descriptor_layouts.data(),
+        .setLayoutCount = static_cast<uint32_t>(_set_layouts.size()),
+        .pSetLayouts = _set_layouts.data(),
         .pushConstantRangeCount =
             static_cast<uint32_t>(_push_constant_ranges.size()),
         .pPushConstantRanges = _push_constant_ranges.data()
@@ -244,7 +187,7 @@ void Pipeline::_init_layout() {
     if(pipeline_result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not create pipeline layout");
     }
-    _layout = pipeline_result.value;
+    _pipeline_layout = pipeline_result.value;
 
     CONSOLE_TRACE("Setting a pipeline layout with {} descriptor sets",
                   pipeline_layout_info.setLayoutCount);
@@ -374,11 +317,12 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _blend_info         { },
     _dynamic_state_info { },
     _render_pass        { },
-    _layout             { nullptr },
+    _pipeline_layout    { nullptr },
     _pipeline           { nullptr },
     _swapchain          { swapchain }
 {
     _frame_data.resize(RenderConfig::swapchain_image_count);
+    _set_layouts.reserve(BindingFreq::MAX_BINDS);
 }
 
 } // namespace vkl

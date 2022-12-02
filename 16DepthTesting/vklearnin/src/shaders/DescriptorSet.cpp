@@ -8,16 +8,25 @@
 namespace vkl {
 
 //==============================================================================
+void DescriptorSet::update_ubo(const uint32_t buffer_index, const void *data) {
+    auto &buffer = _ubos[buffer_index];
+
+    void *mapped = VKAllocator::map_buffer(buffer.allocation);
+        memcpy(mapped, data, buffer.allocation->size);
+    VKAllocator::unmap_buffer(buffer.allocation);
+}
+
+//==============================================================================
 void DescriptorSet::add_ubo(const size_t size,
                             const vk::ShaderStageFlags stages)
 {
-    _uniform_buffers.push_back(BufferTools::create_buffer(
+    _ubos.push_back(BufferTools::create_buffer(
         size,
         vk::BufferUsageFlagBits::eUniformBuffer,
         vk::SharingMode::eExclusive,
         (vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent),
-        std::format("ubo {}", _uniform_buffers.size()).c_str()
+        std::format("ubo {}", _ubos.size()).c_str()
     ));
 
     _layout.add_binding({
@@ -65,10 +74,10 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
     std::vector<vk::DescriptorBufferInfo> buffer_info;
     std::vector<vk::DescriptorImageInfo>  image_info;
 
-    if(_uniform_buffers.size() > 0) {
+    if(_ubos.size() > 0) {
         CONSOLE_TRACE("Binding {} for UBOs", binding_point);
-        buffer_info.reserve(_uniform_buffers.size());
-        for(const auto &buffer : _uniform_buffers) {
+        buffer_info.reserve(_ubos.size());
+        for(const auto &buffer : _ubos) {
             buffer_info.push_back({
                 .buffer = buffer.buffer,
                 .offset = 0u,
@@ -122,7 +131,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
 void DescriptorSet::destroy() {
     _layout.destroy();
 
-    for(auto &buffer : _uniform_buffers) {
+    for(auto &buffer : _ubos) {
         BufferTools::destroy_buffer(buffer);
     }
 
@@ -133,10 +142,10 @@ void DescriptorSet::destroy() {
 
 //==============================================================================
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
-    _uniform_buffers { std::move(other._uniform_buffers) },
-    _textures        { std::move(other._textures) },
-    _layout          { std::move(other._layout) },
-    _descriptor_set  { std::move(other._descriptor_set) }
+    _ubos           { std::move(other._ubos)           },
+    _textures       { std::move(other._textures)       },
+    _layout         { std::move(other._layout)         },
+    _descriptor_set { std::move(other._descriptor_set) }
 { }
 
 } // namespace vkl

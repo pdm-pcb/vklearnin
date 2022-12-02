@@ -2,39 +2,34 @@
 #define VKLEARNIN_ENGINE_PIPELINE_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/engine/Swapchain.hpp"
 #include "vklearnin/rendering/RenderPass.hpp"
 #include "vklearnin/engine/FrameData.hpp"
 
 namespace vkl {
 
+class Swapchain;
+class DescriptorSetLayout;
+
 class Pipeline final {
 public:
+    enum BindingFreq : uint8_t {
+        PER_FRAME,
+        PER_MATERIAL,
+        PER_DRAW,
+        MAX_BINDS
+    };
+
     inline void reset_command_pool(const uint32_t frame_index) const {
         _frame_data[frame_index].command_pool().reset();
     }
-
-    void update_per_frame_ubo(const uint32_t frame_index, const void *data);
-    void update_per_material_ubo(const uint32_t frame_index,
-                                 const uint32_t set_index,
-                                 const void *data);
-    void update_per_draw_ubo(const uint32_t frame_index,
-                             const uint32_t set_index,
-                             const void *data);
 
     void vertex_from_binary(const char *filepath);
     void fragment_from_binary(const char *filepath);
 
     void set_push_constants(const PushConstantRanges &ranges);
-    void set_render_pass(const RenderPass &render_pass);
-
-    void set_per_frame_ubo(const size_t size,
-                           const vk::ShaderStageFlags stages);
-    void add_per_material_ubo(const size_t size,
-                              const vk::ShaderStageFlags stages);
-    void add_texture2D(const char *filepath);
-    void add_per_draw_ubo(const size_t size,
-                          const vk::ShaderStageFlags stages);
+    void set_per_frame_layout(const vk::DescriptorSetLayout &layout);
+    void set_per_material_layout(const vk::DescriptorSetLayout &layout);
+    void set_per_draw_layout(const vk::DescriptorSetLayout &layout);
 
     void create();
     void destroy();
@@ -44,27 +39,11 @@ public:
     void update_dimensions();
 
     // For those concerned with pipeline attributes
-    inline const auto & native()      const { return _pipeline;    }
-    inline const auto & render_pass() const { return _render_pass; }
-    inline const auto & viewport()    const { return _viewport;    }
-    inline const auto & scissor()     const { return _scissor;     }
-    inline const auto & layout()      const { return _layout;      }
-
-    inline auto & per_frame_set(const uint32_t frame_index)  {
-        return _frame_data[frame_index].per_frame_set().native();
-    }
-
-    inline auto & per_material_set(const uint32_t frame_index,
-                                   const uint32_t set_index) 
-    {
-        return _frame_data[frame_index].per_material_sets()[set_index].native();
-    }
-
-    inline auto & per_draw_set(const uint32_t frame_index,
-                               const uint32_t set_index) 
-    {
-        return _frame_data[frame_index].per_draw_sets()[set_index].native();
-    }
+    inline const auto & native()      const { return _pipeline;        }
+    inline const auto & layout()      const { return _pipeline_layout; }
+    inline const auto & render_pass() const { return _render_pass;     }
+    inline const auto & viewport()    const { return _viewport;        }
+    inline const auto & scissor()     const { return _scissor;         }
 
     inline const auto & command_buffer(const uint32_t frame_index) const {
         return _frame_data[frame_index].command_buffer().native();
@@ -100,11 +79,14 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
+    PushConstantRanges _push_constant_ranges;
+    std::vector<vk::DescriptorSetLayout> _set_layouts;
+    std::vector<vk::DescriptorSetLayout> _empty_sets;
+
     std::vector<FrameData> _frame_data;
     RenderPass  _render_pass;
 
-    PushConstantRanges _push_constant_ranges;
-    vk::PipelineLayout _layout;
+    vk::PipelineLayout _pipeline_layout;
     vk::Pipeline       _pipeline;
 
     const Swapchain  &_swapchain;

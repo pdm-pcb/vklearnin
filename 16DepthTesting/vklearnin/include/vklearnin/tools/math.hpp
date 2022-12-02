@@ -1,7 +1,6 @@
 #ifndef VKLEARNIN_TOOLS_MATH_HPP
 #define VKLEARNIN_TOOLS_MATH_HPP
 
-#define GLM_FORCE_MESSAGES
 #define GLM_CXX_17
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"

@@ -1,19 +1,27 @@
 #include "Demo.hpp"
 
-// What doesn't work here is... well, basically anything not this. Per-Draw UBOs
-// can't be added at all (the validation layer claims they're inaccessible from
-// the shader stage they're intended for). Per-Material UBOs illustrate an
-// entirely different behavior, meaning the code paths are wildly divergent when
-// they shouldn't be. Also... All I'm doing right now is making my code more
-// bind-ful, so... Maybe just go back to the Cookbook and get my head around
-// their Vulkan code? Something.
-
-
 // =============================================================================
 std::vector<vkl::Pipeline *>
 Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     _swapchain = &swapchain;
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
+
+    create_descriptor_pool();
+
+    for(auto &set : _per_frame_sets) {
+        set.add_ubo(sizeof(vkl::CameraUBO), vk::ShaderStageFlagBits::eVertex);
+        set.create(_descriptor_pool);
+    }
+
+    _cube_texture.add_texture2D(
+        "../../vklearnin/assets/textures/metal_panel.jpg"
+    );
+    _cube_texture.create(_descriptor_pool);
+
+    _plane_texture.add_texture2D(
+        "../../vklearnin/assets/textures/wooden_wall.jpg"
+    );
+    _plane_texture.create(_descriptor_pool);
 
     _pipelines[0]->vertex_from_binary(
         "../../vklearnin/assets/shaders/05texture_sampler.vert-debug.spv"
@@ -22,40 +30,33 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         "../../vklearnin/assets/shaders/05texture_sampler.frag-debug.spv"
     );
 
-    _pipelines[0]->set_push_constants({
-        {
+    _pipelines[0]->set_push_constants({{
             .stageFlags = vk::ShaderStageFlagBits::eVertex,
             .offset = 0u,
             .size = sizeof(vkl::InstanceUBO)
-        }
-    });
-
-    _pipelines[0]->set_per_frame_ubo(
-        sizeof(vkl::CameraUBO),
-        vk::ShaderStageFlagBits::eVertex
-    );
-
-    // _pipelines[0]->add_per_material_ubo(
-    //     sizeof(vkl::InstanceUBO),
-    //     vk::ShaderStageFlagBits::eVertex
-    // );
-
-    // _pipelines[0]->add_per_draw_ubo(
-    //     sizeof(vkl::InstanceUBO),
-    //     vk::ShaderStageFlagBits::eVertex
-    // );
-
-    _pipelines[0]->add_texture2D(
-        "../../vklearnin/assets/textures/metal_panel.jpg"
-    );
-    _pipelines[0]->add_texture2D(
-        "../../vklearnin/assets/textures/wooden_wall.jpg"
-    );
+    }});
+    _pipelines[0]->set_per_frame_layout(_per_frame_sets[0].layout().native());
+    _pipelines[0]->set_per_material_layout(_cube_texture.layout().native());
 
     _pipelines[0]->create();
-
     return _pipelines;
 }
+
+// =============================================================================
+void Demo::create_descriptor_pool() {
+    vkl::PoolSizes pool_sizes {
+        {
+            .type = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 100u,
+        },
+        {
+            .type = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 100u,
+        },
+    };
+
+    _descriptor_pool.create(pool_sizes);
+};
 
 // =============================================================================
 const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
@@ -94,12 +95,12 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         .pClearValues    = clear_values,
     };
 
-    _pipelines[0]->update_per_frame_ubo(frame_index, &_camera_data);
+    _per_frame_sets[frame_index].update_ubo(0, &_camera_data);
     command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         _pipelines[0]->layout(),
         0u,
-        _pipelines[0]->per_frame_set(frame_index),
+        _per_frame_sets[frame_index].native(),
         { }
     );
 
@@ -141,8 +142,8 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
-            2u,
-            _pipelines[0]->per_material_set(frame_index, 0u),
+            1u,
+            _cube_texture.native(),
             { }
         );
 
@@ -183,8 +184,8 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
-            2u,
-            _pipelines[0]->per_material_set(frame_index, 1u),
+            1u,
+            _plane_texture.native(),
             { }
         );
 
@@ -246,6 +247,15 @@ void Demo::init () {
 void Demo::shutdown() {
     if(_xz_unit_plane) _xz_unit_plane->destroy_buffers();
     if(_unit_cube)     _unit_cube->destroy_buffers();
+
+    _plane_texture.destroy();
+    _cube_texture.destroy();
+
+    for(auto &set : _per_frame_sets) {
+        set.destroy();
+    }
+
+    _descriptor_pool.destroy();
 
     for(auto *pipeline : _pipelines) {
         pipeline->destroy();

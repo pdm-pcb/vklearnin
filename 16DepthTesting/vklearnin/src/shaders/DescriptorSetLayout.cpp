@@ -5,6 +5,7 @@
 
 namespace vkl {
 
+// =============================================================================
 void DescriptorSetLayout::add_binding(
     const vk::DescriptorSetLayoutBinding &binding)
 {
@@ -17,11 +18,8 @@ void DescriptorSetLayout::add_binding(
     );
 }
 
+// =============================================================================
 void DescriptorSetLayout::create() {
-    if(_bindings.size() == 0) {
-        CONSOLE_CRITICAL("Cannot create an empty layout.");
-    }
-
     vk::DescriptorSetLayoutCreateInfo descriptor_info {
         .bindingCount = static_cast<uint32_t>(_bindings.size()),
         .pBindings = _bindings.data(),
@@ -36,19 +34,26 @@ void DescriptorSetLayout::create() {
     if(desc_set_result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to create descriptor set layout");
     }
+
+    CONSOLE_TRACE("Created descriptor set layout {}",
+                  reinterpret_cast<uint64_t>(VkDescriptorSetLayout(_layout)));
 }
 
+// =============================================================================
 void DescriptorSetLayout::destroy() {
+    CONSOLE_TRACE("Destroying descriptor set layout {}",
+                  reinterpret_cast<uint64_t>(VkDescriptorSetLayout(_layout)));
     LogicalDevice::native().destroyDescriptorSetLayout(_layout);
 }
 
+// =============================================================================
 DescriptorSetLayout::DescriptorSetLayout() :
     _layout { nullptr }
 { }
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     _bindings { std::move(other._bindings) },
-    _layout   { std::move(other._layout) }
+    _layout   { std::move(other._layout)   }
 { }
 
 } // namespace vkl

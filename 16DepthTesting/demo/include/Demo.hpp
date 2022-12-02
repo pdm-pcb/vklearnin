@@ -23,10 +23,15 @@
 #include "vklearnin/mesh/UnitCube.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
+struct DrawObject {
+
+};
+
 class Demo final : public vkl::Application {
 public:
     std::vector<vkl::Pipeline *>
     create_pipelines(const vkl::Swapchain &swapchain) override;
+    void create_descriptor_pool() override;
 
     const vk::CommandBuffer &
     execute_pipelines(const uint32_t frame_index) override;
@@ -47,6 +52,14 @@ private:
 
     vkl::XZUnitPlane *_xz_unit_plane;
     vkl::UnitCube    *_unit_cube;
+
+    using FrameSets = std::array<vkl::DescriptorSet,
+                                 vkl::RenderConfig::swapchain_image_count>;
+
+    FrameSets _per_frame_sets;
+    std::vector<FrameSets> _per_object_sets;
+    vkl::DescriptorSet _plane_texture;
+    vkl::DescriptorSet _cube_texture;
 };
 
 #endif // DEMO_HPP
