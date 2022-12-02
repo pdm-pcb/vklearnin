@@ -81,7 +81,6 @@ private:
 
     PushConstantRanges _push_constant_ranges;
     std::vector<vk::DescriptorSetLayout> _set_layouts;
-    std::vector<vk::DescriptorSetLayout> _empty_sets;
 
     std::vector<FrameData> _frame_data;
     RenderPass  _render_pass;
