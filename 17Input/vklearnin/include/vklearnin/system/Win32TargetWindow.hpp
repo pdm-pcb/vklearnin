@@ -10,13 +10,14 @@ namespace vkl {
 class Win32TargetWindow final {
 public:
     // Give the OS a moment to speak up
-    static bool message_loop();
+    static void message_loop();
 
     // Setting up and shutting down the native window
     static void spawn_window(const uint16_t width = 0u,
                              const uint16_t height = 0u);
     static void create_surface();
     static void destroy_surface();
+    static void shutdown();
 
     // For those who would like to know
     inline static vk::SurfaceKHR & surface() { return _surface; }
@@ -37,15 +38,13 @@ private:
     static ::LPCSTR _classname;
     static ::LPCSTR _window_title;
     static ::HDC    _device;
+    static ::LPBYTE _raw_message;
     
     // Helps with centering the window on screen
     static struct CenterPos {
         uint16_t x;
         uint16_t y;
     } _center;
-
-    // A flag for when the user opts to close the program
-    static bool _running;
 
     // Vulkan specifics
     static vk::SurfaceKHR _surface;

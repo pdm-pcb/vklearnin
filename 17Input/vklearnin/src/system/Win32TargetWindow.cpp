@@ -4,6 +4,7 @@
 #include "vklearnin/system/Win32TargetWindow.hpp"
 
 #include "vklearnin/rendering/GraphicsInstance.hpp"
+#include "vklearnin/system/events/EventBroker.hpp"
 
 namespace vkl {
 
@@ -11,26 +12,23 @@ namespace vkl {
 ::LPCSTR Win32TargetWindow::_classname    = nullptr;
 ::LPCSTR Win32TargetWindow::_window_title = nullptr;
 ::HDC    Win32TargetWindow::_device       = nullptr;
+::LPBYTE Win32TargetWindow::_raw_message  = new ::BYTE[64];
 
 Win32TargetWindow::CenterPos Win32TargetWindow::_center { .x = 0u, .y = 0u };
 
 vk::SurfaceKHR Win32TargetWindow::_surface = nullptr;
-
-bool Win32TargetWindow::_running = false;
 
 //==============================================================================
 // Given that this is a single threaded project (for now...) there needs to be
 // one function that drops in and checks on the OS in a non-blocking manner.
 // In this case, I'm also using the opportunity to keep Application abreast
 // of whether or not TargetWindow wants to close.
-bool Win32TargetWindow::message_loop() {
+void Win32TargetWindow::message_loop() {
     ::MSG message { };
     while(::PeekMessageA(&message, _window, 0u, 0u, PM_REMOVE)) {
         ::TranslateMessage(&message);
         ::DispatchMessageA(&message);
     }
-
-    return _running;
 }
 
 //==============================================================================
@@ -42,9 +40,9 @@ bool Win32TargetWindow::message_loop() {
     switch(message) {
         case WM_KEYDOWN: // The most rudimentary input handling
             if(wparam == VK_ESCAPE) {
-                _running = false;
                 // This is how we kick off the process of cleaning up after
                 // ourselves
+                EventBroker::emit<WindowCloseEvent>();
                 ::SendMessage(window, WM_CLOSE, wparam, lparam);
             }
             break;
@@ -95,6 +93,185 @@ bool Win32TargetWindow::message_loop() {
         case WM_DESTROY: // The second and final shutdown message
             ::PostQuitMessage(0);
             return 0;
+
+        case WM_INPUT: {
+            // Check message size
+            ::UINT dwSize;
+            ::GetRawInputData(
+                (::HRAWINPUT) lparam,
+                RID_INPUT,
+                nullptr,
+                &dwSize,
+                sizeof(::RAWINPUTHEADER)
+            );
+
+            // Get actual message
+            ::GetRawInputData(
+                (::HRAWINPUT) lparam,
+                RID_INPUT,
+                _raw_message,
+                &dwSize,
+                sizeof(::RAWINPUTHEADER)
+            );
+
+            //------------------------------------------------------------------
+            // Thanks to Stefan Reinalter for much of the following code
+            // https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
+            //
+            ::RAWINPUT *input = (::RAWINPUT *)_raw_message;
+
+            switch(input->header.dwType) {
+                case RIM_TYPEKEYBOARD:
+                {                
+                    ::UINT vkey  = input->data.keyboard.VKey;
+                    ::UINT code  = input->data.keyboard.MakeCode;
+                    ::UINT flags = input->data.keyboard.Flags;                    
+                    
+                    // discard "fake keys" which are part of an escaped sequence
+                    if(vkey == 255) break;
+
+                    // correct left-hand / right-hand SHIFT
+                    else if(vkey == VK_SHIFT) {
+                        vkey = MapVirtualKey(code, MAPVK_VSC_TO_VK_EX);
+                    }
+
+                    // correct PAUSE/BREAK and NUM LOCK silliness, and set
+                    // the extended bit
+                    else if(vkey == VK_NUMLOCK) {
+                        code = (MapVirtualKey(vkey, MAPVK_VK_TO_VSC) | 0x100);
+                    }
+
+                    // exit condition
+                    else if(vkey == VK_ESCAPE) {
+                        EventBroker::emit<WindowCloseEvent>();
+                        ::SendMessage(window, WM_CLOSE, wparam, lparam);
+                        return 0;
+                    }
+
+                    // e0 and e1 are escape sequences used for certain special
+                    // keys, such as PRINT and PAUSE/BREAK.
+                    // see http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
+                    const bool isE0 = ((flags & RI_KEY_E0) != 0);
+                    const bool isE1 = ((flags & RI_KEY_E1) != 0);
+                    
+                    if(isE1) {
+                        // for escaped sequences, turn the virtual key into the
+                        // correct scan code using MapVirtualKey.
+                        // however, MapVirtualKey is unable to map VK_PAUSE
+                        // (this is a known bug), hence we map that by hand.
+                        if(vkey == VK_PAUSE) {
+                            code = 0x45;
+                        }
+                        else {
+                            code = MapVirtualKey(vkey, MAPVK_VK_TO_VSC);
+                        }
+                    }
+
+                    switch(vkey) {
+                        // right-hand CONTROL and ALT have their e0 bit set
+                        case VK_CONTROL:
+                            if(isE0) vkey = KB_RCTRL;
+                            else     vkey = KB_LCTRL;
+                            break;
+                        
+                        case VK_MENU:
+                            if(isE0) vkey = KB_RALT;
+                            else     vkey = KB_LALT;
+                            break;
+                        
+                        // NUMPAD ENTER has its e0 bit set
+                        case VK_RETURN: if(isE0) vkey = KB_NP_ENTER; break;
+                        
+                        // the standard INSERT, DELETE, HOME, END, PRIOR and
+                        // NEXT keys will always have their e0 bit set, but the
+                        // corresponding keys on the NUMPAD will not.
+                        case VK_INSERT: if(!isE0) vkey = KB_NP_0;       break;
+                        case VK_DELETE: if(!isE0) vkey = KB_NP_DECIMAL; break;
+                        case VK_HOME:   if(!isE0) vkey = KB_NP_7;       break;
+                        case VK_END:    if(!isE0) vkey = KB_NP_1;       break;
+                        case VK_PRIOR:  if(!isE0) vkey = KB_NP_9;       break;
+                        case VK_NEXT:   if(!isE0) vkey = KB_NP_3;       break;
+                        
+                        // the standard arrow keys will always have their e0 bit
+                        // set, but the corresponding keys on the NUMPAD will
+                        // not.
+                        case VK_LEFT:  if(!isE0) vkey = KB_NP_4; break;
+                        case VK_RIGHT: if(!isE0) vkey = KB_NP_6; break;
+                        case VK_UP:    if(!isE0) vkey = KB_NP_8; break;
+                        case VK_DOWN:  if(!isE0) vkey = KB_NP_2; break;
+                        
+                        // NUMPAD 5 doesn't have its e0 bit set
+                        case VK_CLEAR: if(!isE0) vkey = KB_NP_5; break;
+                    }
+
+                    // a key can either produce a "make" or "break" scancode.
+                    // this is used to differentiate between down-presses and
+                    // releases
+                    // see http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
+                    const bool was_release = ((flags & RI_KEY_BREAK) != 0);
+
+                    if(was_release) {
+                        EventBroker::emit<KeyReleaseEvent>(win32_to_vkl(vkey));
+                    }
+                    else {
+                        EventBroker::emit<KeyPressEvent>(win32_to_vkl(vkey));
+                    }
+
+                    break;
+                }
+                case RIM_TYPEMOUSE:
+                {
+                    ::SetCursorPos(_center.x, _center.y);
+                    ::SetCursor(nullptr);
+
+                    ::RAWMOUSE mouse = input->data.mouse;
+
+                    // if(mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
+                    //     MouseButtonPressedEvent event(MOUSE_BUTTON_LEFT);
+                    //     publish(EventType::MouseButtonPressed, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP) {
+                    //     MouseButtonReleasedEvent event(MOUSE_BUTTON_LEFT);
+                    //     publish(EventType::MouseButtonPressed, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN) {
+                    //     MouseButtonPressedEvent event(MOUSE_BUTTON_RIGHT);
+                    //     publish(EventType::MouseButtonReleased, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP) {
+                    //     MouseButtonReleasedEvent event(MOUSE_BUTTON_RIGHT);
+                    //     publish(EventType::MouseButtonReleased, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_DOWN) {
+                    //     MouseButtonPressedEvent event(MOUSE_BUTTON_MIDDLE);
+                    //     publish(EventType::MouseButtonPressed, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_UP) {
+                    //     MouseButtonReleasedEvent event(MOUSE_BUTTON_MIDDLE);
+                    //     publish(EventType::MouseButtonReleased, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_WHEEL) {
+                    //     MouseScrolledEvent event(0, mouse.usButtonData);
+                    //     publish(EventType::MouseScrolled, event);
+                    // }
+                    // else if(mouse.usButtonFlags & RI_MOUSE_HWHEEL) {
+                    //     MouseScrolledEvent event(mouse.usButtonData, 0);
+                    //     publish(EventType::MouseScrolled, event);
+                    // }
+
+                    if(mouse.lLastX != 0 || mouse.lLastY != 0) {
+                        EventBroker::emit<MouseMoveEvent>(
+                            mouse.lLastX,
+                            mouse.lLastY
+                        );
+                    }
+
+                    break;
+                }
+                break;
+            }
+            break;
+        }
 
         default: break;
     }
@@ -184,9 +361,6 @@ void Win32TargetWindow::spawn_window(const uint16_t width,
         RenderConfig::window_width,
         RenderConfig::window_height
     );
-
-    // And, go.
-    _running = true;
 }
 
 //==============================================================================
@@ -218,6 +392,12 @@ void Win32TargetWindow::destroy_surface() {
         reinterpret_cast<uint64_t>(::VkSurfaceKHR(_surface))
     );
     instance.destroy(_surface);
+}
+
+//==============================================================================
+void Win32TargetWindow::shutdown() {
+    destroy_surface();
+    delete[] _raw_message;
 }
 
 //==============================================================================

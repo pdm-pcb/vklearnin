@@ -50,6 +50,8 @@
 #include <fstream>
 #include <chrono>
 #include <format>
+#include <functional>
+#include <unordered_map>
 
 #include "vklearnin/tools/math.hpp"
 

@@ -9,6 +9,7 @@ namespace vkl {
 class Engine;
 class Pipeline;
 class Swapchain;
+struct WindowCloseEvent;
 
 class Application {
 public:
@@ -25,6 +26,8 @@ public:
 
     virtual void init() = 0;
     virtual void shutdown() = 0;
+
+    void on_window_close(const WindowCloseEvent &event);
 
     Application();
     virtual ~Application();

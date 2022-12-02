@@ -6,6 +6,7 @@
 #include "vklearnin/tools/ConsoleLog.hpp"
 #include "vklearnin/tools/VKDebugger.hpp"
 #include "vklearnin/system/Application.hpp"
+#include "vklearnin/system/events/EventBroker.hpp"
 
 #include "vklearnin/rendering/RenderConfig.hpp"
 #include "vklearnin/rendering/Renderer.hpp"

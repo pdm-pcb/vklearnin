@@ -34,6 +34,11 @@ target_compile_options(
     "/wd4312"  # Disable the warning for casting to a bigger size
 )
 
+target_compile_definitions(
+    vklearnin PUBLIC
+    "_CRT_SECURE_NO_WARNINGS"
+)
+
 target_include_directories(
     vklearnin PUBLIC
     "include/"

@@ -18,7 +18,7 @@ void Application::run() {
             _engine->render_loop();
         Timekeeper::frame_end();
 
-        _running = TargetWindow::message_loop();
+        TargetWindow::message_loop();
         Timekeeper::update();
     }
 
@@ -28,8 +28,15 @@ void Application::run() {
 
     this->shutdown();
     _engine->shutdown();
-    TargetWindow::destroy_surface();
+    TargetWindow::shutdown();
     GraphicsInstance::shutdown();
+    EventBroker::shutdown();
+}
+
+// =============================================================================
+void Application::on_window_close([[maybe_unused]] const WindowCloseEvent &) {
+    CONSOLE_TRACE("Application received WindowClosed");
+    _running = false;
 }
 
 // =============================================================================
@@ -38,11 +45,17 @@ Application::Application() :
     _engine  { new Engine(*this) }
 {
     ConsoleLog::init();
+    EventBroker::init();
 
     GraphicsInstance::init();
     TargetWindow::spawn_window();
     TargetWindow::create_surface();
     GraphicsInstance::init_devices();
+
+    EventBroker::subscribe<WindowCloseEvent>(
+        this,
+        &Application::on_window_close
+    );
 }
 
 Application::~Application() {
