@@ -353,6 +353,8 @@ void Win32TargetWindow::spawn_window(const uint16_t width,
         CONSOLE_CRITICAL("Unable to create win32 window.");
     }
 
+    _register_input();
+
     _size_and_place(RenderConfig::window_width, RenderConfig::window_height,
                     pos_x, pos_y);
 
@@ -398,6 +400,31 @@ void Win32TargetWindow::destroy_surface() {
 void Win32TargetWindow::shutdown() {
     destroy_surface();
     delete[] _raw_message;
+}
+
+//==============================================================================
+void Win32TargetWindow::_register_input() {
+    ::RAWINPUTDEVICE devices[2];
+
+    devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    devices[0].usUsage     = HID_USAGE_GENERIC_KEYBOARD;
+    devices[0].dwFlags     = 0; // RIDEV_NOLEGACY ?
+    devices[0].hwndTarget  = _window;
+
+    devices[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    devices[1].usUsage     = HID_USAGE_GENERIC_MOUSE;
+    devices[1].dwFlags     = RIDEV_NOLEGACY;
+    devices[1].hwndTarget  = _window;
+
+    if(!::RegisterRawInputDevices(devices, 2, sizeof(::RAWINPUTDEVICE))) {
+        ::MessageBox(
+            nullptr, "Could not register for raw HID input:",
+            "Error", MB_OK    
+        );
+    }
+    else {
+        CONSOLE_TRACE("Registered for raw win32 input");
+    }
 }
 
 //==============================================================================

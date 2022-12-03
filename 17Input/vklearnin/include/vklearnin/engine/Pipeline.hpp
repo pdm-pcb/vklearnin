@@ -79,8 +79,8 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
-    PushConstantRanges _push_constant_ranges;
-    std::vector<vk::DescriptorSetLayout> _set_layouts;
+    PushConstantRanges   _push_constant_ranges;
+    DescriptorSetLayouts _set_layouts;
 
     std::vector<FrameData> _frame_data;
     RenderPass  _render_pass;

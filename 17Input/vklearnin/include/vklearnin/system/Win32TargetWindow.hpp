@@ -53,6 +53,8 @@ private:
     static ::LRESULT CALLBACK
     _wndproc(::HWND window, ::UINT msg, ::WPARAM wparam, ::LPARAM lparam);
 
+    static void _register_input();
+
     // Make it just right
     static void _size_and_place(const uint16_t width, const uint16_t height,
                                 const uint16_t pos_x, const uint16_t pos_y);

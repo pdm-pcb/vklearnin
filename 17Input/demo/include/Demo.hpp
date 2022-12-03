@@ -11,11 +11,8 @@
 
 #include "vklearnin/vklearnin.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
-// TODO: remove this and/or make it client-side exclusive
-#include "vklearnin/shaders/CameraUBO.hpp"
-#include "vklearnin/shaders/InstanceUBO.hpp"
-////////////////////////////////////////////////////////////////////////////////
+#include "CameraData.hpp"
+#include "InstanceData.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: replace with proper asset management
@@ -36,6 +33,10 @@ public:
     const vk::CommandBuffer &
     execute_pipelines(const uint32_t frame_index) override;
 
+    void on_key_press(const vkl::KeyPressEvent &event);
+    void on_key_release(const vkl::KeyReleaseEvent &event);
+    void on_mouse_move(const vkl::MouseMoveEvent &event);
+
     void swapchain_image_invalid();
 
     void init() override;
@@ -45,10 +46,18 @@ public:
     ~Demo();
 
 private:
+    struct KeyboardState {
+        bool w = false;
+        bool a = false;
+        bool s = false;
+        bool d = false;
+        bool l_ctrl  = false;
+        bool space   = false;
+        bool l_shift = false;
+    };
+
     vkl::Swapchain const *_swapchain;
     std::vector<vkl::Pipeline *> _pipelines;
-
-    vkl::CameraUBO _camera_data;
 
     vkl::XZUnitPlane *_xz_unit_plane;
     vkl::UnitCube    *_unit_cube;
@@ -60,6 +69,13 @@ private:
     std::vector<FrameSets> _per_object_sets;
     vkl::DescriptorSet _plane_texture;
     vkl::DescriptorSet _cube_texture;
+
+    CameraData        _camera_data;
+    CameraOrientation _camera_orientation;
+    CameraSettings    _camera_settings;
+    KeyboardState     _kb_state;
+
+    void _update_camera(const uint32_t frame_index);
 };
 
 #endif // DEMO_HPP

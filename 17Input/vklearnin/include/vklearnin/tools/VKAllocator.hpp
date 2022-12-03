@@ -20,8 +20,6 @@ public:
         std::array<char, 64> name = { "\0" };
     };
 
-    using BlockIter = std::list<Block>::iterator;
-
     struct DeviceAllocation {
         vk::DeviceMemory memory { };
         
@@ -31,17 +29,19 @@ public:
         std::list<Block> blocks = { };
     };
 
+    using DeviceAllocs = std::vector<DeviceAllocation>;
     struct DevicePool {
-        std::vector<DeviceAllocation> allocs = { };
+        DeviceAllocs allocs = { };
     };
 
+    using BlockIter = std::list<Block>::iterator;
     static BlockIter allocate(const vk::Buffer &buffer,
-                             const vk::MemoryPropertyFlags memory_properties,
-                             const char *buffer_name);
+                              const vk::MemoryPropertyFlags memory_properties,
+                              const char *buffer_name);
 
     static BlockIter allocate(const vk::Image &image,
-                             const vk::MemoryPropertyFlags memory_properties,
-                             const char *image_name);
+                              const vk::MemoryPropertyFlags memory_properties,
+                              const char *image_name);
 
     static void * map_buffer(const BlockIter &block_iter);
     static void unmap_buffer(const BlockIter &block_iter);
@@ -61,8 +61,8 @@ public:
     VKAllocator & operator=(const VKAllocator &other) = delete;
 
 private:
-    static const uint64_t _max_alloc_size;
-    static const uint8_t  _max_allocs;
+    static const uint64_t          _max_alloc_size;
+    static const uint8_t           _max_allocs;
     static std::vector<DevicePool> _pools;
 
     static vk::PhysicalDeviceMemoryProperties _memory_properties;

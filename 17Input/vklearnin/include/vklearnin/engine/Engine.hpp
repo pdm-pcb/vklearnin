@@ -32,7 +32,7 @@ private:
     uint32_t   _frame_index;
 
     Application &_application;
-    PipelineList _pipelines;
+    std::vector<Pipeline *> _pipelines;
 
     void _image_invalid();
     void _next_frame();

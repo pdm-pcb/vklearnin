@@ -34,6 +34,7 @@
 #elif defined(_WIN32)
     #define WIN32_LEAN_AND_MEAN // probably doesn't do much nowadays
     #include <Windows.h>
+    #include <hidusage.h>
     #undef min // so we can use std::numeric_limits
     #undef max // <--^
 
@@ -57,15 +58,11 @@
 
 namespace vkl {
 
-class Pipeline;
-
-using PipelineList = std::vector<Pipeline *>;
-
-using PushConstantRanges = std::vector<vk::PushConstantRange>;
+using PushConstantRanges   = std::vector<vk::PushConstantRange>;
 using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
 
-using PoolSizes    = std::set<vk::DescriptorPoolSize>;
-using BindingList  = std::vector<vk::DescriptorSetLayoutBinding>;
+using PoolSizes   = std::set<vk::DescriptorPoolSize>;
+using BindingList = std::vector<vk::DescriptorSetLayoutBinding>;
 
 } // namespace vkl
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

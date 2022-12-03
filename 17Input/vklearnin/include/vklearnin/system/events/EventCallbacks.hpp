@@ -8,7 +8,7 @@ namespace vkl {
 
 class EventCallbacksBase {
 public:
-    static constexpr uint32_t MAX_CALLBACKS = 1024u;
+    static constexpr uint32_t MAX_CALLBACKS = 32u;
 
     virtual void remove(const EventListenerHandle &) { }
 

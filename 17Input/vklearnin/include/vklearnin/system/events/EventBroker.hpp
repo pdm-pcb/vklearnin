@@ -5,6 +5,8 @@
 #include "vklearnin/system/events/Events.hpp"
 #include "vklearnin/system/events/EventCallbacks.hpp"
 
+#include "vklearnin/tools/ConsoleLog.hpp"
+
 namespace vkl {
 
 class EventBroker {
@@ -56,6 +58,7 @@ private:
     template<typename Event>
     static uint32_t _register_event() {
         _callbacks.emplace_back(new EventCallbacks<Event>(_next_event_id));
+        CONSOLE_TRACE("Event callbacks registered: {}", _callbacks.size());
         return _next_event_id++;
     }
 };
