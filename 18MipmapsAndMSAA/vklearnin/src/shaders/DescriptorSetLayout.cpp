@@ -35,13 +35,13 @@ void DescriptorSetLayout::create() {
         CONSOLE_CRITICAL("Unable to create descriptor set layout");
     }
 
-    CONSOLE_TRACE("Created descriptor set layout {}",
+    CONSOLE_TRACE("Created descriptor set layout {:#x}",
                   reinterpret_cast<uint64_t>(VkDescriptorSetLayout(_layout)));
 }
 
 // =============================================================================
 void DescriptorSetLayout::destroy() {
-    CONSOLE_TRACE("Destroying descriptor set layout {}",
+    CONSOLE_TRACE("Destroying descriptor set layout {:#x}",
                   reinterpret_cast<uint64_t>(VkDescriptorSetLayout(_layout)));
     LogicalDevice::native().destroyDescriptorSetLayout(_layout);
 }

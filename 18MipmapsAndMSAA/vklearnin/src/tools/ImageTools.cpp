@@ -129,7 +129,14 @@ ImageObject create_image(const vk::Extent3D &extent,
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Failed to create image. {}",
                          to_string(result.result));
+
+        return { };
     }
+
+    CONSOLE_TRACE(
+        "Created image {:#x}",
+        reinterpret_cast<uint64_t>(VkImage(result.value))
+    );
 
     ImageObject image_result {
         .image      = result.value,
@@ -281,8 +288,6 @@ void ImageTools::generate_mipmaps(ImageObject &image,
     int32_t mip_width  = static_cast<int32_t>(image.width);
     int32_t mip_height = static_cast<int32_t>(image.height);
 
-    auto cmd_buffer = BufferTools::begin_oneshot_cmd_buffer();
-
     for(uint32_t level = 1; level < image.mip_levels; ++level) {
         CONSOLE_TRACE("Generating mip level {}", level);
 
@@ -323,7 +328,7 @@ void ImageTools::generate_mipmaps(ImageObject &image,
             },
         };
 
-        cmd_buffer.blitImage(
+        command_buffer.blitImage(
             image.image,
             vk::ImageLayout::eTransferSrcOptimal,
             image.image,
@@ -382,9 +387,8 @@ void transition_layout(ImageObject &image,
     };
 
     CONSOLE_TRACE(
-        "Layout transition: {} ({}) -> {}",
+        "Layout transition: {} -> {}",
         to_string(barrier.oldLayout),
-        to_string(image.layout),
         to_string(barrier.newLayout)
     );
 
