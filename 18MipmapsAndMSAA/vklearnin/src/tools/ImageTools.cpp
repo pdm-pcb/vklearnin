@@ -252,8 +252,16 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         .imageExtent = extent
     };
 
-    transition_layout(dest, vk::ImageLayout::eUndefined,
-                      vk::ImageLayout::eTransferDstOptimal, command_buffer);
+    transition_layout(
+        dest,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal,
+        command_buffer,
+        1u,
+        0u,
+        dest.mip_levels
+    );
+
     command_buffer.copyBufferToImage(
         source.buffer,
         dest.image,
