@@ -18,10 +18,15 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     );
     _cube_texture.create(_descriptor_pool);
 
-    _plane_texture.add_texture2D(
+    _xy_plane_texture.add_texture2D(
         "../../vklearnin/assets/textures/wooden_wall.jpg"
     );
-    _plane_texture.create(_descriptor_pool);
+    _xy_plane_texture.create(_descriptor_pool);
+
+    _xz_plane_texture.add_texture2D(
+        "../../vklearnin/assets/textures/stone_wall.jpg"
+    );
+    _xz_plane_texture.create(_descriptor_pool);
 
     _pipelines[0]->vertex_from_binary(
         "../../vklearnin/assets/shaders/05texture_sampler.vert-debug.spv"
@@ -124,10 +129,14 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         auto cube_matrix = glm::rotate(
-            glm::translate(glm::mat4(1.0f), { -1.0f, 0.0f, -1.0f }),
+            glm::translate(vkl::math::ident_mat4, { -1.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
+        // auto cube_matrix = glm::translate(
+        //     vkl::math::ident_mat4,
+        //     { -1.0f, 0.0f, -1.0f }
+        // );
         instance_data.model_matrix = cube_matrix;
 
         command_buffer.pushConstants<InstanceData>(
@@ -145,22 +154,25 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
 //------------------------------------------------------------------------------
-// Plane
+// XY Plane
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             _pipelines[0]->layout(),
             vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _plane_texture.native(),
+            _xy_plane_texture.native(),
             { }
         );
 
-        auto plane_matrix = glm::rotate(
-            // glm::mat4(1.0f),
-            glm::translate(glm::mat4(1.0f), { 1.0f, 0.0f, -1.0f }),
+        auto xy_plane_matrix = glm::rotate(
+            glm::translate(vkl::math::ident_mat4, { 1.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.0f, 0.0f, 1.0f }
         );
-        instance_data.model_matrix = plane_matrix;
+        // auto xy_plane_matrix = glm::translate(
+        //     vkl::math::ident_mat4,
+        //     { 1.0f, 0.0f, -1.0f }
+        // );
+        instance_data.model_matrix = xy_plane_matrix;
 
         command_buffer.pushConstants<InstanceData>(
             _pipelines[0]->layout(),
@@ -171,9 +183,39 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         vkl::Renderer::draw(
             command_buffer,
-            _xz_unit_plane->vertex_buffer(),
-            _xz_unit_plane->index_buffer(),
-            static_cast<uint32_t>(_xz_unit_plane->indices().size())
+            _xy_plane->vertex_buffer(),
+            _xy_plane->index_buffer(),
+            static_cast<uint32_t>(_xy_plane->indices().size())
+        );
+
+//------------------------------------------------------------------------------
+// XZ Plane
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[0]->layout(),
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
+            _xz_plane_texture.native(),
+            { }
+        );
+
+        auto xz_plane_matrix = glm::translate(
+            vkl::math::ident_mat4,
+            { 0.0f, -3.0f, 0.0f }
+        );
+        instance_data.model_matrix = xz_plane_matrix;
+
+        command_buffer.pushConstants<InstanceData>(
+            _pipelines[0]->layout(),
+            vk::ShaderStageFlagBits::eVertex,
+            0u,
+            instance_data
+        );
+
+        vkl::Renderer::draw(
+            command_buffer,
+            _xz_plane->vertex_buffer(),
+            _xz_plane->index_buffer(),
+            static_cast<uint32_t>(_xz_plane->indices().size())
         );
 
 // Done Drawing
@@ -251,10 +293,13 @@ void Demo::init () {
         _camera_orientation.up
     );
 
-    _xz_unit_plane = new vkl::XZUnitPlane;
-    _xz_unit_plane->create_buffers();
+    _xy_plane = new vkl::XYPlane(2.0f, 2.0f);
+    _xy_plane->create_buffers();
 
-    _unit_cube = new vkl::UnitCube;
+    _xz_plane = new vkl::XZPlane(100.0f, 50.0f);
+    _xz_plane->create_buffers();
+
+    _unit_cube = new vkl::Cube(0.5f, 1.0f);
     _unit_cube->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
@@ -275,10 +320,12 @@ void Demo::init () {
 
 // =============================================================================
 void Demo::shutdown() {
-    if(_xz_unit_plane) _xz_unit_plane->destroy_buffers();
-    if(_unit_cube)     _unit_cube->destroy_buffers();
+    if(_xy_plane)  _xy_plane->destroy_buffers();
+    if(_xz_plane)  _xz_plane->destroy_buffers();
+    if(_unit_cube) _unit_cube->destroy_buffers();
 
-    _plane_texture.destroy();
+    _xy_plane_texture.destroy();
+    _xz_plane_texture.destroy();
     _cube_texture.destroy();
 
     for(auto &set : _per_frame_sets) {
@@ -350,10 +397,11 @@ void Demo::_update_camera(const uint32_t frame_index) {
 // =============================================================================
 Demo::Demo() :
     vkl::Application(),
-    _swapchain     { nullptr },
-    _camera_data   { },
-    _xz_unit_plane { nullptr },
-    _unit_cube     { nullptr }
+    _swapchain   { nullptr },
+    _camera_data { },
+    _xy_plane    { nullptr },
+    _xz_plane    { nullptr },
+    _unit_cube   { nullptr }
 { }
 
 Demo::~Demo() {
@@ -361,6 +409,7 @@ Demo::~Demo() {
         delete pipeline;
     }
 
-    delete _xz_unit_plane;
+    delete _xy_plane;
+    delete _xz_plane;
     delete _unit_cube;
 }

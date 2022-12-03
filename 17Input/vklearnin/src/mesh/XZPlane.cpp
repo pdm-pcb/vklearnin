@@ -1,16 +1,11 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/mesh/XZUnitPlane.hpp"
+#include "vklearnin/mesh/XZPlane.hpp"
 
 namespace vkl {
 
-void XZUnitPlane::create_buffers() {
+void XZPlane::create_buffers() {
     auto vertex_buffer_size = _vertices.size() * sizeof(Vertex);
     auto index_buffer_size = _indices.size() * sizeof(uint32_t);
-
-    CONSOLE_TRACE(
-        "Allocating XZUnitPlane buffers: {} vb {} ib",
-        vertex_buffer_size, index_buffer_size
-    );
 
     _vertex_buffer = BufferTools::create_buffer(
         vertex_buffer_size,
@@ -18,7 +13,7 @@ void XZUnitPlane::create_buffers() {
          vk::BufferUsageFlagBits::eVertexBuffer),
         vk::SharingMode::eExclusive,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        "plane vertex"
+        "xz plane vertex"
     );
 
     _index_buffer = BufferTools::create_buffer(
@@ -27,24 +22,36 @@ void XZUnitPlane::create_buffers() {
          vk::BufferUsageFlagBits::eIndexBuffer),
         vk::SharingMode::eExclusive,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        "plane index"
+        "xz plane index"
     );
 
     BufferTools::move_to_device(_vertices.data(), _vertex_buffer);
     BufferTools::move_to_device(_indices.data(), _index_buffer);
 }
 
-void XZUnitPlane::destroy_buffers() {
+void XZPlane::destroy_buffers() {
     BufferTools::destroy_buffer(_vertex_buffer);
     BufferTools::destroy_buffer(_index_buffer);
 }
 
-XZUnitPlane::XZUnitPlane() :
+XZPlane::XZPlane(const float scale, const float texture_repeat) :
     _vertices {
-        {{ -0.5f, -0.5f,  0.5f, 1.0f }, { 0.5f, 0.0f,  0.0f,  1.0f }, { 0.0f, 0.0f }},
-        {{  0.5f, -0.5f,  0.5f, 1.0f }, { 0.0f, 0.5f,  0.0f,  1.0f }, { 0.0f, 1.0f }},
-        {{  0.5f,  0.5f,  0.5f, 1.0f }, { 0.0f, 0.0f,  0.5f,  1.0f }, { 1.0f, 1.0f }},
-        {{ -0.5f,  0.5f,  0.5f, 1.0f }, { 0.5f, 0.5f,  0.5f,  1.0f }, { 1.0f, 0.0f }},
+        {
+            { -0.5f * scale, 0.0f, -0.5f * scale, 1.0f },
+            { 0.0f * texture_repeat, 0.0f * texture_repeat }
+        },
+        {
+            { -0.5f * scale, 0.0f,  0.5f * scale, 1.0f },
+            { 0.0f * texture_repeat, 1.0f * texture_repeat }
+        },
+        {
+            {  0.5f * scale, 0.0f,  0.5f * scale, 1.0f },
+            { 1.0f * texture_repeat, 1.0f * texture_repeat }
+        },
+        {
+            {  0.5f * scale, 0.0f, -0.5f * scale, 1.0f },
+            { 1.0f * texture_repeat, 0.0f * texture_repeat }
+        },
     },
     _indices { 0u, 1u, 2u, 2u, 3u, 0u }
 { }

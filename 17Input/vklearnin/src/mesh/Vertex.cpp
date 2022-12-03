@@ -21,12 +21,6 @@ const std::vector<vk::VertexInputAttributeDescription> Vertex::attribs {
     {
         .location = 1u,
         .binding = 0u,
-        .format = vk::Format::eR32G32B32A32Sfloat,
-        .offset = offsetof(Vertex, color)
-    },
-    {
-        .location = 2u,
-        .binding = 0u,
         .format = vk::Format::eR32G32Sfloat,
         .offset = offsetof(Vertex, texcoord)
     }

@@ -16,8 +16,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: replace with proper asset management
-#include "vklearnin/mesh/XZUnitPlane.hpp"
-#include "vklearnin/mesh/UnitCube.hpp"
+#include "vklearnin/mesh/XYPlane.hpp"
+#include "vklearnin/mesh/XZPlane.hpp"
+#include "vklearnin/mesh/Cube.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 struct DrawObject {
@@ -59,15 +60,17 @@ private:
     vkl::Swapchain const *_swapchain;
     std::vector<vkl::Pipeline *> _pipelines;
 
-    vkl::XZUnitPlane *_xz_unit_plane;
-    vkl::UnitCube    *_unit_cube;
+    vkl::XYPlane *_xy_plane;
+    vkl::XZPlane *_xz_plane;
+    vkl::Cube    *_unit_cube;
 
     using FrameSets = std::array<vkl::DescriptorSet,
                                  vkl::RenderConfig::swapchain_image_count>;
 
     FrameSets _per_frame_sets;
     std::vector<FrameSets> _per_object_sets;
-    vkl::DescriptorSet _plane_texture;
+    vkl::DescriptorSet _xy_plane_texture;
+    vkl::DescriptorSet _xz_plane_texture;
     vkl::DescriptorSet _cube_texture;
 
     CameraData        _camera_data;

@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_MESH_UNITCUBE_HPP
-#define VKLEARNIN_MESH_UNITCUBE_HPP
+#ifndef VKLEARNIN_MESH_XYUNITPLANE_HPP
+#define VKLEARNIN_MESH_XYUNITPLANE_HPP
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/mesh/Vertex.hpp"
@@ -9,7 +9,7 @@ namespace vkl {
 
 class LogicalDevice;
 
-class UnitCube final {
+class XYPlane final {
 public:
     void create_buffers();
     void destroy_buffers();
@@ -20,14 +20,15 @@ public:
     inline const auto & index_buffer() const { return _index_buffer; }
     inline auto & indices() { return _indices; }
 
-    UnitCube();
-    ~UnitCube() = default;
+    XYPlane(const float scale, const float texture_repeat);
+    ~XYPlane() = default;
+    XYPlane() = delete;
 
-    UnitCube(UnitCube &&) = delete;
-    UnitCube(const UnitCube &) = delete;
+    XYPlane(XYPlane &&) = delete;
+    XYPlane(const XYPlane &) = delete;
 
-    UnitCube & operator=(UnitCube &&) = delete;
-    UnitCube & operator=(const UnitCube &) = delete;
+    XYPlane & operator=(XYPlane &&) = delete;
+    XYPlane & operator=(const XYPlane &) = delete;
 
 private:
     std::vector<Vertex>   _vertices;
@@ -39,4 +40,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_MESH_UNITCUBE_HPP
+#endif // VKLEARNIN_MESH_XYUNITPLANE_HPP

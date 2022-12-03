@@ -7,7 +7,6 @@ namespace vkl {
 
 struct Vertex {
     std::array<float, 4> position;
-    std::array<float, 4> color;
     std::array<float, 2> texcoord;
 
     const static std::vector<vk::VertexInputBindingDescription>   bindings;
