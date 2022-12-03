@@ -10,6 +10,7 @@ public:
     struct DeviceProperties {
         std::string name  = "";
         size_t vram_bytes = 0;
+        float max_anisoropy = 1.0f;
         std::string driver_version = "";
         std::string vkapi_version  = "";
         vk::PhysicalDevice device = nullptr;

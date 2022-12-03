@@ -95,11 +95,13 @@ void PhysicalDevice::query_devices() {
             "\tDevice Name:    {}\n"
             "\tVRAM:           {}MB\n"
             "\tUBO Alignment:  {}\n"
+            "\tMax Anisotropy  x{}\n"
             "\tDriver Version: {}\n"
             "\tVulkan Version: {}\n",
             properties.name,
             properties.vram_bytes / 1000 / 1000,
             props.limits.minUniformBufferOffsetAlignment,
+            properties.max_anisoropy,
             properties.driver_version,
             properties.vkapi_version
         );
@@ -187,12 +189,15 @@ void PhysicalDevice::select_device() {
            present_fam != std::numeric_limits<uint32_t>::max() &&
            features.samplerAnisotropy)
         {
-            _physical_device = _available_devices[device_index].device;
+            const auto &dev_store = _available_devices[device_index];
+            _physical_device = dev_store.device;
             _cmd_queue_index = graphics_support[device_index].second;
             _cmd_queue_index = present_support[device_index].second;
+            RenderConfig::anisotropy = dev_store.max_anisoropy;
+
             CONSOLE_TRACE(
                 "Selected {}, queue {} for graphics and {} for present",
-                _available_devices[device_index].name,
+                dev_store.name,
                 _cmd_queue_index,
                 _cmd_queue_index
             );
@@ -238,6 +243,8 @@ void PhysicalDevice::_store_physical_device(
         }
     }
     store.vram_bytes = vram_bytes;
+
+    store.max_anisoropy = properties.limits.maxSamplerAnisotropy;
 
     store.driver_version = std::string(drivers.driverInfo.data());
 

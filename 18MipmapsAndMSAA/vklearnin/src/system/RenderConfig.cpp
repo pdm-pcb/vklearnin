@@ -17,4 +17,6 @@ float RenderConfig::aspect_ratio = 1.7777778f;
 
 bool RenderConfig::vsync_on = true;
 
+float RenderConfig::anisotropy = 1.0f;
+
 } // namespace vkl

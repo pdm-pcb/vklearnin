@@ -43,12 +43,6 @@ BufferObject create_buffer(const size_t size_bytes,
 
 // =============================================================================
 void destroy_buffer(BufferObject &buffer) {
-    // CONSOLE_TRACE(
-    //     "Destroying buffer {:#x}, memory {:#x}",
-    //     reinterpret_cast<uint64_t>(VkBuffer(buffer.buffer)),
-    //     reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.allocation.memory))
-    // );
-
     VKAllocator::free(buffer.allocation);
     LogicalDevice::native().destroy(buffer.buffer);
 }

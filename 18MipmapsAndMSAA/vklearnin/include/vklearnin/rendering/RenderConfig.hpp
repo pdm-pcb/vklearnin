@@ -20,6 +20,8 @@ struct RenderConfig {
 
     static constexpr uint8_t swapchain_image_count = 2;
     static bool vsync_on;
+
+    static float anisotropy;
 };
 
 } // namespace vkl
