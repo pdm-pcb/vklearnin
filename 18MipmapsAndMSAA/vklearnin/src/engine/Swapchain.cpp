@@ -154,9 +154,8 @@ void Swapchain::destroy() {
     for(auto &fence : _present_fences) {
         LogicalDevice::native().destroy(fence);
     }
-    for(size_t image = 0; image < RenderConfig::swapchain_image_count; ++image)
-    {
-        ImageTools::destroy_view(_image_views[image]);
+    for(auto &image : _images) {
+        ImageTools::destroy_view(image.view);
     }
     
     LogicalDevice::native().destroy(_swapchain);
@@ -376,29 +375,29 @@ void Swapchain::_get_images() {
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not get swapchain images");
     }
-    _images = result.value;
 
-    if(_images.size() != RenderConfig::swapchain_image_count) {
+    if(result.value.size() != RenderConfig::swapchain_image_count) {
         CONSOLE_CRITICAL(
             "Swapchain returned {} images; {} requested",
             _images.size(), RenderConfig::swapchain_image_count
         );
     }
+    
+    _images.resize(RenderConfig::swapchain_image_count);
+    for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
+        _images[image_idx].image = result.value[image_idx];
+    }
 }
 
 //==============================================================================
 void Swapchain::_create_image_views() {
-    _image_views.resize(RenderConfig::swapchain_image_count);    
-    for(size_t image = 0; image < RenderConfig::swapchain_image_count; ++image)
-    {
-        _image_views[image] = ImageTools::create_view(
-            _images[image],
+    for(auto &image : _images) {
+        ImageTools::create_view(
+            image,
             _surface_format,
             vk::ImageAspectFlagBits::eColor
         );
     }
-
-    CONSOLE_TRACE("Created {} swapchain image views", _image_views.size());
 }
 
 //==============================================================================

@@ -43,6 +43,8 @@ ImageObject load_from_file(std::string_view filepath, const bool flip_vertical) 
             static_cast<float>(width), static_cast<float>(height)))
         )) + 1u;
 
+    // uint32_t mip_levels = 1u;
+
     CONSOLE_TRACE("Set {} mip levels for '{}'", mip_levels, filepath);
 
     result = ImageTools::create_image(
@@ -57,7 +59,8 @@ ImageObject load_from_file(std::string_view filepath, const bool flip_vertical) 
         vk::ImageTiling::eOptimal,
         mip_levels,
         vk::SampleCountFlagBits::e1,
-        (vk::ImageUsageFlagBits::eTransferDst |
+        (vk::ImageUsageFlagBits::eTransferSrc |
+         vk::ImageUsageFlagBits::eTransferDst |
          vk::ImageUsageFlagBits::eSampled),
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         "tex from file"
@@ -82,7 +85,8 @@ ImageObject load_from_file(std::string_view filepath, const bool flip_vertical) 
     ::stbi_image_free(image_data);
     BufferTools::destroy_buffer(staging_buffer);
 
-    result.sampler = ImageTools::create_sampler(
+    ImageTools::create_sampler(
+        result,
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -137,18 +141,16 @@ ImageObject create_image(const vk::Extent3D &extent,
     };
 
     auto alloc = VKAllocator::allocate(result.value, memory_properties, image_name);
-    auto view = create_view(image_result, color_format, image_aspect);
-
     image_result.allocation = alloc;
-    image_result.view = view;
+
+    create_view(image_result, color_format, image_aspect);
 
     return image_result;
 }
 
 // =============================================================================
-vk::ImageView create_view(const ImageObject &image,
-                          const vk::Format &color_format,
-                          const vk::ImageAspectFlags &image_aspect)
+void create_view(ImageObject &image, const vk::Format &color_format,
+                 const vk::ImageAspectFlags &image_aspect)
 {
     vk::ImageViewCreateInfo image_info {
         .image = image.image,
@@ -177,51 +179,17 @@ vk::ImageView create_view(const ImageObject &image,
         CONSOLE_TRACE("Created image view {:#x}",
                       reinterpret_cast<uint64_t>(::VkImageView(view)));
     }
-    return view;
+    
+    image.view = view;
 }
 
 // =============================================================================
-vk::ImageView create_view(const vk::Image &image,
-                          const vk::Format &color_format,
-                          const vk::ImageAspectFlags &image_aspect)
-{
-    vk::ImageViewCreateInfo image_info {
-        .image = image,
-        .viewType = vk::ImageViewType::e2D,
-        .format = color_format,
-        .components = {
-            .r = vk::ComponentSwizzle::eR,
-            .g = vk::ComponentSwizzle::eG,
-            .b = vk::ComponentSwizzle::eB,
-            .a = vk::ComponentSwizzle::eA,
-        },
-        .subresourceRange {
-            .aspectMask     = image_aspect,
-            .baseMipLevel   = 0u,
-            .levelCount     = 1u,
-            .baseArrayLayer = 0u,
-            .layerCount     = 1u
-        }
-    };
-
-    auto [result, view] = LogicalDevice::native().createImageView(image_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not create image view");
-    }
-    else {
-        CONSOLE_TRACE("Created image view {:#x}",
-                      reinterpret_cast<uint64_t>(::VkImageView(view)));
-    }
-    return view;
-}
-
-// =============================================================================
-vk::Sampler create_sampler(const vk::Filter min_filter,
-                           const vk::Filter mag_filter,
-                           const vk::SamplerMipmapMode mip_filter,
-                           const vk::SamplerAddressMode address_mode_u,
-                           const vk::SamplerAddressMode address_mode_v,
-                           const vk::SamplerAddressMode address_mode_w)
+void create_sampler(ImageObject &image,
+                    const vk::Filter min_filter, const vk::Filter mag_filter,
+                    const vk::SamplerMipmapMode mip_filter,
+                    const vk::SamplerAddressMode address_mode_u,
+                    const vk::SamplerAddressMode address_mode_v,
+                    const vk::SamplerAddressMode address_mode_w)
 {
     vk::SamplerCreateInfo sampler_info {
         .magFilter        = min_filter,
@@ -250,11 +218,51 @@ vk::Sampler create_sampler(const vk::Filter min_filter,
                       reinterpret_cast<uint64_t>(::VkSampler(result.value)));
     }
 
-    return result.value;
+    image.sampler = result.value;
 }
 
 // =============================================================================
-void ImageTools::generate_mipmaps(ImageObject &image) {
+void move_to_device(const BufferObject &source, ImageObject &dest,
+                    const vk::Extent3D &extent)
+{
+    auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
+
+    vk::BufferImageCopy copy_region {
+        .bufferOffset = 0u,
+        .bufferRowLength = 0u,
+        .bufferImageHeight = 0u,
+        .imageSubresource {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = 0u,
+            .baseArrayLayer = 0u,
+            .layerCount = 1u,
+        },
+        .imageOffset {
+            .x = 0,
+            .y = 0,
+            .z = 0
+        },
+        .imageExtent = extent
+    };
+
+    transition_layout(dest, vk::ImageLayout::eUndefined,
+                      vk::ImageLayout::eTransferDstOptimal, command_buffer);
+    command_buffer.copyBufferToImage(
+        source.buffer,
+        dest.image,
+        dest.layout,
+        copy_region
+    );
+    
+    generate_mipmaps(dest, command_buffer);
+
+    BufferTools::end_oneshot_cmd_buffer(command_buffer);
+}
+
+// =============================================================================
+void ImageTools::generate_mipmaps(ImageObject &image,
+                                  const vk::CommandBuffer &command_buffer)
+{
     // first, check to see that the chosen image format supports the blitting
     // vulkan will do for us via CommandBuffer::blitImage()
     auto format_props = PhysicalDevice::native().getFormatProperties(
@@ -277,7 +285,16 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
 
     for(uint32_t level = 1; level < image.mip_levels; ++level) {
         CONSOLE_TRACE("Generating mip level {}", level);
-        transition_layout(image, vk::ImageLayout::eTransferSrcOptimal);
+
+        transition_layout(
+            image,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eTransferSrcOptimal,
+            command_buffer,
+            1u,
+            level - 1u,
+            1u
+        );
 
         vk::ImageBlit blit {
             .srcSubresource {
@@ -315,35 +332,61 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
             vk::Filter::eLinear
         );
 
-        transition_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
+        transition_layout(
+            image,
+            vk::ImageLayout::eTransferSrcOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            command_buffer,
+            1u,
+            level - 1u,
+            1u
+        );
 
         if(mip_width  > 1) { mip_width  /= 2; }
         if(mip_height > 1) { mip_height /= 2; }
     }
 
-    transition_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    BufferTools::end_oneshot_cmd_buffer(cmd_buffer);
+    transition_layout(
+        image,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        command_buffer,
+        1u,
+        image.mip_levels - 1u,
+        1u
+    );
 }
 
 // =============================================================================
-void transition_layout(ImageObject &image, const vk::ImageLayout new_layout) {
-    auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
-
+void transition_layout(ImageObject &image,
+                       const vk::ImageLayout old_layout,
+                       const vk::ImageLayout new_layout,
+                       const vk::CommandBuffer &command_buffer,
+                       const uint32_t layer_count,
+                       const uint32_t base_mip_level,
+                       const uint32_t mip_levels)
+{
     vk::ImageMemoryBarrier barrier {
-        .oldLayout = image.layout,
+        .oldLayout = old_layout,
         .newLayout = new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image.image,
         .subresourceRange {
             .aspectMask     = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel   = 0u,
-            .levelCount     = image.mip_levels,
+            .baseMipLevel   = base_mip_level,
+            .levelCount     = mip_levels,
             .baseArrayLayer = 0u,
-            .layerCount     = 1u,
+            .layerCount     = layer_count,
         }
     };
+
+    CONSOLE_TRACE(
+        "Layout transition: {} ({}) -> {}",
+        to_string(barrier.oldLayout),
+        to_string(image.layout),
+        to_string(barrier.newLayout)
+    );
 
     vk::PipelineStageFlags source_stage      = vk::PipelineStageFlagBits::eNone;
     vk::PipelineStageFlags destination_stage = vk::PipelineStageFlagBits::eNone;
@@ -356,10 +399,7 @@ void transition_layout(ImageObject &image, const vk::ImageLayout new_layout) {
             destination_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
-            CONSOLE_CRITICAL(
-                "Unsupported image layout transition: from {} to {}",
-                to_string(barrier.oldLayout), to_string(barrier.newLayout)
-            );
+            CONSOLE_CRITICAL("Unsupported image layout transition");
         }
     }
     else if(barrier.oldLayout == vk::ImageLayout::eTransferDstOptimal) {
@@ -378,10 +418,7 @@ void transition_layout(ImageObject &image, const vk::ImageLayout new_layout) {
             destination_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
-            CONSOLE_CRITICAL(
-                "Unsupported image layout transition: from {} to {}",
-                to_string(barrier.oldLayout), to_string(barrier.newLayout)
-            );
+            CONSOLE_CRITICAL("Unsupported image layout transition");
         }
     }
     else if(barrier.oldLayout == vk::ImageLayout::eTransferSrcOptimal) {
@@ -393,17 +430,11 @@ void transition_layout(ImageObject &image, const vk::ImageLayout new_layout) {
             destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
         }
         else {
-            CONSOLE_CRITICAL(
-                "Unsupported image layout transition: from {} to {}",
-                to_string(barrier.oldLayout), to_string(barrier.newLayout)
-            );
+            CONSOLE_CRITICAL("Unsupported image layout transition");
         }
     }
     else {
-        CONSOLE_CRITICAL(
-            "Unsupported image layout transition: from {} to {}",
-            to_string(barrier.oldLayout), to_string(barrier.newLayout)
-        );
+        CONSOLE_CRITICAL("Unsupported image layout transition");
     }
 
     vk::ImageMemoryBarrier image_barriers[] {
@@ -420,46 +451,6 @@ void transition_layout(ImageObject &image, const vk::ImageLayout new_layout) {
     );
 
     image.layout = barrier.newLayout;
-}
-
-// =============================================================================
-void move_to_device(const BufferObject &source, ImageObject &dest,
-                    const vk::Extent3D &extent)
-{
-    auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
-
-    vk::BufferImageCopy copy_region {
-        .bufferOffset = 0u,
-        .bufferRowLength = 0u,
-        .bufferImageHeight = 0u,
-        .imageSubresource {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .mipLevel = 0u,
-            .baseArrayLayer = 0u,
-            .layerCount = 1u,
-        },
-        .imageOffset {
-            .x = 0,
-            .y = 0,
-            .z = 0
-        },
-        .imageExtent = extent
-    };
-
-    transition_layout(dest, vk::ImageLayout::eTransferDstOptimal);
-        command_buffer.copyBufferToImage(
-            source.buffer,
-            dest.image,
-            dest.layout,
-            copy_region
-        );    
-        BufferTools::end_oneshot_cmd_buffer(command_buffer);
-
-        if(dest.mip_levels > 1u) {
-            generate_mipmaps(dest);
-        }
-
-    transition_layout(dest, vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 // =============================================================================

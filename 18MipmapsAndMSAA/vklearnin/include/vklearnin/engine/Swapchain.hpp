@@ -6,6 +6,7 @@
 namespace vkl {
 
 class CmdQueue;
+struct ImageObject;
 
 class Swapchain final {
 public:
@@ -26,13 +27,12 @@ public:
 
     inline const auto extent() const { return _extent; }
     inline const auto & image_view(const uint32_t index) const {
-        return _image_views[index];
+        return _images[index].view;
     }
     inline const vk::Rect2D render_area() const { return { _offset, _extent }; }
 
     inline const auto & surface_format() const { return _surface_format; }
-    inline const auto & native()         const { return _swapchain;      }
-    inline const auto & image_views()    const { return _image_views; }
+    inline const auto & native()         const { return _swapchain; }
 
     Swapchain();
     ~Swapchain() = default;
@@ -49,8 +49,7 @@ private:
     vk::Format        _surface_format;
     vk::ColorSpaceKHR _color_space;
 
-    std::vector<vk::Image>     _images;
-    std::vector<vk::ImageView> _image_views;
+    std::vector<ImageObject> _images;
 
     uint32_t _image_index;
 
