@@ -40,7 +40,7 @@ void DescriptorSet::add_ubo(const size_t size,
 
 //==============================================================================
 void DescriptorSet::add_texture2D(std::string_view filepath) {
-    _textures.push_back(ImageTools::load_from_file(filepath));
+    _textures.push_back(ImageTools::load_texture_from_file(filepath));
 
     _layout.add_binding({
         .binding            = static_cast<uint32_t>(_layout.bindings().size()),

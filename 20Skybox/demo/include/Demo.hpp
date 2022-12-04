@@ -19,6 +19,7 @@
 #include "vklearnin/mesh/XYPlane.hpp"
 #include "vklearnin/mesh/XZPlane.hpp"
 #include "vklearnin/mesh/Cube.hpp"
+#include "vklearnin/mesh/Skybox.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 struct DrawObject {
@@ -69,10 +70,12 @@ private:
     vkl::XYPlane *_xy_plane;
     vkl::XZPlane *_xz_plane;
     vkl::Cube    *_unit_cube;
+    vkl::Skybox  *_skybox;
 
     vkl::DescriptorSet _xy_plane_texture;
     vkl::DescriptorSet _xz_plane_texture;
     vkl::DescriptorSet _cube_texture;
+    vkl::DescriptorSet _skybox_texture;
 
     CameraData        _camera_data;
     CameraOrientation _camera_orientation;

@@ -11,7 +11,9 @@ namespace vkl {
 namespace ImageTools {
 
 // =============================================================================
-ImageObject load_from_file(std::string_view filepath, const bool flip_vertical) {
+ImageObject load_texture_from_file(std::string_view filepath,
+                                   const bool flip_vertical)
+{
     ImageObject result { };
 
     int width;
@@ -129,7 +131,6 @@ ImageObject create_image(const vk::Extent3D &extent,
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Failed to create image. {}",
                          to_string(result.result));
-
         return { };
     }
 
