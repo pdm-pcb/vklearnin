@@ -50,7 +50,7 @@ void transition_layout(ImageObject &image,
                        const uint32_t mip_levels = 1u);
 
 void destroy_image(ImageObject &image);
-void destroy_view(const vk::ImageView &view);
+void destroy_view(vk::ImageView &view);
 
 } // namespace ImageTools
 } // namespace vkl

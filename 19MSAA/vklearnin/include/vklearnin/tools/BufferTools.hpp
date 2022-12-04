@@ -16,14 +16,14 @@ BufferObject create_buffer(const size_t size_bytes,
                            const vk::MemoryPropertyFlags memory_properties,
                            std::string_view buffer_name);
 
-void destroy_buffer(BufferObject &buffer);
-
-void move_to_device(const void *data, const BufferObject &dest_buffer);
+vk::CommandBuffer begin_oneshot_cmd_buffer();
+void end_oneshot_cmd_buffer(const vk::CommandBuffer &command_buffer);
 
 BufferObject stage_data(const size_t size_bytes, const void *data);
 
-vk::CommandBuffer begin_oneshot_cmd_buffer();
-void end_oneshot_cmd_buffer(const vk::CommandBuffer &command_buffer);
+void move_to_device(const void *data, const BufferObject &dest_buffer);
+
+void destroy_buffer(BufferObject &buffer);
 
 
 } // namespace BufferTools

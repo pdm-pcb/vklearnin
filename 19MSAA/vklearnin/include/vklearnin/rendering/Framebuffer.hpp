@@ -11,8 +11,7 @@ class Pipeline;
 class Framebuffer final {
 public:
     void create(const vk::Extent2D &extent,
-                const vk::ImageView &swapchain_image_view,
-                const vk::ImageView &depth_buffer_image_view,
+                const std::vector<vk::ImageView> &attachments,
                 const vk::RenderPass &render_pass);
     void destroy();
 
@@ -29,7 +28,6 @@ public:
 
 private:
     vk::Framebuffer            _framebuffer;
-    std::vector<vk::ImageView> _attachments;
 };
 
 } // namespace vkl

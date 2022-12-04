@@ -30,9 +30,9 @@ static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
 static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_2;
 
-static constexpr uint32_t DEFAULT_GPU = 0u;
-
 static const std::string ASSET_PATH { "../../vklearnin/assets" };
+
+static constexpr uint32_t DEFAULT_GPU = 0u;
 
 } // namespace vkl
 #endif // VKLEARNIN_VKLEARNIN_HPP

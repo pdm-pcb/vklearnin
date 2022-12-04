@@ -22,6 +22,7 @@ struct RenderConfig {
     static bool vsync_on;
 
     static float anisotropy;
+    static uint32_t msaa;
 };
 
 } // namespace vkl

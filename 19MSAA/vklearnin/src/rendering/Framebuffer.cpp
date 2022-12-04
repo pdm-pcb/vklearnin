@@ -8,19 +8,14 @@ namespace vkl {
 
 // =============================================================================
 void Framebuffer::create(const vk::Extent2D &extent,
-                         const vk::ImageView &swapchain_image_view,
-                         const vk::ImageView &depth_buffer_image_view,
+                         const std::vector<vk::ImageView> &attachments,
                          const vk::RenderPass &render_pass)
 {
-    _attachments = {
-        swapchain_image_view,
-        depth_buffer_image_view
-    };
 
     vk::FramebufferCreateInfo buffer_info {
         .renderPass = render_pass,
-        .attachmentCount = static_cast<uint32_t>(_attachments.size()),
-        .pAttachments = _attachments.data(),
+        .attachmentCount = static_cast<uint32_t>(attachments.size()),
+        .pAttachments = attachments.data(),
         .width = extent.width,
         .height = extent.height,
         .layers = 1u,
@@ -49,8 +44,7 @@ void Framebuffer::destroy() {
 
 // =============================================================================
 Framebuffer::Framebuffer(Framebuffer &&other) :
-    _framebuffer { std::move(other._framebuffer) },
-    _attachments { std::move(other._attachments) }
+    _framebuffer { std::move(other._framebuffer) }
 { }
 
 } // namespace vkl

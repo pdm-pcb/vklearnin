@@ -93,15 +93,17 @@ void PhysicalDevice::query_devices() {
         CONSOLE_TRACE(
             "\n"
             "\tDevice Name:    {}\n"
-            "\tVRAM:           {}MB\n"
+            "\tVRAM:           {} MB\n"
             "\tUBO Alignment:  {}\n"
             "\tMax Anisotropy  x{}\n"
+            "\tMax MSAA        x{}\n"
             "\tDriver Version: {}\n"
             "\tVulkan Version: {}\n",
             properties.name,
             properties.vram_bytes / 1000 / 1000,
             props.limits.minUniformBufferOffsetAlignment,
             properties.max_anisoropy,
+            properties.max_msaa,
             properties.driver_version,
             properties.vkapi_version
         );
@@ -194,6 +196,7 @@ void PhysicalDevice::select_device() {
             _cmd_queue_index = graphics_support[device_index].second;
             _cmd_queue_index = present_support[device_index].second;
             RenderConfig::anisotropy = dev_store.max_anisoropy;
+            RenderConfig::msaa = dev_store.max_msaa;
 
             CONSOLE_TRACE(
                 "Selected {}, queue {} for graphics and {} for present",
@@ -245,6 +248,18 @@ void PhysicalDevice::_store_physical_device(
     store.vram_bytes = vram_bytes;
 
     store.max_anisoropy = properties.limits.maxSamplerAnisotropy;
+
+    auto samples = properties.limits.framebufferColorSampleCounts;
+    store.min_msaa = 1u;
+    store.max_msaa = 1u;
+
+    using aa = vk::SampleCountFlagBits;
+    if     ((samples & aa::e64) == aa::e64) { store.max_msaa = 64u; }
+    else if((samples & aa::e32) == aa::e32) { store.max_msaa = 32u; }
+    else if((samples & aa::e16) == aa::e16) { store.max_msaa = 16u; }
+    else if((samples & aa::e8 ) == aa::e8 ) { store.max_msaa = 8u;  }
+    else if((samples & aa::e4 ) == aa::e4 ) { store.max_msaa = 4u;  }
+    else if((samples & aa::e2 ) == aa::e2 ) { store.max_msaa = 2u;  }
 
     store.driver_version = std::string(drivers.driverInfo.data());
 

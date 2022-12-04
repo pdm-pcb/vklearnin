@@ -69,11 +69,12 @@ void Pipeline::create() {
     _init_assembly();
     _init_viewport();
     _init_raster();
+    _init_msaa();
     _init_blend();
     _init_depth();
     _init_dynamic_states();
 
-    _render_pass.create(_swapchain);
+    _render_pass.create();
 
     vk::GraphicsPipelineCreateInfo pipeline_info {
         .stageCount = static_cast<uint32_t>(_shader_stages.size()),
@@ -83,7 +84,7 @@ void Pipeline::create() {
         .pTessellationState  = nullptr,
         .pViewportState      = &_viewport_info,
         .pRasterizationState = &_raster_info,
-        .pMultisampleState   = { },
+        .pMultisampleState   = &_msaa_info,
         .pDepthStencilState  = &_depth_stencil_info,
         .pColorBlendState    = &_blend_info,
         .pDynamicState       = &_dynamic_state_info,
@@ -131,7 +132,7 @@ void Pipeline::destroy() {
 
 // =============================================================================
 void Pipeline::create_framebuffers() {
-    _render_pass.create_framebuffers(_swapchain);
+    _render_pass.create_framebuffers();
     update_dimensions();
 }
 
@@ -247,6 +248,19 @@ void Pipeline::_init_raster() {
 }
 
 // =============================================================================
+void Pipeline::_init_msaa() {
+
+    _msaa_info = {
+        .rasterizationSamples  = _sample_flags,
+        .sampleShadingEnable   = false,
+        .minSampleShading      = 0.0f,
+        .pSampleMask           = nullptr,
+        .alphaToCoverageEnable = false,
+        .alphaToOneEnable      = false,
+    };
+}
+
+// =============================================================================
 void Pipeline::_init_depth() {
     _depth_stencil_info = {
         .depthTestEnable = true,
@@ -316,13 +330,29 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _raster_info        { },
     _blend_info         { },
     _dynamic_state_info { },
-    _render_pass        { },
+    _render_pass        { swapchain },
     _pipeline_layout    { nullptr },
     _pipeline           { nullptr },
     _swapchain          { swapchain }
 {
     _frame_data.resize(RenderConfig::swapchain_image_count);
     _set_layouts.reserve(BindingFreq::MAX_BINDS);
+
+    switch(RenderConfig::msaa) {
+        case 64u: _sample_flags = vk::SampleCountFlagBits::e64; break;
+        case 32u: _sample_flags = vk::SampleCountFlagBits::e32; break;
+        case 16u: _sample_flags = vk::SampleCountFlagBits::e16; break;
+        case  8u: _sample_flags = vk::SampleCountFlagBits::e8;  break;
+        case  4u: _sample_flags = vk::SampleCountFlagBits::e4;  break;
+        case  2u: _sample_flags = vk::SampleCountFlagBits::e2;  break;
+        case  1u: break;
+        default:
+            CONSOLE_WARN(
+                "Unsupported MSAA sample count {}, defaulting to 1x",
+                RenderConfig::msaa
+            );
+            break;
+    }
 }
 
 } // namespace vkl

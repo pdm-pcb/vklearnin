@@ -468,24 +468,26 @@ void transition_layout(ImageObject &image,
 
 // =============================================================================
 void destroy_image(ImageObject &image) {
-    CONSOLE_TRACE("Destroying image view {:#x}, sampler {:#x}",
+    CONSOLE_TRACE("Destroying image {:#x}, view {:#x}, sampler {:#x}",
+                   reinterpret_cast<uint64_t>(::VkImage(image.image)),
                    reinterpret_cast<uint64_t>(::VkImageView(image.view)),
                    reinterpret_cast<uint64_t>(::VkSampler(image.sampler)));
 
     LogicalDevice::native().destroy(image.image);
     LogicalDevice::native().destroy(image.view);
-    
+    LogicalDevice::native().destroy(image.sampler);
     VKAllocator::free(image.allocation);
 
-    LogicalDevice::native().destroy(image.sampler);
+    image = { };
 }
 
 // =============================================================================
-void destroy_view(const vk::ImageView &view)
-{
+void destroy_view(vk::ImageView &view) {
     CONSOLE_TRACE("Destroying image view {:#x}",
                    reinterpret_cast<uint64_t>(::VkImageView(view)));
     LogicalDevice::native().destroy(view);
+
+    view = nullptr;
 }
 
 } // namespace ImageTools

@@ -42,54 +42,6 @@ BufferObject create_buffer(const size_t size_bytes,
 }
 
 // =============================================================================
-void destroy_buffer(BufferObject &buffer) {
-    VKAllocator::free(buffer.allocation);
-    LogicalDevice::native().destroy(buffer.buffer);
-}
-
-// =============================================================================
-void move_to_device(const void *data, const BufferObject &dest_buffer) {
-    const auto &allocation = dest_buffer.allocation;
-    // create the staging buffer
-    BufferObject staging_buffer = stage_data(allocation->size, data);
-    auto command_buffer = begin_oneshot_cmd_buffer();
-
-    // No offsets for either, full size of the buffer
-    vk::BufferCopy copy_regions {
-        .srcOffset = 0u,
-        .dstOffset = 0u,
-        .size = allocation->size
-    };
-
-    command_buffer.copyBuffer(
-        staging_buffer.buffer,
-        dest_buffer.buffer,
-        copy_regions
-    );
-
-    end_oneshot_cmd_buffer(command_buffer);
-    destroy_buffer(staging_buffer);
-}
-
-// =============================================================================
-BufferObject stage_data(const size_t size_bytes, const void *data) {
-    auto staging_buffer = create_buffer(
-        size_bytes,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::SharingMode::eExclusive,
-        (vk::MemoryPropertyFlagBits::eHostVisible | 
-         vk::MemoryPropertyFlagBits::eHostCoherent),
-        "staging buf"
-    );
-
-    void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
-        memcpy(destination, data, size_bytes);
-    VKAllocator::unmap_buffer(staging_buffer.allocation);
-
-    return staging_buffer;
-}
-
-// =============================================================================
 vk::CommandBuffer begin_oneshot_cmd_buffer() {
     vk::CommandBufferAllocateInfo create_info {
         .commandPool = LogicalDevice::cmd_pool().native(),
@@ -147,6 +99,56 @@ void end_oneshot_cmd_buffer(const vk::CommandBuffer &command_buffer) {
         LogicalDevice::cmd_pool().native(),
         command_buffer
     );
+}
+
+// =============================================================================
+BufferObject stage_data(const size_t size_bytes, const void *data) {
+    auto staging_buffer = create_buffer(
+        size_bytes,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::SharingMode::eExclusive,
+        (vk::MemoryPropertyFlagBits::eHostVisible | 
+         vk::MemoryPropertyFlagBits::eHostCoherent),
+        "staging buf"
+    );
+
+    void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
+        memcpy(destination, data, size_bytes);
+    VKAllocator::unmap_buffer(staging_buffer.allocation);
+
+    return staging_buffer;
+}
+
+// =============================================================================
+void move_to_device(const void *data, const BufferObject &dest_buffer) {
+    const auto &allocation = dest_buffer.allocation;
+    // create the staging buffer
+    BufferObject staging_buffer = stage_data(allocation->size, data);
+    auto command_buffer = begin_oneshot_cmd_buffer();
+
+    // No offsets for either, full size of the buffer
+    vk::BufferCopy copy_regions {
+        .srcOffset = 0u,
+        .dstOffset = 0u,
+        .size = allocation->size
+    };
+
+    command_buffer.copyBuffer(
+        staging_buffer.buffer,
+        dest_buffer.buffer,
+        copy_regions
+    );
+
+    end_oneshot_cmd_buffer(command_buffer);
+    destroy_buffer(staging_buffer);
+}
+
+// =============================================================================
+void destroy_buffer(BufferObject &buffer) {
+    VKAllocator::free(buffer.allocation);
+    LogicalDevice::native().destroy(buffer.buffer);
+
+    buffer = { };
 }
 
 } // namespace BufferTools

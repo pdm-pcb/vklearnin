@@ -68,12 +68,14 @@ private:
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;
 
+    vk::SampleCountFlagBits _sample_flags;
     std::vector<vk::PipelineColorBlendAttachmentState> _blend_states;
 
     vk::PipelineVertexInputStateCreateInfo   _vert_input_info;
     vk::PipelineInputAssemblyStateCreateInfo _assembly_info;
     vk::PipelineViewportStateCreateInfo      _viewport_info;
     vk::PipelineRasterizationStateCreateInfo _raster_info;
+    vk::PipelineMultisampleStateCreateInfo   _msaa_info;
     vk::PipelineColorBlendStateCreateInfo    _blend_info;
     vk::PipelineDepthStencilStateCreateInfo  _depth_stencil_info;
     std::vector<vk::DynamicState>            _dynamic_states;
@@ -95,6 +97,7 @@ private:
     void _init_assembly();
     void _init_viewport();
     void _init_raster();
+    void _init_msaa();
     void _init_depth();
     void _init_blend();
     void _init_dynamic_states();

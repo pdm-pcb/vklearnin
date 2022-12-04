@@ -11,6 +11,8 @@ public:
         std::string name  = "";
         size_t vram_bytes = 0;
         float max_anisoropy = 1.0f;
+        uint32_t min_msaa = 1u;
+        uint32_t max_msaa = 1u;
         std::string driver_version = "";
         std::string vkapi_version  = "";
         vk::PhysicalDevice device = nullptr;
