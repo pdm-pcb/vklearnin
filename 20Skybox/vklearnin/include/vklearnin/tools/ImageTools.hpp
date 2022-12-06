@@ -21,7 +21,6 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::Extent3D &extent,
                          const uint8_t channels,
                          const vk::Format &color_format,
-                         const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,
                          const uint32_t mip_levels,
                          const uint32_t array_layers,
@@ -30,7 +29,8 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::MemoryPropertyFlags memory_properties,
                          std::string_view image_name);
 
-void create_view(ImageObject &image, const vk::Format &color_format,
+void create_view(ImageObject &image, const vk::ImageViewType &type,
+                 const vk::Format &color_format,
                  const vk::ImageAspectFlags &image_aspect);
 
 void create_sampler(ImageObject &image,

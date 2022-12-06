@@ -224,6 +224,8 @@ void RenderPass::_init_depth_buffer() {
         ImageTools::destroy_image(_depth_buffer);
     }
 
+    const auto format = _find_depth_buffer_format();
+
     _depth_buffer = ImageTools::create_image(
         { },
         {
@@ -232,8 +234,7 @@ void RenderPass::_init_depth_buffer() {
             .depth = 1u
         },
         1u,
-        _find_depth_buffer_format(),
-        vk::ImageAspectFlagBits::eDepth,
+        format,
         vk::ImageTiling::eOptimal,
         1u,
         1u,
@@ -241,6 +242,13 @@ void RenderPass::_init_depth_buffer() {
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         "depth_buffer"
+    );
+
+    ImageTools::create_view(
+        _depth_buffer,
+        vk::ImageViewType::e2D,
+        format,
+        vk::ImageAspectFlagBits::eDepth
     );
 }
 
@@ -257,7 +265,6 @@ void RenderPass::_init_color_buffer() {
         { width, height, 1u },
         0u,
         _swapchain.surface_format(),
-        vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
         1u,
         1u,
@@ -266,6 +273,13 @@ void RenderPass::_init_color_buffer() {
         vk::ImageUsageFlagBits::eColorAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         "color_buffer"
+    );
+
+    ImageTools::create_view(
+        _color_buffer,
+        vk::ImageViewType::e2D,
+        _swapchain.surface_format(),
+        vk::ImageAspectFlagBits::eColor
     );
 }
 

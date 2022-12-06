@@ -102,9 +102,6 @@ void * VKAllocator::map_buffer(const BlockIter &block_iter) {
             to_string(result.result)
         );
     }
-    else {
-        CONSOLE_TRACE("Block mapped");
-    }
 
     return result.value;
 }
@@ -113,7 +110,6 @@ void * VKAllocator::map_buffer(const BlockIter &block_iter) {
 void VKAllocator::unmap_buffer(const BlockIter &block_iter) {
     auto &block = _pools[block_iter->type_index].allocs[block_iter->alloc_index];
     LogicalDevice::native().unmapMemory(block.memory);
-    CONSOLE_TRACE("Block unmapped");
 }
 
 // =============================================================================

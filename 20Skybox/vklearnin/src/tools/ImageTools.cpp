@@ -56,7 +56,6 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
         },
         static_cast<uint8_t>(::STBI_rgb_alpha),
         vk::Format::eR8G8B8A8Unorm,
-        vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
         mip_levels,
         1u,
@@ -71,8 +70,15 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
     result.width = static_cast<uint32_t>(width);
     result.height = static_cast<uint32_t>(height);
     result.channels = static_cast<uint32_t>(::STBI_rgb_alpha);
-    result.layer_size = result.width * result.height * ::STBI_rgb_alpha;
+    result.layer_size = result.width * result.height * result.channels;
     result.image_size = result.layer_size;
+
+    create_view(
+        result,
+        vk::ImageViewType::e2D,
+        vk::Format::eR8G8B8A8Unorm,
+        vk::ImageAspectFlagBits::eColor
+    );
 
     auto staging_buffer = BufferTools::stage_data(
         result.image_size,
@@ -154,7 +160,6 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
         },
         static_cast<uint8_t>(::STBI_rgb_alpha),
         vk::Format::eR8G8B8A8Unorm,
-        vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
         mip_levels,
         6u,
@@ -169,12 +174,31 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
     result.width = static_cast<uint32_t>(width);
     result.height = static_cast<uint32_t>(height);
     result.channels = static_cast<uint32_t>(::STBI_rgb_alpha);
-    result.layer_size = result.width * result.height * ::STBI_rgb_alpha;
+    result.layer_size = result.width * result.height * result.channels;
     result.image_size = result.layer_size * filepaths.size();
+
+    create_view(
+        result,
+        vk::ImageViewType::eCube,
+        vk::Format::eR8G8B8A8Unorm,
+        vk::ImageAspectFlagBits::eColor
+    );
+
+    char *consolidated_image = new char[result.image_size];
+    char *offset = consolidated_image;
+
+    for(uint32_t image = 0u; image < filepaths.size(); ++image) {
+        memcpy(offset, image_data[image], result.layer_size);
+        offset += result.layer_size;
+    }
+
+    for(const auto &image : image_data) {
+        ::stbi_image_free(image);
+    }
 
     auto staging_buffer = BufferTools::stage_data(
         result.image_size,
-        image_data.data()
+        consolidated_image
     );
 
     ImageTools::move_to_device(
@@ -182,10 +206,8 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
         result,
         { result.width, result.height, 1u }
     );
-
-    for(const auto &image : image_data) {
-        ::stbi_image_free(image);
-    }
+    
+    delete[] consolidated_image;
     BufferTools::destroy_buffer(staging_buffer);
 
     ImageTools::create_sampler(
@@ -206,7 +228,6 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::Extent3D &extent,
                          const uint8_t channels,
                          const vk::Format &color_format,
-                         const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,
                          const uint32_t mip_levels,
                          const uint32_t array_layers,
@@ -255,18 +276,22 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
     auto alloc = VKAllocator::allocate(result.value, memory_properties, image_name);
     image_result.allocation = alloc;
 
-    create_view(image_result, color_format, image_aspect);
-
     return image_result;
 }
 
 // =============================================================================
-void create_view(ImageObject &image, const vk::Format &color_format,
+void create_view(ImageObject &image, const vk::ImageViewType &type,
+                 const vk::Format &color_format,
                  const vk::ImageAspectFlags &image_aspect)
 {
+    uint32_t layer_count = 1u;
+    if(type == vk::ImageViewType::eCube) {
+        layer_count = 6u;
+    }
+
     vk::ImageViewCreateInfo image_info {
         .image = image.image,
-        .viewType = vk::ImageViewType::e2D,
+        .viewType = type,
         .format = color_format,
         .components = {
             .r = vk::ComponentSwizzle::eR,
@@ -279,7 +304,7 @@ void create_view(ImageObject &image, const vk::Format &color_format,
             .baseMipLevel   = 0u,
             .levelCount     = image.mip_levels,
             .baseArrayLayer = 0u,
-            .layerCount     = 1u
+            .layerCount     = layer_count
         }
     };
 

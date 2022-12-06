@@ -394,6 +394,7 @@ void Swapchain::_create_image_views() {
     for(auto &image : _images) {
         ImageTools::create_view(
             image,
+            vk::ImageViewType::e2D,
             _surface_format,
             vk::ImageAspectFlagBits::eColor
         );
