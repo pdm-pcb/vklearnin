@@ -93,7 +93,7 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
         { result.width, result.height, 1u }
     );
     
-    generate_mipmaps(result);
+    generate_mipmaps(result, 1u);
 
     ::stbi_image_free(image_data);
     BufferTools::destroy_buffer(staging_buffer);
@@ -149,10 +149,12 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         ++current_image;
     }
 
-    auto mip_levels = static_cast<uint32_t>(
-        std::floor(std::log2(std::max(
-            static_cast<float>(width), static_cast<float>(height)))
-        )) + 1u;
+    // auto mip_levels = static_cast<uint32_t>(
+    //     std::floor(std::log2(std::max(
+    //         static_cast<float>(width), static_cast<float>(height)))
+    //     )) + 1u;
+
+    uint32_t mip_levels = 1u;
 
     CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
 
@@ -213,7 +215,7 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         { result.width, result.height, 1u }
     );
     
-    generate_mipmaps(result);
+    generate_mipmaps(result, static_cast<uint32_t>(filepaths.size()));
     
     delete[] consolidated_image;
     BufferTools::destroy_buffer(staging_buffer);
@@ -427,9 +429,9 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
 }
 
 // =============================================================================
-void ImageTools::generate_mipmaps(ImageObject &image) {
-    // first, check to see that the chosen image format supports the blitting
-    // vulkan will do for us via CommandBuffer::blitImage()
+void ImageTools::generate_mipmaps(ImageObject &image,
+                                  const uint32_t layer_count)
+{
     auto format_props = PhysicalDevice::native().getFormatProperties(
         image.format
     );
@@ -448,67 +450,72 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
 
     auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
 
-    for(uint32_t level = 1; level < image.mip_levels; ++level) {
-        CONSOLE_TRACE("Generating mip level {}", level);
+    for(uint32_t array_layer = 0u; array_layer < layer_count; ++array_layer) {
+        CONSOLE_TRACE("Processing array layer {}", array_layer);
 
-        transition_layout(
-            image,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eTransferSrcOptimal,
-            command_buffer,
-            VK_REMAINING_ARRAY_LAYERS,
-            level - 1u,
-            1u
-        );
+        for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level)
+        {
+            CONSOLE_TRACE("Generating mip level {}", mip_level);
 
-        vk::ImageBlit blit {
-            .srcSubresource {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .mipLevel = level - 1,
-                .baseArrayLayer = 0u,
-                .layerCount = 1u,
-            },
-            .srcOffsets = std::array<vk::Offset3D, 2> {
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D { mip_width, mip_height, 1 }
-            },
-            .dstSubresource {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .mipLevel = level,
-                .baseArrayLayer = 0u,
-                .layerCount = 1u,
-            },
-            .dstOffsets = std::array<vk::Offset3D, 2> {
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D {
-                    (mip_width  > 1 ? mip_width  / 2 : 1),
-                    (mip_height > 1 ? mip_height / 2 : 1),
-                    1
-                }
-            },
-        };
+            transition_layout(
+                image,
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::ImageLayout::eTransferSrcOptimal,
+                command_buffer,
+                VK_REMAINING_ARRAY_LAYERS,
+                mip_level - 1u,
+                1u
+            );
 
-        command_buffer.blitImage(
-            image.image,
-            vk::ImageLayout::eTransferSrcOptimal,
-            image.image,
-            vk::ImageLayout::eTransferDstOptimal,
-            { blit },
-            vk::Filter::eLinear
-        );
+            vk::ImageBlit blit {
+                .srcSubresource {
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel = mip_level - 1,
+                    .baseArrayLayer = array_layer,
+                    .layerCount = 1u,
+                },
+                .srcOffsets = std::array<vk::Offset3D, 2> {
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { mip_width, mip_height, 1 }
+                },
+                .dstSubresource {
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel = mip_level,
+                    .baseArrayLayer = array_layer,
+                    .layerCount = 1u,
+                },
+                .dstOffsets = std::array<vk::Offset3D, 2> {
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D {
+                        (mip_width  > 1 ? mip_width  / 2 : 1),
+                        (mip_height > 1 ? mip_height / 2 : 1),
+                        1
+                    }
+                },
+            };
 
-        transition_layout(
-            image,
-            vk::ImageLayout::eTransferSrcOptimal,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            command_buffer,
-            VK_REMAINING_ARRAY_LAYERS,
-            level - 1u,
-            1u
-        );
+            command_buffer.blitImage(
+                image.image,
+                vk::ImageLayout::eTransferSrcOptimal,
+                image.image,
+                vk::ImageLayout::eTransferDstOptimal,
+                { blit },
+                vk::Filter::eLinear
+            );
 
-        if(mip_width  > 1) { mip_width  /= 2; }
-        if(mip_height > 1) { mip_height /= 2; }
+            transition_layout(
+                image,
+                vk::ImageLayout::eTransferSrcOptimal,
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                command_buffer,
+                VK_REMAINING_ARRAY_LAYERS,
+                mip_level - 1u,
+                1u
+            );
+
+            if(mip_width  > 1) { mip_width  /= 2; }
+            if(mip_height > 1) { mip_height /= 2; }
+        }
     }
 
     transition_layout(

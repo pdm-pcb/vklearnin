@@ -60,12 +60,12 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     );
 
     _skybox_texture.add_cubemap({
-        vkl::ASSET_PATH + "/textures/belfast_sunset/nx.png",
-        vkl::ASSET_PATH + "/textures/belfast_sunset/ny.png",
-        vkl::ASSET_PATH + "/textures/belfast_sunset/nz.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/px.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/nx.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/py.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/ny.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/pz.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/nz.png",
     });
     _skybox_texture.create(_descriptor_pool);
 
