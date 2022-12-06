@@ -50,9 +50,10 @@ void transition_layout(ImageObject &image,
                        const vk::ImageLayout old_layout,
                        const vk::ImageLayout new_layout,
                        const vk::CommandBuffer &command_buffer,
-                       const uint32_t layer_count = 1u,
-                       const uint32_t base_mip_level = 0u,
-                       const uint32_t mip_levels = 1u);
+                       const uint32_t base_mip_level,
+                       const uint32_t level_count,
+                       const uint32_t base_array_layer,
+                       const uint32_t layer_count);
 
 void destroy_image(ImageObject &image);
 void destroy_view(vk::ImageView &view);

@@ -413,9 +413,10 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eTransferDstOptimal,
         command_buffer,
-        VK_REMAINING_ARRAY_LAYERS,
         0u,
-        dest.mip_levels
+        dest.mip_levels,
+        0u,
+        layer_count
     );
 
     command_buffer.copyBufferToImage(
@@ -462,9 +463,10 @@ void ImageTools::generate_mipmaps(ImageObject &image,
                 vk::ImageLayout::eTransferDstOptimal,
                 vk::ImageLayout::eTransferSrcOptimal,
                 command_buffer,
-                VK_REMAINING_ARRAY_LAYERS,
                 mip_level - 1u,
-                1u
+                1u,
+                0u,
+                layer_count
             );
 
             vk::ImageBlit blit {
@@ -508,9 +510,10 @@ void ImageTools::generate_mipmaps(ImageObject &image,
                 vk::ImageLayout::eTransferSrcOptimal,
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 command_buffer,
-                VK_REMAINING_ARRAY_LAYERS,
                 mip_level - 1u,
-                1u
+                1u,
+                0u,
+                layer_count
             );
 
             if(mip_width  > 1) { mip_width  /= 2; }
@@ -523,9 +526,10 @@ void ImageTools::generate_mipmaps(ImageObject &image,
         vk::ImageLayout::eTransferDstOptimal,
         vk::ImageLayout::eShaderReadOnlyOptimal,
         command_buffer,
-        VK_REMAINING_ARRAY_LAYERS,
         image.mip_levels - 1u,
-        1u
+        1u,
+        0u,
+        layer_count
     );
 
     BufferTools::end_oneshot_cmd_buffer(command_buffer);
@@ -536,9 +540,10 @@ void transition_layout(ImageObject &image,
                        const vk::ImageLayout old_layout,
                        const vk::ImageLayout new_layout,
                        const vk::CommandBuffer &command_buffer,
-                       const uint32_t layer_count,
                        const uint32_t base_mip_level,
-                       const uint32_t mip_levels)
+                       const uint32_t level_count,
+                       const uint32_t base_array_layer,
+                       const uint32_t layer_count)
 {
     vk::ImageMemoryBarrier barrier {
         .oldLayout = old_layout,
@@ -549,14 +554,14 @@ void transition_layout(ImageObject &image,
         .subresourceRange {
             .aspectMask     = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel   = base_mip_level,
-            .levelCount     = mip_levels,
-            .baseArrayLayer = 0u,
+            .levelCount     = level_count,
+            .baseArrayLayer = base_array_layer,
             .layerCount     = layer_count,
         }
     };
 
     CONSOLE_TRACE(
-        "Layout transition: {} -> {}",
+        "Layout transition: '{}' -> '{}'",
         to_string(barrier.oldLayout),
         to_string(barrier.newLayout)
     );
