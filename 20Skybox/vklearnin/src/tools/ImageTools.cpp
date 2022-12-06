@@ -149,12 +149,12 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         ++current_image;
     }
 
-    auto mip_levels = static_cast<uint32_t>(
-        std::floor(std::log2(std::max(
-            static_cast<float>(width), static_cast<float>(height)))
-        )) + 1u;
+    // auto mip_levels = static_cast<uint32_t>(
+    //     std::floor(std::log2(std::max(
+    //         static_cast<float>(width), static_cast<float>(height)))
+    //     )) + 1u;
 
-    // uint32_t mip_levels = 1u;
+    uint32_t mip_levels = 1u;
 
     CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
 
@@ -563,8 +563,7 @@ void transition_layout(ImageObject &image,
     };
 
     CONSOLE_TRACE(
-        "\n\tImage {:#x}, mip: {}/{}, layer {}/{}"
-        "\n\t  Layout transition: '{}' -> '{}'",
+        "Image {:#x}, mip {}/{}, layer {}/{}: '{}' -> '{}'",
         reinterpret_cast<uint64_t>(VkImage(image.image)),
         base_mip_level, level_count,
         base_array_layer, layer_count,
