@@ -93,7 +93,7 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
         { result.width, result.height, 1u }
     );
     
-    generate_mipmaps(result, 1u);
+    generate_mipmaps(result);
 
     ::stbi_image_free(image_data);
     BufferTools::destroy_buffer(staging_buffer);
@@ -149,12 +149,12 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         ++current_image;
     }
 
-    // auto mip_levels = static_cast<uint32_t>(
-    //     std::floor(std::log2(std::max(
-    //         static_cast<float>(width), static_cast<float>(height)))
-    //     )) + 1u;
+    auto mip_levels = static_cast<uint32_t>(
+        std::floor(std::log2(std::max(
+            static_cast<float>(width), static_cast<float>(height)))
+        )) + 1u;
 
-    uint32_t mip_levels = 1u;
+    // uint32_t mip_levels = 1u;
 
     CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
 
@@ -169,7 +169,7 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         vk::Format::eR8G8B8A8Unorm,
         vk::ImageTiling::eOptimal,
         mip_levels,
-        6u,
+        static_cast<uint32_t>(filepaths.size()),
         vk::SampleCountFlagBits::e1,
         (vk::ImageUsageFlagBits::eTransferSrc |
          vk::ImageUsageFlagBits::eTransferDst |
@@ -215,7 +215,7 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         { result.width, result.height, 1u }
     );
     
-    generate_mipmaps(result, static_cast<uint32_t>(filepaths.size()));
+    generate_mipmaps(result);
     
     delete[] consolidated_image;
     BufferTools::destroy_buffer(staging_buffer);
@@ -275,12 +275,13 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
     );
 
     ImageObject image_result {
-        .image      = result.value,
-        .format     = color_format,
-        .width      = extent.width,
-        .height     = extent.height,
-        .channels   = channels,
-        .mip_levels = mip_levels,
+        .image        = result.value,
+        .format       = color_format,
+        .width        = extent.width,
+        .height       = extent.height,
+        .channels     = channels,
+        .mip_levels   = mip_levels,
+        .array_layers = array_layers,
     };
 
     auto alloc = VKAllocator::allocate(
@@ -430,9 +431,7 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
 }
 
 // =============================================================================
-void ImageTools::generate_mipmaps(ImageObject &image,
-                                  const uint32_t layer_count)
-{
+void ImageTools::generate_mipmaps(ImageObject &image) {
     auto format_props = PhysicalDevice::native().getFormatProperties(
         image.format
     );
@@ -451,7 +450,10 @@ void ImageTools::generate_mipmaps(ImageObject &image,
 
     auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
 
-    for(uint32_t array_layer = 0u; array_layer < layer_count; ++array_layer) {
+    for(uint32_t array_layer = 0u;
+        array_layer < image.array_layers;
+        ++array_layer)
+    {
         CONSOLE_TRACE("Processing array layer {}", array_layer);
 
         for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level)
@@ -465,8 +467,8 @@ void ImageTools::generate_mipmaps(ImageObject &image,
                 command_buffer,
                 mip_level - 1u,
                 1u,
-                0u,
-                layer_count
+                array_layer,
+                1u
             );
 
             vk::ImageBlit blit {
@@ -512,8 +514,8 @@ void ImageTools::generate_mipmaps(ImageObject &image,
                 command_buffer,
                 mip_level - 1u,
                 1u,
-                0u,
-                layer_count
+                array_layer,
+                1u
             );
 
             if(mip_width  > 1) { mip_width  /= 2; }
@@ -529,7 +531,7 @@ void ImageTools::generate_mipmaps(ImageObject &image,
         image.mip_levels - 1u,
         1u,
         0u,
-        layer_count
+        image.array_layers
     );
 
     BufferTools::end_oneshot_cmd_buffer(command_buffer);
@@ -561,7 +563,11 @@ void transition_layout(ImageObject &image,
     };
 
     CONSOLE_TRACE(
-        "Layout transition: '{}' -> '{}'",
+        "\n\tImage {:#x}, mip: {}/{}, layer {}/{}"
+        "\n\t  Layout transition: '{}' -> '{}'",
+        reinterpret_cast<uint64_t>(VkImage(image.image)),
+        base_mip_level, level_count,
+        base_array_layer, layer_count,
         to_string(barrier.oldLayout),
         to_string(barrier.newLayout)
     );

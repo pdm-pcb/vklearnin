@@ -20,6 +20,7 @@ struct ImageObject {
     size_t layer_size = 0; 
 
     uint32_t mip_levels = 1u;
+    uint32_t array_layers = 1u;
 
     VKAllocator::BlockIter allocation;
 };
