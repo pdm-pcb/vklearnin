@@ -378,7 +378,7 @@ void Demo::init() {
     _cube = new vkl::Cube(0.5f, 1.0f);
     _cube->create_buffers();
 
-    _skybox = new vkl::Cube(200.0f, 1.0f);
+    _skybox = new vkl::Cube(50.0f, 1.0f);
     _skybox->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(

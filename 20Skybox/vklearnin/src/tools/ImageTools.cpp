@@ -6,6 +6,7 @@
 #include "vklearnin/tools/VKAllocator.hpp"
 
 #include <stb/stb_image.h>
+#include <stb/stb_image_write.h>
 
 namespace vkl {
 namespace ImageTools {
@@ -88,6 +89,7 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
     ImageTools::move_to_device(
         staging_buffer,
         result,
+        1u,
         { result.width, result.height, 1u }
     );
     
@@ -143,6 +145,7 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
         }
 
         CONSOLE_TRACE("Loaded image for cubemap '{}'", filepath);
+
         ++current_image;
     }
 
@@ -206,6 +209,7 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
     ImageTools::move_to_device(
         staging_buffer,
         result,
+        6u,
         { result.width, result.height, 1u }
     );
     
@@ -238,7 +242,7 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties,
-                         std::string_view image_name)
+                         const std::string_view &image_name)
 {
     vk::ImageCreateInfo image_info {
         .flags       = flags,
@@ -369,27 +373,34 @@ void create_sampler(ImageObject &image,
 
 // =============================================================================
 void move_to_device(const BufferObject &source, ImageObject &dest,
-                    const vk::Extent3D &extent)
+                    const uint32_t layer_count, const vk::Extent3D &extent)
 {
     auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
 
-    vk::BufferImageCopy copy_region {
-        .bufferOffset = 0u,
-        .bufferRowLength = 0u,
-        .bufferImageHeight = 0u,
-        .imageSubresource {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .mipLevel = 0u,
-            .baseArrayLayer = 0u,
-            .layerCount = 1u,
-        },
-        .imageOffset {
-            .x = 0,
-            .y = 0,
-            .z = 0
-        },
-        .imageExtent = extent
-    };
+    std::vector<vk::BufferImageCopy> copy_regions;
+    copy_regions.reserve(layer_count);
+
+    for(uint32_t layer = 0u; layer < layer_count; ++layer) {
+        copy_regions.push_back({
+            .bufferOffset = layer * dest.layer_size,
+            .bufferRowLength = 0u,
+            .bufferImageHeight = 0u,
+            .imageSubresource {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .mipLevel = 0u,
+                .baseArrayLayer = layer,
+                .layerCount = 1u,
+            },
+            .imageOffset {
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+            .imageExtent = extent
+        });
+
+        CONSOLE_WARN("Buffer offset: {}", copy_regions.back().bufferOffset);
+    }
 
     transition_layout(
         dest,
@@ -405,7 +416,7 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         source.buffer,
         dest.image,
         dest.layout,
-        copy_region
+        copy_regions
     );
 
     BufferTools::end_oneshot_cmd_buffer(command_buffer);

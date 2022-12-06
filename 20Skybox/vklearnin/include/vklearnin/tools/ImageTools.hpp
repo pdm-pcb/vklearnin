@@ -27,7 +27,7 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties,
-                         std::string_view image_name);
+                         const std::string_view &image_name);
 
 void create_view(ImageObject &image, const vk::ImageViewType &type,
                  const vk::Format &color_format,
@@ -42,7 +42,7 @@ void create_sampler(ImageObject &image,
                     const vk::SamplerAddressMode address_mode_w);
 
 void move_to_device(const BufferObject &source, ImageObject &dest,
-                    const vk::Extent3D &extent);
+                    const uint32_t layer_count, const vk::Extent3D &extent);
 
 void generate_mipmaps(ImageObject &image);
 
