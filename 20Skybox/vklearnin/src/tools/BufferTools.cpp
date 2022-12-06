@@ -32,6 +32,9 @@ BufferObject create_buffer(const size_t size_bytes,
         CONSOLE_CRITICAL("Failed to create {}-byte buffer", size_bytes);
         return { };
     }
+
+    assert(create_result.value);
+
     CONSOLE_TRACE(
         "Created buffer {:#x}, '{}'",
         reinterpret_cast<uint64_t>(VkBuffer(create_result.value)),
