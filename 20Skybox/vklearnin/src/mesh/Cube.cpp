@@ -39,67 +39,43 @@ void Cube::destroy_buffers() {
     BufferTools::destroy_buffer(_index_buffer);
 }
 
-Cube::Cube(const float scale, const float texture_repeat) :
+Cube::Cube(const float scale, const float tile) :
     _vertices {
         // front face
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{ -scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{  scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{  scale,  scale,  scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{ -scale,  scale,  scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
 
         // back face
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{ -scale, -scale, -scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{  scale, -scale, -scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{  scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
 
         // left face
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{ -scale, -scale, -scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{ -scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{ -scale,  scale,  scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{ -scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
 
         // right face
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{  scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{  scale, -scale, -scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{  scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{  scale,  scale,  scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
 
         // bottom face
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{  scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{ -scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{ -scale, -scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{  scale, -scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
 
         // top face
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 1.0f * texture_repeat }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 1.0f * texture_repeat, 0.0f * texture_repeat }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f },
-         { 0.0f * texture_repeat, 0.0f * texture_repeat }},
+        {{ -scale,  scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{  scale,  scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{  scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{ -scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
     },
     _indices {
         0u,   1u,  2u,    2u,  3u,  0u,

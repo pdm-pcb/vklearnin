@@ -20,7 +20,7 @@ public:
     inline const auto & index_buffer() const { return _index_buffer; }
     inline auto & indices() { return _indices; }
 
-    XYPlane(const float scale, const float texture_repeat);
+    XYPlane(const float scale, const float tile);
     ~XYPlane() = default;
     XYPlane() = delete;
 

@@ -7,7 +7,7 @@ namespace vkl {
 namespace ShaderTools {
 
     vk::ShaderModule
-    module_from_binary(std::string_view filepath, const vk::Device &device);
+    module_from_binary(const std::string_view &filepath, const vk::Device &device);
 
 } // namespace ShaderTools
 } // namespace vkl

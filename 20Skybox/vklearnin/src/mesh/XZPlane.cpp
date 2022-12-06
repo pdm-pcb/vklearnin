@@ -34,24 +34,12 @@ void XZPlane::destroy_buffers() {
     BufferTools::destroy_buffer(_index_buffer);
 }
 
-XZPlane::XZPlane(const float scale, const float texture_repeat) :
+XZPlane::XZPlane(const float scale, const float tile) :
     _vertices {
-        {
-            { -0.5f * scale, 0.0f, -0.5f * scale, 1.0f },
-            { 0.0f * texture_repeat, 0.0f * texture_repeat }
-        },
-        {
-            { -0.5f * scale, 0.0f,  0.5f * scale, 1.0f },
-            { 0.0f * texture_repeat, 1.0f * texture_repeat }
-        },
-        {
-            {  0.5f * scale, 0.0f,  0.5f * scale, 1.0f },
-            { 1.0f * texture_repeat, 1.0f * texture_repeat }
-        },
-        {
-            {  0.5f * scale, 0.0f, -0.5f * scale, 1.0f },
-            { 1.0f * texture_repeat, 0.0f * texture_repeat }
-        },
+        {{ -scale, 0.0f, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale, 0.0f,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
+        {{  scale, 0.0f,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
+        {{  scale, 0.0f, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
     },
     _indices { 0u, 1u, 2u, 2u, 3u, 0u }
 { }

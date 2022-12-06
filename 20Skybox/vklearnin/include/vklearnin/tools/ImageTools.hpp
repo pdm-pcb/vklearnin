@@ -10,18 +10,21 @@ struct BufferObject;
 
 namespace ImageTools {
 
-ImageObject load_texture_from_file(std::string_view filepath,
-                                   const bool flip_vertical = false);
-
 ImageObject
-load_cubemap_from_files(const std::array<std::string_view, 4> &filepaths);
+load_texture_from_file(const std::string_view &filepath,
+                       const bool flip_vertical = false);
+ImageObject
+load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
+                        const bool flip_vertical = false);
 
-ImageObject create_image(const vk::Extent3D &extent,
+ImageObject create_image(const vk::ImageCreateFlags &flags,
+                         const vk::Extent3D &extent,
                          const uint8_t channels,
                          const vk::Format &color_format,
                          const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,
                          const uint32_t mip_levels,
+                         const uint32_t array_layers,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties,

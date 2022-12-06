@@ -9,7 +9,7 @@ struct CameraData {
 };
 
 struct CameraOrientation {
-    glm::vec3 position { 0.0f, 0.0f, 3.0f };
+    glm::vec3 position { 0.0f, 0.0f, 6.0f };
     glm::vec3 forward  { vkl::math::forward_vec3 };
     glm::vec3 up       { vkl::math::up_vec3 };
     glm::vec3 right    { vkl::math::right_vec3 };

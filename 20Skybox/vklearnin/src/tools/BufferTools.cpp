@@ -32,6 +32,11 @@ BufferObject create_buffer(const size_t size_bytes,
         CONSOLE_CRITICAL("Failed to create {}-byte buffer", size_bytes);
         return { };
     }
+    CONSOLE_TRACE(
+        "Created buffer {:#x}, '{}'",
+        reinterpret_cast<uint64_t>(VkBuffer(create_result.value)),
+        buffer_name
+    );
 
     return {
         .buffer     = create_result.value,
@@ -111,6 +116,8 @@ BufferObject stage_data(const size_t size_bytes, const void *data) {
          vk::MemoryPropertyFlagBits::eHostCoherent),
         "staging buf"
     );
+
+    assert(staging_buffer.buffer);
 
     void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
         memcpy(destination, data, size_bytes);

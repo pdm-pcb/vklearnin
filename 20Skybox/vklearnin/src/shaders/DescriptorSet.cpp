@@ -7,7 +7,7 @@
 
 namespace vkl {
 
-//==============================================================================
+// =============================================================================
 void DescriptorSet::update_ubo(const uint32_t buffer_index, const void *data) {
     auto &buffer = _ubos[buffer_index];
 
@@ -16,7 +16,7 @@ void DescriptorSet::update_ubo(const uint32_t buffer_index, const void *data) {
     VKAllocator::unmap_buffer(buffer.allocation);
 }
 
-//==============================================================================
+// =============================================================================
 void DescriptorSet::add_ubo(const size_t size,
                             const vk::ShaderStageFlags stages)
 {
@@ -38,8 +38,8 @@ void DescriptorSet::add_ubo(const size_t size,
     });
 }
 
-//==============================================================================
-void DescriptorSet::add_texture2D(std::string_view filepath) {
+// =============================================================================
+void DescriptorSet::add_texture2D(const std::string_view &filepath) {
     _textures.push_back(ImageTools::load_texture_from_file(filepath));
 
     _layout.add_binding({
@@ -51,7 +51,21 @@ void DescriptorSet::add_texture2D(std::string_view filepath) {
     });
 }
 
-//==============================================================================
+// =============================================================================
+void
+DescriptorSet::add_cubemap(const std::array<std::string_view, 6> &filepaths) {
+    _textures.push_back(ImageTools::load_cubemap_from_files(filepaths));
+
+    _layout.add_binding({
+        .binding            = static_cast<uint32_t>(_layout.bindings().size()),
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+}
+
+// =============================================================================
 void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
     _layout.create();
 
@@ -127,7 +141,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool) {
     LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);
 }
 
-//==============================================================================
+// =============================================================================
 void DescriptorSet::destroy() {
     _layout.destroy();
 
@@ -140,7 +154,7 @@ void DescriptorSet::destroy() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
     _ubos           { std::move(other._ubos)           },
     _textures       { std::move(other._textures)       },

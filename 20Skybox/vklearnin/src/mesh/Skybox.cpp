@@ -39,7 +39,7 @@ void Skybox::destroy_buffers() {
     BufferTools::destroy_buffer(_index_buffer);
 }
 
-Skybox::Skybox(const float scale, const float texture_repeat) :
+Skybox::Skybox(const float scale) :
     _indices {
         0u,  1u,  2u,  2u,  3u,  0u,  6u,  5u,  4u,  4u,  7u,  6u,
         8u,  9u,  10u, 10u, 11u, 8u,  12u, 13u, 14u, 14u, 15u, 12u,
@@ -47,30 +47,30 @@ Skybox::Skybox(const float scale, const float texture_repeat) :
     }
 {
     _vertices = {
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::one_third }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::one_third }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::two_third }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::two_third }},
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 1.0f,  math::one_third }},
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 0.75f, math::one_third }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 0.75f, math::two_third }},
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 1.0f,  math::two_third }},
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 0.0f,  math::one_third }},
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::one_third }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::two_third }},
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 0.0f,  math::two_third }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::one_third }},
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 0.75f, math::one_third }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 0.75f, math::two_third }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::two_third }},
-        {{ -0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 0.25f, 0.0f  }},
-        {{  0.5f * scale, -0.5f * scale,  0.5f * scale, 1.0f }, { 0.5f,  0.0f  }},
-        {{  0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::one_third }},
-        {{ -0.5f * scale, -0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::one_third }},
-        {{ -0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.25f, math::two_third }},
-        {{  0.5f * scale,  0.5f * scale, -0.5f * scale, 1.0f }, { 0.5f,  math::two_third }},
-        {{  0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 0.5f,  1.0f  }},
-        {{ -0.5f * scale,  0.5f * scale,  0.5f * scale, 1.0f }, { 0.25f, 1.0f  }},
+        {{ -scale, -scale, -scale, 1.0f }, { 0.25f, math::one_third  }},
+        {{  scale, -scale, -scale, 1.0f }, { 0.5f,  math::one_third  }},
+        {{  scale,  scale, -scale, 1.0f }, { 0.5f,  math::two_thirds }},
+        {{ -scale,  scale, -scale, 1.0f }, { 0.25f, math::two_thirds }},
+        {{ -scale, -scale,  scale, 1.0f }, { 1.0f,  math::one_third  }},
+        {{  scale, -scale,  scale, 1.0f }, { 0.75f, math::one_third  }},
+        {{  scale,  scale,  scale, 1.0f }, { 0.75f, math::two_thirds }},
+        {{ -scale,  scale,  scale, 1.0f }, { 1.0f,  math::two_thirds }},
+        {{ -scale, -scale,  scale, 1.0f }, { 0.0f,  math::one_third  }},
+        {{ -scale, -scale, -scale, 1.0f }, { 0.25f, math::one_third  }},
+        {{ -scale,  scale, -scale, 1.0f }, { 0.25f, math::two_thirds }},
+        {{ -scale,  scale,  scale, 1.0f }, { 0.0f,  math::two_thirds }},
+        {{  scale, -scale, -scale, 1.0f }, { 0.5f,  math::one_third  }},
+        {{  scale, -scale,  scale, 1.0f }, { 0.75f, math::one_third  }},
+        {{  scale,  scale,  scale, 1.0f }, { 0.75f, math::two_thirds }},
+        {{  scale,  scale, -scale, 1.0f }, { 0.5f,  math::two_thirds }},
+        {{ -scale, -scale,  scale, 1.0f }, { 0.25f, 0.0f }},
+        {{  scale, -scale,  scale, 1.0f }, { 0.5f,  0.0f }},
+        {{  scale, -scale, -scale, 1.0f }, { 0.5f,  math::one_third  }},
+        {{ -scale, -scale, -scale, 1.0f }, { 0.25f, math::one_third  }},
+        {{ -scale,  scale, -scale, 1.0f }, { 0.25f, math::two_thirds }},
+        {{  scale,  scale, -scale, 1.0f }, { 0.5f,  math::two_thirds }},
+        {{  scale,  scale,  scale, 1.0f }, { 0.5f,  1.0f }},
+        {{ -scale,  scale,  scale, 1.0f }, { 0.25f, 1.0f }},
     };
 }
 

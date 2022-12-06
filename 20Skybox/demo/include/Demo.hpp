@@ -22,10 +22,6 @@
 #include "vklearnin/mesh/Skybox.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
-struct DrawObject {
-
-};
-
 class Demo final : public vkl::Application {
 public:
     std::vector<vkl::Pipeline *>
@@ -49,10 +45,10 @@ public:
 
 private:
     struct KeyboardState {
-        bool w = false;
-        bool a = false;
-        bool s = false;
-        bool d = false;
+        bool w       = false;
+        bool a       = false;
+        bool s       = false;
+        bool d       = false;
         bool l_ctrl  = false;
         bool space   = false;
         bool l_shift = false;
@@ -69,8 +65,8 @@ private:
 
     vkl::XYPlane *_xy_plane;
     vkl::XZPlane *_xz_plane;
-    vkl::Cube    *_unit_cube;
-    vkl::Skybox  *_skybox;
+    vkl::Cube    *_cube;
+    vkl::Cube    *_skybox;
 
     vkl::DescriptorSet _xy_plane_texture;
     vkl::DescriptorSet _xz_plane_texture;

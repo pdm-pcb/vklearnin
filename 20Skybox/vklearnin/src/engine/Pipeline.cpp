@@ -13,7 +13,7 @@
 namespace vkl {                               
 
 // =============================================================================
-void Pipeline::vertex_from_binary(std::string_view filepath) {
+void Pipeline::vertex_from_binary(const std::string_view &filepath) {
     _vert = ShaderTools::module_from_binary(filepath, LogicalDevice::native());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -23,7 +23,7 @@ void Pipeline::vertex_from_binary(std::string_view filepath) {
 }
 
 // =============================================================================
-void Pipeline::fragment_from_binary(std::string_view filepath) {
+void Pipeline::fragment_from_binary(const std::string_view &filepath) {
     _frag = ShaderTools::module_from_binary(filepath, LogicalDevice::native());
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,

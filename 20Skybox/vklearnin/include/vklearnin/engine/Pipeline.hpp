@@ -23,8 +23,8 @@ public:
         _frame_data[frame_index].command_pool().reset();
     }
 
-    void vertex_from_binary(std::string_view filepath);
-    void fragment_from_binary(std::string_view filepath);
+    void vertex_from_binary(const std::string_view &filepath);
+    void fragment_from_binary(const std::string_view &filepath);
 
     void set_push_constants(const PushConstantRanges &ranges);
     void set_per_frame_layout(const vk::DescriptorSetLayout &layout);

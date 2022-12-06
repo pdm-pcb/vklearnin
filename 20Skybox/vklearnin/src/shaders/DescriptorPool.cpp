@@ -5,7 +5,7 @@
 
 namespace vkl {
 
-//==============================================================================
+// =============================================================================
 void DescriptorPool::create(const PoolSizes &sizes) {
     std::vector<vk::DescriptorPoolSize> size_list {
         sizes.begin(),
@@ -29,12 +29,12 @@ void DescriptorPool::create(const PoolSizes &sizes) {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void DescriptorPool::destroy() {
     LogicalDevice::native().destroyDescriptorPool(_pool);
 }
 
-//==============================================================================
+// =============================================================================
 DescriptorPool::DescriptorPool(DescriptorPool &&other) :
     _pool { std::move(other._pool) }
 { }

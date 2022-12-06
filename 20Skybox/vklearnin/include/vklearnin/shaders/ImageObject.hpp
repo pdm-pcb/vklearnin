@@ -16,7 +16,8 @@ struct ImageObject {
     uint32_t width    = 0u;
     uint32_t height   = 0u;
     uint32_t channels = 0u;
-    uint32_t size     = 0u;
+    size_t image_size = 0;
+    size_t layer_size = 0; 
 
     uint32_t mip_levels = 1u;
 

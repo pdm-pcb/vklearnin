@@ -6,7 +6,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     create_descriptor_pool();
     _swapchain = &swapchain;
 
-    //--------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
     // skybox pipeline
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
 
@@ -47,20 +47,25 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
 
     _pipelines[0]->create();
 
-    //--------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
     // skybox pipeline
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
 
-    _skybox_texture.add_texture2D(
-        vkl::ASSET_PATH + "/textures/belfast_sunset.png"
-    );
+    _skybox_texture.add_cubemap({
+        vkl::ASSET_PATH + "/textures/belfast_sunset/nx.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/ny.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/nz.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/px.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/py.png",
+        vkl::ASSET_PATH + "/textures/belfast_sunset/pz.png",
+    });
     _skybox_texture.create(_descriptor_pool);
 
     _pipelines[1]->vertex_from_binary(
-        vkl::ASSET_PATH + "/shaders/05texture_sampler.vert-debug.spv"
+        vkl::ASSET_PATH + "/shaders/06cubemap.vert-debug.spv"
     );
     _pipelines[1]->fragment_from_binary(
-        vkl::ASSET_PATH + "/shaders/05texture_sampler.frag-debug.spv"
+        vkl::ASSET_PATH + "/shaders/06cubemap.frag-debug.spv"
     );
 
     _pipelines[1]->set_push_constants({{
@@ -149,7 +154,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         InstanceData instance_data { };
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // Skybox
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -174,9 +179,9 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             static_cast<uint32_t>(_skybox->indices().size())
         );
 
-    //
-    // Bind the "3D" pipeline
-    //
+//
+// Bind the "3D" pipeline
+//
     command_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         _pipelines[0]->native()
@@ -191,11 +196,11 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         { }
     );
 
-        // Establish the area we can draw to
-        command_buffer.setViewport(0u, _pipelines[0]->viewport());
-        command_buffer.setScissor(0u, _pipelines[0]->scissor());
+    // Establish the area we can draw to
+    command_buffer.setViewport(0u, _pipelines[0]->viewport());
+    command_buffer.setScissor(0u, _pipelines[0]->scissor());
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // Cube
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -206,7 +211,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         auto cube_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { -1.0f, 0.0f, -1.0f }),
+            glm::translate(vkl::math::ident_mat4, { -2.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
@@ -221,12 +226,12 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         vkl::Renderer::draw(
             command_buffer,
-            _unit_cube->vertex_buffer(),
-            _unit_cube->index_buffer(),
-            static_cast<uint32_t>(_unit_cube->indices().size())
+            _cube->vertex_buffer(),
+            _cube->index_buffer(),
+            static_cast<uint32_t>(_cube->indices().size())
         );
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // XY Plane
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -237,7 +242,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         auto xy_plane_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { 1.0f, 0.0f, -1.0f }),
+            glm::translate(vkl::math::ident_mat4, { 2.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.0f, 0.0f, 1.0f }
         );
@@ -257,7 +262,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             static_cast<uint32_t>(_xy_plane->indices().size())
         );
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // XZ Plane
         command_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -288,7 +293,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
 // Done Drawing
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
     // With that out of the way, that's this pass handled
     command_buffer.endRenderPass();
@@ -305,10 +310,10 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 // =============================================================================
 void Demo::on_key_press(const vkl::KeyPressEvent &event) {
     switch(event.keycode) {
-        case vkl::KB_W: _kb_state.w = true; break;
-        case vkl::KB_A: _kb_state.a = true; break;
-        case vkl::KB_S: _kb_state.s = true; break;
-        case vkl::KB_D: _kb_state.d = true; break;
+        case vkl::KB_W:      _kb_state.w       = true; break;
+        case vkl::KB_A:      _kb_state.a       = true; break;
+        case vkl::KB_S:      _kb_state.s       = true; break;
+        case vkl::KB_D:      _kb_state.d       = true; break;
         case vkl::KB_LCTRL:  _kb_state.l_ctrl  = true; break;
         case vkl::KB_SPACE:  _kb_state.space   = true; break;
         case vkl::KB_LSHIFT: _kb_state.l_shift = true; break;
@@ -318,10 +323,10 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
 // =============================================================================
 void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
     switch(event.keycode) {
-        case vkl::KB_W: _kb_state.w = false; break;
-        case vkl::KB_A: _kb_state.a = false; break;
-        case vkl::KB_S: _kb_state.s = false; break;
-        case vkl::KB_D: _kb_state.d = false; break;
+        case vkl::KB_W:      _kb_state.w       = false; break;
+        case vkl::KB_A:      _kb_state.a       = false; break;
+        case vkl::KB_S:      _kb_state.s       = false; break;
+        case vkl::KB_D:      _kb_state.d       = false; break;
         case vkl::KB_LCTRL:  _kb_state.l_ctrl  = false; break;
         case vkl::KB_SPACE:  _kb_state.space   = false; break;
         case vkl::KB_LSHIFT: _kb_state.l_shift = false; break;
@@ -365,13 +370,13 @@ void Demo::init() {
     _xy_plane = new vkl::XYPlane(2.0f, 2.0f);
     _xy_plane->create_buffers();
 
-    _xz_plane = new vkl::XZPlane(150.0f, 50.0f);
+    _xz_plane = new vkl::XZPlane(200.0f, 50.0f);
     _xz_plane->create_buffers();
 
-    _unit_cube = new vkl::Cube(0.5f, 1.0f);
-    _unit_cube->create_buffers();
+    _cube = new vkl::Cube(0.5f, 1.0f);
+    _cube->create_buffers();
 
-    _skybox = new vkl::Skybox(100.0f, 1.0f);
+    _skybox = new vkl::Cube(25.0f, 1.0f);
     _skybox->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
@@ -394,7 +399,7 @@ void Demo::init() {
 void Demo::shutdown() {
     if(_xy_plane)  _xy_plane->destroy_buffers();
     if(_xz_plane)  _xz_plane->destroy_buffers();
-    if(_unit_cube) _unit_cube->destroy_buffers();
+    if(_cube) _cube->destroy_buffers();
     if(_skybox)    _skybox->destroy_buffers();
 
     _xy_plane_texture.destroy();
@@ -475,7 +480,7 @@ Demo::Demo() :
     _camera_data { },
     _xy_plane    { nullptr },
     _xz_plane    { nullptr },
-    _unit_cube   { nullptr },
+    _cube   { nullptr },
     _skybox      { nullptr }
 { }
 
@@ -486,6 +491,6 @@ Demo::~Demo() {
 
     delete _xy_plane;
     delete _xz_plane;
-    delete _unit_cube;
+    delete _cube;
     delete _skybox;
 }

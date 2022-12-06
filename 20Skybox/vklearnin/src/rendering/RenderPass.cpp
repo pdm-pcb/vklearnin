@@ -55,7 +55,7 @@ void RenderPass::destroy_framebuffers() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::create() {
     _default_attachments();
     _default_subpasses();
@@ -87,13 +87,13 @@ void RenderPass::create() {
     create_framebuffers();
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::destroy() {
     destroy_framebuffers();
     LogicalDevice::native().destroy(_render_pass);
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::_default_attachments() {
     _attachments.clear();
 
@@ -157,7 +157,7 @@ void RenderPass::_default_attachments() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::_default_subpasses() {
     _color_attachments.clear();
     _color_attachments = {{
@@ -192,7 +192,7 @@ void RenderPass::_default_subpasses() {
     }};
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::_default_subpass_dependencies() {
     _subpass_dependencies.clear();
     _subpass_dependencies = {
@@ -218,13 +218,14 @@ void RenderPass::_default_subpass_dependencies() {
     }};
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::_init_depth_buffer() {
     if(_depth_buffer.image) {
         ImageTools::destroy_image(_depth_buffer);
     }
 
     _depth_buffer = ImageTools::create_image(
+        { },
         {
             .width = _swapchain.extent().width,
             .height = _swapchain.extent().height,
@@ -235,6 +236,7 @@ void RenderPass::_init_depth_buffer() {
         vk::ImageAspectFlagBits::eDepth,
         vk::ImageTiling::eOptimal,
         1u,
+        1u,
         _sample_flags,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -242,7 +244,7 @@ void RenderPass::_init_depth_buffer() {
     );
 }
 
-//==============================================================================
+// =============================================================================
 void RenderPass::_init_color_buffer() {
     if(_color_buffer.image) {
         ImageTools::destroy_image(_color_buffer);
@@ -251,11 +253,13 @@ void RenderPass::_init_color_buffer() {
     auto[width, height] = _swapchain.extent();
 
     _color_buffer = ImageTools::create_image(
+        { },
         { width, height, 1u },
         0u,
         _swapchain.surface_format(),
         vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
+        1u,
         1u,
         _sample_flags,
         vk::ImageUsageFlagBits::eTransientAttachment |
@@ -265,7 +269,7 @@ void RenderPass::_init_color_buffer() {
     );
 }
 
-//==============================================================================
+// =============================================================================
 vk::Format RenderPass::_find_depth_buffer_format() {
     std::vector<vk::Format> depth_options {
         vk::Format::eD32Sfloat,
@@ -290,7 +294,7 @@ vk::Format RenderPass::_find_depth_buffer_format() {
     return vk::Format::eUndefined;
 }
 
-//==============================================================================
+// =============================================================================
 RenderPass::RenderPass(const Swapchain &swapchain) :
     _sample_flags { vk::SampleCountFlagBits::e1 },
     _render_pass  { nullptr },

@@ -11,7 +11,7 @@ namespace vkl {
 namespace ImageTools {
 
 // =============================================================================
-ImageObject load_texture_from_file(std::string_view filepath,
+ImageObject load_texture_from_file(const std::string_view &filepath,
                                    const bool flip_vertical)
 {
     ImageObject result { };
@@ -45,21 +45,21 @@ ImageObject load_texture_from_file(std::string_view filepath,
             static_cast<float>(width), static_cast<float>(height)))
         )) + 1u;
 
-    // uint32_t mip_levels = 1u;
-
     CONSOLE_TRACE("Set {} mip levels for '{}'", mip_levels, filepath);
 
     result = ImageTools::create_image(
+        { },
         vk::Extent3D {
             .width  = static_cast<uint32_t>(width),
             .height = static_cast<uint32_t>(height),
             .depth  = 1u
         },
-        static_cast<uint8_t>(channels),
+        static_cast<uint8_t>(::STBI_rgb_alpha),
         vk::Format::eR8G8B8A8Unorm,
         vk::ImageAspectFlagBits::eColor,
         vk::ImageTiling::eOptimal,
         mip_levels,
+        1u,
         vk::SampleCountFlagBits::e1,
         (vk::ImageUsageFlagBits::eTransferSrc |
          vk::ImageUsageFlagBits::eTransferDst |
@@ -70,11 +70,12 @@ ImageObject load_texture_from_file(std::string_view filepath,
 
     result.width = static_cast<uint32_t>(width);
     result.height = static_cast<uint32_t>(height);
-    result.channels = static_cast<uint32_t>(channels);
-    result.size = result.width * result.height * ::STBI_rgb_alpha;
+    result.channels = static_cast<uint32_t>(::STBI_rgb_alpha);
+    result.layer_size = result.width * result.height * ::STBI_rgb_alpha;
+    result.image_size = result.layer_size;
 
     auto staging_buffer = BufferTools::stage_data(
-        result.size,
+        result.image_size,
         image_data
     );
 
@@ -101,23 +102,126 @@ ImageObject load_texture_from_file(std::string_view filepath,
 }
 
 // =============================================================================
-ImageObject create_image(const vk::Extent3D &extent,
+ImageObject
+load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
+                        const bool flip_vertical)
+{
+    ImageObject result { };
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    std::array<::stbi_uc *, 6> image_data { nullptr };
+    auto current_image = image_data.begin();
+
+    ::stbi_set_flip_vertically_on_load(flip_vertical);
+    for(const auto &filepath : filepaths) {
+        *current_image = ::stbi_load(
+            filepath.data(),
+            &width,
+            &height,
+            &channels,
+            ::STBI_rgb_alpha
+        );
+
+        if(*current_image == nullptr) {
+            CONSOLE_CRITICAL("Failed to load image '{}'\n\t"
+                            "Size/Channels: {}x{}@{}\n\t"
+                            "Error: '{}'",
+                            filepath, width, height, channels,
+                            ::stbi_failure_reason());
+            return result;
+        }
+
+        CONSOLE_TRACE("Loaded image for cubemap '{}'", filepath);
+        ++current_image;
+    }
+
+    auto mip_levels = static_cast<uint32_t>(
+        std::floor(std::log2(std::max(
+            static_cast<float>(width), static_cast<float>(height)))
+        )) + 1u;
+
+    CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
+
+    result = ImageTools::create_image(
+        vk::ImageCreateFlagBits::eCubeCompatible,
+        vk::Extent3D {
+            .width  = static_cast<uint32_t>(width),
+            .height = static_cast<uint32_t>(height),
+            .depth  = 1u
+        },
+        static_cast<uint8_t>(::STBI_rgb_alpha),
+        vk::Format::eR8G8B8A8Unorm,
+        vk::ImageAspectFlagBits::eColor,
+        vk::ImageTiling::eOptimal,
+        mip_levels,
+        6u,
+        vk::SampleCountFlagBits::e1,
+        (vk::ImageUsageFlagBits::eTransferSrc |
+         vk::ImageUsageFlagBits::eTransferDst |
+         vk::ImageUsageFlagBits::eSampled),
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        "cubemap files"
+    );
+
+    result.width = static_cast<uint32_t>(width);
+    result.height = static_cast<uint32_t>(height);
+    result.channels = static_cast<uint32_t>(::STBI_rgb_alpha);
+    result.layer_size = result.width * result.height * ::STBI_rgb_alpha;
+    result.image_size = result.layer_size * filepaths.size();
+
+    auto staging_buffer = BufferTools::stage_data(
+        result.image_size,
+        image_data.data()
+    );
+
+    ImageTools::move_to_device(
+        staging_buffer,
+        result,
+        { result.width, result.height, 1u }
+    );
+
+    for(const auto &image : image_data) {
+        ::stbi_image_free(image);
+    }
+    BufferTools::destroy_buffer(staging_buffer);
+
+    ImageTools::create_sampler(
+        result,
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eClampToBorder
+    );
+
+    return result;
+}
+
+// =============================================================================
+ImageObject create_image(const vk::ImageCreateFlags &flags,
+                         const vk::Extent3D &extent,
                          const uint8_t channels,
                          const vk::Format &color_format,
                          const vk::ImageAspectFlags &image_aspect,
                          const vk::ImageTiling &tiling,
                          const uint32_t mip_levels,
+                         const uint32_t array_layers,
                          const vk::SampleCountFlagBits &sample_count,
                          const vk::ImageUsageFlags &usage,
                          const vk::MemoryPropertyFlags memory_properties,
                          std::string_view image_name)
 {
     vk::ImageCreateInfo image_info {
+        .flags       = flags,
         .imageType   = vk::ImageType::e2D,
         .format      = color_format,
         .extent      = extent,
         .mipLevels   = mip_levels,
-        .arrayLayers = 1u,
+        .arrayLayers = array_layers,
         .samples     = sample_count,
         .tiling      = tiling,
         .usage       = usage,

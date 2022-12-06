@@ -6,7 +6,7 @@
 
 namespace vkl {
 
-const uint64_t VKAllocator::_max_alloc_size = 256u * 1024u * 1024u;
+const uint64_t VKAllocator::_max_alloc_size = 2048u * 1024u * 1024u;
 const uint8_t  VKAllocator::_max_allocs = 4u;
 std::vector<VKAllocator::DevicePool> VKAllocator::_pools;
 vk::PhysicalDeviceMemoryProperties VKAllocator::_memory_properties { };
@@ -28,7 +28,9 @@ VKAllocator::BlockIter VKAllocator::allocate(
         block_iter->name.max_size()
     );
 
+#ifdef VKL_DEBUG
     _print_alloc_state();
+#endif // VKL_DEBUG
 
     auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
     auto bind_result = LogicalDevice::native().bindBufferMemory(
@@ -38,7 +40,10 @@ VKAllocator::BlockIter VKAllocator::allocate(
     );
 
     if(bind_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to bind buffer", to_string(bind_result));
+        CONSOLE_CRITICAL("Unable to bind buffer: '{}'", to_string(bind_result));
+    }
+    else {
+        CONSOLE_TRACE("Buffer allocated and bound");
     }
 
     return block_iter;
@@ -61,7 +66,9 @@ VKAllocator::BlockIter VKAllocator::allocate(
         block_iter->name.max_size()
     );
 
+#ifdef VKL_DEBUG
     _print_alloc_state();
+#endif // VKL_DEBUG
 
     auto &alloc = _pools[type_index].allocs[block_iter->alloc_index];
     auto bind_result = LogicalDevice::native().bindImageMemory(
@@ -71,7 +78,10 @@ VKAllocator::BlockIter VKAllocator::allocate(
     );
 
     if(bind_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to bind image", to_string(bind_result));
+        CONSOLE_CRITICAL("Unable to bind image: '{}'", to_string(bind_result));
+    }
+    else {
+        CONSOLE_TRACE("Image allocated and bound");
     }
 
     return block_iter;
@@ -79,14 +89,21 @@ VKAllocator::BlockIter VKAllocator::allocate(
 
 // =============================================================================
 void * VKAllocator::map_buffer(const BlockIter &block_iter) {
-    auto &block = _pools[block_iter->type_index].allocs[block_iter->alloc_index];
+    auto &block =
+        _pools[block_iter->type_index].allocs[block_iter->alloc_index];
     auto result = LogicalDevice::native().mapMemory(
         block.memory,
         block_iter->offset,
         block_iter->size
     );
     if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to map device memory");
+        CONSOLE_CRITICAL(
+            "Unable to map device memory: '{}'",
+            to_string(result.result)
+        );
+    }
+    else {
+        CONSOLE_TRACE("Block mapped");
     }
 
     return result.value;
@@ -96,6 +113,7 @@ void * VKAllocator::map_buffer(const BlockIter &block_iter) {
 void VKAllocator::unmap_buffer(const BlockIter &block_iter) {
     auto &block = _pools[block_iter->type_index].allocs[block_iter->alloc_index];
     LogicalDevice::native().unmapMemory(block.memory);
+    CONSOLE_TRACE("Block unmapped");
 }
 
 // =============================================================================

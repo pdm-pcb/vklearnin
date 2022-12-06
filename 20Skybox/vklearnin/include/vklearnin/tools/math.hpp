@@ -19,8 +19,8 @@ static constexpr float pi_over_180   = pi / 180.0f;
 static constexpr float pi_over_two   = pi / 2.0f;
 static constexpr float pi_over_four  = pi / 4.0f;
 
-static constexpr float one_third = 1.0f / 3.0f;
-static constexpr float two_third = 2.0f / 3.0f;
+static constexpr float one_third  = 1.0f / 3.0f;
+static constexpr float two_thirds = 2.0f / 3.0f;
 
 } // namespace math
 } // namespace vkl

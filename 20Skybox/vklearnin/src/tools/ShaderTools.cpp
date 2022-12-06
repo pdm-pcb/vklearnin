@@ -7,11 +7,11 @@ namespace ShaderTools {
 using Binary = std::vector<uint32_t>;
 using String = std::vector<char>;
 
-Binary _spirv_to_binary(std::string_view filepath);
+Binary _spirv_to_binary(const std::string_view &filepath);
 
 // =============================================================================
 vk::ShaderModule
-module_from_binary(std::string_view filepath, const vk::Device &device) {
+module_from_binary(const std::string_view &filepath, const vk::Device &device) {
     if(filepath.empty()) {
         CONSOLE_CRITICAL("No file path provided for shader binary");
         return { };
@@ -33,7 +33,7 @@ module_from_binary(std::string_view filepath, const vk::Device &device) {
 }
 
 // =============================================================================
-Binary _spirv_to_binary(std::string_view filepath) {
+Binary _spirv_to_binary(const std::string_view &filepath) {
     std::ifstream input_file(filepath.data(), std::ios::ate | std::ios::binary);
 
     if(!input_file.good()) {

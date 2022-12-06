@@ -16,7 +16,7 @@ namespace vkl {
     using TargetWindow = Win32TargetWindow;
 #endif
 
-//==============================================================================
+// =============================================================================
 vk::Result Swapchain::next_image(const uint32_t frame_index) {
     // wait for an image to become available to write to
     auto result = LogicalDevice::native().waitForFences(
@@ -50,7 +50,7 @@ vk::Result Swapchain::next_image(const uint32_t frame_index) {
     return result;
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::reset_fence() const {
     auto result = LogicalDevice::native().resetFences(
         1u,
@@ -124,7 +124,7 @@ vk::Result Swapchain::present() const {
     return result;
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::create() {
     _query_surface_capabilities();
     _query_surface_format();
@@ -143,7 +143,7 @@ void Swapchain::create() {
     _create_synchronization();
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::destroy() {
     for(auto &sem : _image_available_sems) {
         LogicalDevice::native().destroy(sem);
@@ -161,7 +161,7 @@ void Swapchain::destroy() {
     LogicalDevice::native().destroy(_swapchain);
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_query_surface_capabilities() {
     const auto &vk_pdev = PhysicalDevice::native();
     const auto &surface = TargetWindow::surface();
@@ -229,7 +229,7 @@ void Swapchain::_query_surface_capabilities() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_query_surface_format() {
     const auto &vk_pdev = PhysicalDevice::native();
     const auto &surface = TargetWindow::surface();
@@ -263,7 +263,7 @@ void Swapchain::_query_surface_format() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_query_surface_present_modes() {
     const auto &vk_pdev = PhysicalDevice::native();
     const auto &surface = TargetWindow::surface();
@@ -369,7 +369,7 @@ void Swapchain::_set_create_info() {
     );
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_get_images() {
     auto result = LogicalDevice::native().getSwapchainImagesKHR(_swapchain);
     if(result.result != vk::Result::eSuccess) {
@@ -389,7 +389,7 @@ void Swapchain::_get_images() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_create_image_views() {
     for(auto &image : _images) {
         ImageTools::create_view(
@@ -400,7 +400,7 @@ void Swapchain::_create_image_views() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void Swapchain::_create_synchronization() {
     // Set aside the room for image-count-number of synchronization primitives
     _image_available_sems.resize(RenderConfig::swapchain_image_count);
@@ -448,7 +448,7 @@ void Swapchain::_create_synchronization() {
     CONSOLE_TRACE("Created synchronization primitives");
 }
 
-//==============================================================================
+// =============================================================================
 Swapchain::Swapchain() :
     _create_info    { },
     _swapchain      { },

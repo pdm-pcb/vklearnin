@@ -18,7 +18,7 @@ Win32TargetWindow::CenterPos Win32TargetWindow::_center { .x = 0u, .y = 0u };
 
 vk::SurfaceKHR Win32TargetWindow::_surface = nullptr;
 
-//==============================================================================
+// =============================================================================
 // Given that this is a single threaded project (for now...) there needs to be
 // one function that drops in and checks on the OS in a non-blocking manner.
 // In this case, I'm also using the opportunity to keep Application abreast
@@ -31,7 +31,7 @@ void Win32TargetWindow::message_loop() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 // There are a couple of methods to avoid needing static everything for a win32
 // window, but I opted for simplicity this time around.
 ::LRESULT Win32TargetWindow::_wndproc(::HWND window, ::UINT message,
@@ -114,7 +114,7 @@ void Win32TargetWindow::message_loop() {
                 sizeof(::RAWINPUTHEADER)
             );
 
-            //------------------------------------------------------------------
+            // ------------------------------------------------------------------
             // Thanks to Stefan Reinalter for much of the following code
             // https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
             //
@@ -279,7 +279,7 @@ void Win32TargetWindow::message_loop() {
     return ::DefWindowProc(window, message, wparam, lparam);
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::spawn_window(const uint16_t width,
                                      const uint16_t height)
 {
@@ -365,7 +365,7 @@ void Win32TargetWindow::spawn_window(const uint16_t width,
     );
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::create_surface() {
     vk::Win32SurfaceCreateInfoKHR surface_info {
         .hinstance = nullptr,
@@ -386,7 +386,7 @@ void Win32TargetWindow::create_surface() {
     );
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::destroy_surface() {
     const auto &instance = GraphicsInstance::native();
     CONSOLE_TRACE(
@@ -396,13 +396,13 @@ void Win32TargetWindow::destroy_surface() {
     instance.destroy(_surface);
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::shutdown() {
     destroy_surface();
     delete[] _raw_message;
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::_register_input() {
     ::RAWINPUTDEVICE devices[2];
 
@@ -427,7 +427,7 @@ void Win32TargetWindow::_register_input() {
     }
 }
 
-//==============================================================================
+// =============================================================================
 void Win32TargetWindow::_size_and_place(const uint16_t width,
                                         const uint16_t height,
                                         const uint16_t pos_x,
