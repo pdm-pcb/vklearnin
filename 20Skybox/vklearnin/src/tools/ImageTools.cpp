@@ -149,12 +149,12 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
         ++current_image;
     }
 
-    // auto mip_levels = static_cast<uint32_t>(
-    //     std::floor(std::log2(std::max(
-    //         static_cast<float>(width), static_cast<float>(height)))
-    //     )) + 1u;
+    auto mip_levels = static_cast<uint32_t>(
+        std::floor(std::log2(std::max(
+            static_cast<float>(width), static_cast<float>(height)))
+        )) + 1u;
 
-    uint32_t mip_levels = 1u;
+    // uint32_t mip_levels = 1u;
 
     CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
 
@@ -521,18 +521,18 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
             if(mip_width  > 1) { mip_width  /= 2; }
             if(mip_height > 1) { mip_height /= 2; }
         }
-    }
 
-    transition_layout(
-        image,
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        command_buffer,
-        image.mip_levels - 1u,
-        1u,
-        0u,
-        image.array_layers
-    );
+        transition_layout(
+            image,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            command_buffer,
+            image.mip_levels - 1u,
+            1u,
+            array_layer,
+            1u
+        );
+    }
 
     BufferTools::end_oneshot_cmd_buffer(command_buffer);
 }
