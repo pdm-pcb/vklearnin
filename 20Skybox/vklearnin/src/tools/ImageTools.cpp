@@ -399,7 +399,11 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
             .imageExtent = extent
         });
 
-        CONSOLE_WARN("Buffer offset: {}", copy_regions.back().bufferOffset);
+        CONSOLE_TRACE(
+            "Layer {}, buffer offset: {}",
+            layer,
+            copy_regions.back().bufferOffset
+        );
     }
 
     transition_layout(
