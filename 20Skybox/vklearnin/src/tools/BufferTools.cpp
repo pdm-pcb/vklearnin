@@ -120,7 +120,9 @@ BufferObject stage_data(const size_t size_bytes, const void *data) {
         "staging buf"
     );
 
-    assert(staging_buffer.buffer);
+    CONSOLE_WARN("staging buffer: {:#x}",
+        reinterpret_cast<uint64_t>(VkBuffer(staging_buffer.buffer))
+    );
 
     void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
         memcpy(destination, data, size_bytes);

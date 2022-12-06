@@ -6,7 +6,7 @@
 
 namespace vkl {
 
-const uint64_t VKAllocator::_max_alloc_size = 2048u * 1024u * 1024u;
+const uint64_t VKAllocator::_max_alloc_size = 256u * 1024u * 1024u;
 const uint8_t  VKAllocator::_max_allocs = 4u;
 std::vector<VKAllocator::DevicePool> VKAllocator::_pools;
 vk::PhysicalDeviceMemoryProperties VKAllocator::_memory_properties { };

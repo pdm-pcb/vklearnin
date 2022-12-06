@@ -10,6 +10,13 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     // skybox pipeline
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
 
+    _pipelines[0]->vertex_from_binary(
+        vkl::ASSET_PATH + "/shaders/05texture_sampler.vert-debug.spv"
+    );
+    _pipelines[0]->fragment_from_binary(
+        vkl::ASSET_PATH + "/shaders/05texture_sampler.frag-debug.spv"
+    );
+
     for(auto &set : _per_frame_sets) {
         set.add_ubo(sizeof(CameraData), vk::ShaderStageFlagBits::eVertex);
         set.create(_descriptor_pool);
@@ -30,13 +37,6 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     );
     _xz_plane_texture.create(_descriptor_pool);
 
-    _pipelines[0]->vertex_from_binary(
-        vkl::ASSET_PATH + "/shaders/05texture_sampler.vert-debug.spv"
-    );
-    _pipelines[0]->fragment_from_binary(
-        vkl::ASSET_PATH + "/shaders/05texture_sampler.frag-debug.spv"
-    );
-
     _pipelines[0]->set_push_constants({{
             .stageFlags = vk::ShaderStageFlagBits::eVertex,
             .offset = 0u,
@@ -51,6 +51,13 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     // skybox pipeline
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
 
+    _pipelines[1]->vertex_from_binary(
+        vkl::ASSET_PATH + "/shaders/06cubemap.vert-debug.spv"
+    );
+    _pipelines[1]->fragment_from_binary(
+        vkl::ASSET_PATH + "/shaders/06cubemap.frag-debug.spv"
+    );
+
     _skybox_texture.add_cubemap({
         vkl::ASSET_PATH + "/textures/belfast_sunset/nx.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/ny.png",
@@ -60,13 +67,6 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         vkl::ASSET_PATH + "/textures/belfast_sunset/pz.png",
     });
     _skybox_texture.create(_descriptor_pool);
-
-    _pipelines[1]->vertex_from_binary(
-        vkl::ASSET_PATH + "/shaders/06cubemap.vert-debug.spv"
-    );
-    _pipelines[1]->fragment_from_binary(
-        vkl::ASSET_PATH + "/shaders/06cubemap.frag-debug.spv"
-    );
 
     _pipelines[1]->set_push_constants({{
             .stageFlags = vk::ShaderStageFlagBits::eVertex,
