@@ -40,7 +40,7 @@ private:
     vk::AttachmentReference                _depth_attachment;
     std::vector<vk::AttachmentReference>   _resolve_attachments;
 
-    vk::SampleCountFlagBits _sample_flags;
+    vk::SampleCountFlagBits _sample_count_flags;
 
     ImageObject _color_buffer;
     ImageObject _depth_buffer;

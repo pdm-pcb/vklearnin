@@ -101,7 +101,7 @@ void RenderPass::_default_attachments() {
         _attachments = {
             {   // color buffer (msaa) attachment description
                 .format         = _swapchain.surface_format(),
-                .samples        = _sample_flags,
+                .samples        = _sample_count_flags,
                 .loadOp         = vk::AttachmentLoadOp::eClear,
                 .storeOp        = vk::AttachmentStoreOp::eDontCare,
                 .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -111,7 +111,7 @@ void RenderPass::_default_attachments() {
             },
             {   // depth buffer attachment description
                 .format         = _find_depth_buffer_format(),
-                .samples        = _sample_flags,
+                .samples        = _sample_count_flags,
                 .loadOp         = vk::AttachmentLoadOp::eClear,
                 .storeOp        = vk::AttachmentStoreOp::eDontCare,
                 .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -238,7 +238,7 @@ void RenderPass::_init_depth_buffer() {
         vk::ImageTiling::eOptimal,
         1u,
         1u,
-        _sample_flags,
+        _sample_count_flags,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         "depth_buffer"
@@ -268,7 +268,7 @@ void RenderPass::_init_color_buffer() {
         vk::ImageTiling::eOptimal,
         1u,
         1u,
-        _sample_flags,
+        _sample_count_flags,
         vk::ImageUsageFlagBits::eTransientAttachment |
         vk::ImageUsageFlagBits::eColorAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -310,19 +310,19 @@ vk::Format RenderPass::_find_depth_buffer_format() {
 
 // =============================================================================
 RenderPass::RenderPass(const Swapchain &swapchain) :
-    _sample_flags { vk::SampleCountFlagBits::e1 },
+    _sample_count_flags { vk::SampleCountFlagBits::e1 },
     _render_pass  { nullptr },
     _swapchain    { swapchain }
 {
     _framebuffers.resize(RenderConfig::swapchain_image_count);
 
     switch(RenderConfig::msaa) {
-        case 64u: _sample_flags = vk::SampleCountFlagBits::e64; break;
-        case 32u: _sample_flags = vk::SampleCountFlagBits::e32; break;
-        case 16u: _sample_flags = vk::SampleCountFlagBits::e16; break;
-        case  8u: _sample_flags = vk::SampleCountFlagBits::e8;  break;
-        case  4u: _sample_flags = vk::SampleCountFlagBits::e4;  break;
-        case  2u: _sample_flags = vk::SampleCountFlagBits::e2;  break;
+        case 64u: _sample_count_flags = vk::SampleCountFlagBits::e64; break;
+        case 32u: _sample_count_flags = vk::SampleCountFlagBits::e32; break;
+        case 16u: _sample_count_flags = vk::SampleCountFlagBits::e16; break;
+        case  8u: _sample_count_flags = vk::SampleCountFlagBits::e8;  break;
+        case  4u: _sample_count_flags = vk::SampleCountFlagBits::e4;  break;
+        case  2u: _sample_count_flags = vk::SampleCountFlagBits::e2;  break;
         case  1u: break;
         default:
             CONSOLE_WARN(

@@ -120,25 +120,9 @@ BufferObject stage_data(const size_t size_bytes, const void *data) {
         "staging buf"
     );
 
-    CONSOLE_WARN("staging buffer created: {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(staging_buffer.buffer))
-    );
-
     void *destination = VKAllocator::map_buffer(staging_buffer.allocation);
-
-    CONSOLE_WARN("staging buffer mapped: {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(staging_buffer.buffer))
-    );
         memcpy(destination, data, size_bytes);
-
-    CONSOLE_WARN("staging buffer memcpy'd: {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(staging_buffer.buffer))
-    );
     VKAllocator::unmap_buffer(staging_buffer.allocation);
-
-    CONSOLE_WARN("staging buffer unmapped: {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(staging_buffer.buffer))
-    );
 
     return staging_buffer;
 }

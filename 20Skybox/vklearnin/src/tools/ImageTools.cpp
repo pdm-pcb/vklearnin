@@ -90,6 +90,8 @@ ImageObject load_texture_from_file(const std::string_view &filepath,
         result,
         { result.width, result.height, 1u }
     );
+    
+    generate_mipmaps(result);
 
     ::stbi_image_free(image_data);
     BufferTools::destroy_buffer(staging_buffer);
@@ -207,6 +209,8 @@ load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
         { result.width, result.height, 1u }
     );
     
+    generate_mipmaps(result);
+    
     delete[] consolidated_image;
     BufferTools::destroy_buffer(staging_buffer);
 
@@ -273,9 +277,13 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
         .mip_levels = mip_levels,
     };
 
-    auto alloc = VKAllocator::allocate(result.value, memory_properties, image_name);
+    auto alloc = VKAllocator::allocate(
+        result.value,
+        memory_properties,
+        image_name
+    );
     image_result.allocation = alloc;
-
+    
     return image_result;
 }
 
@@ -388,7 +396,7 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eTransferDstOptimal,
         command_buffer,
-        1u,
+        VK_REMAINING_ARRAY_LAYERS,
         0u,
         dest.mip_levels
     );
@@ -399,16 +407,12 @@ void move_to_device(const BufferObject &source, ImageObject &dest,
         dest.layout,
         copy_region
     );
-    
-    generate_mipmaps(dest, command_buffer);
 
     BufferTools::end_oneshot_cmd_buffer(command_buffer);
 }
 
 // =============================================================================
-void ImageTools::generate_mipmaps(ImageObject &image,
-                                  const vk::CommandBuffer &command_buffer)
-{
+void ImageTools::generate_mipmaps(ImageObject &image) {
     // first, check to see that the chosen image format supports the blitting
     // vulkan will do for us via CommandBuffer::blitImage()
     auto format_props = PhysicalDevice::native().getFormatProperties(
@@ -427,6 +431,8 @@ void ImageTools::generate_mipmaps(ImageObject &image,
     int32_t mip_width  = static_cast<int32_t>(image.width);
     int32_t mip_height = static_cast<int32_t>(image.height);
 
+    auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
+
     for(uint32_t level = 1; level < image.mip_levels; ++level) {
         CONSOLE_TRACE("Generating mip level {}", level);
 
@@ -435,7 +441,7 @@ void ImageTools::generate_mipmaps(ImageObject &image,
             vk::ImageLayout::eTransferDstOptimal,
             vk::ImageLayout::eTransferSrcOptimal,
             command_buffer,
-            1u,
+            VK_REMAINING_ARRAY_LAYERS,
             level - 1u,
             1u
         );
@@ -481,7 +487,7 @@ void ImageTools::generate_mipmaps(ImageObject &image,
             vk::ImageLayout::eTransferSrcOptimal,
             vk::ImageLayout::eShaderReadOnlyOptimal,
             command_buffer,
-            1u,
+            VK_REMAINING_ARRAY_LAYERS,
             level - 1u,
             1u
         );
@@ -495,10 +501,12 @@ void ImageTools::generate_mipmaps(ImageObject &image,
         vk::ImageLayout::eTransferDstOptimal,
         vk::ImageLayout::eShaderReadOnlyOptimal,
         command_buffer,
-        1u,
+        VK_REMAINING_ARRAY_LAYERS,
         image.mip_levels - 1u,
         1u
     );
+
+    BufferTools::end_oneshot_cmd_buffer(command_buffer);
 }
 
 // =============================================================================

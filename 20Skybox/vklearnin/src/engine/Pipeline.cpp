@@ -63,6 +63,11 @@ void Pipeline::set_per_draw_layout(const vk::DescriptorSetLayout &layout) {
 }
 
 // =============================================================================
+void Pipeline::set_cull_mode(const vk::CullModeFlags flags) {
+    _cull_mode_flags = flags;
+}
+
+// =============================================================================
 void Pipeline::create() {
     _init_layout();
     _init_vert_input();
@@ -237,7 +242,7 @@ void Pipeline::_init_raster() {
         .depthClampEnable = false,
         .rasterizerDiscardEnable = false,
         .polygonMode = vk::PolygonMode::eFill,
-        .cullMode    = vk::CullModeFlagBits::eBack,
+        .cullMode    = _cull_mode_flags,
         .frontFace   = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable         = false,
         .depthBiasConstantFactor = 0.0f,
@@ -251,7 +256,7 @@ void Pipeline::_init_raster() {
 void Pipeline::_init_msaa() {
 
     _msaa_info = {
-        .rasterizationSamples  = _sample_flags,
+        .rasterizationSamples  = _sample_count_flags,
         .sampleShadingEnable   = false,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
@@ -324,6 +329,7 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _frag               { nullptr },
     _viewport           { },
     _scissor            { },
+    _cull_mode_flags    { },
     _vert_input_info    { },
     _assembly_info      { },
     _viewport_info      { },
@@ -339,12 +345,12 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _set_layouts.reserve(BindingFreq::MAX_BINDS);
 
     switch(RenderConfig::msaa) {
-        case 64u: _sample_flags = vk::SampleCountFlagBits::e64; break;
-        case 32u: _sample_flags = vk::SampleCountFlagBits::e32; break;
-        case 16u: _sample_flags = vk::SampleCountFlagBits::e16; break;
-        case  8u: _sample_flags = vk::SampleCountFlagBits::e8;  break;
-        case  4u: _sample_flags = vk::SampleCountFlagBits::e4;  break;
-        case  2u: _sample_flags = vk::SampleCountFlagBits::e2;  break;
+        case 64u: _sample_count_flags = vk::SampleCountFlagBits::e64; break;
+        case 32u: _sample_count_flags = vk::SampleCountFlagBits::e32; break;
+        case 16u: _sample_count_flags = vk::SampleCountFlagBits::e16; break;
+        case  8u: _sample_count_flags = vk::SampleCountFlagBits::e8;  break;
+        case  4u: _sample_count_flags = vk::SampleCountFlagBits::e4;  break;
+        case  2u: _sample_count_flags = vk::SampleCountFlagBits::e2;  break;
         case  1u: break;
         default:
             CONSOLE_WARN(

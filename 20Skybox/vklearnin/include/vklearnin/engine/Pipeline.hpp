@@ -31,6 +31,8 @@ public:
     void set_per_material_layout(const vk::DescriptorSetLayout &layout);
     void set_per_draw_layout(const vk::DescriptorSetLayout &layout);
 
+    void set_cull_mode(const vk::CullModeFlags flags);
+
     void create();
     void destroy();
 
@@ -67,8 +69,9 @@ private:
 
     vk::Viewport _viewport;
     vk::Rect2D   _scissor;
-
-    vk::SampleCountFlagBits _sample_flags;
+    
+    vk::CullModeFlags _cull_mode_flags;
+    vk::SampleCountFlagBits _sample_count_flags;
     std::vector<vk::PipelineColorBlendAttachmentState> _blend_states;
 
     vk::PipelineVertexInputStateCreateInfo   _vert_input_info;

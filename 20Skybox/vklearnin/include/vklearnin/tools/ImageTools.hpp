@@ -44,8 +44,7 @@ void create_sampler(ImageObject &image,
 void move_to_device(const BufferObject &source, ImageObject &dest,
                     const vk::Extent3D &extent);
 
-void generate_mipmaps(ImageObject &image,
-                      const vk::CommandBuffer &command_buffer);
+void generate_mipmaps(ImageObject &image);
 
 void transition_layout(ImageObject &image,
                        const vk::ImageLayout old_layout,
