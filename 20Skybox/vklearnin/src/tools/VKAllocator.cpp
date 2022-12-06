@@ -122,8 +122,8 @@ void VKAllocator::free(BlockIter &block_iter) {
 
     CONSOLE_TRACE(
         "free {} (aligned {}) from pool {}, alloc {}",
-        block_iter->size,
-        block_iter->aligned_size,
+        _size_string(block_iter->size),
+        _size_string(block_iter->aligned_size),
         block_iter->type_index,
         block_iter->alloc_index
     );
