@@ -266,33 +266,33 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
 // ------------------------------------------------------------------------------
 // XZ Plane
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _pipelines[0]->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _xz_plane_texture.native(),
-            { }
-        );
+        // command_buffer.bindDescriptorSets(
+        //     vk::PipelineBindPoint::eGraphics,
+        //     _pipelines[0]->layout(),
+        //     vkl::Pipeline::BindingFreq::PER_MATERIAL,
+        //     _xz_plane_texture.native(),
+        //     { }
+        // );
 
-        auto xz_plane_matrix = glm::translate(
-            vkl::math::ident_mat4,
-            { 0.0f, -3.0f, 0.0f }
-        );
-        instance_data.model_matrix = xz_plane_matrix;
+        // auto xz_plane_matrix = glm::translate(
+        //     vkl::math::ident_mat4,
+        //     { 0.0f, -3.0f, 0.0f }
+        // );
+        // instance_data.model_matrix = xz_plane_matrix;
 
-        command_buffer.pushConstants<InstanceData>(
-            _pipelines[0]->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
+        // command_buffer.pushConstants<InstanceData>(
+        //     _pipelines[0]->layout(),
+        //     vk::ShaderStageFlagBits::eVertex,
+        //     0u,
+        //     instance_data
+        // );
 
-        vkl::Renderer::draw(
-            command_buffer,
-            _xz_plane->vertex_buffer(),
-            _xz_plane->index_buffer(),
-            static_cast<uint32_t>(_xz_plane->indices().size())
-        );
+        // vkl::Renderer::draw(
+        //     command_buffer,
+        //     _xz_plane->vertex_buffer(),
+        //     _xz_plane->index_buffer(),
+        //     static_cast<uint32_t>(_xz_plane->indices().size())
+        // );
 
 // Done Drawing
 // ------------------------------------------------------------------------------
