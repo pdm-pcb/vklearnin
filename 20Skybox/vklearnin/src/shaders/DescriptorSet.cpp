@@ -53,7 +53,9 @@ void DescriptorSet::add_texture2D(const std::string_view &filepath) {
 
 // =============================================================================
 void
-DescriptorSet::add_cubemap(const std::array<std::string_view, 6> &filepaths) {
+DescriptorSet::add_cubemap(
+    const std::array<const std::string_view, 6> &filepaths)
+{
     _textures.push_back(ImageTools::load_cubemap_from_files(filepaths));
 
     _layout.add_binding({

@@ -17,7 +17,7 @@ public:
 
     void add_ubo(const size_t size, const vk::ShaderStageFlags stages);
     void add_texture2D(const std::string_view &filepath);
-    void add_cubemap(const std::array<std::string_view, 6> &filepaths);
+    void add_cubemap(const std::array<const std::string_view, 6> &filepaths);
 
     void create(const DescriptorPool &descriptor_pool);
     void destroy();

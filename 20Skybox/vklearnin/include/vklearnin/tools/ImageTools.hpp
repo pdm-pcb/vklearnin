@@ -14,7 +14,7 @@ ImageObject
 load_texture_from_file(const std::string_view &filepath,
                        const bool flip_vertical = false);
 ImageObject
-load_cubemap_from_files(const std::array<std::string_view, 6> &filepaths,
+load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
                         const bool flip_vertical = false);
 
 ImageObject create_image(const vk::ImageCreateFlags &flags,
