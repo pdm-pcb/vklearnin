@@ -19,7 +19,7 @@
 #include "vklearnin/mesh/XYPlane.hpp"
 #include "vklearnin/mesh/XZPlane.hpp"
 #include "vklearnin/mesh/Cube.hpp"
-#include "vklearnin/mesh/Skybox.hpp"
+#include "vklearnin/mesh/Icosphere.hpp"
 ////////////////////////////////////////////////////////////////////////////////
 
 class Demo final : public vkl::Application {
@@ -35,7 +35,7 @@ public:
     void on_key_release(const vkl::KeyReleaseEvent &event);
     void on_mouse_move(const vkl::MouseMoveEvent &event);
 
-    void swapchain_image_invalid();
+    void update_projection();
 
     void init() override;
     void shutdown() override;
@@ -63,10 +63,11 @@ private:
     FrameSets              _per_frame_sets;
     std::vector<FrameSets> _per_object_sets;
 
-    vkl::XYPlane *_xy_plane;
-    vkl::XZPlane *_xz_plane;
-    vkl::Cube    *_cube;
-    vkl::Cube    *_skybox;
+    vkl::XYPlane   *_xy_plane;
+    vkl::XZPlane   *_xz_plane;
+    vkl::Cube      *_cube;
+    vkl::Cube      *_skybox;
+    vkl::Icosphere *_icosphere;
 
     vkl::DescriptorSet _xy_plane_texture;
     vkl::DescriptorSet _xz_plane_texture;

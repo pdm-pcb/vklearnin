@@ -6,8 +6,8 @@
 namespace vkl {
 
 struct Vertex {
-    std::array<float, 4> position;
-    std::array<float, 2> texcoord;
+    glm::vec4 position;
+    glm::vec2 texcoord;
 
     const static std::vector<vk::VertexInputBindingDescription>   bindings;
     const static std::vector<vk::VertexInputAttributeDescription> attribs;

@@ -3,6 +3,7 @@
 
 namespace vkl {
 
+// =============================================================================
 void Cube::create_buffers() {
     auto vertex_buffer_size = _vertices.size() * sizeof(Vertex);
     auto index_buffer_size = _indices.size() * sizeof(uint32_t);
@@ -34,11 +35,13 @@ void Cube::create_buffers() {
     BufferTools::move_to_device(_indices.data(), _index_buffer);
 }
 
+// =============================================================================
 void Cube::destroy_buffers() {
     BufferTools::destroy_buffer(_vertex_buffer);
     BufferTools::destroy_buffer(_index_buffer);
 }
 
+// =============================================================================
 Cube::Cube(const float scale, const float tile) :
     _vertices {
         // front face

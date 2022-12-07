@@ -68,6 +68,11 @@ void Pipeline::set_cull_mode(const vk::CullModeFlags flags) {
 }
 
 // =============================================================================
+void Pipeline::set_front_face(const vk::FrontFace winding) {
+    _winding = winding;
+}
+
+// =============================================================================
 void Pipeline::create() {
     _init_layout();
     _init_vert_input();
@@ -239,16 +244,16 @@ void Pipeline::_init_viewport() {
 // =============================================================================
 void Pipeline::_init_raster() {
     _raster_info = {
-        .depthClampEnable = false,
+        .depthClampEnable        = false,
         .rasterizerDiscardEnable = false,
-        .polygonMode = vk::PolygonMode::eFill,
-        .cullMode    = _cull_mode_flags,
-        .frontFace   = vk::FrontFace::eCounterClockwise,
+        .polygonMode             = vk::PolygonMode::eFill,
+        .cullMode                = _cull_mode_flags,
+        .frontFace               = _winding,
         .depthBiasEnable         = false,
         .depthBiasConstantFactor = 0.0f,
         .depthBiasClamp          = 0.0f,
         .depthBiasSlopeFactor    = 0.0f,
-        .lineWidth = 1.0f,
+        .lineWidth               = 1.0f,
     };
 }
 
@@ -330,6 +335,7 @@ Pipeline::Pipeline(const Swapchain &swapchain) :
     _viewport           { },
     _scissor            { },
     _cull_mode_flags    { },
+    _winding            { },
     _vert_input_info    { },
     _assembly_info      { },
     _viewport_info      { },

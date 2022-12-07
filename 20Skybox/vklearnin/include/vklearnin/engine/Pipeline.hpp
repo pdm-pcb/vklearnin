@@ -32,6 +32,7 @@ public:
     void set_per_draw_layout(const vk::DescriptorSetLayout &layout);
 
     void set_cull_mode(const vk::CullModeFlags flags);
+    void set_front_face(const vk::FrontFace winding);
 
     void create();
     void destroy();
@@ -71,6 +72,7 @@ private:
     vk::Rect2D   _scissor;
     
     vk::CullModeFlags _cull_mode_flags;
+    vk::FrontFace     _winding;
     vk::SampleCountFlagBits _sample_count_flags;
     std::vector<vk::PipelineColorBlendAttachmentState> _blend_states;
 

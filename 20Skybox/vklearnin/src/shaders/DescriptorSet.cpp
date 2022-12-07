@@ -39,24 +39,9 @@ void DescriptorSet::add_ubo(const size_t size,
 }
 
 // =============================================================================
-void DescriptorSet::add_texture2D(const std::string_view &filepath) {
-    _textures.push_back(ImageTools::load_texture_from_file(filepath));
-
-    _layout.add_binding({
-        .binding            = static_cast<uint32_t>(_layout.bindings().size()),
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-}
-
-// =============================================================================
 void
-DescriptorSet::add_cubemap(
-    const std::array<const std::string_view, 6> &filepaths)
-{
-    _textures.push_back(ImageTools::load_cubemap_from_files(filepaths));
+DescriptorSet::add_texture2D(const std::vector<std::string_view> &filepaths) {
+    _textures.push_back(ImageTools::load_texture_from_file(filepaths));
 
     _layout.add_binding({
         .binding            = static_cast<uint32_t>(_layout.bindings().size()),

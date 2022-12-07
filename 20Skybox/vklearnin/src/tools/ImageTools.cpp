@@ -12,120 +12,22 @@ namespace vkl {
 namespace ImageTools {
 
 // =============================================================================
-ImageObject load_texture_from_file(const std::string_view &filepath,
-                                   const bool flip_vertical)
-{
-    ImageObject result { };
-
-    int width;
-    int height;
-    int channels;
-
-    ::stbi_set_flip_vertically_on_load(flip_vertical);
-    ::stbi_uc *image_data = ::stbi_load(
-        filepath.data(),
-        &width,
-        &height,
-        &channels,
-        ::STBI_rgb_alpha
-    );
-
-    if(image_data == nullptr) {
-		CONSOLE_CRITICAL("Failed to load image '{}'\n\t"
-                         "Size/Channels: {}x{}@{}\n\t"
-                         "Error: '{}'",
-                         filepath, width, height, channels,
-                         ::stbi_failure_reason());
-        return result;
-    }
-
-    CONSOLE_TRACE("Loaded image '{}'", filepath);
-
-    auto mip_levels = static_cast<uint32_t>(
-        std::floor(std::log2(std::max(
-            static_cast<float>(width), static_cast<float>(height)))
-        )) + 1u;
-
-    CONSOLE_TRACE("Set {} mip levels for '{}'", mip_levels, filepath);
-
-    result = ImageTools::create_image(
-        { },
-        vk::Extent3D {
-            .width  = static_cast<uint32_t>(width),
-            .height = static_cast<uint32_t>(height),
-            .depth  = 1u
-        },
-        static_cast<uint8_t>(::STBI_rgb_alpha),
-        vk::Format::eR8G8B8A8Unorm,
-        vk::ImageTiling::eOptimal,
-        mip_levels,
-        1u,
-        vk::SampleCountFlagBits::e1,
-        (vk::ImageUsageFlagBits::eTransferSrc |
-         vk::ImageUsageFlagBits::eTransferDst |
-         vk::ImageUsageFlagBits::eSampled),
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        "tex from file"
-    );
-
-    result.width = static_cast<uint32_t>(width);
-    result.height = static_cast<uint32_t>(height);
-    result.channels = static_cast<uint32_t>(::STBI_rgb_alpha);
-    result.layer_size = result.width * result.height * result.channels;
-    result.image_size = result.layer_size;
-
-    create_view(
-        result,
-        vk::ImageViewType::e2D,
-        vk::Format::eR8G8B8A8Unorm,
-        vk::ImageAspectFlagBits::eColor
-    );
-
-    auto staging_buffer = BufferTools::stage_data(
-        result.image_size,
-        image_data
-    );
-
-    ImageTools::move_to_device(
-        staging_buffer,
-        result,
-        1u,
-        { result.width, result.height, 1u }
-    );
-    
-    generate_mipmaps(result);
-
-    ::stbi_image_free(image_data);
-    BufferTools::destroy_buffer(staging_buffer);
-
-    ImageTools::create_sampler(
-        result,
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eClampToBorder
-    );
-
-    return result;
-}
-
-// =============================================================================
 ImageObject
-load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
-                        const bool flip_vertical)
+load_texture_from_file(const std::vector<std::string_view> &filepaths,
+                       const bool flip_vertical)
 {
+    std::vector<::stbi_uc *> image_data;
+    image_data.resize(filepaths.size());
+
     ImageObject result { };
 
     int width = 0;
     int height = 0;
     int channels = 0;
 
-    std::array<::stbi_uc *, 6> image_data { nullptr };
-    auto current_image = image_data.begin();
-
     ::stbi_set_flip_vertically_on_load(flip_vertical);
+
+    auto current_image = image_data.begin();
     for(const auto &filepath : filepaths) {
         *current_image = ::stbi_load(
             filepath.data(),
@@ -154,12 +56,15 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
             static_cast<float>(width), static_cast<float>(height)))
         )) + 1u;
 
-    // uint32_t mip_levels = 1u;
-
     CONSOLE_TRACE("Set {} mip levels for cubemap", mip_levels);
 
+    vk::ImageCreateFlagBits image_flags = { };
+    if(filepaths.size() == 6) {
+        image_flags = vk::ImageCreateFlagBits::eCubeCompatible;
+    }
+
     result = ImageTools::create_image(
-        vk::ImageCreateFlagBits::eCubeCompatible,
+        image_flags,
         vk::Extent3D {
             .width  = static_cast<uint32_t>(width),
             .height = static_cast<uint32_t>(height),
@@ -186,7 +91,6 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
 
     create_view(
         result,
-        vk::ImageViewType::eCube,
         vk::Format::eR8G8B8A8Unorm,
         vk::ImageAspectFlagBits::eColor
     );
@@ -194,8 +98,8 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
     char *consolidated_image = new char[result.image_size];
     char *offset = consolidated_image;
 
-    for(uint32_t image = 0u; image < filepaths.size(); ++image) {
-        memcpy(offset, image_data[image], result.layer_size);
+    for(const auto &image : image_data) {
+        memcpy(offset, image, result.layer_size);
         offset += result.layer_size;
     }
 
@@ -211,7 +115,7 @@ load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
     ImageTools::move_to_device(
         staging_buffer,
         result,
-        6u,
+        static_cast<uint32_t>(filepaths.size()),
         { result.width, result.height, 1u }
     );
     
@@ -295,13 +199,12 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
 }
 
 // =============================================================================
-void create_view(ImageObject &image, const vk::ImageViewType &type,
-                 const vk::Format &color_format,
+void create_view(ImageObject &image, const vk::Format &color_format,
                  const vk::ImageAspectFlags &image_aspect)
 {
-    uint32_t layer_count = 1u;
-    if(type == vk::ImageViewType::eCube) {
-        layer_count = 6u;
+    auto type = vk::ImageViewType::e2D;
+    if(image.array_layers == 6u) {
+        type = vk::ImageViewType::eCube;
     }
 
     vk::ImageViewCreateInfo image_info {
@@ -319,7 +222,7 @@ void create_view(ImageObject &image, const vk::ImageViewType &type,
             .baseMipLevel   = 0u,
             .levelCount     = image.mip_levels,
             .baseArrayLayer = 0u,
-            .layerCount     = layer_count
+            .layerCount     = image.array_layers
         }
     };
 
@@ -445,16 +348,13 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
         );
     }
 
-    int32_t mip_width  = static_cast<int32_t>(image.width);
-    int32_t mip_height = static_cast<int32_t>(image.height);
-
     auto command_buffer = BufferTools::begin_oneshot_cmd_buffer();
 
-    for(uint32_t array_layer = 0u;
-        array_layer < image.array_layers;
-        ++array_layer)
-    {
-        CONSOLE_TRACE("Processing array layer {}", array_layer);
+    for(uint32_t layer = 0u; layer < image.array_layers; ++layer) {
+        CONSOLE_TRACE("Processing array layer {}", layer);
+
+        int32_t mip_width  = static_cast<int32_t>(image.width);
+        int32_t mip_height = static_cast<int32_t>(image.height);
 
         for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level)
         {
@@ -467,7 +367,7 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
                 command_buffer,
                 mip_level - 1u,
                 1u,
-                array_layer,
+                layer,
                 1u
             );
 
@@ -475,7 +375,7 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
                 .srcSubresource {
                     .aspectMask = vk::ImageAspectFlagBits::eColor,
                     .mipLevel = mip_level - 1,
-                    .baseArrayLayer = array_layer,
+                    .baseArrayLayer = layer,
                     .layerCount = 1u,
                 },
                 .srcOffsets = std::array<vk::Offset3D, 2> {
@@ -485,7 +385,7 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
                 .dstSubresource {
                     .aspectMask = vk::ImageAspectFlagBits::eColor,
                     .mipLevel = mip_level,
-                    .baseArrayLayer = array_layer,
+                    .baseArrayLayer = layer,
                     .layerCount = 1u,
                 },
                 .dstOffsets = std::array<vk::Offset3D, 2> {
@@ -514,7 +414,7 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
                 command_buffer,
                 mip_level - 1u,
                 1u,
-                array_layer,
+                layer,
                 1u
             );
 
@@ -529,7 +429,7 @@ void ImageTools::generate_mipmaps(ImageObject &image) {
             command_buffer,
             image.mip_levels - 1u,
             1u,
-            array_layer,
+            layer,
             1u
         );
     }

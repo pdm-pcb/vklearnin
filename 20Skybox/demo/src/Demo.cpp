@@ -24,7 +24,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         vkl::ASSET_PATH + "/shaders/06cubemap.frag-debug.spv"
     );
 
-    _skybox_texture.add_cubemap({
+    _skybox_texture.add_texture2D({
         vkl::ASSET_PATH + "/textures/belfast_sunset/px.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/nx.png",
         vkl::ASSET_PATH + "/textures/belfast_sunset/py.png",
@@ -42,6 +42,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     _pipelines[0]->set_per_frame_layout(_per_frame_sets[0].layout().native());
     _pipelines[0]->set_per_material_layout(_skybox_texture.layout().native());
     _pipelines[0]->set_cull_mode(vk::CullModeFlagBits::eFront);
+    _pipelines[0]->set_front_face(vk::FrontFace::eCounterClockwise);
 
     CONSOLE_TRACE("Creating skybox pipeline");
     _pipelines[0]->create();
@@ -58,17 +59,17 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     );
 
     _cube_texture.add_texture2D(
-        vkl::ASSET_PATH + "/textures/metal_panel.jpg"
+        { vkl::ASSET_PATH + "/textures/stone_wall.jpg" }
     );
     _cube_texture.create(_descriptor_pool);
 
     _xy_plane_texture.add_texture2D(
-        vkl::ASSET_PATH + "/textures/wooden_wall.jpg"
+        { vkl::ASSET_PATH + "/textures/wooden_wall.jpg" }
     );
     _xy_plane_texture.create(_descriptor_pool);
 
     _xz_plane_texture.add_texture2D(
-        vkl::ASSET_PATH + "/textures/gravel.jpg"
+        { vkl::ASSET_PATH + "/textures/gravel.jpg" }
     );
     _xz_plane_texture.create(_descriptor_pool);
 
@@ -80,6 +81,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     _pipelines[1]->set_per_frame_layout(_per_frame_sets[0].layout().native());
     _pipelines[1]->set_per_material_layout(_cube_texture.layout().native());
     _pipelines[1]->set_cull_mode(vk::CullModeFlagBits::eBack);
+    _pipelines[0]->set_front_face(vk::FrontFace::eCounterClockwise);
 
     CONSOLE_TRACE("Creating object pipeline");
     _pipelines[1]->create();
@@ -263,40 +265,40 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         vkl::Renderer::draw(
             command_buffer,
-            _xy_plane->vertex_buffer(),
-            _xy_plane->index_buffer(),
-            static_cast<uint32_t>(_xy_plane->indices().size())
+            _icosphere->vertex_buffer(),
+            _icosphere->index_buffer(),
+            static_cast<uint32_t>(_icosphere->indices().size())
         );
 
 // ------------------------------------------------------------------------------
 // XZ Plane
-        // command_buffer.bindDescriptorSets(
-        //     vk::PipelineBindPoint::eGraphics,
-        //     _pipelines[1]->layout(),
-        //     vkl::Pipeline::BindingFreq::PER_MATERIAL,
-        //     _xz_plane_texture.native(),
-        //     { }
-        // );
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[1]->layout(),
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
+            _xz_plane_texture.native(),
+            { }
+        );
 
-        // auto xz_plane_matrix = glm::translate(
-        //     vkl::math::ident_mat4,
-        //     { 0.0f, -3.0f, 0.0f }
-        // );
-        // instance_data.model_matrix = xz_plane_matrix;
+        auto xz_plane_matrix = glm::translate(
+            vkl::math::ident_mat4,
+            { 0.0f, -10.0f, 0.0f }
+        );
+        instance_data.model_matrix = xz_plane_matrix;
 
-        // command_buffer.pushConstants<InstanceData>(
-        //     _pipelines[1]->layout(),
-        //     vk::ShaderStageFlagBits::eVertex,
-        //     0u,
-        //     instance_data
-        // );
+        command_buffer.pushConstants<InstanceData>(
+            _pipelines[1]->layout(),
+            vk::ShaderStageFlagBits::eVertex,
+            0u,
+            instance_data
+        );
 
-        // vkl::Renderer::draw(
-        //     command_buffer,
-        //     _xz_plane->vertex_buffer(),
-        //     _xz_plane->index_buffer(),
-        //     static_cast<uint32_t>(_xz_plane->indices().size())
-        // );
+        vkl::Renderer::draw(
+            command_buffer,
+            _xz_plane->vertex_buffer(),
+            _xz_plane->index_buffer(),
+            static_cast<uint32_t>(_xz_plane->indices().size())
+        );
 
 // Done Drawing
 // ------------------------------------------------------------------------------
@@ -349,23 +351,18 @@ void Demo::on_mouse_move(const vkl::MouseMoveEvent &event) {
 }
 
 // =============================================================================
-void Demo::swapchain_image_invalid() {
+void Demo::update_projection() {
     _camera_data.proj_matrix = glm::perspective(
         vkl::RenderConfig::fov_rad * 0.5f,
         vkl::RenderConfig::aspect_ratio,
         0.1f,
-        1000.0f
+        5000.0f
     );
 }
 
 // =============================================================================
 void Demo::init() {
-    _camera_data.proj_matrix = glm::perspective(
-        vkl::RenderConfig::fov_rad * 0.5f,
-        vkl::RenderConfig::aspect_ratio,
-        0.1f,
-        1000.0f
-    );
+    update_projection();
 
     _camera_data.view_matrix = glm::lookAt(
         _camera_orientation.position,
@@ -373,7 +370,7 @@ void Demo::init() {
         _camera_orientation.up
     );
 
-    _xy_plane = new vkl::XYPlane(2.0f, 2.0f);
+    _xy_plane = new vkl::XYPlane(1.0f, 1.0f);
     _xy_plane->create_buffers();
 
     _xz_plane = new vkl::XZPlane(200.0f, 150.0f);
@@ -382,8 +379,11 @@ void Demo::init() {
     _cube = new vkl::Cube(0.5f, 1.0f);
     _cube->create_buffers();
 
-    _skybox = new vkl::Cube(10.0f, 1.0f);
+    _skybox = new vkl::Cube(1000.0f, 1.0f);
     _skybox->create_buffers();
+
+    _icosphere = new vkl::Icosphere(1.0f, 0u);
+    _icosphere->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
         this,
@@ -405,8 +405,9 @@ void Demo::init() {
 void Demo::shutdown() {
     if(_xy_plane)  _xy_plane->destroy_buffers();
     if(_xz_plane)  _xz_plane->destroy_buffers();
-    if(_cube) _cube->destroy_buffers();
+    if(_cube)      _cube->destroy_buffers();
     if(_skybox)    _skybox->destroy_buffers();
+    if(_icosphere) _icosphere->destroy_buffers();
 
     _xy_plane_texture.destroy();
     _xz_plane_texture.destroy();
@@ -486,8 +487,9 @@ Demo::Demo() :
     _camera_data { },
     _xy_plane    { nullptr },
     _xz_plane    { nullptr },
-    _cube   { nullptr },
-    _skybox      { nullptr }
+    _cube        { nullptr },
+    _skybox      { nullptr },
+    _icosphere   { nullptr }
 { }
 
 Demo::~Demo() {
@@ -499,4 +501,5 @@ Demo::~Demo() {
     delete _xz_plane;
     delete _cube;
     delete _skybox;
+    delete _icosphere;
 }

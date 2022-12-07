@@ -246,7 +246,6 @@ void RenderPass::_init_depth_buffer() {
 
     ImageTools::create_view(
         _depth_buffer,
-        vk::ImageViewType::e2D,
         format,
         vk::ImageAspectFlagBits::eDepth
     );
@@ -277,7 +276,6 @@ void RenderPass::_init_color_buffer() {
 
     ImageTools::create_view(
         _color_buffer,
-        vk::ImageViewType::e2D,
         _swapchain.surface_format(),
         vk::ImageAspectFlagBits::eColor
     );

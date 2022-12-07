@@ -22,7 +22,7 @@ public:
     virtual const vk::CommandBuffer &
     execute_pipelines(const uint32_t frame_index) = 0;
 
-    virtual void swapchain_image_invalid() = 0;
+    virtual void update_projection() = 0;
 
     virtual void init() = 0;
     virtual void shutdown() = 0;

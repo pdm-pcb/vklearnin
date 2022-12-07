@@ -92,7 +92,7 @@ void Engine::_image_invalid() {
         pipeline->create_framebuffers();
     }
 
-    _application.swapchain_image_invalid();
+    _application.update_projection();
 
     _frame_index = 0u;
 }

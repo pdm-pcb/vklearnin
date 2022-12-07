@@ -11,11 +11,8 @@ struct BufferObject;
 namespace ImageTools {
 
 ImageObject
-load_texture_from_file(const std::string_view &filepath,
+load_texture_from_file(const std::vector<std::string_view> &filepaths,
                        const bool flip_vertical = false);
-ImageObject
-load_cubemap_from_files(const std::array<const std::string_view, 6> &filepaths,
-                        const bool flip_vertical = false);
 
 ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::Extent3D &extent,
@@ -29,8 +26,7 @@ ImageObject create_image(const vk::ImageCreateFlags &flags,
                          const vk::MemoryPropertyFlags memory_properties,
                          const std::string_view &image_name);
 
-void create_view(ImageObject &image, const vk::ImageViewType &type,
-                 const vk::Format &color_format,
+void create_view(ImageObject &image, const vk::Format &color_format,
                  const vk::ImageAspectFlags &image_aspect);
 
 void create_sampler(ImageObject &image,
