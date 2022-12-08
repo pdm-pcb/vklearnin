@@ -3,6 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/mesh/Vertex.hpp"
+#include "vklearnin/mesh/Face.hpp"
 #include "vklearnin/shaders/BufferObject.hpp"
 
 namespace vkl {
@@ -16,7 +17,7 @@ public:
     inline auto & vertices() { return _vertices; }
 
     inline const auto & index_buffer() const { return _index_buffer; }
-    inline auto & indices() { return _indices; }
+    inline auto & faces() { return _faces; }
 
     Icosphere(const float scale, const uint32_t subdivisions);
     ~Icosphere() = default;
@@ -30,41 +31,38 @@ public:
 
 private:
     struct Edge {
-        uint32_t index_a = static_cast<uint32_t>(-1);
-        uint32_t index_b = static_cast<uint32_t>(-1);
+        Index _a = std::numeric_limits<Index>::max();
+        Index _b = std::numeric_limits<Index>::max();
 
-        Edge(const uint32_t a, const uint32_t b) :
-            index_a { a },
-            index_b { b }
+        Edge(const Index a, const Index b) :
+            _a { a }, _b { b }
         { }
 
         bool operator==(const Edge &other) const {
-            return index_a == other.index_a &&
-                   index_b == other.index_b;
+            return _a == other._a && _b == other._b;
         }
     };
 
     struct EdgeHash {
         size_t operator()(const Edge edge) const {
-            size_t hash_a = std::hash<uint32_t>()(edge.index_a);
-            size_t hash_b = std::hash<uint32_t>()(edge.index_b);
-
+            size_t hash_a = std::hash<Index>()(edge._a);
+            size_t hash_b = std::hash<Index>()(edge._b);
             return hash_a ^ hash_b;
         }
     };
     
-    std::vector<Vertex>   _vertices;
-    std::vector<uint32_t> _indices;
+    std::vector<Vertex> _vertices;
+    std::vector<Face>   _faces;
 
     BufferObject _vertex_buffer;
     BufferObject _index_buffer;
 
-    std::unordered_map<Edge, uint32_t, EdgeHash> _midpoint_cache;
+    using MidpointCache = std::unordered_map<Edge, Index, EdgeHash>;
 
     glm::vec4 _normalize(const float scale, const glm::vec3 &vector);
     void _subdivide(const uint32_t subdivisions, const float scale);
-    uint32_t _midpoint(const uint32_t index_a, const uint32_t index_b,
-                       const uint32_t next_index, glm::vec4 &midpoint);
+    Index _midpoint(const Index index_a, const Index index_b,
+                    const float scale, MidpointCache &cache);
 };
 
 } // namespace vkl

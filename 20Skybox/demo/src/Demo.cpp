@@ -184,7 +184,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             command_buffer,
             _skybox->vertex_buffer(),
             _skybox->index_buffer(),
-            static_cast<uint32_t>(_skybox->indices().size())
+            static_cast<uint32_t>(_skybox->faces().size() * 3)
         );
 
 //
@@ -236,7 +236,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             command_buffer,
             _cube->vertex_buffer(),
             _cube->index_buffer(),
-            static_cast<uint32_t>(_cube->indices().size())
+            static_cast<uint32_t>(_cube->faces().size() * 3)
         );
 
 // ------------------------------------------------------------------------------
@@ -267,7 +267,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             command_buffer,
             _icosphere->vertex_buffer(),
             _icosphere->index_buffer(),
-            static_cast<uint32_t>(_icosphere->indices().size())
+            static_cast<uint32_t>(_icosphere->faces().size() * 3)
         );
 
 // ------------------------------------------------------------------------------
@@ -382,7 +382,7 @@ void Demo::init() {
     _skybox = new vkl::Cube(1000.0f, 1.0f);
     _skybox->create_buffers();
 
-    _icosphere = new vkl::Icosphere(1.0f, 2u);
+    _icosphere = new vkl::Icosphere(1.0f, 5u);
     _icosphere->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(

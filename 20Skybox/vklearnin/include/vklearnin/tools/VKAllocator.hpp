@@ -11,20 +11,20 @@ public:
         size_t type_index = std::numeric_limits<size_t>::max();
         size_t alloc_index = std::numeric_limits<size_t>::max();
 
-        uint64_t offset       = 0u;
-        uint64_t size         = 0u;
-        uint64_t aligned_size = 0u;
+        uint64_t offset       = std::numeric_limits<uint64_t>::max();
+        uint64_t size         = std::numeric_limits<uint64_t>::max();
+        uint64_t aligned_size = std::numeric_limits<uint64_t>::max();
         
         bool free = true;
 
-        std::array<char, 64> name = { "Unclaimed\0" };
+        std::array<char, 32> name = { "Unclaimed\0" };
     };
 
     struct DeviceAllocation {
         vk::DeviceMemory memory { };
         
-        uint64_t free = 0u;
-        uint64_t used = 0u;
+        uint64_t free = std::numeric_limits<uint64_t>::max();
+        uint64_t used = std::numeric_limits<uint64_t>::max();
 
         std::list<Block> blocks = { };
     };

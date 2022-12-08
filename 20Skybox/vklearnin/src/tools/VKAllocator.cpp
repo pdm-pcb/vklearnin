@@ -285,11 +285,16 @@ VKAllocator::BlockIter VKAllocator::_find_free_block(
                 if(current_block->free && current_block->size >= aligned_size) {
                     auto aligned_offset = static_cast<uint64_t>(
                         std::ceil(static_cast<float>(current_block->offset) /
-                                  mem_reqs.alignment) *
-                        mem_reqs.alignment
+                                  mem_reqs.alignment) * mem_reqs.alignment
                     );
 
-                    assert(aligned_offset >= current_block->offset);
+                    if(aligned_offset < current_block->offset) {
+                        CONSOLE_CRITICAL(
+                            "aligned offset {} b vs current block offset {} b",
+                            aligned_offset,
+                            current_block->offset
+                        );
+                    }
 
                     new_block.alloc_index = alloc_index;
                     new_block.offset      = aligned_offset;

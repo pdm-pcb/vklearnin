@@ -3,6 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/mesh/Vertex.hpp"
+#include "vklearnin/mesh/Face.hpp"
 #include "vklearnin/shaders/BufferObject.hpp"
 
 namespace vkl {
@@ -18,7 +19,7 @@ public:
     inline auto & vertices() { return _vertices; }
 
     inline const auto & index_buffer() const { return _index_buffer; }
-    inline auto & indices() { return _indices; }
+    inline auto & faces() { return _faces; }
 
     Cube(const float scale, const float tile);
     ~Cube() = default;
@@ -31,8 +32,8 @@ public:
     Cube & operator=(const Cube &) = delete;
 
 private:
-    std::vector<Vertex>   _vertices;
-    std::vector<uint32_t> _indices;
+    std::vector<Vertex> _vertices;
+    std::vector<Face>   _faces;
 
     BufferObject _vertex_buffer;
     BufferObject _index_buffer;
