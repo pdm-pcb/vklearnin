@@ -19,7 +19,7 @@ void Icosphere::create_buffers() {
          vk::BufferUsageFlagBits::eVertexBuffer),
         vk::SharingMode::eExclusive,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        "sphere vertex"
+        "icosphere vert"
     );
 
     _index_buffer = BufferTools::create_buffer(
@@ -28,7 +28,7 @@ void Icosphere::create_buffers() {
          vk::BufferUsageFlagBits::eIndexBuffer),
         vk::SharingMode::eExclusive,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        "sphere index"
+        "icosphere idx"
     );
 
     BufferTools::move_to_device(_vertices.data(), _vertex_buffer);
@@ -65,14 +65,14 @@ void Icosphere::_subdivide(const uint32_t subdivisions, const float scale) {
         std::vector<Face> new_faces;
         new_faces.reserve(_faces.size() * 4);
 
-        // To coordinate the 
-        MidpointCache midpoint_cache;
+        // To coordinate the vertices and avoid duplicates
+        MidpointCache cache;
 
         // Now, replace each individual triangle with four more
         for(const auto &face : _faces) {
-            auto mid_ab = _midpoint(face.a, face.b, scale, midpoint_cache);
-            auto mid_bc = _midpoint(face.b, face.c, scale, midpoint_cache);
-            auto mid_ca = _midpoint(face.c, face.a, scale, midpoint_cache);
+            auto mid_ab = _find_midpoint(face.a, face.b, scale, cache);
+            auto mid_bc = _find_midpoint(face.b, face.c, scale, cache);
+            auto mid_ca = _find_midpoint(face.c, face.a, scale, cache);
 
             new_faces.push_back({ face.a, mid_ab, mid_ca });
             new_faces.push_back({ face.b, mid_bc, mid_ab });
@@ -93,8 +93,8 @@ void Icosphere::_subdivide(const uint32_t subdivisions, const float scale) {
 }
 
 // =============================================================================
-Index Icosphere::_midpoint(const Index index_a, const Index index_b,
-                           const float scale, MidpointCache &cache)
+Index Icosphere::_find_midpoint(const Index index_a, const Index index_b,
+                                const float scale, MidpointCache &cache)
 {
     // Keep the keys consistent
     auto lesser_index  = std::min(index_a, index_b);
@@ -102,7 +102,10 @@ Index Icosphere::_midpoint(const Index index_a, const Index index_b,
 
     // Test-fit the potentially new midpoint
     auto key = MidpointCache::key_type({ lesser_index, greater_index });
-    auto insert_result = cache.insert({ key, _vertices.size() });
+    auto insert_result = cache.insert({
+        key,
+        static_cast<Index>(_vertices.size())
+    });
 
     // Did we create a new entry in the map?
     if(insert_result.second) {
@@ -125,27 +128,39 @@ Index Icosphere::_midpoint(const Index index_a, const Index index_b,
 }
 
 // =============================================================================
+void Icosphere::_generate_UVs() {
+    // First, generate the naive coordinates
+    for(auto &vertex : _vertices) {
+        float u = std::atan2f(vertex.position.z, vertex.position.x) /
+                  math::two_pi;
+        float v = (std::asinf(vertex.position.y) / math::pi) + 0.5f;
+
+        vertex.texcoord = { u, v };
+    }
+}
+
+// =============================================================================
 Icosphere::Icosphere(const float scale, const uint32_t subdivisions) :
     _vertex_buffer { },
     _index_buffer  { }
 {
     auto t = (1.0f + std::sqrt(5.0f)) * 0.5f;
     _vertices = {
-        { _normalize(scale, { -1.0f,  t, 0.0f }), { 0.0f, 0.0f }},
-        { _normalize(scale, {  1.0f,  t, 0.0f }), { 0.0f, 1.0f }},
-        { _normalize(scale, { -1.0f, -t, 0.0f }), { 1.0f, 0.0f }},
+        { _normalize(scale, { -1.0f,  t, 0.0f }), { }},
+        { _normalize(scale, {  1.0f,  t, 0.0f }), { }},
+        { _normalize(scale, { -1.0f, -t, 0.0f }), { }},
 
-        { _normalize(scale, {  1.0f, -t, 0.0f }), { 1.0f, 1.0f }},
-        { _normalize(scale, { 0.0f, -1.0f,  t }), { 0.0f, 0.0f }},
-        { _normalize(scale, { 0.0f,  1.0f,  t }), { 0.0f, 1.0f }},
+        { _normalize(scale, {  1.0f, -t, 0.0f }), { }},
+        { _normalize(scale, { 0.0f, -1.0f,  t }), { }},
+        { _normalize(scale, { 0.0f,  1.0f,  t }), { }},
 
-        { _normalize(scale, { 0.0f, -1.0f, -t }), { 1.0f, 0.0f }},
-        { _normalize(scale, { 0.0f,  1.0f, -t }), { 1.0f, 1.0f }},
-        { _normalize(scale, {  t, 0.0f, -1.0f }), { 0.0f, 0.0f }},
+        { _normalize(scale, { 0.0f, -1.0f, -t }), { }},
+        { _normalize(scale, { 0.0f,  1.0f, -t }), { }},
+        { _normalize(scale, {  t, 0.0f, -1.0f }), { }},
 
-        { _normalize(scale, {  t, 0.0f,  1.0f }), { 0.0f, 1.0f }},
-        { _normalize(scale, { -t, 0.0f, -1.0f }), { 1.0f, 0.0f }},
-        { _normalize(scale, { -t, 0.0f,  1.0f }), { 1.0f, 1.0f }},
+        { _normalize(scale, {  t, 0.0f,  1.0f }), { }},
+        { _normalize(scale, { -t, 0.0f, -1.0f }), { }},
+        { _normalize(scale, { -t, 0.0f,  1.0f }), { }},
     };
 
     _faces = {
@@ -157,6 +172,7 @@ Icosphere::Icosphere(const float scale, const uint32_t subdivisions) :
     };
 
     _subdivide(subdivisions, scale);
+    _generate_UVs();
 }
 
 } // namespace vkl

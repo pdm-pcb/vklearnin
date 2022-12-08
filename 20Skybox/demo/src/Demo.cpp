@@ -59,12 +59,12 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     );
 
     _cube_texture.add_texture2D(
-        { vkl::ASSET_PATH + "/textures/stone_wall.jpg" }
+        { vkl::ASSET_PATH + "/textures/metal_panel.jpg" }
     );
     _cube_texture.create(_descriptor_pool);
 
     _xy_plane_texture.add_texture2D(
-        { vkl::ASSET_PATH + "/textures/wooden_wall.jpg" }
+        { vkl::ASSET_PATH + "/textures/stone_wall.jpg" }
     );
     _xy_plane_texture.create(_descriptor_pool);
 
@@ -72,6 +72,11 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
         { vkl::ASSET_PATH + "/textures/gravel.jpg" }
     );
     _xz_plane_texture.create(_descriptor_pool);
+
+    _icosphere_texture.add_texture2D(
+        { vkl::ASSET_PATH + "/textures/wooden_wall.jpg" }
+    );
+    _icosphere_texture.create(_descriptor_pool);
 
     _pipelines[1]->set_push_constants({{
             .stageFlags = vk::ShaderStageFlagBits::eVertex,
@@ -219,7 +224,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         auto cube_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { -2.0f, 0.0f, -1.0f }),
+            glm::translate(vkl::math::ident_mat4, { -3.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.75f, 1.0f, 0.0f }
         );
@@ -250,7 +255,7 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
         );
 
         auto xy_plane_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { 2.0f, 0.0f, -1.0f }),
+            glm::translate(vkl::math::ident_mat4, { 3.0f, 0.0f, -1.0f }),
             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
             { 0.0f, 0.0f, 1.0f }
         );
@@ -265,9 +270,9 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
 
         vkl::Renderer::draw(
             command_buffer,
-            _icosphere->vertex_buffer(),
-            _icosphere->index_buffer(),
-            static_cast<uint32_t>(_icosphere->faces().size() * 3)
+            _xy_plane->vertex_buffer(),
+            _xy_plane->index_buffer(),
+            static_cast<uint32_t>(_xy_plane->indices().size())
         );
 
 // ------------------------------------------------------------------------------
@@ -298,6 +303,39 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index)
             _xz_plane->vertex_buffer(),
             _xz_plane->index_buffer(),
             static_cast<uint32_t>(_xz_plane->indices().size())
+        );
+
+// ------------------------------------------------------------------------------
+// Icosphere
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            _pipelines[1]->layout(),
+            vkl::Pipeline::BindingFreq::PER_MATERIAL,
+            _icosphere_texture.native(),
+            { }
+        );
+
+        auto icosphere_matrix = glm::rotate(
+            vkl::math::ident_mat4,
+            vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
+            { 0.0f, 1.0f, 0.0f }
+        );
+
+
+        instance_data.model_matrix = icosphere_matrix;
+
+        command_buffer.pushConstants<InstanceData>(
+            _pipelines[1]->layout(),
+            vk::ShaderStageFlagBits::eVertex,
+            0u,
+            instance_data
+        );
+
+        vkl::Renderer::draw(
+            command_buffer,
+            _icosphere->vertex_buffer(),
+            _icosphere->index_buffer(),
+            static_cast<uint32_t>(_icosphere->faces().size() * 3)
         );
 
 // Done Drawing
@@ -370,7 +408,7 @@ void Demo::init() {
         _camera_orientation.up
     );
 
-    _xy_plane = new vkl::XYPlane(1.0f, 1.0f);
+    _xy_plane = new vkl::XYPlane(1.0f, 2.0f);
     _xy_plane->create_buffers();
 
     _xz_plane = new vkl::XZPlane(200.0f, 150.0f);
@@ -382,7 +420,7 @@ void Demo::init() {
     _skybox = new vkl::Cube(1000.0f, 1.0f);
     _skybox->create_buffers();
 
-    _icosphere = new vkl::Icosphere(1.0f, 5u);
+    _icosphere = new vkl::Icosphere(1.0f, 2u);
     _icosphere->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
@@ -413,6 +451,7 @@ void Demo::shutdown() {
     _xz_plane_texture.destroy();
     _cube_texture.destroy();
     _skybox_texture.destroy();
+    _icosphere_texture.destroy();
 
     for(auto &set : _per_frame_sets) {
         set.destroy();

@@ -11,6 +11,7 @@
 // 
 // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 // https://schneide.blog/2016/07/15/generating-an-icosphere-in-c/
+// https://mft-dev.dk/uv-mapping-sphere/
 
 namespace vkl {
 
@@ -56,6 +57,8 @@ private:
             return hash_a ^ hash_b;
         }
     };
+
+    using MidpointCache = std::unordered_map<Edge, Index, EdgeHash>;
     
     std::vector<Vertex> _vertices;
     std::vector<Face>   _faces;
@@ -63,12 +66,14 @@ private:
     BufferObject _vertex_buffer;
     BufferObject _index_buffer;
 
-    using MidpointCache = std::unordered_map<Edge, Index, EdgeHash>;
-
     glm::vec4 _normalize(const float scale, const glm::vec3 &vector);
+
     void _subdivide(const uint32_t subdivisions, const float scale);
-    Index _midpoint(const Index index_a, const Index index_b,
-                    const float scale, MidpointCache &cache);
+    Index _find_midpoint(const Index index_a, const Index index_b,
+                         const float scale, MidpointCache &cache);
+                    
+    
+    void _generate_UVs();
 };
 
 } // namespace vkl

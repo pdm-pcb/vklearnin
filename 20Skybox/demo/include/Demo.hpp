@@ -73,6 +73,7 @@ private:
     vkl::DescriptorSet _xz_plane_texture;
     vkl::DescriptorSet _cube_texture;
     vkl::DescriptorSet _skybox_texture;
+    vkl::DescriptorSet _icosphere_texture;
 
     CameraData        _camera_data;
     CameraOrientation _camera_orientation;
