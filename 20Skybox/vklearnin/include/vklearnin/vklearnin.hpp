@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_VKLEARNIN_HPP
 #define VKLEARNIN_VKLEARNIN_HPP
 
-// #define MEMLOG
+#define MEMLOG
 #include "vklearnin/tools/MemTracker.hpp"
 #include "vklearnin/tools/ConsoleLog.hpp"
 #include "vklearnin/tools/VKDebugger.hpp"
