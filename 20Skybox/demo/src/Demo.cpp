@@ -382,7 +382,7 @@ void Demo::init() {
     _skybox = new vkl::Cube(1000.0f, 1.0f);
     _skybox->create_buffers();
 
-    _icosphere = new vkl::Icosphere(1.0f, 0u);
+    _icosphere = new vkl::Icosphere(1.0f, 2u);
     _icosphere->create_buffers();
 
     vkl::EventBroker::subscribe<vkl::KeyPressEvent>(

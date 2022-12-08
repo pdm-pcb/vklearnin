@@ -29,17 +29,42 @@ public:
     Icosphere & operator=(const Icosphere &other) = delete;
 
 private:
+    struct Edge {
+        uint32_t index_a = static_cast<uint32_t>(-1);
+        uint32_t index_b = static_cast<uint32_t>(-1);
+
+        Edge(const uint32_t a, const uint32_t b) :
+            index_a { a },
+            index_b { b }
+        { }
+
+        bool operator==(const Edge &other) const {
+            return index_a == other.index_a &&
+                   index_b == other.index_b;
+        }
+    };
+
+    struct EdgeHash {
+        size_t operator()(const Edge edge) const {
+            size_t hash_a = std::hash<uint32_t>()(edge.index_a);
+            size_t hash_b = std::hash<uint32_t>()(edge.index_b);
+
+            return hash_a ^ hash_b;
+        }
+    };
+    
     std::vector<Vertex>   _vertices;
     std::vector<uint32_t> _indices;
 
     BufferObject _vertex_buffer;
     BufferObject _index_buffer;
-    
-    // std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t> _midpoint_cache;
+
+    std::unordered_map<Edge, uint32_t, EdgeHash> _midpoint_cache;
 
     glm::vec4 _normalize(const float scale, const glm::vec3 &vector);
-    void _subdivide(const uint32_t subdivisions);
-    uint32_t _find_midpoint(const uint32_t index_a, const uint32_t index_b);
+    void _subdivide(const uint32_t subdivisions, const float scale);
+    uint32_t _midpoint(const uint32_t index_a, const uint32_t index_b,
+                       const uint32_t next_index, glm::vec4 &midpoint);
 };
 
 } // namespace vkl
