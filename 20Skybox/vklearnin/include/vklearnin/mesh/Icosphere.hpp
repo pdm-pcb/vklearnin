@@ -6,6 +6,12 @@
 #include "vklearnin/mesh/Face.hpp"
 #include "vklearnin/shaders/BufferObject.hpp"
 
+// Credit where credit is due - without the following, this class would not
+// exist. =)
+// 
+// http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+// https://schneide.blog/2016/07/15/generating-an-icosphere-in-c/
+
 namespace vkl {
 
 class Icosphere final {
