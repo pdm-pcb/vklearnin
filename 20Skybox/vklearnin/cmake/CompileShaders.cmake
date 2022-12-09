@@ -17,9 +17,11 @@ function(compile_shader target)
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set(output_filename "${source}-debug.spv")
             set(shader_optimization "-O0")
+            set(shader_debug "-g")
         elseif(CMAKE_BUILD_TYPE MATCHES "Release")
             set(output_filename "${source}-release.spv")
             set(shader_optimization "-O")
+            set(shader_debug "")
         else()
             message(FATAL_ERROR "CMake build type ${CMAKE_BUILD_TYPE} unknown.")
         endif()
@@ -32,6 +34,7 @@ function(compile_shader target)
                 $<$<BOOL:${arg_ENV}>:--target-env=${arg_ENV}>
                 -mfmt=bin
                 -MD -MF ${source}.d
+                ${shader_debug}
                 -o ${output_filename}
                 ${source}
         )

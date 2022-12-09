@@ -120,7 +120,7 @@ Index Icosphere::_find_midpoint(const Index index_a, const Index index_b,
         auto scaled_vertex = _normalize(scale, new_vertex);
 
         // And add to the global list
-        _vertices.push_back({ scaled_vertex, { 0.0f, 0.0f } });
+        _vertices.push_back({ scaled_vertex, { }, { }, { }, { } });
     }
 
     // Send the corresponding index value back
@@ -144,24 +144,24 @@ Icosphere::Icosphere(const float scale, const uint32_t subdivisions) :
     _vertex_buffer { },
     _index_buffer  { }
 {
-    float golden_ratio = (1.0f + sqrt(5.0f)) * 0.5f;
+    float phi = (1.0f + sqrt(5.0f)) * 0.5f; // golden ratio
 
     _vertices = {
-        { _normalize(scale, { -1.0f,  golden_ratio, 0.0f }), { }},
-        { _normalize(scale, {  1.0f,  golden_ratio, 0.0f }), { }},
-        { _normalize(scale, { -1.0f, -golden_ratio, 0.0f }), { }},
+        { _normalize(scale, { -1.0f,  phi, 0.0f }), { }, { }, { }, { }},
+        { _normalize(scale, {  1.0f,  phi, 0.0f }), { }, { }, { }, { }},
+        { _normalize(scale, { -1.0f, -phi, 0.0f }), { }, { }, { }, { }},
 
-        { _normalize(scale, {  1.0f, -golden_ratio, 0.0f }), { }},
-        { _normalize(scale, { 0.0f, -1.0f,  golden_ratio }), { }},
-        { _normalize(scale, { 0.0f,  1.0f,  golden_ratio }), { }},
+        { _normalize(scale, {  1.0f, -phi, 0.0f }), { }, { }, { }, { }},
+        { _normalize(scale, { 0.0f, -1.0f,  phi }), { }, { }, { }, { }},
+        { _normalize(scale, { 0.0f,  1.0f,  phi }), { }, { }, { }, { }},
 
-        { _normalize(scale, { 0.0f, -1.0f, -golden_ratio }), { }},
-        { _normalize(scale, { 0.0f,  1.0f, -golden_ratio }), { }},
-        { _normalize(scale, {  golden_ratio, 0.0f, -1.0f }), { }},
+        { _normalize(scale, { 0.0f, -1.0f, -phi }), { }, { }, { }, { }},
+        { _normalize(scale, { 0.0f,  1.0f, -phi }), { }, { }, { }, { }},
+        { _normalize(scale, {  phi, 0.0f, -1.0f }), { }, { }, { }, { }},
 
-        { _normalize(scale, {  golden_ratio, 0.0f,  1.0f }), { }},
-        { _normalize(scale, { -golden_ratio, 0.0f, -1.0f }), { }},
-        { _normalize(scale, { -golden_ratio, 0.0f,  1.0f }), { }},
+        { _normalize(scale, {  phi, 0.0f,  1.0f }), { }, { }, { }, { }},
+        { _normalize(scale, { -phi, 0.0f, -1.0f }), { }, { }, { }, { }},
+        { _normalize(scale, { -phi, 0.0f,  1.0f }), { }, { }, { }, { }},
     };
 
     _faces = {
@@ -174,6 +174,7 @@ Icosphere::Icosphere(const float scale, const uint32_t subdivisions) :
 
     _subdivide(subdivisions, scale);
     _generate_UVs();
+    MeshTools::build_surface_normals(_vertices, _faces);
 }
 
 } // namespace vkl

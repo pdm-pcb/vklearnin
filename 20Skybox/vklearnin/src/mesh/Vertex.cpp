@@ -21,6 +21,24 @@ const std::vector<vk::VertexInputAttributeDescription> Vertex::attribs {
     {
         .location = 1u,
         .binding = 0u,
+        .format = vk::Format::eR32G32B32A32Sfloat,
+        .offset = offsetof(Vertex, normal)
+    },
+    {
+        .location = 2u,
+        .binding = 0u,
+        .format = vk::Format::eR32G32B32A32Sfloat,
+        .offset = offsetof(Vertex, tangent)
+    },
+    {
+        .location = 3u,
+        .binding = 0u,
+        .format = vk::Format::eR32G32B32A32Sfloat,
+        .offset = offsetof(Vertex, bitangent)
+    },
+    {
+        .location = 4u,
+        .binding = 0u,
         .format = vk::Format::eR32G32Sfloat,
         .offset = offsetof(Vertex, texcoord)
     }

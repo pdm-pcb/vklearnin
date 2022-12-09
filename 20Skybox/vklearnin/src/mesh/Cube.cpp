@@ -45,40 +45,40 @@ void Cube::destroy_buffers() {
 Cube::Cube(const float scale, const float tile) :
     _vertices {
         // front face
-        {{ -scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale,  scale,  scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{ -scale,  scale,  scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale, -scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale, -scale,  scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale,  scale,  scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{ -scale,  scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
 
         // back face
-        {{ -scale, -scale, -scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale, -scale, -scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
-        {{ -scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{ -scale, -scale, -scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale, -scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale,  scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
+        {{ -scale,  scale, -scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
 
         // left face
-        {{ -scale, -scale, -scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{ -scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{ -scale,  scale,  scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{ -scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale, -scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{ -scale, -scale,  scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{ -scale,  scale,  scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{ -scale,  scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
 
         // right face
-        {{  scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale, -scale, -scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{  scale,  scale,  scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{  scale, -scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale, -scale, -scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale,  scale, -scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{  scale,  scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
 
         // bottom face
-        {{  scale, -scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{ -scale, -scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{ -scale, -scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{  scale, -scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{  scale, -scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{ -scale, -scale,  scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{ -scale, -scale, -scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{  scale, -scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
 
         // top face
-        {{ -scale,  scale,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale,  scale,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale,  scale, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{ -scale,  scale, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale,  scale,  scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale,  scale,  scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale,  scale, -scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{ -scale,  scale, -scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
     },
     _faces {
         { 0u,   1u,  2u }, {  2u,  3u,  0u },
@@ -88,6 +88,8 @@ Cube::Cube(const float scale, const float tile) :
         { 16u, 17u, 18u }, { 18u, 19u, 16u },
         { 20u, 21u, 22u }, { 22u, 23u, 20u },
     }
-{ }
+{
+    MeshTools::build_surface_normals(_vertices, _faces);
+}
 
 } // namespace vkl

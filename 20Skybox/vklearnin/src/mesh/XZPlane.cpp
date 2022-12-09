@@ -36,10 +36,10 @@ void XZPlane::destroy_buffers() {
 
 XZPlane::XZPlane(const float scale, const float tile) :
     _vertices {
-        {{ -scale, 0.0f, -scale, 1.0f }, { 0.0f * tile, 0.0f * tile }},
-        {{ -scale, 0.0f,  scale, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale, 0.0f,  scale, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale, 0.0f, -scale, 1.0f }, { 1.0f * tile, 0.0f * tile }},
+        {{ -scale, 0.0f, -scale, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
+        {{ -scale, 0.0f,  scale, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale, 0.0f,  scale, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale, 0.0f, -scale, 1.0f }, { }, { }, { }, { tile, 0.0f }},
     },
     _indices { 0u, 1u, 2u, 2u, 3u, 0u }
 { }

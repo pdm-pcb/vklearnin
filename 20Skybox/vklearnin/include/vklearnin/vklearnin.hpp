@@ -17,6 +17,7 @@
 
 #include "vklearnin/tools/ImageTools.hpp"
 #include "vklearnin/tools/BufferTools.hpp"
+#include "vklearnin/tools/MeshTools.hpp"
 #include "vklearnin/tools/Timekeeper.hpp"
 
 namespace vkl {

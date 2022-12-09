@@ -36,10 +36,10 @@ void XYPlane::destroy_buffers() {
 
 XYPlane::XYPlane(const float scale, const float tile) :
     _vertices {
-        {{ -scale, -scale, 0.0f, 1.0f }, { 0.0f * tile, 1.0f * tile }},
-        {{  scale, -scale, 0.0f, 1.0f }, { 1.0f * tile, 1.0f * tile }},
-        {{  scale,  scale, 0.0f, 1.0f }, { 1.0f * tile, 0.0f * tile }},
-        {{ -scale,  scale, 0.0f, 1.0f }, { 0.0f * tile, 0.0f * tile }},
+        {{ -scale, -scale, 0.0f, 1.0f }, { }, { }, { }, { 0.0f, tile }},
+        {{  scale, -scale, 0.0f, 1.0f }, { }, { }, { }, { tile, tile }},
+        {{  scale,  scale, 0.0f, 1.0f }, { }, { }, { }, { tile, 0.0f }},
+        {{ -scale,  scale, 0.0f, 1.0f }, { }, { }, { }, { 0.0f, 0.0f }},
     },
     _indices { 0u, 1u, 2u, 2u, 3u, 0u }
 { }

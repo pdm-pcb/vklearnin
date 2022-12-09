@@ -7,6 +7,9 @@ namespace vkl {
 
 struct Vertex {
     glm::vec4 position;
+    glm::vec4 normal;
+    glm::vec4 tangent;
+    glm::vec4 bitangent;
     glm::vec2 texcoord;
 
     const static std::vector<vk::VertexInputBindingDescription>   bindings;

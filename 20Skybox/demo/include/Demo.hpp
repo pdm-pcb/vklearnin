@@ -57,6 +57,10 @@ private:
     vkl::Swapchain const *_swapchain;
     std::vector<vkl::Pipeline *> _pipelines;
 
+    vkl::Pipeline *_object_pipeline;
+    vkl::Pipeline *_envmap_pipeline;
+    vkl::Pipeline *_skybox_pipeline;
+
     using FrameSets = std::array<vkl::DescriptorSet,
                                  vkl::RenderConfig::swapchain_image_count>;
 
