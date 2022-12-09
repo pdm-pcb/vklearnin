@@ -179,109 +179,109 @@ const vk::CommandBuffer & Demo::execute_pipelines(const uint32_t frame_index) {
             { }
         );
 
-//
-// Bind the objects pipeline
-//
-        command_buffer.bindPipeline(
-            vk::PipelineBindPoint::eGraphics,
-            _object_pipeline->native()
-        );
+// //
+// // Bind the objects pipeline
+// //
+//         command_buffer.bindPipeline(
+//             vk::PipelineBindPoint::eGraphics,
+//             _object_pipeline->native()
+//         );
 
-        // Establish the area we can draw to
-        command_buffer.setViewport(0u, _object_pipeline->viewport());
-        command_buffer.setScissor(0u, _object_pipeline->scissor());
+//         // Establish the area we can draw to
+//         command_buffer.setViewport(0u, _object_pipeline->viewport());
+//         command_buffer.setScissor(0u, _object_pipeline->scissor());
 
-// -----------------------------------------------------------------------------
-// Cube
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _object_pipeline->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _cube_texture.native(),
-            { }
-        );
+// // -----------------------------------------------------------------------------
+// // Cube
+//         command_buffer.bindDescriptorSets(
+//             vk::PipelineBindPoint::eGraphics,
+//             _object_pipeline->layout(),
+//             vkl::Pipeline::BindingFreq::PER_MATERIAL,
+//             _cube_texture.native(),
+//             { }
+//         );
 
-        auto cube_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { -4.0f, 0.0f, -2.0f }),
-            vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
-            { 0.75f, 1.0f, 0.0f }
-        );
-        instance_data.model_matrix = cube_matrix;
+//         auto cube_matrix = glm::rotate(
+//             glm::translate(vkl::math::ident_mat4, { -4.0f, 0.0f, -2.0f }),
+//             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
+//             { 0.75f, 1.0f, 0.0f }
+//         );
+//         instance_data.model_matrix = cube_matrix;
 
-        command_buffer.pushConstants<InstanceData>(
-            _object_pipeline->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
+//         command_buffer.pushConstants<InstanceData>(
+//             _object_pipeline->layout(),
+//             vk::ShaderStageFlagBits::eVertex,
+//             0u,
+//             instance_data
+//         );
 
-        vkl::Renderer::draw(
-            command_buffer,
-            _cube->vertex_buffer(),
-            _cube->index_buffer(),
-            static_cast<uint32_t>(_cube->faces().size() * 3)
-        );
+//         vkl::Renderer::draw(
+//             command_buffer,
+//             _cube->vertex_buffer(),
+//             _cube->index_buffer(),
+//             static_cast<uint32_t>(_cube->faces().size() * 3)
+//         );
 
-// -----------------------------------------------------------------------------
-// XY Plane
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _object_pipeline->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _xy_plane_texture.native(),
-            { }
-        );
+// // -----------------------------------------------------------------------------
+// // XY Plane
+//         command_buffer.bindDescriptorSets(
+//             vk::PipelineBindPoint::eGraphics,
+//             _object_pipeline->layout(),
+//             vkl::Pipeline::BindingFreq::PER_MATERIAL,
+//             _xy_plane_texture.native(),
+//             { }
+//         );
 
-        auto xy_plane_matrix = glm::rotate(
-            glm::translate(vkl::math::ident_mat4, { 4.0f, 0.0f, -2.0f }),
-            vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
-            { 0.0f, 0.0f, 1.0f }
-        );
-        instance_data.model_matrix = xy_plane_matrix;
+//         auto xy_plane_matrix = glm::rotate(
+//             glm::translate(vkl::math::ident_mat4, { 4.0f, 0.0f, -2.0f }),
+//             vkl::Timekeeper::runtime() * vkl::math::pi_over_four,
+//             { 0.0f, 0.0f, 1.0f }
+//         );
+//         instance_data.model_matrix = xy_plane_matrix;
 
-        command_buffer.pushConstants<InstanceData>(
-            _object_pipeline->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
+//         command_buffer.pushConstants<InstanceData>(
+//             _object_pipeline->layout(),
+//             vk::ShaderStageFlagBits::eVertex,
+//             0u,
+//             instance_data
+//         );
 
-        vkl::Renderer::draw(
-            command_buffer,
-            _xy_plane->vertex_buffer(),
-            _xy_plane->index_buffer(),
-            static_cast<uint32_t>(_xy_plane->indices().size())
-        );
+//         vkl::Renderer::draw(
+//             command_buffer,
+//             _xy_plane->vertex_buffer(),
+//             _xy_plane->index_buffer(),
+//             static_cast<uint32_t>(_xy_plane->indices().size())
+//         );
 
-// -----------------------------------------------------------------------------
-// XZ Plane
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            _object_pipeline->layout(),
-            vkl::Pipeline::BindingFreq::PER_MATERIAL,
-            _xz_plane_texture.native(),
-            { }
-        );
+// // -----------------------------------------------------------------------------
+// // XZ Plane
+//         command_buffer.bindDescriptorSets(
+//             vk::PipelineBindPoint::eGraphics,
+//             _object_pipeline->layout(),
+//             vkl::Pipeline::BindingFreq::PER_MATERIAL,
+//             _xz_plane_texture.native(),
+//             { }
+//         );
 
-        auto xz_plane_matrix = glm::translate(
-            vkl::math::ident_mat4,
-            { 0.0f, -10.0f, 0.0f }
-        );
-        instance_data.model_matrix = xz_plane_matrix;
+//         auto xz_plane_matrix = glm::translate(
+//             vkl::math::ident_mat4,
+//             { 0.0f, -10.0f, 0.0f }
+//         );
+//         instance_data.model_matrix = xz_plane_matrix;
 
-        command_buffer.pushConstants<InstanceData>(
-            _object_pipeline->layout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0u,
-            instance_data
-        );
+//         command_buffer.pushConstants<InstanceData>(
+//             _object_pipeline->layout(),
+//             vk::ShaderStageFlagBits::eVertex,
+//             0u,
+//             instance_data
+//         );
 
-        vkl::Renderer::draw(
-            command_buffer,
-            _xz_plane->vertex_buffer(),
-            _xz_plane->index_buffer(),
-            static_cast<uint32_t>(_xz_plane->indices().size())
-        );
+//         vkl::Renderer::draw(
+//             command_buffer,
+//             _xz_plane->vertex_buffer(),
+//             _xz_plane->index_buffer(),
+//             static_cast<uint32_t>(_xz_plane->indices().size())
+//         );
 
 //
 // Bind the envmap pipeline
