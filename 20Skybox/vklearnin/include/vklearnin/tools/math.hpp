@@ -14,11 +14,12 @@ const auto up_vec3      = glm::vec3 { 0.0f, 1.0f,  0.0f };
 const auto right_vec3   = glm::vec3 { 1.0f, 0.0f,  0.0f };
 const auto forward_vec3 = glm::vec3 { 0.0f, 0.0f, -1.0f };
 
-static constexpr float pi           = 3.14159265f;
-static constexpr float two_pi       = pi * 2.0f;
-static constexpr float pi_over_180  = pi / 180.0f;
-static constexpr float pi_over_two  = pi / 2.0f;
-static constexpr float pi_over_four = pi / 4.0f;
+static constexpr float pi            = 3.14159265f;
+static constexpr float two_pi        = pi * 2.0f;
+static constexpr float pi_over_180   = pi / 180.0f;
+static constexpr float pi_over_two   = pi / 2.0f;
+static constexpr float pi_over_four  = pi / 4.0f;
+static constexpr float pi_over_eight = pi / 8.0f;
 
 } // namespace math
 } // namespace vkl

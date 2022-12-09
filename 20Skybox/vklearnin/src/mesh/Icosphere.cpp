@@ -129,11 +129,11 @@ Index Icosphere::_find_midpoint(const Index index_a, const Index index_b,
 
 // =============================================================================
 void Icosphere::_generate_UVs() {
-    // First, generate the naive coordinates
     for(auto &vertex : _vertices) {
-        float u = std::atan2f(vertex.position.z, vertex.position.x) /
-                  math::two_pi;
-        float v = (std::asinf(vertex.position.y) / math::pi) + 0.5f;
+        auto normalized = glm::normalize(glm::vec3(vertex.position));
+
+        float u = 0.5f + std::atan2f(normalized.z, normalized.x) / math::two_pi;
+        float v = 0.5f - std::asinf(normalized.y) / math::pi;
 
         vertex.texcoord = { u, v };
     }
@@ -144,23 +144,24 @@ Icosphere::Icosphere(const float scale, const uint32_t subdivisions) :
     _vertex_buffer { },
     _index_buffer  { }
 {
-    auto t = (1.0f + std::sqrt(5.0f)) * 0.5f;
+    float golden_ratio = (1.0f + sqrt(5.0f)) * 0.5f;
+
     _vertices = {
-        { _normalize(scale, { -1.0f,  t, 0.0f }), { }},
-        { _normalize(scale, {  1.0f,  t, 0.0f }), { }},
-        { _normalize(scale, { -1.0f, -t, 0.0f }), { }},
+        { _normalize(scale, { -1.0f,  golden_ratio, 0.0f }), { }},
+        { _normalize(scale, {  1.0f,  golden_ratio, 0.0f }), { }},
+        { _normalize(scale, { -1.0f, -golden_ratio, 0.0f }), { }},
 
-        { _normalize(scale, {  1.0f, -t, 0.0f }), { }},
-        { _normalize(scale, { 0.0f, -1.0f,  t }), { }},
-        { _normalize(scale, { 0.0f,  1.0f,  t }), { }},
+        { _normalize(scale, {  1.0f, -golden_ratio, 0.0f }), { }},
+        { _normalize(scale, { 0.0f, -1.0f,  golden_ratio }), { }},
+        { _normalize(scale, { 0.0f,  1.0f,  golden_ratio }), { }},
 
-        { _normalize(scale, { 0.0f, -1.0f, -t }), { }},
-        { _normalize(scale, { 0.0f,  1.0f, -t }), { }},
-        { _normalize(scale, {  t, 0.0f, -1.0f }), { }},
+        { _normalize(scale, { 0.0f, -1.0f, -golden_ratio }), { }},
+        { _normalize(scale, { 0.0f,  1.0f, -golden_ratio }), { }},
+        { _normalize(scale, {  golden_ratio, 0.0f, -1.0f }), { }},
 
-        { _normalize(scale, {  t, 0.0f,  1.0f }), { }},
-        { _normalize(scale, { -t, 0.0f, -1.0f }), { }},
-        { _normalize(scale, { -t, 0.0f,  1.0f }), { }},
+        { _normalize(scale, {  golden_ratio, 0.0f,  1.0f }), { }},
+        { _normalize(scale, { -golden_ratio, 0.0f, -1.0f }), { }},
+        { _normalize(scale, { -golden_ratio, 0.0f,  1.0f }), { }},
     };
 
     _faces = {
