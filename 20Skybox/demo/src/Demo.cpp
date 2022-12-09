@@ -542,6 +542,8 @@ void Demo::_update_camera(const uint32_t frame_index) {
         _camera_orientation.up
     );
 
+    _camera_data.position = glm::vec4(_camera_orientation.position, 1.0f);
+
     _per_frame_sets[frame_index].update_ubo(0, &_camera_data);
 }
 

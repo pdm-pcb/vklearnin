@@ -6,6 +6,7 @@
 struct CameraData {
     glm::mat4 view_matrix { 1.0f };
     glm::mat4 proj_matrix { 1.0f };
+    glm::vec4 position    { 0.0f };
 };
 
 struct CameraOrientation {
