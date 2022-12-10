@@ -16,7 +16,7 @@ Demo::create_pipelines(const vkl::Swapchain &swapchain) {
     }
 
     //
-    // Pipeline creation
+    // Initial pipeline creation
     //
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
     _pipelines.push_back(new vkl::Pipeline(*_swapchain));
