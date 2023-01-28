@@ -39,7 +39,7 @@
             }
         },
         {
-            "name": "windows-base",
+            "name": "windows-base-msvc",
             "hidden": true,
             "inherits": "base",
             "architecture": {
@@ -63,27 +63,69 @@
             }
         },
         {
-            "name": "windows-debug-vulkan",
+            "name": "windows-base-llvm",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Windows"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "windows-debug-msvc",
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
             },
-            "displayName": "Windows Vulkan Debug",
-            "inherits": "windows-base",
+            "displayName": "Windows Debug MSVC",
+            "inherits": "windows-base-msvc",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "windows-release-vulkan",
+            "name": "windows-release-msvc",
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
             },
-            "displayName": "Windows Vulkan Release",
-            "inherits": "windows-base",
+            "displayName": "Windows Release MSVC",
+            "inherits": "windows-base-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows-debug-llvm",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "displayName": "Windows Debug LLVM",
+            "inherits": "windows-base-llvm",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-release-llvm",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "displayName": "Windows Release LLVM",
+            "inherits": "windows-base-llvm",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }

@@ -1,0 +1,175 @@
+{
+  "main": {
+    "id": "87f08453220a47f6",
+    "type": "split",
+    "children": [
+      {
+        "id": "2dc56ab1dd3f0136",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "49adfcd541c9117c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "00zDefinitions.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "b9f92c3d6b13af50",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "11VertexBuffers.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "7d701657be5fc575",
+    "type": "split",
+    "children": [
+      {
+        "id": "9b03f25e79381392",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a682f08cc7c17951",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "6220fe38cf1d2c80",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "0ba0f03cdbac49c5",
+            "type": "leaf",
+            "state": {
+              "type": "starred",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 315.5
+  },
+  "right": {
+    "id": "de4651be42096052",
+    "type": "split",
+    "children": [
+      {
+        "id": "1d4c1c9a2697af71",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0efb3424c2073121",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "11VertexBuffers.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "ee21dd84f8816ede",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "11VertexBuffers.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "3c602af72de832cc",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "5333c3e1b1da97b0",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "11VertexBuffers.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "b9f92c3d6b13af50",
+  "lastOpenFiles": [
+    "10ShadersAndPipelines.md",
+    "11VertexBuffers.md",
+    "00zDefinitions.md",
+    "09RenderPassesAndFramebuffers.md",
+    "06DevicesAndQueues.md",
+    "07Images.md",
+    "08Swapchain.md",
+    "02APIAndDebugger.md",
+    "01Framework.md",
+    "00bSetup.md"
+  ]
+}

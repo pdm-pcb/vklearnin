@@ -7,10 +7,10 @@ In the plainest terms, a host can be considered the CPU and RAM of the machine w
 The type is [vk::Instance](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkInstance.html). As the spec says, this is our first major departure from OpenGL. While the GL context has the (in)convenient trait of being a giant, global, finite state machine, Vulkan opts for an instance, which is distinct per application. It's also thread-aware, so there are situations where you're empowered to delegate chunks of a larger task to different threads.
 
 ### Physical Device
-A [vk::PhysicalDevice](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDevice.html) corresponds with your graphics adapter, whether emulated, integrated, or descrete. From the physical device we can query VRAM amount, driver version, MSAA and mipmap sample support, and more.
+A [vk::PhysicalDevice](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDevice.html) corresponds with your graphics adapter, whether emulated, integrated, or discrete. From the physical device we can query VRAM amount, driver version, MSAA and mipmap sample support, and more.
 
 ## Surface
-A [vk::SurfaceKHR](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSurfaceKHR.html) is provided by the platform on which your program runs. The host will provide some portion or the whole of a display where your program may present images. Between the phsyical device and the surface, things such as color space, image format, and maximum resolution can be queried.
+A [vk::SurfaceKHR](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSurfaceKHR.html) is provided by the platform on which your program runs. The host will provide some portion or the whole of a display where your program may present images. Between the physical device and the surface, things such as color space, image format, and maximum resolution can be queried.
 
 ## (Logical) Device
 The spec page for [vk::Device](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDevice.html) is a touch sparse, but it's intended to be. The logical device is responsible for managing higher-level concepts than itself, both creation and destruction often times. Multiple logical devices may be created from one physical device.
@@ -19,7 +19,7 @@ The spec page for [vk::Device](https://registry.khronos.org/vulkan/specs/1.3-ext
 As with the logical device, [vk::Queue](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkQueue.html) is simply a handle. The concept of queues is central to the Vulkan paradigm though, so there's some utility here. A given logical device will have a handful of queue families which themselves are able to accept certain types of commands. For example, a queue may accept graphics commands (related to drawing) presentation commands (related to showing an image on screen) or compute commands (related to general purpose GPU programming). Queues may accept more than one type of command, and this ought to be queried on a per-device basis.
 
 ## Command Buffer
-The medium by which any command is relayed to a given device queue will be an associated [vk::CommandBuffer](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkCommandBuffer.html). Commands are recorded to their respective buffers and then submitted to the relevant queue for eventual excution on the GPU. There are both primary and secondary command buffers, which are used in conjunction when rendering multipass scenes.
+The medium by which any command is relayed to a given device queue will be an associated [vk::CommandBuffer](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkCommandBuffer.html). Commands are recorded to their respective buffers and then submitted to the relevant queue for eventual execution on the GPU. There are both primary and secondary command buffers, which are used in conjunction when rendering multi-pass scenes.
 
 ## Synchronization
 As mentioned above, Vulkan is designed to consider applications which will benefit from multiple threads sharing historically monolithic workloads. As stated by [this section](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization) of the API spec, there are five means by which one can explicitly synchronize the operations of a program. For the purposes of this tutorial, I'll predominately focus on just two: fences and semaphores.
@@ -28,7 +28,7 @@ As mentioned above, Vulkan is designed to consider applications which will benef
 A [vk::Fence](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkFence.html) is a comparatively crude synchronization primitive which will emit a signal when prompted to do so. A call to [WaitForFences()](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkWaitForFences.html) will halt execution on a given thread until the fence(s) in question emit the required signal.
 
 ## Semaphore
-Traditionally, a mutex is a **MUT**ually **EX**clusive control on some shared resource, while a Semaphore is a, "[signal bearer](https://en.wikipedia.org/wiki/Semaphore)." Vulkan offers the [vk::Semaphore](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSemaphore.html) as a more flexible signaling mechanism when compared to fences.
+Traditionally, a mutex is a **MUT**ually **EX**clusive control on some shared resource, while a Semaphore is a [signal bearer](https://en.wikipedia.org/wiki/Semaphore). Vulkan offers the [vk::Semaphore](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSemaphore.html) as a more flexible signaling mechanism when compared to fences.
 
 ## Render Pass
 In keeping with modern rendering techniques, Vulkan presumes your program will require some number of passes to render a given scene. A [vk::RenderPass](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkRenderPass.html) is the first layer of this flavorful cake which facilitates such an approach.
@@ -54,7 +54,7 @@ The [vk::Buffer](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/v
 ## Image
 A [vk::Image](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImage.html) may be multidimensional, supporting two or three 'axes'. Unlike buffers, images require additional information to be interpreted. First is the [vk::ImageLayout](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageLayout.html), which can range from depth stencil to transfer destination to video decoding. These layouts can and frequently do change during operation.
 
-The second companion to images is the [vk::ImageView](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageView.html). A view is the means by which your program interacts with a given image or subresource of that image (array layers or mipmap levels, for example).
+Another companion to images is the [vk::ImageView](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkImageView.html). A view is the means by which your program interacts with a given image or subresource of that image (array layers or mipmap levels, for example).
 
 ## Descriptors
 Descriptors are another layer of representation between the CPU and the GPU regarding shader resources. Descriptors themselves cannot be individually sent to the GPU, however - there must be a [vk::DescriptorSet](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDescriptorSet.html) for that. And descriptor sets aren't just declared, but allocated from a [vk::DescriptorPool](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDescriptorPool.html).

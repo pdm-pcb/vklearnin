@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.19)
 project(
     vklearnin
     VERSION 0.1.0
-    DESCRIPTION "A tutorial."
+    DESCRIPTION "Exploring real time graphics."
     LANGUAGES CXX C
 )
 

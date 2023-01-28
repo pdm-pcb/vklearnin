@@ -1,0 +1,6 @@
+#ifndef VKLEARNIN_TOOLS_MEMTRACKER_HPP
+#define VKLEARNIN_TOOLS_MEMTRACKER_HPP
+
+#include "vklearnin/system/pch.hpp"
+
+#endif // VKLEARNIN_TOOLS_MEMTRACKER_HPP
