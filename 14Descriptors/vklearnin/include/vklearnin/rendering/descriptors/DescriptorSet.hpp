@@ -25,7 +25,7 @@ public:
     DescriptorSet();
     ~DescriptorSet() = default;
 
-    DescriptorSet(DescriptorSet &&other);
+    DescriptorSet(DescriptorSet &&other) noexcept;
     DescriptorSet(const DescriptorSet &) = delete;
 
     DescriptorSet& operator=(DescriptorSet &&) = delete;

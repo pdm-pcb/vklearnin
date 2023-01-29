@@ -108,8 +108,8 @@ DescriptorSet::DescriptorSet() :
     _set    { }
 { }
 
-DescriptorSet::DescriptorSet(DescriptorSet &&other) :
-    _ubos { other._ubos },
+DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept :
+    _ubos { std::move(other._ubos) },
     _set  { other._set  }
 {
     other._ubos.clear();
