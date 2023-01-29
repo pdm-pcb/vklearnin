@@ -17,6 +17,20 @@ layout(location = 0) out vec4 out_color;
 void main() {
 	out_color = in_color;
 
+	// mat4 model_mat = mat4(
+	// 	0.7071069, -0.0000000,  0.7071066, 0.0f,
+	// 	0.4999999,  0.7071069, -0.5000000, 0.0f,
+	// 	-0.5000000,  0.7071066,  0.5000002, 0.0f,
+	// 	0.0f, 0.0f, 0.0f, 1.0f
+	// );
+
+	// mat4 model_mat = mat4(
+	// 	0.7071069, -0.0000000, -0.7071066, 0.0f,
+	// 	0.4999999,  0.7071069,  0.5000000, 0.0f,
+	// 	0.5000000, -0.7071066,  0.5000002, 0.0f,
+	// 	0.0f, 0.0f, 0.0f, 1.0f
+	// );
+
 	gl_Position = proj_mat * view_mat * vec4(
 		position.x * vert_scale.x,
 		position.y * vert_scale.y,

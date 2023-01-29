@@ -3,6 +3,7 @@
 
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/meshes/XYPlane.hpp"
+#include "vklearnin/meshes/Cube.hpp"
 
 class Demo final : public vkl::Application {
 public:
@@ -22,6 +23,7 @@ public:
 
 private:
     vkl::XYPlane _xy_plane;
+    vkl::Cube    _cube;
     std::array<float, 4> _vert_scale;
     std::array<float, 4> _color_scale;
 };
