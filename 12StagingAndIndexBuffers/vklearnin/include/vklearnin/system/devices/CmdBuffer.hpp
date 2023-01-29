@@ -18,8 +18,8 @@ public:
     CmdBuffer(CmdBuffer &&other) noexcept;
     CmdBuffer(const CmdBuffer &) = delete;
 
-    CmdBuffer & operator=(CmdBuffer &&) = delete;
-    CmdBuffer & operator=(const CmdBuffer &) = delete;
+    CmdBuffer& operator=(CmdBuffer &&) = delete;
+    CmdBuffer& operator=(const CmdBuffer &) = delete;
 
 private:
     vk::CommandPool   _pool;

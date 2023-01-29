@@ -3,20 +3,18 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/meshes/Vertex.hpp"
+#include "vklearnin/resources/buffers/BufferTools.hpp"
 
 namespace vkl {
 
 class VertexBuffer {
 public:
-    void create(const size_t size_bytes,
-                const vk::BufferUsageFlags usage_flags,
-                const vk::SharingMode sharing_mod,
-                const vk::MemoryPropertyFlags memory_properties);
-    void destroy();
+    void init(const size_t size);
+    void shutdown();
 
     void populate_buffer(const std::vector<Vertex> &vertices);
 
-    inline auto native() const { return _buffer; }
+    inline const auto & native() const { return _buffer.handle; }
 
     VertexBuffer();
     ~VertexBuffer() = default;
@@ -24,18 +22,11 @@ public:
     VertexBuffer(VertexBuffer &&) = delete;
     VertexBuffer(const VertexBuffer &) = delete;
 
-    VertexBuffer & operator=(VertexBuffer &&) = delete;
-    VertexBuffer & operator=(const VertexBuffer &) = delete;
+    VertexBuffer& operator=(VertexBuffer &&) = delete;
+    VertexBuffer& operator=(const VertexBuffer &) = delete;
 
 private:
-    size_t           _size;
-    vk::Buffer       _buffer;
-    vk::DeviceMemory _memory;
-
-    void _allocate(const vk::MemoryPropertyFlags memory_properties);
-
-    static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
-                                      const vk::MemoryRequirements &reqs);
+    Buffer _buffer;
 };
 
 } // namespace vkl

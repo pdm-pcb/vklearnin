@@ -20,8 +20,8 @@ public:
     Image2D(Image2D &&) = delete;
     Image2D(const Image2D &) = delete;
 
-    Image2D & operator=(Image2D &&) = delete;
-    Image2D & operator=(const Image2D &) = delete;
+    Image2D& operator=(Image2D &&) = delete;
+    Image2D& operator=(const Image2D &) = delete;
 
 private:
     vk::Image       _image;
@@ -33,4 +33,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDER_IMAGES_IMAGE2D_HPP
+#endif // VKLEARNIN_RENDERINGIMAGES_IMAGE2D_HPP

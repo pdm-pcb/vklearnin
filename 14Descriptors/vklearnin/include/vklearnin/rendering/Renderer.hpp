@@ -37,7 +37,7 @@ public:
     Renderer& operator=(const Renderer &) = delete;
 
 private:
-    std::vector<Framebuffer>   _framebuffers;
+    std::vector<Framebuffer> _framebuffers;
 
     DescriptorPool             _desc_pool;
     DescriptorSetLayout        _desc_layout;

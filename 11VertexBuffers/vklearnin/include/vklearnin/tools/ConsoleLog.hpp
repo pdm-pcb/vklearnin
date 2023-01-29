@@ -8,6 +8,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h> // definitely want color, right?
+#include <spdlog/fmt/ostr.h> // support for ostream operator overloading
 
 
 namespace vkl {

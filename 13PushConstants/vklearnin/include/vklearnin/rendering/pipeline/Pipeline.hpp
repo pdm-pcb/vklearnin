@@ -19,14 +19,14 @@ public:
         const Vertex::AttribDescriptions &attributes
     );
 
-    void add_push_constant(const vk::PushConstantRange &push_constant);
+    void add_push_constant(vk::ShaderStageFlags stage_flags, uint32_t size);
 
     void create(const RenderPass &render_pass);
     void destroy();
     void update_dimensions();
 
-    inline auto native()           const { return _pipeline; }
-    inline auto layout()           const { return _layout; }
+    inline const auto & native()   const { return _pipeline; }
+    inline const auto & layout()   const { return _layout; }
     inline const auto & viewport() const { return _viewport; }
     inline const auto & scissor()  const { return _scissor; }
 

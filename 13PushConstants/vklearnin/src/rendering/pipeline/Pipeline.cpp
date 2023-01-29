@@ -48,16 +48,18 @@ void Pipeline::describe_vertex_input(
 }
 
 // =============================================================================
-void Pipeline::add_push_constant(const vk::PushConstantRange &push_constant) {
+void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
+                                 uint32_t size)
+{
     static uint32_t running_offset = 0u;
 
     _push_constants.push_back({
-        .stageFlags = push_constant.stageFlags,
+        .stageFlags = stage_flags,
         .offset = running_offset,
-        .size = push_constant.size
+        .size = size
     });
 
-    running_offset += push_constant.size;
+    running_offset += size;
 }
 
 // =============================================================================

@@ -13,7 +13,7 @@ public:
                 const RenderPass &render_pass);
     void destroy();
 
-    inline auto native() const { return _framebuffer; }
+    inline const auto & native() const { return _framebuffer; }
 
     Framebuffer();
     ~Framebuffer() = default;

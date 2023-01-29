@@ -74,32 +74,8 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
 void Renderer::init() {
     _render_pass.create();
 
-    for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
-        _framebuffers[frame].create(
-            { vkl::Swapchain::image(frame)->view() },
-            _render_pass
-        );
-    }
-
-    _pipeline.vert_from_spirv("shaders/02flat_color.vert");
-    _pipeline.frag_from_spirv("shaders/02flat_color.frag");
-
-    _pipeline.add_push_constant({
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .size = sizeof(std::array<float, 4>)
-    });
-
-    _pipeline.add_push_constant({
-        .stageFlags = vk::ShaderStageFlagBits::eFragment,
-        .size = sizeof(std::array<float, 4>)
-    });
-
-    _pipeline.describe_vertex_input(
-        vkl::Vertex::binding_desc(),
-        vkl::Vertex::attrib_desc()
-    );
-
-    _pipeline.create(_render_pass);
+    _init_framebuffers();
+    _init_pipeline();
 }
 
 // =============================================================================
@@ -114,9 +90,43 @@ void Renderer::shutdown() {
 }
 
 // =============================================================================
+void Renderer::_init_framebuffers() {
+    for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
+        _framebuffers[frame].create(
+            { vkl::Swapchain::image(frame)->view() },
+            _render_pass
+        );
+    }
+}
+
+// =============================================================================
+void Renderer::_init_pipeline() {
+    _pipeline.vert_from_spirv("shaders/02flat_color.vert");
+    _pipeline.frag_from_spirv("shaders/02flat_color.frag");
+
+    _pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eVertex,
+        sizeof(std::array<float, 4>)
+    );
+
+    _pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eFragment,
+        sizeof(std::array<float, 4>)
+    );
+
+    _pipeline.describe_vertex_input(
+        vkl::Vertex::binding_desc(),
+        vkl::Vertex::attrib_desc()
+    );
+
+    _pipeline.create(_render_pass);
+}
+
+// =============================================================================
 Renderer::Renderer() :
-    _render_pass { },
-    _pipeline { }
+_render_pass { },
+_pipeline    { },
+_draws       { }
 {
     _framebuffers.resize(vkl::RenderConfig::image_count);
 }

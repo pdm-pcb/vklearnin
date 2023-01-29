@@ -22,8 +22,8 @@ void IndexBuffer::shutdown() {
 }
 
 // =============================================================================
-void IndexBuffer::populate_buffer(const std::vector<Face> &faces) {
-    BufferTools::host_to_device(_buffer, faces.data());
+void IndexBuffer::populate_buffer(const std::vector<Index> &indices) {
+    BufferTools::host_to_device(_buffer, indices.data());
 }
 
 // =============================================================================

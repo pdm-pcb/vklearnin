@@ -12,7 +12,7 @@ public:
     void create(const vk::CommandPoolCreateFlags flags = { });
     void destroy();
 
-    inline auto & native() const { return _pool; }
+    inline const auto &native() const { return _pool; }
 
     CmdPool();
     ~CmdPool() = default;
@@ -20,8 +20,8 @@ public:
     CmdPool(CmdPool &&other) noexcept;
     CmdPool(const CmdPool &) = delete;
 
-    CmdPool & operator=(CmdPool &&) = delete;
-    CmdPool & operator=(const CmdPool &) = delete;
+    CmdPool& operator=(CmdPool &&) = delete;
+    CmdPool& operator=(const CmdPool &) = delete;
 
 private:
     vk::CommandPool _pool;

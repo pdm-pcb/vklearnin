@@ -38,6 +38,9 @@
     #undef max // how I've got things set up. This is a blunt approach, but
                // but nobody should be globally defining 'min' and 'max' in the
                // first place.
+    // Grr...
+    #undef near
+    #undef far
 
     #include <vulkan/vulkan_win32.h>
 #endif
@@ -45,5 +48,6 @@
 #include <filesystem>
 #include <fstream>
 #include <set>
+#include <numbers>
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

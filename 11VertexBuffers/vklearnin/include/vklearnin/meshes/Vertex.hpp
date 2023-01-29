@@ -5,7 +5,7 @@
 
 namespace vkl {
 
-class Vertex {
+class Vertex final {
 public:
     using BindingDescriptions = std::vector<vk::VertexInputBindingDescription>;
     using AttribDescriptions = std::vector<vk::VertexInputAttributeDescription>;

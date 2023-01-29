@@ -16,6 +16,7 @@ FOR /d /r %%F IN (.vs?) DO (
     @IF EXIST %%F RMDIR /S /Q "%%F"
 )
 
+DEL /A /F /Q /S "*.bak"
 DEL /A /F /Q /S "*.exe*"
 DEL /A /F /Q /S "*.pdb*"
 DEL /A /F /Q /S "*.ilk*"

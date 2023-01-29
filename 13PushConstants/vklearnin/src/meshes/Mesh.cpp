@@ -13,7 +13,7 @@ void Mesh::_set_vertices(const std::vector<Vertex> &vertices) {
 // =============================================================================
 void Mesh::_set_indices(const std::vector<Index> &indices) {
     _index_data = indices;
-    _index_buffer.init(sizeof(indices) * _index_data.size());
+    _index_buffer.init(sizeof(Index) * _index_data.size());
     _index_buffer.populate_buffer(_index_data);
 }
 

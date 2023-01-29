@@ -11,8 +11,8 @@ public:
     void request_queue();
 
     inline const auto & native()      const { return _queue;       }
-    inline auto index()               const { return _index;       }
-    inline auto priority()            const { return _priority;    }
+    inline const auto & index()       const { return _index;       }
+    inline const auto & priority()    const { return _priority;    }
     inline const auto & create_info() const { return _create_info; }
 
     CmdQueue();

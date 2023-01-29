@@ -14,7 +14,7 @@ public:
     static void destroy_device();
     static void shutdown();
 
-    inline static const vk::Instance & native() { return _instance; }
+    inline static const auto & native() { return _instance; }
 
     GraphicsAPI() = delete;
     ~GraphicsAPI() = delete;
@@ -22,8 +22,8 @@ public:
     GraphicsAPI(GraphicsAPI &&other) = delete;
     GraphicsAPI(const GraphicsAPI &other) = delete;
 
-    GraphicsAPI & operator=(GraphicsAPI &&other) = delete;
-    GraphicsAPI & operator=(const GraphicsAPI &other) = delete;
+    GraphicsAPI& operator=(GraphicsAPI &&other) = delete;
+    GraphicsAPI& operator=(const GraphicsAPI &other) = delete;
 
 private:
     static vk::DynamicLoader _loader;

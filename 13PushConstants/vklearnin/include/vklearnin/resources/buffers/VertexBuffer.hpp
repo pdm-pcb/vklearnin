@@ -14,7 +14,7 @@ public:
 
     void populate_buffer(const std::vector<Vertex> &vertices);
 
-    inline auto native() const { return _buffer.handle; }
+    inline const auto & native() const { return _buffer.handle; }
 
     VertexBuffer();
     ~VertexBuffer() = default;

@@ -3,7 +3,7 @@
 
 #include "vklearnin/system/Engine.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
-#include "vklearnin/render/swapchain/Swapchain.hpp"
+#include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
 namespace vkl {
@@ -29,6 +29,8 @@ void Application::run() {
             cummulative_frametime = 0.0f;
             cummulative_frame_count = 0u;
         }
+
+        Timekeeper::update();
     }
 
     auto result = LogicalDevice::native().waitIdle();

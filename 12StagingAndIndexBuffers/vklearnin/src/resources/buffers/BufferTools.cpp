@@ -3,6 +3,7 @@
 
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
+#include "vklearnin/system/devices/CmdBuffer.hpp"
 
 namespace vkl::BufferTools {
 

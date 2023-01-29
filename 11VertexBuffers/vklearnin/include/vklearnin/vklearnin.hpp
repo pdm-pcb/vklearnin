@@ -7,18 +7,10 @@
 #include "vklearnin/tools/Timekeeper.hpp"
 
 #include "vklearnin/system/Application.hpp"
-#include "vklearnin/render/RenderConfig.hpp"
+#include "vklearnin/rendering/RenderConfig.hpp"
 
 #include "vklearnin/system/GraphicsAPI.hpp"
-
-#include "vklearnin/render/swapchain/Swapchain.hpp"
-#include "vklearnin/resources/images/Image2D.hpp"
-#include "vklearnin/render/renderpass/CmdPool.hpp"
-#include "vklearnin/render/renderpass/CmdBuffer.hpp"
-#include "vklearnin/render/renderpass/RenderPass.hpp"
-#include "vklearnin/render/renderpass/Framebuffer.hpp"
-#include "vklearnin/render/pipeline/Pipeline.hpp"
-#include "vklearnin/meshes/Vertex.hpp"
+#include "vklearnin/rendering/Renderer.hpp"
 
 namespace vkl {
 

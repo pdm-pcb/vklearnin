@@ -12,7 +12,7 @@ public:
     void create(const vk::CommandPoolCreateFlags flags = { });
     void destroy();
 
-    inline auto & native() const { return _pool; }
+    inline const auto &native() const { return _pool; }
 
     CmdPool();
     ~CmdPool() = default;

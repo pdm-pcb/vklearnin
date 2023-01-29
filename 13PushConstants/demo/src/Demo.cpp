@@ -49,7 +49,7 @@ void Demo::shutdown() {
 
 // =============================================================================
 Demo::Demo() :
-    _xy_plane { },
-    _vert_scale { 1.0f, 1.0f, 0.0f, 0.0f },
+    _xy_plane    { },
+    _vert_scale  { 1.0f, 1.0f, 0.0f, 0.0f },
     _color_scale { 1.0f, 1.0f, 1.0f, 0.0f }
 { }

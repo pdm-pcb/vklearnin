@@ -26,8 +26,8 @@ public:
     Timekeeper(Timekeeper &&other) = delete;
     Timekeeper(const Timekeeper &other) = delete;
     
-    Timekeeper & operator=(Timekeeper &&other) = delete;
-    Timekeeper & operator=(const Timekeeper &other) = delete;
+    Timekeeper& operator=(Timekeeper &&other) = delete;
+    Timekeeper& operator=(const Timekeeper &other) = delete;
 
 private:
     static HRC::time_point _app_start;

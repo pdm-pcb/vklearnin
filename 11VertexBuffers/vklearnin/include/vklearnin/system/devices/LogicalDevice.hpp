@@ -2,10 +2,10 @@
 #define VKLEARNIN_SYSTEM_DEVICES_LOGICALDEVICE_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/system/devices/CmdQueue.hpp"
+#include "vklearnin/system/devices/CmdPool.hpp"
 
 namespace vkl {
-
-class CmdQueue;
 
 class LogicalDevice final {
 public:
@@ -13,12 +13,14 @@ public:
     static void destroy();
 
     inline static const auto & native()    { return _logical_device; }
-    inline static const auto & cmd_queue() { return _cmd_queue; }
+    inline static const auto & cmd_queue() { return _cmd_queue;      }
+    inline static auto & transient_pool()  { return _transient_pool; }
 
     LogicalDevice() = delete;
 
 private:
-    static CmdQueue _cmd_queue;
+    static CmdQueue   _cmd_queue;
+    static CmdPool    _transient_pool;
     static vk::Device _logical_device;
 };
 

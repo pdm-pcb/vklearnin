@@ -1,12 +1,12 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
-#include "vklearnin/system/devices/CmdQueue.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 
 namespace vkl {
 
-CmdQueue LogicalDevice::_cmd_queue;
+CmdQueue   LogicalDevice::_cmd_queue      { };
+CmdPool    LogicalDevice::_transient_pool { };
 vk::Device LogicalDevice::_logical_device { };
 
 // =============================================================================
@@ -71,6 +71,8 @@ void LogicalDevice::create() {
 
     // This is the final step in providing the dynamic loader with information
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_logical_device);
+
+    _transient_pool.create(vk::CommandPoolCreateFlagBits::eTransient);
 }
 
 // =============================================================================
@@ -80,6 +82,7 @@ void LogicalDevice::destroy() {
         reinterpret_cast<uint64_t>(VkDevice(native()))
     );
 
+    _transient_pool.destroy();
     _logical_device.destroy();
 }
 

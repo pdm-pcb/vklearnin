@@ -2,7 +2,7 @@
 #include "vklearnin/system/Engine.hpp"
 
 #include "vklearnin/system/Application.hpp"
-#include "vklearnin/render/swapchain/Swapchain.hpp"
+#include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
 namespace vkl {
 
@@ -12,11 +12,33 @@ void Engine::render_loop() {
 
         Swapchain::next_image();
         Swapchain::reset_fence();
-        auto image_index = Swapchain::image_index();
 
-        _cmd_pools[image_index].reset();
-        _application.run_renderpasses(*_cmd_buffers[image_index], image_index);
+        _cmd_pools[Swapchain::image_index()].reset();
+        auto &cmd_buffer = _cmd_buffers[Swapchain::image_index()];
 
+        const vk::CommandBufferBeginInfo begin_info { };
+        auto result = cmd_buffer.native().begin(begin_info);
+        if(result != vk::Result::eSuccess) {
+            CONSOLE_ERROR(
+                "Failed to begin command buffer recording: '{}'",
+                to_string(result)
+            );
+            return;
+        }
+
+            _application.submit_draws(_renderer);
+            _renderer.render_pass(cmd_buffer.native());
+
+        result = cmd_buffer.native().end();
+        if(result != vk::Result::eSuccess) {
+            CONSOLE_ERROR(
+                "Failed to end command buffer recording: '{}'",
+                to_string(result)
+            );
+            return;
+        }
+
+        Swapchain::submit({ cmd_buffer.native() });
         Swapchain::present();
 
     Timekeeper::frame_end();
@@ -26,14 +48,19 @@ void Engine::render_loop() {
 void Engine::init() {
     for(uint32_t frame = 0; frame < _cmd_pools.size(); ++frame) {
         _cmd_pools[frame].create();
-        _cmd_buffers[frame] = _cmd_pools[frame].allocate_buffer();
+        _cmd_buffers[frame].allocate(_cmd_pools[frame].native());
     }
+
+    _renderer.init();
 }
 
 // =============================================================================
 void Engine::shutdown() {
-    for(auto &pool : _cmd_pools) {
-        pool.destroy();
+    _renderer.shutdown();
+
+    for(uint32_t frame = 0; frame < _cmd_pools.size(); ++frame) {
+        _cmd_buffers[frame].free();
+        _cmd_pools[frame].destroy();
     }
 }
 

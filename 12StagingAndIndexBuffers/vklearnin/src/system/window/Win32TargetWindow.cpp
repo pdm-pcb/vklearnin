@@ -86,6 +86,10 @@ void Win32TargetWindow::spawn_window(const uint32_t width,
         RenderConfig::window_height = height;
     }
 
+    RenderConfig::window_aspect =
+        static_cast<float>(RenderConfig::window_width) /
+        static_cast<float>(RenderConfig::window_height);
+
     // Determine the window's eventual position on screen
     auto half_width  = static_cast<int32_t>(RenderConfig::window_width)  / 2;
     auto half_height = static_cast<int32_t>(RenderConfig::window_height) / 2;
@@ -121,9 +125,10 @@ void Win32TargetWindow::spawn_window(const uint32_t width,
     _size_and_place();
 
     CONSOLE_TRACE(
-        "Created Win32 target window: {}x{}",
+        "Created Win32 target window: {}x{} @ {:0.3f}",
         RenderConfig::window_width,
-        RenderConfig::window_height
+        RenderConfig::window_height,
+        RenderConfig::window_aspect
     );
 }
 

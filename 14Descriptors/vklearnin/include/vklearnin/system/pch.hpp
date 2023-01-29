@@ -50,13 +50,4 @@
 #include <set>
 #include <numbers>
 
-namespace vkl {
-
-using PushConstantRanges   = std::vector<vk::PushConstantRange>;
-using DescriptorSetLayouts = std::vector<vk::DescriptorSetLayout>;
-
-using DescBindings = std::vector<vk::DescriptorSetLayoutBinding>;
-
-} // namespace vkl
-
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

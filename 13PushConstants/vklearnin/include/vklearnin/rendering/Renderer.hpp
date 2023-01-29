@@ -32,6 +32,9 @@ private:
     vkl::Pipeline   _pipeline;
 
     std::vector<DrawSubmission> _draws;
+
+    void _init_framebuffers();
+    void _init_pipeline();
 };
 
 } // namespace vkl

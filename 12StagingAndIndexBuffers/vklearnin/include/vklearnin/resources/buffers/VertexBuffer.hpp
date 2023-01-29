@@ -14,7 +14,7 @@ public:
 
     void populate_buffer(const std::vector<Vertex> &vertices);
 
-    inline auto native() const { return _buffer.handle; }
+    inline const auto & native() const { return _buffer.handle; }
 
     VertexBuffer();
     ~VertexBuffer() = default;
@@ -22,8 +22,8 @@ public:
     VertexBuffer(VertexBuffer &&) = delete;
     VertexBuffer(const VertexBuffer &) = delete;
 
-    VertexBuffer & operator=(VertexBuffer &&) = delete;
-    VertexBuffer & operator=(const VertexBuffer &) = delete;
+    VertexBuffer& operator=(VertexBuffer &&) = delete;
+    VertexBuffer& operator=(const VertexBuffer &) = delete;
 
 private:
     Buffer _buffer;
