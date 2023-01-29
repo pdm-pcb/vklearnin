@@ -19,7 +19,8 @@ public:
         const Vertex::AttribDescriptions &attributes
     );
 
-    void add_push_constant(const vk::PushConstantRange &push_constant);
+    void add_descriptor_set(const vk::DescriptorSetLayout &set_layout);
+    void add_push_constant(vk::ShaderStageFlags stage_flags, uint32_t size);
 
     void create(const RenderPass &render_pass);
     void destroy();
@@ -57,7 +58,8 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
-    std::vector<vk::PushConstantRange> _push_constants;
+    std::vector<vk::DescriptorSetLayout> _desc_set_layouts;
+    std::vector<vk::PushConstantRange>   _push_constants;
 
     vk::PipelineLayout _layout;
     vk::Pipeline       _pipeline;

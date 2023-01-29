@@ -32,7 +32,7 @@ void Demo::submit_draws(vkl::Renderer &renderer) {
 // =============================================================================
 void Demo::init() {
     _xy_plane.init(
-        0.5f,
+        1.5f,
         {{
             { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
             { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
@@ -49,7 +49,7 @@ void Demo::shutdown() {
 
 // =============================================================================
 Demo::Demo() :
-    _xy_plane { },
-    _vert_scale { 1.0f, 1.0f, 0.0f, 0.0f },
+    _xy_plane    { },
+    _vert_scale  { 1.0f, 1.0f, 0.0f, 0.0f },
     _color_scale { 1.0f, 1.0f, 1.0f, 0.0f }
 { }

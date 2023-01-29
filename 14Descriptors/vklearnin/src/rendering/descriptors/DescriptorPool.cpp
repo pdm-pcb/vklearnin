@@ -6,15 +6,14 @@
 namespace vkl {
 
 // =============================================================================
-void DescriptorPool::create(const PoolSizes &sizes) {
+void DescriptorPool::create(const uint32_t max_sets, const PoolSizes &sizes) {
     std::vector<vk::DescriptorPoolSize> size_list {
         sizes.begin(),
         sizes.end()
     };
 
-    CONSOLE_TRACE("Creating descriptor pool for {} types", size_list.size());
     const vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = 10u,
+        .maxSets = max_sets,
         .poolSizeCount = static_cast<uint32_t>(size_list.size()),
         .pPoolSizes = size_list.data()
     };

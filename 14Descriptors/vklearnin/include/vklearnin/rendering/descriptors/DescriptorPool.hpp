@@ -8,7 +8,7 @@ namespace vkl {
 class DescriptorPool {
 public:
     using PoolSizes = std::set<vk::DescriptorPoolSize>;
-    void create(const PoolSizes &sizes);
+    void create(const uint32_t max_sets, const PoolSizes &sizes);
     void destroy();
 
     inline const auto &native() const { return _pool; }

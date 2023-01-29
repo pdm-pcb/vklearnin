@@ -17,4 +17,8 @@ FOR /d /r %%F IN (.vs?) DO (
 )
 
 DEL /A /F /Q /S "*.exe*"
-DEL /A /F /Q /S "*.bak*"
+DEL /A /F /Q /S "*.pdb*"
+DEL /A /F /Q /S "*.ilk*"
+DEL /A /F /Q /S "*.spv"
+DEL /A /F /Q /S "*.vert.d"
+DEL /A /F /Q /S "*.frag.d"

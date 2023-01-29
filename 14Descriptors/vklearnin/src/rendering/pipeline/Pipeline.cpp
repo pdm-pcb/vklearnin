@@ -48,16 +48,23 @@ void Pipeline::describe_vertex_input(
 }
 
 // =============================================================================
-void Pipeline::add_push_constant(const vk::PushConstantRange &push_constant) {
+void Pipeline::add_descriptor_set(const vk::DescriptorSetLayout &set_layout) {
+    _desc_set_layouts.push_back(set_layout);
+}
+
+// =============================================================================
+void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
+                                 uint32_t size)
+{
     static uint32_t running_offset = 0u;
 
     _push_constants.push_back({
-        .stageFlags = push_constant.stageFlags,
+        .stageFlags = stage_flags,
         .offset = running_offset,
-        .size = push_constant.size
+        .size = size
     });
 
-    running_offset += push_constant.size;
+    running_offset += size;
 }
 
 // =============================================================================
@@ -274,8 +281,8 @@ void Pipeline::_init_dynamic_states() {
 void Pipeline::_init_layout() {
     // Much like the input state above, the layout of this pipeline is empty.
     const vk::PipelineLayoutCreateInfo layout_info {
-        .setLayoutCount         = 0u,
-        .pSetLayouts            = nullptr,
+        .setLayoutCount = static_cast<uint32_t>(_desc_set_layouts.size()),
+        .pSetLayouts    = _desc_set_layouts.data(),
         .pushConstantRangeCount = static_cast<uint32_t>(_push_constants.size()),
         .pPushConstantRanges    = _push_constants.data()
     };
@@ -308,6 +315,7 @@ Pipeline::Pipeline() :
     _viewport_info      { },
     _raster_info        { },
     _dynamic_state_info { },
+    _desc_set_layouts   { },
     _push_constants     { },
     _layout             { },
     _pipeline           { }
