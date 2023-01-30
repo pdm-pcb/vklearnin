@@ -10,7 +10,7 @@ public:
     void allocate(const vk::CommandPool pool, const bool primary = true);
     void free();
 
-    inline const auto & native() const { return _buffer; }
+    inline const auto& native() const { return _buffer; }
 
     CmdBuffer();
     ~CmdBuffer() = default;

@@ -11,8 +11,8 @@ public:
     static void select_device();
 
     inline static auto queue_index()          { return _queue_index;       }
-    inline static const auto & native()       { return _physical_device;   }
-    inline static const auto & memory_props() { return _memory_properties; }
+    inline static const auto& native()       { return _physical_device;   }
+    inline static const auto& memory_props() { return _memory_properties; }
 
     PhysicalDevice() = delete;
 

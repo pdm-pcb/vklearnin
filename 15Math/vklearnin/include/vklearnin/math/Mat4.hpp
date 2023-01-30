@@ -6,25 +6,30 @@
 
 namespace vkl {
 
+struct Mat3;
+
 struct Mat4 final {
     explicit Mat4(const std::array<Vec4, 4> &vecs);
     Mat4(const Vec4 &x, const Vec4 &y, const Vec4 &z, const Vec4 &w);
     Mat4();
 
-    Mat4 operator*(const Mat4 &other) const;
+#ifdef VKL_USE_GLM
+    explicit Mat4(const glm::mat4 &other);
+    Mat4& operator=(const glm::mat4 &other);
+#endif // VKL_USE_GLM
 
-    Mat4 & operator*=(const Mat4 &other);
-
-    bool operator==(const Mat4 &other) const;
-
-    friend std::ostream & operator<<(std::ostream& out, const Mat4& a);
+    Mat4& operator=(const Mat3 &other);
+    Mat4& operator*=(const Mat4 &other);
 
     std::array<Vec4, 4> rows;
 
     static const Mat4 identity;
 };
 
-std::ostream & operator<<(std::ostream& out, const Mat4& a);
+Mat4 operator*(const Mat4 &a, const Mat4 &b);
+bool operator==(const Mat4 &a, const Mat4 &b);
+
+std::ostream& operator<<(std::ostream& out, const Mat4& a);
 
 } // namespace vkl
 

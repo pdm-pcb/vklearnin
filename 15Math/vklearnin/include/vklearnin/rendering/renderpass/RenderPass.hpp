@@ -10,7 +10,7 @@ public:
     void create();
     void destroy();
 
-    inline const auto & native() const { return _render_pass; }
+    inline const auto& native() const { return _render_pass; }
 
     RenderPass();
     ~RenderPass() = default;

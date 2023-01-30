@@ -50,9 +50,9 @@ void Engine::init() {
     }
 
     _persp_cam.orient(
-        { 0.0f, 0.0f, 3.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f, 1.0f },
-        { 0.0f, 1.0f, 0.0f, 0.0f }
+        { 0.0f, 0.0f, 5.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f }
     );
     _persp_cam.set_perspective(0.1f, 1000.0f, 90.0f);
 
@@ -61,6 +61,16 @@ void Engine::init() {
         .view = _persp_cam.view_matrix(),
         .proj = _persp_cam.proj_matrix()
     });
+    
+    CONSOLE_ERROR(
+        "View:\n{}",
+        _persp_cam.view_matrix()
+    );
+    
+    CONSOLE_ERROR(
+        "Projection:\n{}",
+        _persp_cam.proj_matrix()
+    );
 }
 
 // =============================================================================

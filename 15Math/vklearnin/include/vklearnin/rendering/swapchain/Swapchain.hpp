@@ -20,11 +20,11 @@ public:
     static void destroy();
 
     inline static auto image_index() { return _draw_index; }
-    inline static auto & image(const uint32_t index) { return _images[index]; }
+    inline static auto& image(const uint32_t index) { return _images[index]; }
 
-    inline static const auto & extent()       { return _extent; };
-    inline static const auto & offset()       { return _offset; };
-    inline static const auto & image_format() { return _image_format; }
+    inline static const auto& extent()       { return _extent; };
+    inline static const auto& offset()       { return _offset; };
+    inline static const auto& image_format() { return _image_format; }
     inline static auto
     render_area() { return vk::Rect2D { _offset, _extent }; }
 

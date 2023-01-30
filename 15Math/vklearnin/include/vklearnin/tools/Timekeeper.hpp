@@ -15,10 +15,10 @@ public:
     static void frame_start();
     static void frame_end();
 
-    static inline auto runtime()   { return 1e-6f * static_cast<float>(_runtime);   }
-    static inline auto frametime() { return 1e-6f * static_cast<float>(_frametime); }
+    inline static auto runtime()   { return 1e-6f * static_cast<float>(_runtime);   }
+    inline static auto frametime() { return 1e-6f * static_cast<float>(_frametime); }
 
-    static inline auto now() { return HRC::now(); }
+    inline static auto now() { return HRC::now(); }
 
     Timekeeper() = delete;
     ~Timekeeper() = delete;

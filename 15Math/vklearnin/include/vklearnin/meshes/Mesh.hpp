@@ -9,10 +9,10 @@ namespace vkl {
 
 class Mesh {
 public:
-    inline const auto & vertex_buffer() const { return _vertex_buffer; }
+    inline const auto& vertex_buffer() const { return _vertex_buffer; }
     inline auto vertex_count()          const { return _vertex_data.size(); }
 
-    inline const auto & index_buffer() const { return _index_buffer; }
+    inline const auto& index_buffer() const { return _index_buffer; }
     inline auto index_count()          const { return _index_data.size(); }
 
     Mesh();

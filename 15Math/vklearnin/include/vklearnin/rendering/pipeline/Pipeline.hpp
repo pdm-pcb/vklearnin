@@ -26,10 +26,10 @@ public:
     void destroy();
     void update_dimensions();
 
-    inline const auto & native()   const { return _pipeline; }
-    inline const auto & layout()   const { return _layout; }
-    inline const auto & viewport() const { return _viewport; }
-    inline const auto & scissor()  const { return _scissor; }
+    inline const auto& native()   const { return _pipeline; }
+    inline const auto& layout()   const { return _layout; }
+    inline const auto& viewport() const { return _viewport; }
+    inline const auto& scissor()  const { return _scissor; }
 
     Pipeline();
     ~Pipeline() = default;

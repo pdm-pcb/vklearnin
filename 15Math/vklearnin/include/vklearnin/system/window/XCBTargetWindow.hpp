@@ -22,7 +22,7 @@ public:
     static void create_surface();
     static void destroy_surface();
 
-    static inline const auto & surface() { return _surface; }
+    inline static const auto& surface() { return _surface; }
 
     XCBTargetWindow() = delete;
 

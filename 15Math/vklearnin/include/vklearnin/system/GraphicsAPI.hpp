@@ -14,7 +14,7 @@ public:
     static void destroy_device();
     static void shutdown();
 
-    inline static const auto & native() { return _instance; }
+    inline static const auto& native() { return _instance; }
 
     GraphicsAPI() = delete;
     ~GraphicsAPI() = delete;

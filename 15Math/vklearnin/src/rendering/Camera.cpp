@@ -4,10 +4,10 @@
 namespace vkl {
 
 // =============================================================================
-void Camera::orient(const Vec4 &position, const Vec4 &target, const Vec4 &up) {
+void Camera::orient(const Vec3 &position, const Vec3 &target, const Vec3 &up) {
     _position = position;
-    _target = target;
-    _up = normalized(up);
+    _target   = target;
+    _up       = up;
 
     _set_view_mat();
 }
@@ -17,39 +17,65 @@ void Camera::set_perspective(const float near_plane,
                              const float far_plane,
                              const float vertical_fov_degrees)
 {
-    const float vfov_radians = math::degrees_to_radians(vertical_fov_degrees);
-    const float a = std::tanf(0.5f * vfov_radians);
-    const float b = far_plane - near_plane;
+#ifdef VKL_USE_GLM
+    _proj_mat = glm::perspective(
+        glm::radians(vertical_fov_degrees),
+        RenderConfig::window_aspect,
+        near_plane,
+        far_plane
+    );
+#else
+    const float vfov_radians = math::to_radians(vertical_fov_degrees);
+    const float a = std::tanf(vfov_radians * 0.5f);
+    const float b = near_plane - far_plane;
+    const float c = far_plane - near_plane;
 
-    _proj_mat = {
+    _proj_mat = Mat4 {
         { 1.0f / (RenderConfig::window_aspect * a), 0.0f, 0.0f, 0.0f },
         { 0.0f, 1.0f / a, 0.0f, 0.0f },
         { 0.0f, 0.0f, far_plane / b, 1.0f },
-        { 0.0f, 0.0f, -(far_plane * near_plane) / b, 0.0f },
+        { 0.0f, 0.0f, -(far_plane * near_plane) / c, 0.0f },
     };
+#endif // VKL_USE_GLM
 
     CONSOLE_TRACE("\n{}", fmt::streamed(_proj_mat));
 }
 
 // =============================================================================
 void Camera::_set_view_mat() {
-    _forward = _target - _position;
-    normalize(_forward);
+// #ifdef VKL_USE_GLM
+//     _view_mat = glm::lookAt(
+//         glm::vec3 { _position.x, _position.y, _position.z },
+//         glm::vec3 { _target.x, _target.y, _target.z },
+//         glm::vec3 { _up.x, _up.y, _up.z }
+//     );
+// #else
+    _forward = math::normalized(_target - _position);
+    _side    = math::normalized(math::cross(_forward, _up));
+    _up      = math::normalized(math::cross(_side, _forward));
 
-    _right = cross(_forward, _up);
-    normalize(_right);
-
-    _view_mat = { _right, _up, _forward, _position };
+    _view_mat = {
+        { _side,     0.0f },
+        { _up,       0.0f },
+        { -_forward, 0.0f },
+        {
+            -math::dot(_side,    _position),
+            -math::dot(_up,      _position),
+             math::dot(_forward, _position),
+            1.0f
+        }
+    };
+// #endif // VKL_USE_GLM
     
     CONSOLE_TRACE("\n{}", fmt::streamed(_view_mat));
 }
 
 // =============================================================================
-Camera::Camera(const Vec4 &position, const Vec4 &target, const Vec4 &up) :
+Camera::Camera(const Vec3 &position, const Vec3 &target, const Vec3 &up) :
     _position { position },
     _target   { target },
-    _up       { normalized(up) },
-    _right    { },
+    _up       { up },
+    _side     { },
     _forward  { },
     _view_mat { Mat4::identity },
     _proj_mat { Mat4::identity }
@@ -61,7 +87,7 @@ Camera::Camera() :
     _position { },
     _target   { },
     _up       { },
-    _right    { },
+    _side     { },
     _forward  { },
     _view_mat { Mat4::identity },
     _proj_mat { Mat4::identity }

@@ -5,24 +5,26 @@
 
 namespace vkl {
 
+struct Vec3;
+
 struct Vec4 final {
     explicit Vec4(const std::array<float, 4> &vec);
     Vec4(const float x, const float y, const float z, const float w);
     Vec4();
 
-    Vec4 operator+(const Vec4 &other) const;
-    Vec4 operator-(const Vec4 &other) const;
-    Vec4 operator*(const float scalar) const;
-    Vec4 operator/(const float scalar) const;
+    Vec4(const Vec3 &other, const float w);
 
-    Vec4 & operator+=(const Vec4 &other);
-    Vec4 & operator-=(const Vec4 &other);
-    Vec4 & operator*=(const float scalar);
-    Vec4 & operator/=(const float scalar);
+#ifdef VKL_USE_GLM
+    explicit Vec4(const glm::vec4 &other);
+    Vec4& operator=(const glm::vec4 &other);
+#endif // VKL_USE_GLM
 
-    bool operator==(const Vec4 &other) const;
+    Vec4& operator+=(const Vec4 &other);
+    Vec4& operator-=(const Vec4 &other);
+    Vec4& operator*=(const float scalar);
+    Vec4& operator/=(const float scalar);
 
-    friend std::ostream & operator<<(std::ostream& out, const Vec4& a);
+    friend std::ostream& operator<<(std::ostream& out, const Vec4& a);
 
     float x;
     float y;
@@ -35,7 +37,16 @@ struct Vec4 final {
     static const Vec4 origin;
 };
 
-std::ostream & operator<<(std::ostream &out, const Vec4 &a);
+Vec4 operator+(const Vec4 &a, const Vec4 &b);
+Vec4 operator-(const Vec4 &a, const Vec4 &b);
+Vec4 operator*(const Vec4 &a, const float scalar);
+Vec4 operator/(const Vec4 &a, const float scalar);
+
+Vec4 operator-(const Vec4 &a);
+
+bool operator==(const Vec4 &a, const Vec4 &b);
+
+std::ostream& operator<<(std::ostream &out, const Vec4 &a);
 
 } // namespace vkl
 

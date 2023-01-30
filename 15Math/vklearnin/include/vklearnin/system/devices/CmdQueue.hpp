@@ -10,10 +10,10 @@ public:
     void fill_create_info(const uint32_t index, const float priority = 1.0f);
     void request_queue();
 
-    inline const auto & native()      const { return _queue;       }
-    inline const auto & index()       const { return _index;       }
-    inline const auto & priority()    const { return _priority;    }
-    inline const auto & create_info() const { return _create_info; }
+    inline const auto& native()      const { return _queue;       }
+    inline const auto& index()       const { return _index;       }
+    inline const auto& priority()    const { return _priority;    }
+    inline const auto& create_info() const { return _create_info; }
 
     CmdQueue();
     ~CmdQueue() = default;

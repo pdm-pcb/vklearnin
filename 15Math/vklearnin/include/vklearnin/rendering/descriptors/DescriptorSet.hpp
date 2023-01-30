@@ -20,7 +20,7 @@ public:
                 const DescriptorSetLayout &set_layout);
     void destroy();
 
-    inline const auto & native() const { return _set; }
+    inline const auto& native() const { return _set; }
 
     DescriptorSet();
     ~DescriptorSet() = default;

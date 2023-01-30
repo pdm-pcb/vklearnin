@@ -10,8 +10,8 @@ public:
     using BindingDescriptions = std::vector<vk::VertexInputBindingDescription>;
     using AttribDescriptions = std::vector<vk::VertexInputAttributeDescription>;
 
-    static inline const auto & binding_desc() { return _binding_desc; }
-    static inline const auto & attrib_desc()  { return _attrib_desc;  }
+    inline static const auto& binding_desc() { return _binding_desc; }
+    inline static const auto& attrib_desc()  { return _attrib_desc;  }
 
     Vertex(const std::array<float, 4> &position,
            const std::array<float, 4> &color);

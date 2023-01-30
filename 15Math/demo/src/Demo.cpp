@@ -2,11 +2,6 @@
 
 // =============================================================================
 void Demo::submit_draws(vkl::Renderer &renderer) {
-    _model_matrix = vkl::rotated(
-        vkl::Mat4::identity,
-        { 0.0f, vkl::Timekeeper::runtime() * 15.0f, 0.0f, 0.0f }
-    );
-
     renderer.submit({
         .mesh = _cube,
         .push_constants {
@@ -44,6 +39,13 @@ void Demo::init() {
             { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
         }}
     );
+
+    _model_matrix = vkl::math::rotated(
+        vkl::Mat4::identity,
+        { 0.0f, 45.0f, 0.0f }
+    );
+
+    CONSOLE_ERROR("Model:\n{}", _model_matrix);
 }
 
 // =============================================================================

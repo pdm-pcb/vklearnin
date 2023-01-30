@@ -5,13 +5,6 @@
 
 namespace vkl {
 
-const Mat4 Mat4::identity {
-    Vec4::unit_x,
-    Vec4::unit_y,
-    Vec4::unit_z,
-    Vec4::origin
-};
-
 // =============================================================================
 Mat4::Mat4(const std::array<Vec4, 4> &vecs) :
     rows { vecs }
@@ -30,16 +23,45 @@ Mat4::Mat4() :
     }
 { }
 
-// =============================================================================
-Mat4 Mat4::operator*(const Mat4 &other) const {
-    Mat4 result = *this;
-    result *= other;
+#ifdef VKL_USE_GLM
+    Mat4::Mat4(const glm::mat4 &other) {
+        rows = {{
+            Vec4(other[0]),
+            Vec4(other[1]),
+            Vec4(other[2]),
+            Vec4(other[3])
+        }};
 
-    return result;
+        CONSOLE_ERROR("\n{}", *this);
+    }
+
+    Mat4& Mat4::operator=(const glm::mat4 &other) {
+        rows = {{
+            Vec4(other[0]),
+            Vec4(other[1]),
+            Vec4(other[2]),
+            Vec4(other[3])
+        }};
+
+        CONSOLE_ERROR("\n{}", *this);
+        return *this;
+    }
+#endif // VKL_USE_GLM
+
+// =============================================================================
+Mat4& Mat4::operator=(const Mat3 &other) {
+    rows = {{
+        { other.rows[0].x, other.rows[0].y, other.rows[0].z, 0.0f },
+        { other.rows[1].x, other.rows[1].y, other.rows[1].z, 0.0f },
+        { other.rows[2].x, other.rows[2].y, other.rows[2].z, 0.0f },
+        { 0.0f, 0.0f, 0.0f, 1.0f },
+    }};
+
+    return *this;
 }
 
 // =============================================================================
-Mat4 & Mat4::operator*=(const Mat4 &other) {
+Mat4& Mat4::operator*=(const Mat4 &other) {
     const float x0 = (rows[0].x * other.rows[0].x) +
                      (rows[0].y * other.rows[1].x) +
                      (rows[0].z * other.rows[2].x) +
@@ -119,15 +141,23 @@ Mat4 & Mat4::operator*=(const Mat4 &other) {
 }
 
 // =============================================================================
-bool Mat4::operator==(const Mat4 &other) const {
-    return rows[0] == other.rows[0] &&
-           rows[1] == other.rows[1] &&
-           rows[2] == other.rows[2] &&
-           rows[3] == other.rows[3];
+Mat4 operator*(const Mat4 &a, const Mat4 &b) {
+    Mat4 result = a;
+    result *= b;
+
+    return result;
 }
 
 // =============================================================================
-std::ostream & operator<<(std::ostream& out, const Mat4& a) {
+bool operator==(const Mat4 &a, const Mat4 &b) {
+    return a.rows[0] == b.rows[0] &&
+           a.rows[1] == b.rows[1] &&
+           a.rows[2] == b.rows[2] &&
+           a.rows[3] == b.rows[3];
+}
+
+// =============================================================================
+std::ostream& operator<<(std::ostream& out, const Mat4& a) {
     out << "[ " << a.rows[0] << " ]\n"
         << "[ " << a.rows[1] << " ]\n"
         << "[ " << a.rows[2] << " ]\n"
