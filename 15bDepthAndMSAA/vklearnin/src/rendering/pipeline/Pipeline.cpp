@@ -72,6 +72,7 @@ void Pipeline::create(const RenderPass &render_pass) {
     _init_assembly();
     _init_viewport();
     _init_raster();
+    _init_depth_stencil();
     _init_blend();
     _init_dynamic_states();
     _init_layout();
@@ -86,7 +87,7 @@ void Pipeline::create(const RenderPass &render_pass) {
         .pViewportState      = &_viewport_info,
         .pRasterizationState = &_raster_info,
         .pMultisampleState   = nullptr,
-        .pDepthStencilState  = nullptr,
+        .pDepthStencilState  = &_depth_stencil_info,
         .pColorBlendState    = &_blend_info,
         .pDynamicState       = &_dynamic_state_info,
 
@@ -236,6 +237,21 @@ void Pipeline::_init_raster() {
 
         // If a line segment is to be reasterized, what width should it be?
         .lineWidth = 1.0f,
+    };
+}
+
+// =============================================================================
+void Pipeline::_init_depth_stencil() {
+    _depth_stencil_info = {
+        .depthTestEnable = true,
+        .depthWriteEnable = true,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = false,
+        .stencilTestEnable = false,
+        .front = { },
+        .back = { },
+        .minDepthBounds = 0.0f,
+        .maxDepthBounds = 1.0f
     };
 }
 

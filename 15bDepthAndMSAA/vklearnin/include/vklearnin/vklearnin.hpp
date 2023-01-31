@@ -12,6 +12,9 @@
 #include "vklearnin/system/GraphicsAPI.hpp"
 #include "vklearnin/rendering/Renderer.hpp"
 
+#include "vklearnin/resources/images/ImageTools.hpp"
+#include "vklearnin/resources/buffers/BufferTools.hpp"
+
 #include "vklearnin/math/math.hpp"
 
 namespace vkl {

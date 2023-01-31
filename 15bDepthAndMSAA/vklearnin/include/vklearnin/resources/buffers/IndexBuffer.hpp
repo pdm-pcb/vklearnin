@@ -3,7 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/meshes/Index.hpp"
-#include "vklearnin/resources/buffers/BufferTools.hpp"
+#include "vklearnin/resources/buffers/BufferObject.hpp"
 
 namespace vkl {
 
@@ -26,7 +26,7 @@ public:
     IndexBuffer& operator=(const IndexBuffer &) = delete;
 
 private:
-    Buffer _buffer;
+    BufferObject _buffer;
 };
 
 } // namespace vkl

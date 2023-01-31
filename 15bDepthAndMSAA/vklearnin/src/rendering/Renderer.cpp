@@ -116,8 +116,11 @@ void Renderer::shutdown() {
 void Renderer::_init_framebuffers() {
     for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
         _framebuffers[frame].create(
-            { vkl::Swapchain::image(frame)->view() },
-            _render_pass
+            {
+                Swapchain::image(frame).view,
+                // _render_pass.depth_buffer_view()
+            },
+            _render_pass.native()
         );
     }
 }

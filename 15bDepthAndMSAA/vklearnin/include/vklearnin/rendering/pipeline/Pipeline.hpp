@@ -54,6 +54,7 @@ private:
     vk::PipelineInputAssemblyStateCreateInfo _assembly_info;
     vk::PipelineViewportStateCreateInfo      _viewport_info;
     vk::PipelineRasterizationStateCreateInfo _raster_info;
+    vk::PipelineDepthStencilStateCreateInfo  _depth_stencil_info;
     vk::PipelineColorBlendStateCreateInfo    _blend_info;
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
@@ -67,6 +68,7 @@ private:
     void _init_assembly();
     void _init_viewport();
     void _init_raster();
+    void _init_depth_stencil();
     void _init_blend();
     void _init_dynamic_states();
     void _init_layout();

@@ -2,27 +2,18 @@
 #define VKLEARNIN_RESOURCES_BUFFERS_BUFFERTOOLS_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/resources/buffers/BufferObject.hpp"
 
-namespace vkl {
-
-struct Buffer {
-    size_t           size { 0 };
-    vk::Buffer       handle { };
-    vk::DeviceMemory memory { };
-};
-
-namespace BufferTools {
+namespace vkl::BufferTools {
 
 void create(const vk::BufferUsageFlags usage_flags,
             const vk::MemoryPropertyFlags memory_properties,
-            Buffer &buffer);
+            BufferObject &buffer);
 
-void destroy(Buffer &buffer);
+void destroy(BufferObject &buffer);
 
-void host_to_device(const Buffer &dst_buffer, const void * const data);
+void host_to_device(const BufferObject &dst_buffer, const void * const data);
 
-} // namespace BufferTools
-
-} // namespace vkl
+} // namespace vkl::BufferTools
 
 #endif // VKLEARNIN_RESOURCES_BUFFERS_BUFFERTOOLS_HPP

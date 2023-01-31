@@ -1,6 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/renderpass/RenderPass.hpp"
 
+#include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
@@ -8,6 +9,8 @@ namespace vkl {
 
 // =============================================================================
 void RenderPass::create() {
+    _find_depth_stencil_format();
+    _init_depth_buffer();
     _default_attachments();
     _default_subpasses();
 
@@ -58,7 +61,7 @@ void RenderPass::_default_attachments() {
         // Notify Vulkan that we'd like  to keep whatever we've drawn
         .storeOp = vk::AttachmentStoreOp::eStore,
         
-        // Stencil operations aren't useful yet
+        // Stencil operations aren't useful for the color attachment
         .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
         .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
         
@@ -67,11 +70,26 @@ void RenderPass::_default_attachments() {
         .initialLayout  = vk::ImageLayout::eUndefined,
         .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
     }};
+    // {
+    //     .format  = _depth_buffer.format,
+    //     .samples = vk::SampleCountFlagBits::e1,
+    //     .loadOp  = vk::AttachmentLoadOp::eClear,
+    //     .storeOp = vk::AttachmentStoreOp::eDontCare,
+    //     .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+    //     .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+    //     .initialLayout  = vk::ImageLayout::eUndefined,
+    //     .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    // }};
 
     _color_attachments = {{
         .attachment = 0u,
         .layout     = vk::ImageLayout::eColorAttachmentOptimal,
     }};
+
+    _depth_attachment = {
+        .attachment = 1u,
+        .layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    };
 }
 
 // =============================================================================
@@ -92,7 +110,10 @@ void RenderPass::_default_subpasses() {
         // And has no multisampling resolution attachments
         .pResolveAttachments = nullptr,
 
-        // Nor any depth attachments
+        // // With a depth stencil
+        // .pDepthStencilAttachment = &_depth_attachment,
+
+        // With a depth stencil
         .pDepthStencilAttachment = nullptr,
 
         // As we've only got a single subpass, there's nothing to preserve
@@ -128,8 +149,59 @@ void RenderPass::_default_subpasses() {
 }
 
 // =============================================================================
+void RenderPass::_init_depth_buffer() {
+    // if(_depth_buffer.handle) {
+    //     ImageTools::destroy_image(_depth_buffer);
+    // }
+
+    // ImageTools::create_image(
+    //     _depth_buffer,
+    //     vk::ImageType::e2D,
+    //     { Swapchain::extent().width, Swapchain::extent().height, 1u },
+    //     vk::ImageUsageFlagBits::eDepthStencilAttachment
+    // );
+
+    // ImageTools::create_view(
+    //     _depth_buffer,
+    //     vk::ImageViewType::e2D,
+    //     vk::ImageAspectFlagBits::eDepth
+    // );
+}
+
+// =============================================================================
+void RenderPass::_find_depth_stencil_format() {
+    const std::vector<vk::Format> depth_options {
+        vk::Format::eD32Sfloat,
+        vk::Format::eD32SfloatS8Uint,
+        vk::Format::eD24UnormS8Uint
+    };
+
+    for(const auto &option : depth_options) {
+        auto props = PhysicalDevice::native().getFormatProperties(option);
+        if(props.optimalTilingFeatures &
+           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+        {
+            CONSOLE_TRACE(
+                "Using depth stencil format {}",
+                to_string(option)
+            );
+            _depth_buffer.format = option;
+            return;
+        }
+    }
+
+    CONSOLE_CRITICAL("Unable to find suitable depth stencil format");
+}
+
+// =============================================================================
 RenderPass::RenderPass() :
-    _render_pass { }
+    _attach_descs      { },
+    _color_attachments { },
+    _depth_attachment  { },
+    _subpasses         { },
+    _subpass_deps      { },
+    _render_pass       { },
+    _depth_buffer      { }
 { }
 
 } // namespace vkl

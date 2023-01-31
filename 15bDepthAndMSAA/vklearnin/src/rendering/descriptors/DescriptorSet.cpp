@@ -10,7 +10,7 @@ namespace vkl {
 
 // =============================================================================
 DescriptorSet::UBOIter DescriptorSet::add_ubo(const size_t size) {
-    Buffer ubo {
+    BufferObject ubo {
         .size = size
     };
 

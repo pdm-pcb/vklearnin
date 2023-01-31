@@ -2,6 +2,7 @@
 #define VKLEARNIN_RENDERINGRENDERPASS_RENDERPASS_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/resources/images/ImageObject.hpp"
 
 namespace vkl {
 
@@ -11,6 +12,7 @@ public:
     void destroy();
 
     inline const auto& native() const { return _render_pass; }
+    inline const auto depth_buffer_view() const { return _depth_buffer.view; }
 
     RenderPass();
     ~RenderPass() = default;
@@ -24,13 +26,19 @@ public:
 private:
     std::vector<vk::AttachmentDescription> _attach_descs;
     std::vector<vk::AttachmentReference>   _color_attachments;
+    vk::AttachmentReference                _depth_attachment;
     std::vector<vk::SubpassDescription>    _subpasses;
     std::vector<vk::SubpassDependency>     _subpass_deps;
 
     vk::RenderPass _render_pass;
 
+    ImageObject _depth_buffer;
+
     void _default_attachments();
     void _default_subpasses();
+    void _init_depth_buffer();
+
+    void _find_depth_stencil_format();
 };
 
 } // namespace vkl

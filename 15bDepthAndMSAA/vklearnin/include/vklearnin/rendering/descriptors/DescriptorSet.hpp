@@ -11,7 +11,7 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
-    using UBOIter = std::vector<Buffer>::iterator;
+    using UBOIter = std::vector<BufferObject>::iterator;
     UBOIter add_ubo(const size_t size);
 
     static void update_ubo(const UBOIter &buffer, const void *data);
@@ -32,7 +32,7 @@ public:
     DescriptorSet& operator=(const DescriptorSet &) = delete;
 
 private:
-    std::vector<Buffer> _ubos;
+    std::vector<BufferObject> _ubos;
     vk::DescriptorSet   _set;
 };
 

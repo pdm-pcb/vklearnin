@@ -8,7 +8,7 @@
 namespace vkl::BufferTools {
 
 void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               Buffer &buffer);
+               BufferObject &buffer);
 
 static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
                                   const vk::MemoryRequirements &reqs);
@@ -16,7 +16,7 @@ static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
 // =============================================================================
 void create(const vk::BufferUsageFlags usage_flags,
             const vk::MemoryPropertyFlags memory_properties,
-            Buffer &buffer)
+            BufferObject &buffer)
 {
     const vk::BufferCreateInfo buffer_info {
         .size        = buffer.size,
@@ -52,7 +52,7 @@ void create(const vk::BufferUsageFlags usage_flags,
 }
 
 // =============================================================================
-void destroy(Buffer &buffer) {
+void destroy(BufferObject &buffer) {
     CONSOLE_TRACE(
         "\n\tDestroying vertex buffer {:#x}"
         "\n\tFreeing device memory {:#x}",
@@ -65,8 +65,8 @@ void destroy(Buffer &buffer) {
 }
 
 // =============================================================================
-void host_to_device(const Buffer &dst_buffer, const void * const data) {
-    Buffer staging_buffer {
+void host_to_device(const BufferObject &dst_buffer, const void * const data) {
+    BufferObject staging_buffer {
         .size = dst_buffer.size,
     };
 
@@ -173,7 +173,7 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
 
 // =============================================================================
 void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               Buffer &buffer)
+               BufferObject &buffer)
 {
     // The first order of business is to query the logical device about what
     // available memory matches properties we've specified thus far. A zero-
