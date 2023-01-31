@@ -16,6 +16,7 @@ static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
 void create_image(ImageObject &image,
                   const vk::ImageType type,
                   const vk::Extent3D extent,
+                  const vk::SampleCountFlagBits samples,
                   const vk::ImageUsageFlags usage_flags,
                   const vk::MemoryPropertyFlags memory_properties)
 {
@@ -29,7 +30,7 @@ void create_image(ImageObject &image,
         .extent      = extent,
         .mipLevels   = 1u,
         .arrayLayers = 1u,
-        .samples     = vk::SampleCountFlagBits::e1,
+        .samples     = samples,
         .tiling      = vk::ImageTiling::eOptimal,
         .usage       = usage_flags
     };
@@ -55,6 +56,11 @@ void create_image(ImageObject &image,
 void destroy_image(ImageObject &image) {
     CONSOLE_TRACE("Destroying image {:#x}",
                    reinterpret_cast<uint64_t>(::VkImage(image.handle)));
+
+    if(image.view) {
+        destroy_view(image);
+    }
+
     LogicalDevice::native().destroyImage(image.handle);
     LogicalDevice::native().freeMemory(image.memory);
 

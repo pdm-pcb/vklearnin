@@ -72,6 +72,7 @@ void Pipeline::create(const RenderPass &render_pass) {
     _init_assembly();
     _init_viewport();
     _init_raster();
+    _init_multisample();
     _init_depth_stencil();
     _init_blend();
     _init_dynamic_states();
@@ -86,7 +87,7 @@ void Pipeline::create(const RenderPass &render_pass) {
         .pTessellationState  = nullptr,
         .pViewportState      = &_viewport_info,
         .pRasterizationState = &_raster_info,
-        .pMultisampleState   = nullptr,
+        .pMultisampleState   = &_multisample_info,
         .pDepthStencilState  = &_depth_stencil_info,
         .pColorBlendState    = &_blend_info,
         .pDynamicState       = &_dynamic_state_info,
@@ -241,6 +242,33 @@ void Pipeline::_init_raster() {
 }
 
 // =============================================================================
+void Pipeline::_init_multisample() {
+    switch(RenderConfig::sample_count) {
+        case 64u: _samples = vk::SampleCountFlagBits::e64; break;
+        case 32u: _samples = vk::SampleCountFlagBits::e32; break;
+        case 16u: _samples = vk::SampleCountFlagBits::e16; break;
+        case 8u:  _samples = vk::SampleCountFlagBits::e8;  break;
+        case 4u:  _samples = vk::SampleCountFlagBits::e4;  break;
+        case 2u:  _samples = vk::SampleCountFlagBits::e2;  break;
+        case 1u:  _samples = vk::SampleCountFlagBits::e1;  break;
+        default:
+            CONSOLE_CRITICAL(
+                "Unsupported color buffer sample count {}.",
+                RenderConfig::sample_count
+            );
+    }
+
+    _multisample_info = {
+        .rasterizationSamples  = _samples,
+        .sampleShadingEnable   = false,
+        .minSampleShading      = 0.0f,
+        .pSampleMask           = nullptr,
+        .alphaToCoverageEnable = false,
+        .alphaToOneEnable      = false,
+    };
+}
+
+// =============================================================================
 void Pipeline::_init_depth_stencil() {
     _depth_stencil_info = {
         .depthTestEnable = true,
@@ -330,7 +358,9 @@ Pipeline::Pipeline() :
     _assembly_info      { },
     _viewport_info      { },
     _raster_info        { },
+    _multisample_info   { },
     _dynamic_state_info { },
+    _samples            { },
     _desc_set_layouts   { },
     _push_constants     { },
     _layout             { },

@@ -20,6 +20,7 @@ private:
     struct DeviceProps {
         std::string name;
         size_t vram_bytes = 0;
+        uint8_t max_samples = 0u;
         std::string driver_version;
         std::string vkapi_version;
         vk::PhysicalDevice device = nullptr;

@@ -97,11 +97,13 @@ void PhysicalDevice::query_devices() {
             "\tDevice Name:    {}\n"
             "\tDevice Type:    {}\n"
             "\tVRAM:           {} MB\n"
+            "\tMax MSAA:       x{}\n"
             "\tDriver Version: {}\n"
             "\tVulkan Version: {}\n",
             properties.name,
             to_string(properties.type),
             properties.vram_bytes / 1000 / 1000,
+            properties.max_samples,
             properties.driver_version,
             properties.vkapi_version
         );
@@ -209,11 +211,12 @@ void PhysicalDevice::select_device() {
            present_fam != std::numeric_limits<uint32_t>::max() &&
            features.samplerAnisotropy != 0)
         {
-            const auto &dev_store = _available_devices[device_index];
-            _physical_device      = dev_store.device;
-            _memory_properties    = dev_store.memory;
-            gfx_queue_index       = graphics_support[device_index].second;
-            present_queue_index   = present_support[device_index].second;
+            const auto &dev_store      = _available_devices[device_index];
+            _physical_device           = dev_store.device;
+            _memory_properties         = dev_store.memory;
+            RenderConfig::sample_count = dev_store.max_samples;
+            gfx_queue_index            = graphics_support[device_index].second;
+            present_queue_index        = present_support[device_index].second;
 
             CONSOLE_TRACE(
                 "Selected {}, queue {} for graphics and {} for present",
@@ -265,6 +268,29 @@ void PhysicalDevice::_store_physical_device(
         }
     }
     store.vram_bytes = vram_bytes;
+
+    const auto sample_counts = properties.limits.framebufferColorSampleCounts;
+    if(sample_counts & vk::SampleCountFlagBits::e64) {
+        store.max_samples = 64u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e32) {
+        store.max_samples = 32u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e16) {
+        store.max_samples = 16u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e8) {
+        store.max_samples = 8u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e4) {
+        store.max_samples = 4u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e2) {
+        store.max_samples = 2u;
+    }
+    else if(sample_counts & vk::SampleCountFlagBits::e1) {
+        store.max_samples = 1u;
+    }
 
     store.driver_version = std::string(drivers.driverInfo.data());
 

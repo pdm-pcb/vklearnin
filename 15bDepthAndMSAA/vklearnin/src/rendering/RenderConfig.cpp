@@ -17,4 +17,6 @@ float    RenderConfig::window_aspect = 0.0f;
 uint8_t RenderConfig::image_count = 2u;
 bool    RenderConfig::vsync_on = true;
 
+uint8_t RenderConfig::sample_count = 1u;
+
 } // namespace vkl

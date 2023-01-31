@@ -9,6 +9,7 @@ namespace vkl::ImageTools {
 void create_image(ImageObject &image,
                   const vk::ImageType type,
                   const vk::Extent3D extent,
+                  const vk::SampleCountFlagBits samples,
                   const vk::ImageUsageFlags usage_flags,
                   const vk::MemoryPropertyFlags memory_properties);
 

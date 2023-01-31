@@ -20,6 +20,8 @@ struct RenderConfig final {
     static uint8_t image_count;
     static bool vsync_on;
 
+    static uint8_t sample_count;
+
     static constexpr std::array<float, 4>
         CLEAR_COLOR { 0.08f, 0.08f, 0.16f, 1.0f };
 };
