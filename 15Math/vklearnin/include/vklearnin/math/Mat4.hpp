@@ -13,11 +13,6 @@ struct Mat4 final {
     Mat4(const Vec4 &x, const Vec4 &y, const Vec4 &z, const Vec4 &w);
     Mat4();
 
-#ifdef VKL_USE_GLM
-    explicit Mat4(const glm::mat4 &other);
-    Mat4& operator=(const glm::mat4 &other);
-#endif // VKL_USE_GLM
-
     Mat4& operator=(const Mat3 &other);
     Mat4& operator*=(const Mat4 &other);
 

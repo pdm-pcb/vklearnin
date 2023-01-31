@@ -2,7 +2,6 @@
 #define DEMO_HPP
 
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/meshes/XYPlane.hpp"
 #include "vklearnin/meshes/Cube.hpp"
 
 class Demo final : public vkl::Application {
@@ -22,9 +21,8 @@ public:
     Demo& operator=(const Demo &) = delete;
 
 private:
-    vkl::XYPlane _xy_plane;
-    vkl::Cube    _cube;
-    vkl::Mat4    _model_matrix;
+    vkl::Cube _cube;
+    std::vector<vkl::Mat4> _model_matrices;
 };
 
 #endif // DEMO_HPP

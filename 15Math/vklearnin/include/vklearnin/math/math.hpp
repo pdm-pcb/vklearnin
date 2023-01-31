@@ -34,33 +34,23 @@ inline float length(const Vec3 &a) {
     return std::sqrtf((a.x * a.x) + (a.y * a.y) + (a.z * a.z));
 }
 
-inline float length(const Vec4 &a) {
-    return std::sqrtf((a.x * a.x) + (a.y * a.y) + (a.z * a.z));
-}
-
 float dot(const Vec3 &a, const Vec3 &b);
 Vec3 cross(const Vec3 &a, const Vec3 &b);
 
+void normalize(Vec3 &a);
 Vec3 normalized(const Vec3 &a);
-inline void normalize(Vec3 &a) { a = normalized(a); }
-
-// =============================================================================
-// 3x3 matrices
-Mat3 transposed(const Mat3 &a);
-inline void transpose(Mat3 &a) { a = transposed(a); }
 
 // =============================================================================
 // 4x4 matrices
-Mat4 transposed(const Mat4 &a);
-inline void transpose(Mat4 &a) { a = transposed(a); }
 
+void translate(Mat4 &a, const Vec3 &pos);
 Mat4 translated(const Mat4 &a, const Vec3 &pos);
-inline void translate(Mat4 &a, const Vec3 &pos) { a = translated(a, pos); }
 
+void rotate(Mat4 &a, const Vec3 &degrees);
 Mat4 rotated(const Mat4 &a, const Vec3 &degrees);
-inline void rotate(Mat4 &a, const Vec3 &degrees) {
-    a = rotated(a, degrees);
-}
+
+inline void scale(Mat4 &a, const Vec3 &scale);
+Mat4 scaled(const Mat4 &a, const Vec3 &scale);
 
 } // namespace vkl::math
 

@@ -13,11 +13,6 @@ struct Mat3 final {
     Mat3(const Vec4 &x, const Vec4 &y, const Vec4 &z);
     Mat3();
 
-#ifdef VKL_USE_GLM
-    explicit Mat3(const glm::mat3 &other);
-    Mat3& operator=(const glm::mat3 &other);
-#endif // VKL_USE_GLM
-
     Mat3& operator*=(const Mat3 &other);
 
     std::array<Vec3, 3> rows;

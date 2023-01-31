@@ -23,31 +23,6 @@ Mat4::Mat4() :
     }
 { }
 
-#ifdef VKL_USE_GLM
-    Mat4::Mat4(const glm::mat4 &other) {
-        rows = {{
-            Vec4(other[0]),
-            Vec4(other[1]),
-            Vec4(other[2]),
-            Vec4(other[3])
-        }};
-
-        CONSOLE_ERROR("\n{}", *this);
-    }
-
-    Mat4& Mat4::operator=(const glm::mat4 &other) {
-        rows = {{
-            Vec4(other[0]),
-            Vec4(other[1]),
-            Vec4(other[2]),
-            Vec4(other[3])
-        }};
-
-        CONSOLE_ERROR("\n{}", *this);
-        return *this;
-    }
-#endif // VKL_USE_GLM
-
 // =============================================================================
 Mat4& Mat4::operator=(const Mat3 &other) {
     rows = {{

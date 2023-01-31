@@ -15,11 +15,6 @@ struct Vec3 final {
     explicit Vec3(const Vec4 &other);
     Vec3& operator=(const Vec4 &other);
 
-#ifdef VKL_USE_GLM
-    explicit Vec3(const glm::vec3 &other);
-    Vec3& operator=(const glm::vec3 &other);
-#endif // VKL_USE_GLM
-
     Vec3& operator+=(const Vec3 &other);
     Vec3& operator-=(const Vec3 &other);
     Vec3& operator*=(const float scalar);

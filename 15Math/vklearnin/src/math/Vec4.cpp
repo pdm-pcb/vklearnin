@@ -34,24 +34,6 @@ Vec4::Vec4(const Vec3 &other, const float w) :
     w { w }
 { }
 
-#ifdef VKL_USE_GLM
-    Vec4::Vec4(const glm::vec4 &other) :
-        x { other.x },
-        y { other.y },
-        z { other.z },
-        w { other.w }
-    { }
-
-    Vec4& Vec4::operator=(const glm::vec4 &other) {
-        x = other.x;
-        y = other.y;
-        z = other.z;
-        w = other.w;
-
-        return *this;
-    }
-#endif // VKL_USE_GLM
-
 // =============================================================================
 Vec4& Vec4::operator+=(const Vec4 &other) {
     x += other.x;

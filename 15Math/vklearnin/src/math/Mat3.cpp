@@ -38,26 +38,6 @@ Mat3::Mat3() :
     }
 { }
 
-#ifdef VKL_USE_GLM
-    Mat3::Mat3(const glm::mat3 &other) {
-        rows = {{
-            Vec3(other[0]),
-            Vec3(other[1]),
-            Vec3(other[2])
-        }};
-    }
-
-    Mat3& Mat3::operator=(const glm::mat3 &other) {
-        rows = {{
-            Vec3(other[0]),
-            Vec3(other[1]),
-            Vec3(other[2])
-        }};
-
-        return *this;
-    }
-#endif // VKL_USE_GLM
-
 // =============================================================================
 Mat3& Mat3::operator*=(const Mat3 &other) {
     const float x0 = (rows[0].x * other.rows[0].x) +

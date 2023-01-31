@@ -17,14 +17,6 @@ void Camera::set_perspective(const float near_plane,
                              const float far_plane,
                              const float vertical_fov_degrees)
 {
-#ifdef VKL_USE_GLM
-    _proj_mat = glm::perspective(
-        glm::radians(vertical_fov_degrees),
-        RenderConfig::window_aspect,
-        near_plane,
-        far_plane
-    );
-#else
     const float vfov_radians = math::to_radians(vertical_fov_degrees);
     const float a = std::tanf(vfov_radians * 0.5f);
     const float b = near_plane - far_plane;
@@ -33,23 +25,15 @@ void Camera::set_perspective(const float near_plane,
     _proj_mat = Mat4 {
         { 1.0f / (RenderConfig::window_aspect * a), 0.0f, 0.0f, 0.0f },
         { 0.0f, 1.0f / a, 0.0f, 0.0f },
-        { 0.0f, 0.0f, far_plane / b, 1.0f },
+        { 0.0f, 0.0f, far_plane / b, -1.0f },
         { 0.0f, 0.0f, -(far_plane * near_plane) / c, 0.0f },
     };
-#endif // VKL_USE_GLM
 
     CONSOLE_TRACE("\n{}", fmt::streamed(_proj_mat));
 }
 
 // =============================================================================
 void Camera::_set_view_mat() {
-// #ifdef VKL_USE_GLM
-//     _view_mat = glm::lookAt(
-//         glm::vec3 { _position.x, _position.y, _position.z },
-//         glm::vec3 { _target.x, _target.y, _target.z },
-//         glm::vec3 { _up.x, _up.y, _up.z }
-//     );
-// #else
     _forward = math::normalized(_target - _position);
     _side    = math::normalized(math::cross(_forward, _up));
     _up      = math::normalized(math::cross(_side, _forward));
@@ -65,8 +49,7 @@ void Camera::_set_view_mat() {
             1.0f
         }
     };
-// #endif // VKL_USE_GLM
-    
+
     CONSOLE_TRACE("\n{}", fmt::streamed(_view_mat));
 }
 
