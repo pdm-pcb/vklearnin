@@ -32,7 +32,6 @@ void Demo::submit_draws(vkl::Renderer &renderer) {
         xpos += 0.5f;
     }
 
-
     for(auto& matrix : _model_matrices) {
         renderer.submit({
             .mesh = _cube,

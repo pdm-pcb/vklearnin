@@ -61,16 +61,6 @@ void Engine::init() {
         .view = _persp_cam.view_matrix(),
         .proj = _persp_cam.proj_matrix()
     });
-
-    CONSOLE_ERROR(
-        "View:\n{}",
-        _persp_cam.view_matrix()
-    );
-
-    CONSOLE_ERROR(
-        "Projection:\n{}",
-        _persp_cam.proj_matrix()
-    );
 }
 
 // =============================================================================

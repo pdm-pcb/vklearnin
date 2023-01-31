@@ -49,7 +49,7 @@ Mat4 translated(const Mat4 &a, const Vec3 &pos);
 void rotate(Mat4 &a, const Vec3 &degrees);
 Mat4 rotated(const Mat4 &a, const Vec3 &degrees);
 
-inline void scale(Mat4 &a, const Vec3 &scale);
+void scale(Mat4 &a, const Vec3 &scale);
 Mat4 scaled(const Mat4 &a, const Vec3 &scale);
 
 } // namespace vkl::math
