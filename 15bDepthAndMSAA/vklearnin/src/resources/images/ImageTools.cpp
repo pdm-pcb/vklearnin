@@ -2,12 +2,22 @@
 #include "vklearnin/resources/images/ImageTools.hpp"
 
 #include "vklearnin/system/devices/LogicalDevice.hpp"
+#include "vklearnin/system/devices/PhysicalDevice.hpp"
 
 namespace vkl::ImageTools {
 
+void _allocate(ImageObject &image,
+               const vk::MemoryPropertyFlags memory_properties);
+
+static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
+                                  const vk::MemoryRequirements &reqs);
+
 // =============================================================================
-void create_image(ImageObject &image, vk::ImageType type, vk::Extent3D extent,
-                  vk::ImageUsageFlags usage_flags)
+void create_image(ImageObject &image,
+                  const vk::ImageType type,
+                  const vk::Extent3D extent,
+                  const vk::ImageUsageFlags usage_flags,
+                  const vk::MemoryPropertyFlags memory_properties)
 {
     if(image.format == vk::Format::eUndefined) {
         CONSOLE_CRITICAL("Cannot create image with undefined format.");
@@ -37,6 +47,8 @@ void create_image(ImageObject &image, vk::ImageType type, vk::Extent3D extent,
     }
     
     image.handle = handle;
+
+    _allocate(image, memory_properties);
 }
 
 // =============================================================================
@@ -44,8 +56,10 @@ void destroy_image(ImageObject &image) {
     CONSOLE_TRACE("Destroying image {:#x}",
                    reinterpret_cast<uint64_t>(::VkImage(image.handle)));
     LogicalDevice::native().destroyImage(image.handle);
+    LogicalDevice::native().freeMemory(image.memory);
 
-    image.view = nullptr;
+    image.handle = nullptr;
+    image.memory = nullptr;
 }
 
 // =============================================================================
@@ -102,6 +116,82 @@ void destroy_view(ImageObject &image) {
     LogicalDevice::native().destroyImageView(image.view);
 
     image.view = nullptr;
+}
+
+// =============================================================================
+void _allocate(ImageObject &image,
+               const vk::MemoryPropertyFlags memory_properties)
+{
+    vk::MemoryRequirements mem_reqs { };
+    LogicalDevice::native().getImageMemoryRequirements(
+        image.handle,
+        &mem_reqs
+    );
+
+    auto type_index = _find_memory_type(memory_properties, mem_reqs);
+
+    const vk::MemoryAllocateInfo alloc_info {
+        .allocationSize  = mem_reqs.size,
+        .memoryTypeIndex = type_index,
+    };
+
+    auto alloc_result = LogicalDevice::native().allocateMemory(alloc_info);
+    if(alloc_result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Failed to allocate {} bytes for image {:#x}: '{}'",
+            mem_reqs.size,
+            reinterpret_cast<uint64_t>(VkImage(image.handle)),
+            to_string(alloc_result.result)
+        );
+        return;
+    }
+
+    CONSOLE_TRACE(
+        "\n\tAllocated {} bytes : {:#x}"
+        "\n\tFor image {:#x}",
+        mem_reqs.size,
+        reinterpret_cast<uint64_t>(VkDeviceMemory(alloc_result.value)),
+        reinterpret_cast<uint64_t>(VkImage(image.handle))
+    );
+
+    image.memory = alloc_result.value;
+
+    auto bind_result = LogicalDevice::native().bindImageMemory(
+        image.handle,
+        image.memory,
+        0u
+    );
+
+    if(bind_result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Binding attempt failed with '{}' for:"
+            "\n\tImage: {:#x}"
+            "\n\tMemory: {:#x}",
+            to_string(bind_result),
+            reinterpret_cast<uint64_t>(VkImage(image.handle)),
+            reinterpret_cast<uint64_t>(VkDeviceMemory(image.memory))
+        );
+    }
+}
+
+// =============================================================================
+uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
+                           const vk::MemoryRequirements &reqs)
+{
+    const auto &memory_properties = PhysicalDevice::memory_props();
+    const auto type_count = memory_properties.memoryTypeCount;
+
+    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
+        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
+            const auto &props = memory_properties.memoryTypes[type_index];
+            if(props.propertyFlags & flags) {
+                return type_index;
+            }
+        }
+    }
+
+    CONSOLE_CRITICAL("Could not find memory to match buffer requirements.");
+    return std::numeric_limits<uint32_t>::max();
 }
 
 } // namespace vkl::ImageTools

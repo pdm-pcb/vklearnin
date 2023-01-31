@@ -6,8 +6,12 @@
 
 namespace vkl::ImageTools {
 
-void create_image(ImageObject &image, vk::ImageType type, vk::Extent3D extent,
-                  vk::ImageUsageFlags usage_flags);
+void create_image(ImageObject &image,
+                  const vk::ImageType type,
+                  const vk::Extent3D extent,
+                  const vk::ImageUsageFlags usage_flags,
+                  const vk::MemoryPropertyFlags memory_properties);
+
 void destroy_image(ImageObject &image);
 
 void create_view(ImageObject &image,

@@ -9,10 +9,10 @@ namespace vkl {
 void VertexBuffer::init(const size_t size) {
     _buffer.size = size;
     BufferTools::create(
+        _buffer,
         (vk::BufferUsageFlagBits::eVertexBuffer |
          vk::BufferUsageFlagBits::eTransferDst),
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        _buffer
+        vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 }
 

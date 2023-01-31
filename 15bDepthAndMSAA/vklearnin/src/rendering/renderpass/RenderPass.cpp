@@ -40,6 +40,8 @@ void RenderPass::create() {
 
 // =============================================================================
 void RenderPass::destroy() {
+    ImageTools::destroy_view(_depth_buffer);
+    ImageTools::destroy_image(_depth_buffer);
     LogicalDevice::native().destroyRenderPass(_render_pass);
     _render_pass = nullptr;
 }
@@ -69,17 +71,17 @@ void RenderPass::_default_attachments() {
         // initially, but once we're done, the image is ready to be presented
         .initialLayout  = vk::ImageLayout::eUndefined,
         .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+    },
+    {
+        .format  = _depth_buffer.format,
+        .samples = vk::SampleCountFlagBits::e1,
+        .loadOp  = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     }};
-    // {
-    //     .format  = _depth_buffer.format,
-    //     .samples = vk::SampleCountFlagBits::e1,
-    //     .loadOp  = vk::AttachmentLoadOp::eClear,
-    //     .storeOp = vk::AttachmentStoreOp::eDontCare,
-    //     .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-    //     .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-    //     .initialLayout  = vk::ImageLayout::eUndefined,
-    //     .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-    // }};
 
     _color_attachments = {{
         .attachment = 0u,
@@ -110,11 +112,8 @@ void RenderPass::_default_subpasses() {
         // And has no multisampling resolution attachments
         .pResolveAttachments = nullptr,
 
-        // // With a depth stencil
-        // .pDepthStencilAttachment = &_depth_attachment,
-
         // With a depth stencil
-        .pDepthStencilAttachment = nullptr,
+        .pDepthStencilAttachment = &_depth_attachment,
 
         // As we've only got a single subpass, there's nothing to preserve
         // between subpasses
@@ -127,45 +126,49 @@ void RenderPass::_default_subpasses() {
         // this render pass. If the source subpass is external, the dependency
         // is everything before this pass. If the destination subpass is
         // external, the dependency is everything after this pass.
-        .srcSubpass      = VK_SUBPASS_EXTERNAL,
-        .dstSubpass      = 0u,
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0u,
 
-        // This subpass will take place after all pipeline stages are complete
-        .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
+        .srcStageMask = (
+            vk::PipelineStageFlagBits::eColorAttachmentOutput |
+            vk::PipelineStageFlagBits::eEarlyFragmentTests
+        ),
 
-        // This subpass will output to the color attachment
-        .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        .dstStageMask = (
+            vk::PipelineStageFlagBits::eColorAttachmentOutput |
+            vk::PipelineStageFlagBits::eEarlyFragmentTests
+        ),
 
-        // We want to read from the bottom of the pipe
-        .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
+        .srcAccessMask = vk::AccessFlagBits::eMemoryRead,
+    
+        .dstAccessMask = (
+            vk::AccessFlagBits::eColorAttachmentWrite |
+            vk::AccessFlagBits::eDepthStencilAttachmentWrite
+        ),
 
-        // We want to write to the color attachment
-        .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-
-        // Flagging a subpass dependency by-region means it is local to its
-        // framebuffer
         .dependencyFlags = vk::DependencyFlagBits::eByRegion
     }};
 }
 
 // =============================================================================
 void RenderPass::_init_depth_buffer() {
-    // if(_depth_buffer.handle) {
-    //     ImageTools::destroy_image(_depth_buffer);
-    // }
+    if(_depth_buffer.handle) {
+        ImageTools::destroy_image(_depth_buffer);
+    }
 
-    // ImageTools::create_image(
-    //     _depth_buffer,
-    //     vk::ImageType::e2D,
-    //     { Swapchain::extent().width, Swapchain::extent().height, 1u },
-    //     vk::ImageUsageFlagBits::eDepthStencilAttachment
-    // );
+    ImageTools::create_image(
+        _depth_buffer,
+        vk::ImageType::e2D,
+        { Swapchain::extent().width, Swapchain::extent().height, 1u },
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        vk::MemoryPropertyFlagBits::eDeviceLocal
+    );
 
-    // ImageTools::create_view(
-    //     _depth_buffer,
-    //     vk::ImageViewType::e2D,
-    //     vk::ImageAspectFlagBits::eDepth
-    // );
+    ImageTools::create_view(
+        _depth_buffer,
+        vk::ImageViewType::e2D,
+        vk::ImageAspectFlagBits::eDepth
+    );
 }
 
 // =============================================================================

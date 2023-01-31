@@ -6,10 +6,11 @@
 namespace vkl {
 
 struct ImageObject final {
-    vk::Image       handle { };
-    vk::ImageView   view   { };
-    vk::Format      format { vk::Format::eUndefined };
-    vk::ImageLayout layout { vk::ImageLayout::eUndefined };
+    vk::Image        handle { };
+    vk::DeviceMemory memory { };
+    vk::ImageView    view   { };
+    vk::Format       format { vk::Format::eUndefined };
+    vk::ImageLayout  layout { vk::ImageLayout::eUndefined };
 };
 
 } // namespace vkl

@@ -7,16 +7,16 @@
 
 namespace vkl::BufferTools {
 
-void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               BufferObject &buffer);
+void _allocate(BufferObject &buffer,
+               const vk::MemoryPropertyFlags memory_properties);
 
 static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
                                   const vk::MemoryRequirements &reqs);
 
 // =============================================================================
-void create(const vk::BufferUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties,
-            BufferObject &buffer)
+void create(BufferObject &buffer,
+            const vk::BufferUsageFlags usage_flags,
+            const vk::MemoryPropertyFlags memory_properties)
 {
     const vk::BufferCreateInfo buffer_info {
         .size        = buffer.size,
@@ -48,7 +48,7 @@ void create(const vk::BufferUsageFlags usage_flags,
 
     buffer.handle = result.value;
 
-    _allocate(memory_properties, buffer);
+    _allocate(buffer, memory_properties);
 }
 
 // =============================================================================
@@ -62,6 +62,9 @@ void destroy(BufferObject &buffer) {
 
     LogicalDevice::native().destroyBuffer(buffer.handle);
     LogicalDevice::native().freeMemory(buffer.memory);
+
+    buffer.handle = nullptr;
+    buffer.memory = nullptr;
 }
 
 // =============================================================================
@@ -71,10 +74,10 @@ void host_to_device(const BufferObject &dst_buffer, const void * const data) {
     };
 
     BufferTools::create(
+        staging_buffer,
         vk::BufferUsageFlagBits::eTransferSrc,
         (vk::MemoryPropertyFlagBits::eHostVisible |
-         vk::MemoryPropertyFlagBits::eHostCoherent),
-        staging_buffer
+         vk::MemoryPropertyFlagBits::eHostCoherent)
     );
 
     auto map_result = LogicalDevice::native().mapMemory(
@@ -172,8 +175,8 @@ void host_to_device(const BufferObject &dst_buffer, const void * const data) {
 }
 
 // =============================================================================
-void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               BufferObject &buffer)
+void _allocate(BufferObject &buffer,
+               const vk::MemoryPropertyFlags memory_properties)
 {
     // The first order of business is to query the logical device about what
     // available memory matches properties we've specified thus far. A zero-

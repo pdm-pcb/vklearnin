@@ -15,10 +15,10 @@ DescriptorSet::UBOIter DescriptorSet::add_ubo(const size_t size) {
     };
 
     BufferTools::create(
+        ubo,
         vk::BufferUsageFlagBits::eUniformBuffer,
         (vk::MemoryPropertyFlagBits::eHostVisible |
-         vk::MemoryPropertyFlagBits::eHostCoherent),
-         ubo
+         vk::MemoryPropertyFlagBits::eHostCoherent)
     );
 
     CONSOLE_TRACE(

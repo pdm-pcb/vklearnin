@@ -8,7 +8,8 @@
 namespace vkl {
 
 static constexpr vk::ClearValue clear_values[] = {
-    { .color { vkl::RenderConfig::CLEAR_COLOR }}
+    { .color { vkl::RenderConfig::CLEAR_COLOR }},
+    { .depthStencil = 1.0f }
 };
 
 // =============================================================================
@@ -118,7 +119,7 @@ void Renderer::_init_framebuffers() {
         _framebuffers[frame].create(
             {
                 Swapchain::image(frame).view,
-                // _render_pass.depth_buffer_view()
+                _render_pass.depth_buffer_view()
             },
             _render_pass.native()
         );

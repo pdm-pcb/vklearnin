@@ -6,9 +6,9 @@
 
 namespace vkl::BufferTools {
 
-void create(const vk::BufferUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties,
-            BufferObject &buffer);
+void create(BufferObject &buffer,
+            const vk::BufferUsageFlags usage_flags,
+            const vk::MemoryPropertyFlags memory_properties);
 
 void destroy(BufferObject &buffer);
 
