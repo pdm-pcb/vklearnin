@@ -181,6 +181,23 @@ void host_to_device(const BufferObject &dst, const void * const data) {
 }
 
 // =============================================================================
+void update_buffer(const BufferObject &buffer, const void * const data) {
+    auto result =
+        LogicalDevice::native().mapMemory(buffer.memory, 0u, buffer.size);
+    if(result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to map UBO {:#x}: '{}'",
+            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
+            to_string(result.result)
+        );
+        return;
+    }
+
+    memcpy(result.value, data, buffer.size);
+    LogicalDevice::native().unmapMemory(buffer.memory);
+}
+
+// =============================================================================
 void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
     // The first order of business is to query the logical device about what
     // available memory matches properties we've specified thus far. A zero-

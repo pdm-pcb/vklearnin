@@ -4,6 +4,7 @@
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/CmdBuffer.hpp"
+#include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
 #include <stb/stb_image.h>
 
@@ -22,7 +23,6 @@ void transition_layout(ImageObject &image,
 // =============================================================================
 void create_image(ImageObject &image,
                   const vk::ImageType type,
-                  const vk::Extent3D extent,
                   const vk::SampleCountFlagBits samples,
                   const vk::ImageUsageFlags usage_flags,
                   const vk::MemoryPropertyFlags memory_properties)
@@ -34,7 +34,7 @@ void create_image(ImageObject &image,
     const vk::ImageCreateInfo image_info {
         .imageType     = type,
         .format        = image.format,
-        .extent        = extent,
+        .extent        = image.extent,
         .mipLevels     = 1u,
         .arrayLayers   = 1u,
         .samples       = samples,
@@ -65,6 +65,10 @@ void create_image(ImageObject &image,
 void destroy_image(ImageObject &image) {
     CONSOLE_TRACE("Destroying image {:#x}",
                    reinterpret_cast<uint64_t>(::VkImage(image.handle)));
+
+    if(image.sampler) {
+        destroy_sampler(image);
+    }
 
     if(image.view) {
         destroy_view(image);
@@ -129,20 +133,16 @@ void destroy_view(ImageObject &image) {
     CONSOLE_TRACE("Destroying image view {:#x}",
                    reinterpret_cast<uint64_t>(::VkImageView(image.view)));
     LogicalDevice::native().destroyImageView(image.view);
-
     image.view = nullptr;
 }
 
 // =============================================================================
-void* load_from_file(std::string_view filepath,
-                     ImageObject      &image,
-                     vk::Extent2D     &extent)
-{
+void* load_from_file(ImageObject &image, std::string_view filepath) {
     const auto texture_path = ASSET_PATH / filepath.data();
     const std::string path = texture_path.string();
 
-    int width = 0;
-    int height = 0;
+    int width    = 0;
+    int height   = 0;
     int channels = 0;
 
     ::stbi_uc* data = ::stbi_load(
@@ -163,14 +163,15 @@ void* load_from_file(std::string_view filepath,
     else {
         CONSOLE_TRACE("Loaded image {}", filepath);
 
-        extent = vk::Extent2D {
+        image.extent = {
             .width  = static_cast<uint32_t>(width),
             .height = static_cast<uint32_t>(height),
+            .depth  = 1u
         };
 
         channels = static_cast<uint32_t>(::STBI_rgb_alpha);
-        image.size = extent.width * extent.height * channels;
-        image.format = vk::Format::eR8G8B8A8Srgb;
+        image.size = image.extent.width * image.extent.height * channels;
+        image.format = Swapchain::image_format();
     }
 
     return data;
@@ -182,9 +183,7 @@ void free_file_data(void *data) {
 }
 
 // =============================================================================
-void host_to_device(ImageObject &dst,
-                    const vk::Extent3D extent,
-                    const void * const data) {
+void host_to_device(ImageObject &dst, const void * const data) {
     vk::BufferImageCopy copy_region {
         .bufferOffset = 0u,
         .bufferRowLength = 0u,
@@ -200,7 +199,7 @@ void host_to_device(ImageObject &dst,
             .y = 0,
             .z = 0
         },
-        .imageExtent = extent
+        .imageExtent = dst.extent
     };
 
     auto staging_buffer = BufferTools::stage_data(dst.size, data);
@@ -250,16 +249,50 @@ void host_to_device(ImageObject &dst,
         return;
     }
 
+    const vk::SubmitInfo submit_info {
+        .waitSemaphoreCount   = 0u,
+        .pWaitSemaphores      = nullptr,
+        .pWaitDstStageMask    = { },
+        .commandBufferCount   = 1u,
+        .pCommandBuffers      = &(cmd_buffer.native()),
+        .signalSemaphoreCount = 0u,
+        .pSignalSemaphores    = nullptr,
+    };
+
+    result = LogicalDevice::cmd_queue().native().submit(
+        submit_info,
+        nullptr
+    );
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_ERROR(
+            "Could not submit command buffer copy commands: '{}'",
+            to_string(result)
+        );
+        return;
+    }
+
+    CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
+
+    result = LogicalDevice::native().waitIdle();
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Failed to wait for device idle after copy from staging buffer: "
+            "'{}'",
+            to_string(result)
+        );
+        return;
+    }
+
     cmd_buffer.free();
     BufferTools::destroy(staging_buffer);
 }
 
 // =============================================================================
-vk::Sampler create_sampler(const ImageObject &image,
-                           const vk::Filter min_filter,
-                           const vk::Filter mag_filter,
-                           const vk::SamplerAddressMode mode_u,
-                           const vk::SamplerAddressMode mode_v)
+void create_sampler(ImageObject &image,
+                    const vk::Filter min_filter,
+                    const vk::Filter mag_filter,
+                    const vk::SamplerAddressMode mode_u,
+                    const vk::SamplerAddressMode mode_v)
 {
     vk::SamplerCreateInfo sampler_info {
         .magFilter        = min_filter,
@@ -271,21 +304,23 @@ vk::Sampler create_sampler(const ImageObject &image,
     auto result = LogicalDevice::native().createSampler(sampler_info);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Unable to create image sampler");
-    }
-    else {
-        CONSOLE_TRACE(
-            "Created image sampler {:#x}",
-                    reinterpret_cast<uint64_t>(::VkSampler(result.value))
-        );
+        return;
     }
 
-    return result.value;
+    CONSOLE_TRACE(
+        "Created image sampler {:#x}",
+                reinterpret_cast<uint64_t>(::VkSampler(result.value))
+    );
+
+    image.sampler = result.value;
 }
 
 // =============================================================================
-void destroy_sampler(vk::Sampler &sampler) {
-    LogicalDevice::native().destroySampler(sampler);
-    sampler = nullptr;
+void destroy_sampler(ImageObject &image) {
+    CONSOLE_TRACE("Destroying image sampler {:#x}",
+                   reinterpret_cast<uint64_t>(::VkSampler(image.sampler)));
+    LogicalDevice::native().destroySampler(image.sampler);
+    image.sampler = nullptr;
 }
 
 // =============================================================================
@@ -390,15 +425,15 @@ void transition_layout(ImageObject &image,
         to_string(barrier.newLayout)
     );
 
-    vk::PipelineStageFlags source_stage      = vk::PipelineStageFlagBits::eNone;
-    vk::PipelineStageFlags destination_stage = vk::PipelineStageFlagBits::eNone;
+    vk::PipelineStageFlags src_stage = vk::PipelineStageFlagBits::eNone;
+    vk::PipelineStageFlags dst_stage = vk::PipelineStageFlagBits::eNone;
 
     if(barrier.oldLayout == vk::ImageLayout::eUndefined) {
         if(new_layout == vk::ImageLayout::eTransferDstOptimal) {
             barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
 
-            source_stage      = vk::PipelineStageFlagBits::eTopOfPipe;
-            destination_stage = vk::PipelineStageFlagBits::eTransfer;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
             CONSOLE_CRITICAL("Unsupported image layout transition");
@@ -410,15 +445,15 @@ void transition_layout(ImageObject &image,
             barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
-            source_stage      = vk::PipelineStageFlagBits::eTransfer;
-            destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            src_stage      = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
         }
         else if(barrier.newLayout == vk::ImageLayout::eTransferSrcOptimal) {
             barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 
-            source_stage      = vk::PipelineStageFlagBits::eTransfer;
-            destination_stage = vk::PipelineStageFlagBits::eTransfer;
+            src_stage      = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
             CONSOLE_CRITICAL("Unsupported image layout transition");
@@ -430,8 +465,8 @@ void transition_layout(ImageObject &image,
             barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
-            source_stage      = vk::PipelineStageFlagBits::eTransfer;
-            destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            src_stage      = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
         }
         else {
             CONSOLE_CRITICAL("Unsupported image layout transition");
@@ -443,17 +478,13 @@ void transition_layout(ImageObject &image,
         return;
     }
 
-    vk::ImageMemoryBarrier image_barriers[] {
-        { barrier }
-    };
-
     command_buffer.pipelineBarrier(
-        source_stage,
-        destination_stage,
+        src_stage,
+        dst_stage,
         { },
         nullptr,
         nullptr,
-        image_barriers
+        { barrier }
     );
 
     image.layout = barrier.newLayout;

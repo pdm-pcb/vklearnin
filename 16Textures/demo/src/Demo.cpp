@@ -1,22 +1,20 @@
 #include "Demo.hpp"
 
+static constexpr uint32_t CUBES_PER_SIDE = 5u;
+static constexpr float    CUBE_STEP      = 0.5f;
+
 // =============================================================================
-void Demo::submit_draws(vkl::Renderer &renderer) {
+void Demo::submit_draws() {
     _model_matrices.clear();
 
-    float xpos = -1.0f;
-    for(uint32_t x = 0; x < 5; ++x) {
-        float zpos = -1.0f;
+    float xpos = (CUBES_PER_SIDE / 2) * -CUBE_STEP;
+    for(uint32_t x = 0; x < CUBES_PER_SIDE; ++x) {
+        float zpos = (CUBES_PER_SIDE / 2) * -CUBE_STEP;
 
-        for(uint32_t z = 0; z < 5; ++z) {
-            auto translate_bottom = vkl::math::translated(
-                vkl::Mat4::identity,
-                { xpos, -0.5f, zpos }
-            );
-
+        for(uint32_t z = 0; z < CUBES_PER_SIDE; ++z) {
             auto translate_top = vkl::math::translated(
                 vkl::Mat4::identity,
-                { xpos, 0.5f, zpos }
+                { xpos, CUBE_STEP, zpos }
             );
 
             auto rotate_top = vkl::math::rotated(
@@ -26,6 +24,11 @@ void Demo::submit_draws(vkl::Renderer &renderer) {
                     vkl::Timekeeper::runtime() * 20.0f,
                     0.0f
                 }
+            );
+
+            auto translate_bottom = vkl::math::translated(
+                vkl::Mat4::identity,
+                { xpos, -CUBE_STEP, zpos }
             );
 
             auto rotate_bottom = vkl::math::rotated(
@@ -45,54 +48,40 @@ void Demo::submit_draws(vkl::Renderer &renderer) {
             _model_matrices.push_back(scale * rotate_top * translate_top);
             _model_matrices.push_back(scale * rotate_bottom * translate_bottom);
 
-            zpos += 0.5f;
+            zpos += CUBE_STEP;
         }
 
-        xpos += 0.5f;
+        xpos += CUBE_STEP;
     }
 
     for(auto& matrix : _model_matrices) {
-        renderer.submit({
+        vkl::Renderer::submit({
             .mesh = _cube,
-            .push_constants {
-                {
-                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                    .size = static_cast<uint32_t>(sizeof(vkl::Mat4)),
-                    .data = &matrix,
-                }
-            }
+            .push_constants {{
+                .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                .size = static_cast<uint32_t>(sizeof(vkl::Mat4)),
+                .data = &matrix,
+            }}
         });
     }
 }
 
 // =============================================================================
 void Demo::init() {
-    _cube.init(
-        1.0f,
-        {{
-            { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
-            { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
-            { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
-            { 1.0f, 1.0f, 1.0f, 1.0f }, // White
-            { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
-            { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
-            { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
-            { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
-        }}
+    _persp_camera.orient(
+        { 0.0f, 0.0f, 3.0f },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f }
     );
+    _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
 
-    _model_matrices.reserve(50);
+    vkl::Renderer::update_view_proj({
+        .view = _persp_camera.view_matrix(),
+        .proj = _persp_camera.proj_matrix()
+    });
 
-    vkl::Texture2D loltest;
-    loltest.init_from_file("textures/bricks082c_d.jpg");
-    loltest.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-
-    loltest.shutdown();
+    _cube.init();
+    _model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
 }
 
 // =============================================================================
@@ -102,6 +91,7 @@ void Demo::shutdown() {
 
 // =============================================================================
 Demo::Demo() :
+    _persp_camera   { },
     _cube           { },
     _model_matrices { }
 { }

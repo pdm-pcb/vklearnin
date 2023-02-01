@@ -8,9 +8,7 @@ namespace vkl {
 
 class Cube final : public Mesh {
 public:
-    using CornerColors = std::array<std::array<float, 4>, 8>;
-
-    void init(const CornerColors corner_colors, const float scale = 1.0f);
+    void init(const float scale = 1.0f, const float tile = 1.0f);
     void shutdown();
 
     Cube() = default;

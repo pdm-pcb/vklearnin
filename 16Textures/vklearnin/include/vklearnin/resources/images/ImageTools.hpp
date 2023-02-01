@@ -9,7 +9,6 @@ namespace vkl::ImageTools {
 
 void create_image(ImageObject &image,
                   const vk::ImageType type,
-                  const vk::Extent3D extent,
                   const vk::SampleCountFlagBits samples,
                   const vk::ImageUsageFlags usage_flags,
                   const vk::MemoryPropertyFlags memory_properties);
@@ -22,23 +21,19 @@ void create_view(ImageObject &image,
 
 void destroy_view(ImageObject &image);
 
-void* load_from_file(std::string_view filepath,
-                     ImageObject      &image,
-                     vk::Extent2D     &extent);
+void* load_from_file(ImageObject &image, std::string_view filepath);
 
 void free_file_data(void *data);
 
-void host_to_device(ImageObject &dst,
-                    const vk::Extent3D extent,
-                    const void * const data);
+void host_to_device(ImageObject &dst, const void * const data);
 
-vk::Sampler create_sampler(const ImageObject &image,
-                           const vk::Filter min_filter,
-                           const vk::Filter mag_filter,
-                           const vk::SamplerAddressMode mode_u,
-                           const vk::SamplerAddressMode mode_v);
+void create_sampler(ImageObject &image,
+                    const vk::Filter min_filter,
+                    const vk::Filter mag_filter,
+                    const vk::SamplerAddressMode mode_u,
+                    const vk::SamplerAddressMode mode_v);
 
-void destroy_sampler(vk::Sampler &sampler);
+void destroy_sampler(ImageObject &image);
 
 } // namespace vkl::ImageTools
 

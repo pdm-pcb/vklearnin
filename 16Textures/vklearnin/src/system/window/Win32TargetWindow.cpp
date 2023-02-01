@@ -3,6 +3,8 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/window/Win32TargetWindow.hpp"
 
+#include "vklearnin/system/GraphicsAPI.hpp"
+
 namespace vkl {
 
 bool     Win32TargetWindow::_carry_on     = true;

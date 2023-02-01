@@ -3,50 +3,19 @@
 
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
-#include "vklearnin/resources/buffers/BufferTools.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
+#include "vklearnin/resources/images/Texture2D.hpp"
 
 namespace vkl {
 
 // =============================================================================
-DescriptorSet::UBOIter DescriptorSet::add_ubo(const size_t size) {
-    BufferObject ubo {
-        .size = size
-    };
-
-    BufferTools::create(
-        ubo,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        (vk::MemoryPropertyFlagBits::eHostVisible |
-         vk::MemoryPropertyFlagBits::eHostCoherent)
-    );
-
-    CONSOLE_TRACE(
-        "Created UBO {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(ubo.handle))
-    );
-
+void DescriptorSet::add_ubo(const BufferObject &ubo) {
     _ubos.push_back(ubo);
-
-    return std::prev(_ubos.end());
 }
 
 // =============================================================================
-void DescriptorSet::update_ubo(const UBOIter &buffer, const void *data) {
-    auto &ubo = *buffer;
-
-    auto result = LogicalDevice::native().mapMemory(ubo.memory, 0u, ubo.size);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to map UBO {:#x}: '{}'",
-            reinterpret_cast<uint64_t>(VkBuffer(ubo.handle)),
-            to_string(result.result)
-        );
-        return;
-    }
-
-    memcpy(result.value, data, ubo.size);
-    LogicalDevice::native().unmapMemory(ubo.memory);
+void DescriptorSet::add_texture2D(const Texture2D &texture) {
+    _textures.push_back(texture.image());
 }
 
 // =============================================================================
@@ -65,21 +34,34 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not allocate descriptor sets");
+        return;
     }
 
-    std::vector<vk::WriteDescriptorSet>   set_writes;
     std::vector<vk::DescriptorBufferInfo> buffer_info;
+    buffer_info.reserve(_ubos.size());
 
-    if(!_ubos.empty()) {
-        buffer_info.reserve(_ubos.size());
-        for(const auto &buffer : _ubos) {
-            buffer_info.push_back({
-                .buffer = buffer.handle,
-                .offset = 0u,
-                .range = VK_WHOLE_SIZE
-            });
-        }
+    for(const auto &ubo : _ubos) {
+        buffer_info.push_back({
+            .buffer = ubo.handle,
+            .offset = 0u,
+            .range = VK_WHOLE_SIZE
+        });
+    }
 
+    std::vector<vk::DescriptorImageInfo> image_info;
+    image_info.reserve(_textures.size());
+
+    for(const auto &texture : _textures) {
+        image_info.push_back({
+            .sampler     = texture.sampler,
+            .imageView   = texture.view,
+            .imageLayout = texture.layout
+        });
+    }
+
+    std::vector<vk::WriteDescriptorSet> set_writes;
+
+    if(buffer_info.size() > 0) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 0u,
@@ -88,6 +70,19 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
             .descriptorType = vk::DescriptorType::eUniformBuffer,
             .pImageInfo = nullptr,
             .pBufferInfo = buffer_info.data(),
+            .pTexelBufferView = nullptr
+        });
+    }
+
+    if(image_info.size() > 0) {
+        set_writes.push_back({
+            .dstSet = _set,
+            .dstBinding = 1u,
+            .dstArrayElement = 0u,
+            .descriptorCount = static_cast<uint32_t>(image_info.size()),
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo = image_info.data(),
+            .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         });
     }
@@ -104,15 +99,18 @@ void DescriptorSet::destroy() {
 
 // =============================================================================
 DescriptorSet::DescriptorSet() :
-    _ubos   { },
-    _set    { }
+    _ubos     { },
+    _textures { },
+    _set      { }
 { }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept :
-    _ubos { std::move(other._ubos) },
-    _set  { other._set  }
+    _ubos     { std::move(other._ubos) },
+    _textures { std::move(other._textures) },
+    _set      { other._set  }
 {
     other._ubos.clear();
+    other._textures.clear();
     other._set = nullptr;
 }
 

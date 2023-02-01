@@ -17,6 +17,8 @@ public:
                       const vk::SamplerAddressMode mode_v);
     void shutdown();
 
+    inline const auto& image() const { return _image; }
+
     Texture2D();
     ~Texture2D() = default;
 
@@ -28,8 +30,6 @@ public:
 
 private:
     ImageObject  _image;
-    vk::Extent2D _extent;
-    vk::Sampler  _sampler;
 };
 
 } // namespace vkl

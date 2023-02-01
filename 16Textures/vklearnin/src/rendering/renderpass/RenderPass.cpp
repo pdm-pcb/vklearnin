@@ -155,11 +155,15 @@ void RenderPass::_init_color_buffer() {
     _get_sample_count();
 
     _color_buffer.format = Swapchain::image_format();
+    _color_buffer.extent = {
+        .width  = Swapchain::extent().width,
+        .height = Swapchain::extent().height,
+        .depth  = 1u
+    };
 
     ImageTools::create_image(
         _color_buffer,
         vk::ImageType::e2D,
-        { Swapchain::extent().width, Swapchain::extent().height, 1u },
         _samples,
         (
             vk::ImageUsageFlagBits::eColorAttachment |
@@ -199,10 +203,15 @@ void RenderPass::_init_depth_buffer() {
         ImageTools::destroy_image(_depth_buffer);
     }
 
+    _depth_buffer.extent = {
+        .width  = Swapchain::extent().width,
+        .height = Swapchain::extent().height,
+        .depth  = 1u
+    };
+
     ImageTools::create_image(
         _depth_buffer,
         vk::ImageType::e2D,
-        { Swapchain::extent().width, Swapchain::extent().height, 1u },
         _samples,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal

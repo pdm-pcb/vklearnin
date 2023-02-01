@@ -43,16 +43,16 @@ const Vertex::AttribDescriptions Vertex::_attrib_desc {
     {
         .location = 1u,
         .binding  = 0u,
-        .format   = vk::Format::eR32G32B32A32Sfloat,
-        .offset   = static_cast<uint32_t>(offsetof(Vertex, _color)),
+        .format   = vk::Format::eR32G32Sfloat,
+        .offset   = static_cast<uint32_t>(offsetof(Vertex, _uv)),
     }
 };
 
 // =============================================================================
 Vertex::Vertex(const std::array<float, 4> &position,
-               const std::array<float, 4> &color) :
+               const std::array<float, 2> &uv) :
     _position { position },
-    _color    { color }
+    _uv       { uv }
 { }
 
 } // namespace vkl

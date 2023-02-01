@@ -12,10 +12,20 @@ static constexpr vk::ClearValue clear_values[] = {
     { .depthStencil = 1.0f }
 };
 
+std::vector<Framebuffer>    Renderer::_framebuffers   { };
+DescriptorPool              Renderer::_desc_pool      { };
+DescriptorSetLayout         Renderer::_desc_layout    { };
+std::vector<DescriptorSet>  Renderer::_desc_sets      { };
+std::vector<BufferObject>   Renderer::_view_proj_ubos { };
+vkl::RenderPass             Renderer::_render_pass    { };
+vkl::Pipeline               Renderer::_pipeline       { };
+std::vector<DrawSubmission> Renderer::_draws          { };
+Texture2D                   Renderer::_loltest        { };
+
 // =============================================================================
-void Renderer::update_view_proj(const ViewProjMats &matrices) {
-    for(uint32_t set = 0u; set < RenderConfig::image_count; ++set) {
-        _desc_sets[set].update_ubo(_ubo_iters[set], &matrices);
+void Renderer::update_view_proj(const Camera::ViewProjMats &matrices) {
+    for(const auto &ubo : _view_proj_ubos) {
+        BufferTools::update_buffer(ubo, &matrices);
     }
 }
 
@@ -88,8 +98,15 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
 
 // =============================================================================
 void Renderer::init() {
-    _render_pass.create();
+    _loltest.init_from_file("textures/brickwall017_d.jpg");
+    _loltest.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
 
+    _render_pass.create();
     _init_framebuffers();
     _init_descriptors();
     _init_pipeline();
@@ -97,6 +114,8 @@ void Renderer::init() {
 
 // =============================================================================
 void Renderer::shutdown() {
+    _loltest.shutdown();
+
     _pipeline.destroy();
 
     for(auto &set : _desc_sets) {
@@ -115,6 +134,7 @@ void Renderer::shutdown() {
 
 // =============================================================================
 void Renderer::_init_framebuffers() {
+    _framebuffers.resize(vkl::RenderConfig::image_count);
     for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
         _framebuffers[frame].create(
             {
@@ -130,10 +150,14 @@ void Renderer::_init_framebuffers() {
 // =============================================================================
 void Renderer::_init_descriptors() {
     _desc_pool.create(
-        10u,
+        vkl::RenderConfig::image_count,
         {{
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = 100u,
+            .descriptorCount = 10u,
+        },
+        {
+            .type = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 10u,
         }}
     );
 
@@ -145,11 +169,31 @@ void Renderer::_init_descriptors() {
         .pImmutableSamplers = nullptr
     });
 
+    _desc_layout.add_binding({
+        .binding = static_cast<uint32_t>(_desc_layout.bindings().size()),
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
     _desc_layout.create();
 
+    _view_proj_ubos.resize(vkl::RenderConfig::image_count);
+    for(auto &ubo : _view_proj_ubos) {
+        ubo.size = sizeof(Camera::ViewProjMats);
+        BufferTools::create(
+            ubo,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    _desc_sets.resize(vkl::RenderConfig::image_count);
     for(uint32_t set_index = 0; set_index < _desc_sets.size(); ++set_index) {
-        _ubo_iters[set_index] =
-            _desc_sets[set_index].add_ubo(sizeof(ViewProjMats));
+        _desc_sets[set_index].add_ubo(_view_proj_ubos[set_index]);
+        _desc_sets[set_index].add_texture2D(_loltest);
         _desc_sets[set_index].create(_desc_pool, _desc_layout);
     }
 }
@@ -172,18 +216,6 @@ void Renderer::_init_pipeline() {
     );
 
     _pipeline.create(_render_pass);
-}
-
-// =============================================================================
-Renderer::Renderer() :
-_desc_pool   { },
-_render_pass { },
-_pipeline    { },
-_draws       { }
-{
-    _framebuffers.resize(vkl::RenderConfig::image_count);
-    _desc_sets.resize(vkl::RenderConfig::image_count);
-    _ubo_iters.resize(vkl::RenderConfig::image_count);
 }
 
 } // namespace vkl

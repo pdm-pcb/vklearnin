@@ -9,50 +9,45 @@
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
-#include "vklearnin/math/math.hpp"
+#include "vklearnin/resources/buffers/BufferObject.hpp"
+#include "vklearnin/resources/images/Texture2D.hpp"
+#include "vklearnin/rendering/Camera.hpp"
 
 namespace vkl {
 
 class Renderer {
 public:
-    struct ViewProjMats {
-        Mat4 view;
-        Mat4 proj;
-    };
-    void update_view_proj(const ViewProjMats &matrices);
+    static void update_view_proj(const Camera::ViewProjMats &matrices);
 
-    void submit(const DrawSubmission &draw);
-    void render_pass(const vk::CommandBuffer &cmd_buffer);
+    static void submit(const DrawSubmission &draw);
+    static void render_pass(const vk::CommandBuffer &cmd_buffer);
 
-    void init();
-    void shutdown();
+    static void init();
+    static void shutdown();
 
-    Renderer();
-    ~Renderer() = default;
-
-    Renderer(Renderer &&) = delete;
-    Renderer(const Renderer &) = delete;
-
-    Renderer& operator=(Renderer &&) = delete;
-    Renderer& operator=(const Renderer &) = delete;
+    Renderer() = delete;
 
 private:
-    std::vector<Framebuffer> _framebuffers;
+    static std::vector<Framebuffer> _framebuffers;
 
-    DescriptorPool             _desc_pool;
-    DescriptorSetLayout        _desc_layout;
-    std::vector<DescriptorSet> _desc_sets;
+    static DescriptorPool             _desc_pool;
+    static DescriptorSetLayout        _desc_layout;
+    static std::vector<DescriptorSet> _desc_sets;
 
-    std::vector<DescriptorSet::UBOIter> _ubo_iters;
+    static std::vector<BufferObject> _view_proj_ubos;
 
-    vkl::RenderPass _render_pass;
-    vkl::Pipeline   _pipeline;
+    static vkl::RenderPass _render_pass;
+    static vkl::Pipeline   _pipeline;
 
-    std::vector<DrawSubmission> _draws;
+    static std::vector<DrawSubmission> _draws;
 
-    void _init_framebuffers();
-    void _init_descriptors();
-    void _init_pipeline();
+    static void _init_framebuffers();
+    static void _init_descriptors();
+    static void _init_pipeline();
+
+    /// @brief ///////////////////////////////////////////////////////////////
+    static Texture2D _loltest;
+    /// @brief ///////////////////////////////////////////////////////////////
 };
 
 } // namespace vkl

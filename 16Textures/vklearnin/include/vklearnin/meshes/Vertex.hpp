@@ -14,7 +14,7 @@ public:
     inline static const auto& attrib_desc()  { return _attrib_desc;  }
 
     Vertex(const std::array<float, 4> &position,
-           const std::array<float, 4> &color);
+           const std::array<float, 2> &uv);
     Vertex() = delete;
 
 private:
@@ -22,7 +22,7 @@ private:
     static const AttribDescriptions  _attrib_desc;
 
     std::array<float, 4> _position;
-    std::array<float, 4> _color;
+    std::array<float, 2> _uv;
 };
 
 } // namespace vkl

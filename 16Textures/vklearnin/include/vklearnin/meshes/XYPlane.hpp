@@ -8,9 +8,7 @@ namespace vkl {
 
 class XYPlane final : public Mesh {
 public:
-    using CornerColors = std::array<std::array<float, 4>, 4>;
-
-    void init(const float scale, const CornerColors corner_colors);
+    void init(const float scale = 1.0f, const float tile = 1.0f);
     void shutdown();
 
     XYPlane() = default;

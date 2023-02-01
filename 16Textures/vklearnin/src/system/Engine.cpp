@@ -25,8 +25,8 @@ void Engine::render_loop() {
             return;
         }
 
-            _application.submit_draws(_renderer);
-            _renderer.render_pass(cmd_buffer.native());
+            _application.submit_draws();
+            Renderer::render_pass(cmd_buffer.native());
 
         result = cmd_buffer.native().end();
         if(result != vk::Result::eSuccess) {
@@ -49,23 +49,12 @@ void Engine::init() {
         _cmd_buffers[frame].allocate(_cmd_pools[frame].native());
     }
 
-    _persp_cam.orient(
-        { 0.0f, 0.0f, 3.0f },
-        { 0.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f }
-    );
-    _persp_cam.set_perspective(0.1f, 1000.0f, 45.0f);
-
-    _renderer.init();
-    _renderer.update_view_proj({
-        .view = _persp_cam.view_matrix(),
-        .proj = _persp_cam.proj_matrix()
-    });
+    Renderer::init();
 }
 
 // =============================================================================
 void Engine::shutdown() {
-    _renderer.shutdown();
+    Renderer::shutdown();
 
     for(uint32_t frame = 0; frame < _cmd_pools.size(); ++frame) {
         _cmd_buffers[frame].free();
@@ -75,9 +64,7 @@ void Engine::shutdown() {
 
 // =============================================================================
 Engine::Engine(Application &app) :
-    _application { app },
-    _renderer    { },
-    _persp_cam   { }
+    _application { app }
 {
     _cmd_pools.resize(vkl::RenderConfig::image_count);
     _cmd_buffers.resize(vkl::RenderConfig::image_count);

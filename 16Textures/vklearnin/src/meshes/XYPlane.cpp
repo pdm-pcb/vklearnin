@@ -7,12 +7,12 @@
 namespace vkl {
 
 // =============================================================================
-void XYPlane::init(const float scale, const CornerColors corner_colors) {
+void XYPlane::init(const float scale, const float tile) {
     Mesh::_set_vertices({
-        {{ -scale, -scale, 0.0f, 1.0f }, corner_colors[0]},
-        {{ -scale,  scale, 0.0f, 1.0f }, corner_colors[1]},
-        {{  scale,  scale, 0.0f, 1.0f }, corner_colors[2]},
-        {{  scale, -scale, 0.0f, 1.0f }, corner_colors[3]},
+        {{ -scale, -scale,  scale, 1.0f }, { 0.0f, tile }},
+        {{  scale, -scale,  scale, 1.0f }, { tile, tile }},
+        {{  scale,  scale,  scale, 1.0f }, { tile, 0.0f }},
+        {{ -scale,  scale,  scale, 1.0f }, { 0.0f, 0.0f }},
     });
 
     Mesh::_set_indices({

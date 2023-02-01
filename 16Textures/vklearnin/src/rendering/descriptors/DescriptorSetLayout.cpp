@@ -6,8 +6,8 @@
 namespace vkl {
 
 // =============================================================================
-void DescriptorSetLayout::add_binding(
-    const vk::DescriptorSetLayoutBinding &binding)
+void
+DescriptorSetLayout::add_binding(const vk::DescriptorSetLayoutBinding &binding)
 {
     _bindings.push_back(binding);
 

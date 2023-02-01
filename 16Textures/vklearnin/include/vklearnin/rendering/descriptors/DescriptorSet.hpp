@@ -2,19 +2,19 @@
 #define VKLEARNIN_RENDERING_DESCRIPTORS_DESCRIPTORSET_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/resources/buffers/BufferTools.hpp"
+#include "vklearnin/resources/buffers/BufferObject.hpp"
+#include "vklearnin/resources/images/ImageObject.hpp"
 
 namespace vkl {
 
 class DescriptorPool;
 class DescriptorSetLayout;
+class Texture2D;
 
 class DescriptorSet {
 public:
-    using UBOIter = std::vector<BufferObject>::iterator;
-    UBOIter add_ubo(const size_t size);
-
-    static void update_ubo(const UBOIter &buffer, const void *data);
+    void add_ubo(const BufferObject &ubo);
+    void add_texture2D(const Texture2D &texture);
 
     void create(const DescriptorPool &descriptor_pool,
                 const DescriptorSetLayout &set_layout);
@@ -33,7 +33,8 @@ public:
 
 private:
     std::vector<BufferObject> _ubos;
-    vk::DescriptorSet   _set;
+    std::vector<ImageObject>  _textures;
+    vk::DescriptorSet _set;
 };
 
 } // namespace vkl
