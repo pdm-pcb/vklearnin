@@ -4,8 +4,6 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/devices/CmdPool.hpp"
 #include "vklearnin/system/devices/CmdBuffer.hpp"
-#include "vklearnin/rendering/Renderer.hpp"
-#include "vklearnin/rendering/Camera.hpp"
 
 namespace vkl {
 
@@ -34,9 +32,6 @@ private:
 
     std::vector<CmdPool>   _cmd_pools;
     std::vector<CmdBuffer> _cmd_buffers;
-
-    Renderer _renderer;
-    Camera   _persp_cam;
 };
 
 } // namespace vkl

@@ -2,7 +2,7 @@
 #define VKLEARNIN_RENDERINGSWAPCHAIN_SWAPCHAIN_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/resources/images/ImageTools.hpp"
+#include "vklearnin/resources/images/ImageObject.hpp"
 
 namespace vkl {
 

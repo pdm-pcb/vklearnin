@@ -10,7 +10,7 @@ class RenderPass;
 class Framebuffer final {
 public:
     void create(const std::vector<vk::ImageView> &attachments,
-                const RenderPass &render_pass);
+                const vk::RenderPass &render_pass);
     void destroy();
 
     inline const auto& native() const { return _framebuffer; }

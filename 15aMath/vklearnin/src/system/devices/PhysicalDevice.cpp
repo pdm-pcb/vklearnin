@@ -1,6 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 
+#include "vklearnin/system/GraphicsAPI.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
 
 namespace vkl {

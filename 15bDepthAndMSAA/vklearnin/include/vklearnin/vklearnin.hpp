@@ -8,9 +8,8 @@
 
 #include "vklearnin/system/Application.hpp"
 #include "vklearnin/rendering/RenderConfig.hpp"
-
-#include "vklearnin/system/GraphicsAPI.hpp"
 #include "vklearnin/rendering/Renderer.hpp"
+#include "vklearnin/rendering/Camera.hpp"
 
 #include "vklearnin/resources/images/ImageTools.hpp"
 #include "vklearnin/resources/buffers/BufferTools.hpp"
@@ -26,7 +25,7 @@ static constexpr char ENGINE_NAME[] { "vklearnin" };
 static constexpr uint32_t APP_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
-static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_2;
+static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_1;
 
 #if VKL_DEBUG
 static const std::filesystem::path ASSET_PATH("../../assets");

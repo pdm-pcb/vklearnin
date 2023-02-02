@@ -2,10 +2,10 @@
 #define VKLEARNIN_RENDERINGSWAPCHAIN_SWAPCHAIN_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/resources/images/ImageObject.hpp"
 
 namespace vkl {
 
-class Image2D;
 class CmdQueue;
 
 class Swapchain final {
@@ -53,7 +53,7 @@ private:
         vk::Fence     queue_fence;
     };
 
-    static std::vector<Image2D *> _images;
+    static std::vector<ImageObject> _images;
     static std::vector<ImageSync> _image_sync;
 
     static uint32_t _draw_index;

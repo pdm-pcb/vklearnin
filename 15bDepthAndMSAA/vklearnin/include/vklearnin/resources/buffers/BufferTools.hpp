@@ -12,7 +12,11 @@ void create(BufferObject &buffer,
 
 void destroy(BufferObject &buffer);
 
-void host_to_device(const BufferObject &dst_buffer, const void * const data);
+BufferObject stage_data(const size_t size, const void * const data);
+
+void host_to_device(const BufferObject &dst, const void * const data);
+
+void update_buffer(const BufferObject &buffer, const void * const data);
 
 } // namespace vkl::BufferTools
 

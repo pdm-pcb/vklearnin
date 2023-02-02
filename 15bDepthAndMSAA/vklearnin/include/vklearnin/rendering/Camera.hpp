@@ -2,13 +2,17 @@
 #define VKLEARNIN_RENDERING_CAMERA_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/math/Vec4.hpp"
-#include "vklearnin/math/Mat4.hpp"
+#include "vklearnin/math/math.hpp"
 
 namespace vkl {
 
 class Camera final {
 public:
+    struct ViewProjMats {
+        Mat4 view;
+        Mat4 proj;
+    };
+
     void orient(const Vec3 &position, const Vec3 &target, const Vec3 &up);
     void set_perspective(const float near_plane,
                          const float far_plane,

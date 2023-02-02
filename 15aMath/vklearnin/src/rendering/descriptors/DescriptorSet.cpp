@@ -3,50 +3,13 @@
 
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
-#include "vklearnin/resources/buffers/BufferTools.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
 namespace vkl {
 
 // =============================================================================
-DescriptorSet::UBOIter DescriptorSet::add_ubo(const size_t size) {
-    Buffer ubo {
-        .size = size
-    };
-
-    BufferTools::create(
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        (vk::MemoryPropertyFlagBits::eHostVisible |
-         vk::MemoryPropertyFlagBits::eHostCoherent),
-         ubo
-    );
-
-    CONSOLE_TRACE(
-        "Created UBO {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(ubo.handle))
-    );
-
+void DescriptorSet::add_ubo(const BufferObject &ubo) {
     _ubos.push_back(ubo);
-
-    return std::prev(_ubos.end());
-}
-
-// =============================================================================
-void DescriptorSet::update_ubo(const UBOIter &buffer, const void *data) {
-    auto &ubo = *buffer;
-
-    auto result = LogicalDevice::native().mapMemory(ubo.memory, 0u, ubo.size);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to map UBO {:#x}: '{}'",
-            reinterpret_cast<uint64_t>(VkBuffer(ubo.handle)),
-            to_string(result.result)
-        );
-        return;
-    }
-
-    memcpy(result.value, data, ubo.size);
-    LogicalDevice::native().unmapMemory(ubo.memory);
 }
 
 // =============================================================================
@@ -65,21 +28,23 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not allocate descriptor sets");
+        return;
     }
 
-    std::vector<vk::WriteDescriptorSet>   set_writes;
     std::vector<vk::DescriptorBufferInfo> buffer_info;
+    buffer_info.reserve(_ubos.size());
 
-    if(!_ubos.empty()) {
-        buffer_info.reserve(_ubos.size());
-        for(const auto &buffer : _ubos) {
-            buffer_info.push_back({
-                .buffer = buffer.handle,
-                .offset = 0u,
-                .range = VK_WHOLE_SIZE
-            });
-        }
+    for(const auto &ubo : _ubos) {
+        buffer_info.push_back({
+            .buffer = ubo.handle,
+            .offset = 0u,
+            .range = VK_WHOLE_SIZE
+        });
+    }
 
+    std::vector<vk::WriteDescriptorSet> set_writes;
+
+    if(buffer_info.size() > 0) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 0u,
@@ -104,8 +69,8 @@ void DescriptorSet::destroy() {
 
 // =============================================================================
 DescriptorSet::DescriptorSet() :
-    _ubos   { },
-    _set    { }
+    _ubos { },
+    _set  { }
 { }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept :

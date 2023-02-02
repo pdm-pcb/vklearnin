@@ -5,7 +5,7 @@
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/system/devices/CmdQueue.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
-#include "vklearnin/resources/images/Image2D.hpp"
+#include "vklearnin/resources/images/ImageTools.hpp"
 
 namespace vkl {
 
@@ -18,7 +18,7 @@ vk::PresentModeKHR Swapchain::_present_mode = vk::PresentModeKHR::eImmediate;
 vk::SwapchainCreateInfoKHR Swapchain::_create_info { };
 vk::SwapchainKHR           Swapchain::_swapchain   { };
 
-std::vector<Image2D *>            Swapchain::_images;
+std::vector<ImageObject>          Swapchain::_images;
 std::vector<Swapchain::ImageSync> Swapchain::_image_sync;
 
 uint32_t Swapchain::_draw_index    = 0u;
@@ -178,8 +178,7 @@ void Swapchain::destroy() {
         LogicalDevice::native().destroyFence(sync.queue_fence);
     }
     for(auto &image : _images) {
-        image->destroy_view();
-        delete image;
+        ImageTools::destroy_view(image);
     }
     
     LogicalDevice::native().destroy(_swapchain);
@@ -421,20 +420,22 @@ void Swapchain::_get_images() {
     
     _images.resize(RenderConfig::image_count);
     for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
-        _images[image_idx] = new Image2D;
-        _images[image_idx]->init(
-            result.value[image_idx],
-            _image_format,
-            vk::ImageLayout::eUndefined,
-            _extent
-        );
+        _images[image_idx] = {
+            .handle = result.value[image_idx],
+            .format = _image_format,
+            .layout =  vk::ImageLayout::eUndefined,
+        };
     }
 }
 
 // =============================================================================
 void Swapchain::_create_image_views() {
     for(auto &image : _images) {
-        image->create_view(vk::ImageAspectFlagBits::eColor);
+        ImageTools::create_view(
+            image,
+            vk::ImageViewType::e2D,
+            vk::ImageAspectFlagBits::eColor
+        );
     }
 }
 

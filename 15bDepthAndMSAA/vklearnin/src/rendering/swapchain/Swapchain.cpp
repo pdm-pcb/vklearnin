@@ -6,7 +6,6 @@
 #include "vklearnin/system/devices/CmdQueue.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
 #include "vklearnin/resources/images/ImageTools.hpp"
-#include "vklearnin/resources/images/Image2D.hpp"
 
 namespace vkl {
 

@@ -6,7 +6,7 @@
 
 class Demo final : public vkl::Application {
 public:
-    void submit_draws(vkl::Renderer &renderer) override;
+    void submit_draws() override;
 
     void init() override;
     void shutdown() override;
@@ -21,6 +21,8 @@ public:
     Demo& operator=(const Demo &) = delete;
 
 private:
+    vkl::Camera _persp_camera;
+
     vkl::Cube _cube;
     std::vector<vkl::Mat4> _model_matrices;
 };

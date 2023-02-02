@@ -7,16 +7,15 @@
 
 namespace vkl::BufferTools {
 
-void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               Buffer &buffer);
+void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags);
 
-static uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
-                                  const vk::MemoryRequirements &reqs);
+uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
+                          const vk::MemoryRequirements &reqs);
 
 // =============================================================================
-void create(const vk::BufferUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties,
-            Buffer &buffer)
+void create(BufferObject &buffer,
+            const vk::BufferUsageFlags usage_flags,
+            const vk::MemoryPropertyFlags memory_properties)
 {
     const vk::BufferCreateInfo buffer_info {
         .size        = buffer.size,
@@ -48,13 +47,13 @@ void create(const vk::BufferUsageFlags usage_flags,
 
     buffer.handle = result.value;
 
-    _allocate(memory_properties, buffer);
+    allocate(buffer, memory_properties);
 }
 
 // =============================================================================
-void destroy(Buffer &buffer) {
+void destroy(BufferObject &buffer) {
     CONSOLE_TRACE(
-        "\n\tDestroying vertex buffer {:#x}"
+        "\n\tDestroying buffer {:#x}"
         "\n\tFreeing device memory {:#x}",
         reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
         reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.memory))
@@ -62,19 +61,22 @@ void destroy(Buffer &buffer) {
 
     LogicalDevice::native().destroyBuffer(buffer.handle);
     LogicalDevice::native().freeMemory(buffer.memory);
+
+    buffer.handle = nullptr;
+    buffer.memory = nullptr;
 }
 
 // =============================================================================
-void host_to_device(const Buffer &dst_buffer, const void * const data) {
-    Buffer staging_buffer {
-        .size = dst_buffer.size,
+BufferObject stage_data(const size_t size, const void * const data) {
+    BufferObject staging_buffer {
+        .size = size,
     };
 
     BufferTools::create(
+        staging_buffer,
         vk::BufferUsageFlagBits::eTransferSrc,
         (vk::MemoryPropertyFlagBits::eHostVisible |
-         vk::MemoryPropertyFlagBits::eHostCoherent),
-        staging_buffer
+         vk::MemoryPropertyFlagBits::eHostCoherent)
     );
 
     auto map_result = LogicalDevice::native().mapMemory(
@@ -89,22 +91,29 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
             reinterpret_cast<uint64_t>(VkDeviceMemory(staging_buffer.memory)),
             to_string(map_result.result)
         );
-        return;
+    }
+    else {
+        memcpy(map_result.value, data, staging_buffer.size);
+        LogicalDevice::native().unmapMemory(staging_buffer.memory);
+
+        CONSOLE_TRACE("Copied {} bytes to staging buffer", staging_buffer.size);
     }
 
-    memcpy(map_result.value, data, staging_buffer.size);
-    LogicalDevice::native().unmapMemory(staging_buffer.memory);
+    return staging_buffer;
+}
 
-    CONSOLE_TRACE("Copied {} bytes to staging buffer", staging_buffer.size);
-
-    const vk::CommandBufferBeginInfo begin_info {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
-    };
-    
+// =============================================================================
+void host_to_device(const BufferObject &dst, const void * const data) {
     const vk::BufferCopy copy_region {
         .srcOffset = 0u,
         .dstOffset = 0u,
-        .size = dst_buffer.size
+        .size = dst.size
+    };
+
+    auto staging_buffer = stage_data(dst.size, data);
+
+    const vk::CommandBufferBeginInfo begin_info {
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
     };
 
     CmdBuffer cmd_buffer;
@@ -112,7 +121,7 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
     auto result = cmd_buffer.native().begin(&begin_info);
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
-            "Could not begin recording for vertex buffer transfer: '{}'",
+            "Could not begin recording for buffer transfer: '{}'",
             to_string(result)
         );
         return;
@@ -120,14 +129,14 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
 
         cmd_buffer.native().copyBuffer(
             staging_buffer.handle,
-            dst_buffer.handle,
+            dst.handle,
             copy_region
         );
 
     result = cmd_buffer.native().end();
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
-            "Failed to end recording for vertex buffer transfer: '{}'",
+            "Failed to end recording for buffer transfer: '{}'",
             to_string(result)
         );
         return;
@@ -149,13 +158,13 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
     );
     if(result != vk::Result::eSuccess) {
         CONSOLE_ERROR(
-            "Could not submit command vertex buffer copy commands: '{}'",
+            "Could not submit command buffer copy commands: '{}'",
             to_string(result)
         );
         return;
     }
 
-    CONSOLE_TRACE("Copied {} bytes to staging buffer", dst_buffer.size);
+    CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
 
     result = LogicalDevice::native().waitIdle();
     if(result != vk::Result::eSuccess) {
@@ -172,9 +181,24 @@ void host_to_device(const Buffer &dst_buffer, const void * const data) {
 }
 
 // =============================================================================
-void _allocate(const vk::MemoryPropertyFlags memory_properties,
-               Buffer &buffer)
-{
+void update_buffer(const BufferObject &buffer, const void * const data) {
+    auto result =
+        LogicalDevice::native().mapMemory(buffer.memory, 0u, buffer.size);
+    if(result.result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to map UBO {:#x}: '{}'",
+            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
+            to_string(result.result)
+        );
+        return;
+    }
+
+    memcpy(result.value, data, buffer.size);
+    LogicalDevice::native().unmapMemory(buffer.memory);
+}
+
+// =============================================================================
+void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
     // The first order of business is to query the logical device about what
     // available memory matches properties we've specified thus far. A zero-
     // initialized vk::MemoryRequirements structure indicates that the
@@ -189,7 +213,7 @@ void _allocate(const vk::MemoryPropertyFlags memory_properties,
     // This function call will check the joint requirements of ourselves and
     // the logical device against the types of memory offered by the physical
     // device.
-    auto type_index = _find_memory_type(memory_properties, mem_reqs);
+    auto type_index = find_memory_type(flags, mem_reqs);
 
     // Once a suitable memory type (and its index) is located, we're ready to
     // actually allocate the buffer.
@@ -239,8 +263,8 @@ void _allocate(const vk::MemoryPropertyFlags memory_properties,
 }
 
 // =============================================================================
-uint32_t _find_memory_type(const vk::MemoryPropertyFlags flags,
-                           const vk::MemoryRequirements &reqs)
+uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
+                          const vk::MemoryRequirements &reqs)
 {
     const auto &memory_properties = PhysicalDevice::memory_props();
     const auto type_count = memory_properties.memoryTypeCount;

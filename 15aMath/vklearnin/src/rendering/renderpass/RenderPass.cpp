@@ -1,6 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/renderpass/RenderPass.hpp"
 
+#include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
@@ -129,7 +130,11 @@ void RenderPass::_default_subpasses() {
 
 // =============================================================================
 RenderPass::RenderPass() :
-    _render_pass { }
+    _attach_descs        { },
+    _color_attachments   { },
+    _subpasses           { },
+    _subpass_deps        { },
+    _render_pass         { }
 { }
 
 } // namespace vkl

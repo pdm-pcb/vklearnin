@@ -12,7 +12,7 @@ class Application {
 public:
     void run();
 
-    virtual void submit_draws(Renderer &renderer) = 0;
+    virtual void submit_draws() = 0;
 
     virtual void init() = 0;
     virtual void shutdown() = 0;

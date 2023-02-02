@@ -9,10 +9,10 @@ namespace vkl {
 
 // =============================================================================
 void Framebuffer::create(const std::vector<vk::ImageView> &attachments,
-                         const RenderPass &render_pass)
+                         const vk::RenderPass &render_pass)
 {
     const vk::FramebufferCreateInfo buffer_info {
-        .renderPass      = render_pass.native(),
+        .renderPass      = render_pass,
         .attachmentCount = static_cast<uint32_t>(attachments.size()),
         .pAttachments    = attachments.data(),
         .width           = Swapchain::extent().width,
