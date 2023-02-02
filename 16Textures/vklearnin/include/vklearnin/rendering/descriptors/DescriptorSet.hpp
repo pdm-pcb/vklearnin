@@ -4,6 +4,8 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
+#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
+#include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
 namespace vkl {
 
@@ -12,14 +14,17 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
-    void add_ubo(const BufferObject &ubo);
-    void add_texture2D(const ImageObject &texture);
+    using BufferObjects = std::vector<BufferObject>;
 
-    void create(const DescriptorPool &descriptor_pool,
-                const DescriptorSetLayout &set_layout);
+    void add_ubo(BufferObjects const& buffers,
+                 vk::ShaderStageFlags const stage_flags);
+    void add_texture2D(ImageObject const& texture);
+
+    void create(DescriptorPool const& pool);
     void destroy();
 
-    inline auto const& native() const { return _set; }
+    inline auto const& native() const { return _sets[Swapchain::image_index()]; }
+    inline auto const& layout() const { return _layout; }
 
     DescriptorSet();
     ~DescriptorSet() = default;
@@ -31,9 +36,13 @@ public:
     DescriptorSet& operator=(const DescriptorSet &) = delete;
 
 private:
-    std::vector<BufferObject> _ubos;
-    std::vector<ImageObject>  _textures;
-    vk::DescriptorSet _set;
+    std::vector<BufferObjects> _ubos;
+    std::vector<ImageObject>   _textures;
+
+    DescriptorSetLayout _layout;
+
+    using DescriptorSets = std::vector<vk::DescriptorSet>;
+    DescriptorSets _sets;
 };
 
 } // namespace vkl

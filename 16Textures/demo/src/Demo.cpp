@@ -17,7 +17,8 @@ void Demo::submit_draws() {
         &vpm
     );
 
-    _model_matrices.clear();
+    _color_model_matrices.clear();
+    _texture_model_matrices.clear();
 
     float xpos = std::floorf(CUBES_PER_SIDE * 0.5f) * -CUBE_STEP;
     for(size_t x = 0; x < CUBES_PER_SIDE; ++x) {
@@ -57,8 +58,13 @@ void Demo::submit_draws() {
                 { 0.1f, 0.1f, 0.1f, }
             );
 
-            _model_matrices.push_back(scale * rotate_top * translate_top);
-            _model_matrices.push_back(scale * rotate_bottom * translate_bottom);
+            _color_model_matrices.push_back(
+                scale * rotate_top * translate_top
+            );
+
+            _texture_model_matrices.push_back(
+                scale * rotate_bottom * translate_bottom
+            );
 
             zpos += CUBE_STEP;
         }
@@ -66,18 +72,21 @@ void Demo::submit_draws() {
         xpos += CUBE_STEP;
     }
 
-    for(auto& matrix : _model_matrices) {
-        vkl::Renderer::submit({
-            .vertex_buffer = _cube.vertex_buffer().native(),
-            .index_buffer  = _cube.index_buffer().native(),
-            .index_count   = _cube.index_count(),
+    for(auto& matrix : _texture_model_matrices) {
+        vkl::Renderer::submit(
+            vkl::Renderer::PipelineIndex::TEXTURE,
+            {
+                .vertex_buffer = _texture_cube.vertex_buffer().native(),
+                .index_buffer  = _texture_cube.index_buffer().native(),
+                .index_count   = _texture_cube.index_count(),
 
-            .push_constants = {{
-                .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                .size        = sizeof(vkl::Mat4),
-                .data        = &matrix,
-            }}
-        });
+                .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &matrix,
+                }}
+            }
+        );
     }
 }
 
@@ -101,10 +110,11 @@ void Demo::init() {
         );
     }
 
-    vkl::Renderer::add_ubo(_view_proj_ubos, vk::ShaderStageFlagBits::eVertex);
+    _color_cube.init();
+    _color_model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE);
 
-    _cube.init();
-    _model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
+    _texture_cube.init();
+    _texture_model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE);
 
     _bricks.init_from_file("textures/brickwall017_d.jpg");
     _bricks.init_sampler(
@@ -114,18 +124,27 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat
     );
 
-    vkl::Renderer::add_texture2D(_bricks.image());
+    // vkl::Renderer::add_ubo(
+    //     vkl::Renderer::PipelineIndex::COLOR,
+    //     _view_proj_ubos,
+    //     vk::ShaderStageFlagBits::eVertex
+    // );
+
+    vkl::Renderer::add_ubo(
+        vkl::Renderer::PipelineIndex::TEXTURE,
+        _view_proj_ubos,
+        vk::ShaderStageFlagBits::eVertex
+    );
+
+    vkl::Renderer::add_texture2D(
+        vkl::Renderer::PipelineIndex::TEXTURE,
+        _bricks.image()
+    );
 }
 
 // =============================================================================
 void Demo::shutdown() {
-    _cube.shutdown();
+    _color_cube.shutdown();
+    _texture_cube.shutdown();
     _bricks.shutdown();
 }
-
-// =============================================================================
-Demo::Demo() :
-    _persp_camera   { },
-    _cube           { },
-    _model_matrices { }
-{ }

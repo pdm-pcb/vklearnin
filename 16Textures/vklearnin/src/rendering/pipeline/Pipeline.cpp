@@ -349,21 +349,4 @@ void Pipeline::_init_layout() {
     _layout = result.value;
 }
 
-// =============================================================================
-Pipeline::Pipeline() :
-    _viewport           { },
-    _scissor            { },
-    _vert_input_info    { },
-    _assembly_info      { },
-    _viewport_info      { },
-    _raster_info        { },
-    _multisample_info   { },
-    _dynamic_state_info { },
-    _samples            { },
-    _desc_set_layouts   { },
-    _push_constants     { },
-    _layout             { },
-    _pipeline           { }
-{ }
-
 } // namespace vkl

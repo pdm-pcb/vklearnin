@@ -11,7 +11,7 @@ public:
     void init() override;
     void shutdown() override;
 
-    Demo();
+    Demo() = default;
     ~Demo() override = default;
 
     Demo(Demo &&) = delete;
@@ -22,11 +22,13 @@ public:
 
 private:
     vkl::Camera _persp_camera;
-
     std::vector<vkl::BufferObject> _view_proj_ubos;
 
-    vkl::Cube<vkl::VertexTexture> _cube;
-    std::vector<vkl::Mat4> _model_matrices;
+    vkl::Cube<vkl::VertexColor>   _color_cube;
+    vkl::Cube<vkl::VertexTexture> _texture_cube;
+
+    std::vector<vkl::Mat4> _color_model_matrices;
+    std::vector<vkl::Mat4> _texture_model_matrices;
 
     vkl::Texture2D _bricks;
 };

@@ -10,24 +10,17 @@ namespace vkl {
 
 static constexpr vk::ClearValue clear_values[] = {
     { .color { vkl::RenderConfig::CLEAR_COLOR }},
-    { .depthStencil {
-            .depth = 1.0f,
-            .stencil = 1u,
-        }
-    }
+    { .depthStencil { .depth = 1.0f }}
 };
 
-std::vector<Framebuffer>    Renderer::_framebuffers   { vkl::RenderConfig::image_count };
-DescriptorPool              Renderer::_desc_pool      { };
-DescriptorSetLayout         Renderer::_desc_layout    { };
-std::vector<DescriptorSet>  Renderer::_desc_sets      { vkl::RenderConfig::image_count };
-vkl::RenderPass             Renderer::_render_pass    { };
-vkl::Pipeline               Renderer::_pipeline       { };
-std::vector<DrawSubmission> Renderer::_draws          { };
+DescriptorPool         Renderer::_desc_pool    { };
+Renderer::Pipelines    Renderer::_pipelines    { };
+Renderer::Framebuffers Renderer::_framebuffers { vkl::RenderConfig::image_count };
+vkl::RenderPass        Renderer::_render_pass  { };
 
 // =============================================================================
-void Renderer::submit(const DrawSubmission &draw) {
-    _draws.push_back(draw);
+void Renderer::submit(const PipelineIndex index, const DrawSubmission &draw) {
+    _pipelines[index].draws.push_back(draw);
 }
 
 // =============================================================================
@@ -41,26 +34,27 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
     };
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
+    for(auto& pipeline : _pipelines) {
         cmd_buffer.bindPipeline(
             vk::PipelineBindPoint::eGraphics,
-            _pipeline.native()
+            pipeline.pipeline.native()
         );
-        cmd_buffer.setViewport(0u, _pipeline.viewport());
-        cmd_buffer.setScissor(0u,  _pipeline.scissor());
+        cmd_buffer.setViewport(0u, pipeline.pipeline.viewport());
+        cmd_buffer.setScissor(0u,  pipeline.pipeline.scissor());
 
         cmd_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
-            _pipeline.layout(),
+            pipeline.pipeline.layout(),
             0u,
-            { _desc_sets[Swapchain::image_index()].native() },
+            { pipeline.desc_set.native() },
             nullptr
         );
 
-        for(auto const& draw : _draws) {
+        for(auto const& draw : pipeline.draws) {
             size_t running_offset = 0u;
             for(auto const& push_constant : draw.push_constants) {
                 cmd_buffer.pushConstants(
-                    _pipeline.layout(),
+                    pipeline.pipeline.layout(),
                     push_constant.stage_flags,
                     static_cast<uint32_t>(running_offset),
                     static_cast<uint32_t>(push_constant.size),
@@ -86,9 +80,10 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
             );
         }
 
-    cmd_buffer.endRenderPass();
+        pipeline.draws.clear();
+    }
 
-    _draws.clear();
+    cmd_buffer.endRenderPass();
 }
 
 // =============================================================================
@@ -100,13 +95,11 @@ void Renderer::init() {
 
 // =============================================================================
 void Renderer::shutdown() {
-    _pipeline.destroy();
-
-    for(auto &set : _desc_sets) {
-        set.destroy();
+    for(auto& pipeline : _pipelines) {
+        pipeline.desc_set.destroy();
+        pipeline.pipeline.destroy();
     }
 
-    _desc_layout.destroy();
     _desc_pool.destroy();
 
     for(auto &framebuffer : _framebuffers) {
@@ -117,69 +110,66 @@ void Renderer::shutdown() {
 }
 
 // =============================================================================
-void Renderer::add_ubo(const std::vector<BufferObject> &ubos,
+void Renderer::add_ubo(const PipelineIndex index,
+                       const DescriptorSet::BufferObjects &buffers,
                        const vk::ShaderStageFlags stage_flags)
 {
-    if(ubos.size() != RenderConfig::image_count) {
-        CONSOLE_CRITICAL(
-            "UBO vector size of {} does not match image count of {}",
-            ubos.size(),
-            RenderConfig::image_count
-        );
-    }
-
-    _desc_layout.add_binding({
-        .binding = static_cast<uint32_t>(_desc_layout.bindings().size()),
-        .descriptorType     = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount    = 1u,
-        .stageFlags         = stage_flags,
-        .pImmutableSamplers = nullptr
-    });
-
-    for(uint32_t image = 0u; image < RenderConfig::image_count; ++image) {
-        _desc_sets[image].add_ubo(ubos[image]);
-    }
+    _pipelines[index].desc_set.add_ubo(buffers, stage_flags);
 }
 
 // =============================================================================
-void Renderer::add_texture2D(const ImageObject &texture) {
-    _desc_layout.add_binding({
-        .binding            = 1u,
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    for(auto &set : _desc_sets) {
-        set.add_texture2D(texture);
-    }
+void Renderer::add_texture2D(const PipelineIndex index,
+                             const ImageObject &texture)
+{
+    _pipelines[index].desc_set.add_texture2D(texture);
 }
 
 // =============================================================================
 void Renderer::create_pipelines() {
-    _desc_layout.create();
+    // {
+    //     // Color Pipeline
+    //     auto& pipe = _pipelines[PipelineIndex::COLOR];
+    //     pipe.pipeline.vert_from_spirv("shaders/01color.vert");
+    //     pipe.pipeline.frag_from_spirv("shaders/01color.frag");
 
-    for(auto &set : _desc_sets) {
-        set.create(_desc_pool, _desc_layout);
+    //     pipe.desc_layout.create();
+    //     for(auto& set : pipe.desc_sets) {
+    //         set.create(_desc_pool, pipe.desc_layout);
+    //     }
+
+    //     pipe.pipeline.add_descriptor_set(pipe.desc_layout.native());
+
+    //     pipe.pipeline.add_push_constant(
+    //         vk::ShaderStageFlagBits::eVertex,
+    //         sizeof(Mat4)
+    //     );
+    //     pipe.pipeline.describe_vertex_input(
+    //         VertexColor::bindings,
+    //         VertexColor::attributes
+    //     );
+
+    //     pipe.pipeline.create(_render_pass);
+    // }
+    {
+        // Texture Pipeline
+        auto& pipe = _pipelines[PipelineIndex::TEXTURE];
+        pipe.pipeline.vert_from_spirv("shaders/02texture.vert");
+        pipe.pipeline.frag_from_spirv("shaders/02texture.frag");
+
+        pipe.desc_set.create(_desc_pool);
+        pipe.pipeline.add_descriptor_set(pipe.desc_set.layout().native());
+
+        pipe.pipeline.add_push_constant(
+            vk::ShaderStageFlagBits::eVertex,
+            sizeof(Mat4)
+        );
+        pipe.pipeline.describe_vertex_input(
+            VertexTexture::bindings,
+            VertexTexture::attributes
+        );
+
+        pipe.pipeline.create(_render_pass);
     }
-
-    _pipeline.vert_from_spirv("shaders/02texture.vert");
-    _pipeline.frag_from_spirv("shaders/02texture.frag");
-
-    _pipeline.add_descriptor_set(_desc_layout.native());
-
-    _pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
-        sizeof(Mat4)
-    );
-
-    _pipeline.describe_vertex_input(
-        VertexTexture::bindings,
-        VertexTexture::attributes
-    );
-
-    _pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -199,7 +189,7 @@ void Renderer::_init_framebuffers() {
 // =============================================================================
 void Renderer::_init_descriptors() {
     _desc_pool.create(
-        vkl::RenderConfig::image_count,
+        vkl::RenderConfig::image_count * PipelineIndex::MAX,
         {{
             .type = vk::DescriptorType::eUniformBuffer,
             .descriptorCount = 10u,

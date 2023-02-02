@@ -7,7 +7,6 @@
 #include "vklearnin/rendering/renderpass/Framebuffer.hpp"
 #include "vklearnin/rendering/pipeline/Pipeline.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
-#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 
 namespace vkl {
@@ -17,30 +16,44 @@ struct ImageObject;
 
 class Renderer {
 public:
-    static void submit(const DrawSubmission &draw);
+    const enum PipelineIndex {
+        // COLOR,
+        TEXTURE,
+
+        MAX
+    };
+
+    static void submit(const PipelineIndex index, const DrawSubmission &draw);
     static void render_pass(const vk::CommandBuffer &cmd_buffer);
 
     static void init();
     static void shutdown();
 
-    static void add_ubo(const std::vector<BufferObject> &ubos,
+    static void add_ubo(const PipelineIndex index,
+                        const DescriptorSet::BufferObjects &buffers,
                         const vk::ShaderStageFlags stage_flags);
-    static void add_texture2D(const ImageObject &texture);
+    static void add_texture2D(const PipelineIndex index,
+                              const ImageObject &texture);
     static void create_pipelines();
 
     Renderer() = delete;
 
 private:
-    static std::vector<Framebuffer> _framebuffers;
+    static DescriptorPool _desc_pool;
 
-    static DescriptorPool             _desc_pool;
-    static DescriptorSetLayout        _desc_layout;
-    static std::vector<DescriptorSet> _desc_sets;
+    using DrawSubmissions = std::vector<DrawSubmission>;
+    struct FullPipeline {
+        DescriptorSet   desc_set;
+        Pipeline        pipeline;
+        DrawSubmissions draws;
+    };
 
-    static RenderPass _render_pass;
-    static Pipeline   _pipeline;
+    using Pipelines = std::array<FullPipeline, PipelineIndex::MAX>;
+    static Pipelines _pipelines;
 
-    static std::vector<DrawSubmission> _draws;
+    using Framebuffers = std::vector<Framebuffer>;
+    static Framebuffers _framebuffers;
+    static RenderPass   _render_pass;
 
     static void _init_framebuffers();
     static void _init_descriptors();
