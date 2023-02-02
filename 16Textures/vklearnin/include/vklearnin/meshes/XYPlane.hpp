@@ -6,19 +6,35 @@
 
 namespace vkl {
 
-class XYPlane final : public Mesh {
+template <typename VertexType>
+class XYPlane final : public Mesh<VertexType> {
 public:
-    void init(const float scale = 1.0f, const float tile = 1.0f);
-    void shutdown();
+    void init(float const scale = 1.0f, float const tile = 1.0f) {
+        Mesh::_set_vertices({
+            {{ -scale, -scale,  scale, 1.0f }, { 0.0f, tile }},
+            {{  scale, -scale,  scale, 1.0f }, { tile, tile }},
+            {{  scale,  scale,  scale, 1.0f }, { tile, 0.0f }},
+            {{ -scale,  scale,  scale, 1.0f }, { 0.0f, 0.0f }},
+        });
+
+        Mesh::_set_indices({
+            0, 1, 2,
+            0, 2, 3
+        });
+    }
+
+    void shutdown() {
+        Mesh::_shutdown_buffers();
+    }
 
     XYPlane() = default;
     ~XYPlane() = default;
 
     XYPlane(XYPlane &&) = delete;
-    XYPlane(const XYPlane &) = delete;
+    XYPlane(XYPlane const&) = delete;
 
     XYPlane& operator=(XYPlane &&) = delete;
-    XYPlane& operator=(const XYPlane &) = delete;
+    XYPlane& operator=(XYPlane const&) = delete;
 };
 
 } // namespace vkl

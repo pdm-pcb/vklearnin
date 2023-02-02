@@ -11,8 +11,8 @@ public:
     static void select_device();
 
     inline static auto queue_index()          { return _queue_index;       }
-    inline static const auto& native()       { return _physical_device;   }
-    inline static const auto& memory_props() { return _memory_properties; }
+    inline static auto const& native()       { return _physical_device;   }
+    inline static auto const& memory_props() { return _memory_properties; }
 
     PhysicalDevice() = delete;
 
@@ -43,7 +43,7 @@ private:
         const vk::PhysicalDeviceDriverProperties &drivers
     );
 
-    static void _print_family_flags(const uint32_t family,
+    static void _print_family_flags(uint32_t const family,
                                     const vk::QueueFlags flags);
 };
 

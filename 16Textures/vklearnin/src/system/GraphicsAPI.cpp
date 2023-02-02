@@ -82,7 +82,7 @@ void GraphicsAPI::init() {
     // we need
     for(const char *required_extension : _enabled_extensions) {
         bool supported = false;
-        for(const auto &extension : extensions) {
+        for(auto const& extension : extensions) {
             if(strcmp(required_extension, extension.extensionName) == 0) {
                 supported = true;
                 break;
@@ -199,7 +199,7 @@ void GraphicsAPI::_init_extensions() {
         .pDisabledValidationFeatures = nullptr
     };
 
-    for(const auto &extension : _enabled_extensions) {
+    for(auto const& extension : _enabled_extensions) {
         CONSOLE_TRACE("Requesting instance extension '{}'", extension);
     }
 }

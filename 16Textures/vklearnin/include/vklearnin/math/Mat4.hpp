@@ -9,22 +9,22 @@ namespace vkl {
 struct Mat3;
 
 struct Mat4 final {
-    explicit Mat4(const std::array<Vec4, 4> &vecs);
-    Mat4(const Vec4 &x, const Vec4 &y, const Vec4 &z, const Vec4 &w);
+    explicit Mat4(std::array<Vec4, 4> const& vecs);
+    Mat4(Vec4 const& x, Vec4 const& y, Vec4 const& z, Vec4 const& w);
     Mat4();
 
-    Mat4& operator=(const Mat3 &other);
-    Mat4& operator*=(const Mat4 &other);
+    Mat4& operator=(Mat3 const& other);
+    Mat4& operator*=(Mat4 const& other);
 
     std::array<Vec4, 4> rows;
 
-    static const Mat4 identity;
+    static Mat4 const identity;
 };
 
-Mat4 operator*(const Mat4 &a, const Mat4 &b);
-bool operator==(const Mat4 &a, const Mat4 &b);
+Mat4 operator*(Mat4 const& a, Mat4 const& b);
+bool operator==(Mat4 const& a, Mat4 const& b);
 
-std::ostream& operator<<(std::ostream& out, const Mat4& a);
+std::ostream& operator<<(std::ostream& out, Mat4 const& a);
 
 } // namespace vkl
 

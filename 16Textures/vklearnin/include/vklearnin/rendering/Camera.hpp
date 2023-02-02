@@ -14,12 +14,12 @@ public:
     };
 
     void orient(const Vec3 &position, const Vec3 &target, const Vec3 &up);
-    void set_perspective(const float near_plane,
-                         const float far_plane,
-                         const float vertical_fov_degrees);
+    void set_perspective(float const near_plane,
+                         float const far_plane,
+                         float const vertical_fov_degrees);
 
-    inline const auto& view_matrix() const { return _view_mat; }
-    inline const auto& proj_matrix() const { return _proj_mat; }
+    inline auto const& view_matrix() const { return _view_mat; }
+    inline auto const& proj_matrix() const { return _proj_mat; }
 
     Camera();
     ~Camera() = default;

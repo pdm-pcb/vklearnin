@@ -6,33 +6,33 @@ namespace vkl {
 //==============================================================================
 // Order-dependent statics
 
-const Vec3 Vec3::unit_x { 1.0f, 0.0f, 0.0f };
-const Vec3 Vec3::unit_y { 0.0f, 1.0f, 0.0f };
-const Vec3 Vec3::unit_z { 0.0f, 0.0f, 1.0f };
-const Vec3 Vec3::origin { 0.0f, 0.0f, 0.0f };
+Vec3 const Vec3::unit_x { 1.0f, 0.0f, 0.0f };
+Vec3 const Vec3::unit_y { 0.0f, 1.0f, 0.0f };
+Vec3 const Vec3::unit_z { 0.0f, 0.0f, 1.0f };
+Vec3 const Vec3::origin { 0.0f, 0.0f, 0.0f };
 
-const Vec4 Vec4::unit_x { Vec3::unit_x, 0.0f };
-const Vec4 Vec4::unit_y { Vec3::unit_y, 0.0f };
-const Vec4 Vec4::unit_z { Vec3::unit_z, 0.0f };
-const Vec4 Vec4::origin { Vec3::origin, 1.0f };
+Vec4 const Vec4::unit_x { Vec3::unit_x, 0.0f };
+Vec4 const Vec4::unit_y { Vec3::unit_y, 0.0f };
+Vec4 const Vec4::unit_z { Vec3::unit_z, 0.0f };
+Vec4 const Vec4::origin { Vec3::origin, 1.0f };
 
-const Mat3 Mat3::identity { };
+Mat3 const Mat3::identity { };
 
-const Mat4 Mat4::identity { };
+Mat4 const Mat4::identity { };
 
 namespace math {
 
 // =============================================================================
 // Three-component vectors
 
-float dot(const Vec3 &a, const Vec3 &b) {
+float dot(Vec3 const& a, Vec3 const& b) {
     return a.x * b.x +
            a.y * b.y +
            a.z * b.z;
 }
 
 // -----------------------------------------------------------------------------
-Vec3 cross(const Vec3 &a, const Vec3 &b) {
+Vec3 cross(Vec3 const& a, Vec3 const& b) {
     return {
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
@@ -42,14 +42,14 @@ Vec3 cross(const Vec3 &a, const Vec3 &b) {
 
 // -----------------------------------------------------------------------------
 void normalize(Vec3 &a) {
-    const float length = math::length(a);
+    float const length = math::length(a);
     a.x /= length;
     a.y /= length;
     a.z /= length;
 }
 
 // -----------------------------------------------------------------------------
-Vec3 normalized(const Vec3 &a) {
+Vec3 normalized(Vec3 const& a) {
     auto result = a;
     normalize(result);
     return result;
@@ -58,30 +58,30 @@ Vec3 normalized(const Vec3 &a) {
 // =============================================================================
 // 4x4 matrices
 
-void translate(Mat4 &a, const Vec3 &pos) {
+void translate(Mat4 &a, Vec3 const& pos) {
     a.rows[3] = { pos, 1.0f };
 }
 
 // -----------------------------------------------------------------------------
-Mat4 translated(const Mat4 &a, const Vec3 &pos) {
+Mat4 translated(Mat4 const& a, Vec3 const& pos) {
     auto result = a;
     translate(result, pos);
     return result;
 }
 
 // -----------------------------------------------------------------------------
-void rotate(Mat4 &a, const Vec3 &degrees) {
-    const float x_radians = math::to_radians(degrees.x);
-    const float y_radians = math::to_radians(degrees.y);
-    const float z_radians = math::to_radians(degrees.z);
+void rotate(Mat4 &a, Vec3 const& degrees) {
+    float const x_radians = math::to_radians(degrees.x);
+    float const y_radians = math::to_radians(degrees.y);
+    float const z_radians = math::to_radians(degrees.z);
 
     Mat4 rot_x = Mat4::identity;
     Mat4 rot_y = Mat4::identity;
     Mat4 rot_z = Mat4::identity;
 
     if(x_radians > math::float_epsilon) {
-        const float c_x = std::cosf(x_radians);
-        const float s_x = std::sinf(x_radians);
+        float const c_x = std::cosf(x_radians);
+        float const s_x = std::sinf(x_radians);
 
         rot_x.rows[1].y =  c_x;
         rot_x.rows[1].z =  s_x;
@@ -90,8 +90,8 @@ void rotate(Mat4 &a, const Vec3 &degrees) {
     }
 
     if(y_radians > math::float_epsilon) {
-        const float c_y = std::cosf(y_radians);
-        const float s_y = std::sinf(y_radians);
+        float const c_y = std::cosf(y_radians);
+        float const s_y = std::sinf(y_radians);
 
         rot_y.rows[0].x =  c_y;
         rot_y.rows[0].z = -s_y;
@@ -100,8 +100,8 @@ void rotate(Mat4 &a, const Vec3 &degrees) {
     }
 
     if(z_radians > math::float_epsilon) {
-        const float c_z = std::cosf(z_radians);
-        const float s_z = std::sinf(z_radians);
+        float const c_z = std::cosf(z_radians);
+        float const s_z = std::sinf(z_radians);
 
         rot_z.rows[0].x =  c_z;
         rot_z.rows[0].y =  s_z;
@@ -113,14 +113,14 @@ void rotate(Mat4 &a, const Vec3 &degrees) {
 }
 
 // -----------------------------------------------------------------------------
-Mat4 rotated(const Mat4 &a, const Vec3 &degrees) {
+Mat4 rotated(Mat4 const& a, Vec3 const& degrees) {
     auto result = a;
     rotate(result, degrees);
     return result;
 }
 
 // -----------------------------------------------------------------------------
-void scale(Mat4 &a, const Vec3 &scale) {
+void scale(Mat4 &a, Vec3 const& scale) {
     const Mat4 scaled_mat {
         { scale.x, 0.0f,    0.0f,    0.0f },
         { 0.0f,    scale.y, 0.0f,    0.0f },
@@ -132,7 +132,7 @@ void scale(Mat4 &a, const Vec3 &scale) {
 }
 
 // -----------------------------------------------------------------------------
-Mat4 scaled(const Mat4 &a, const Vec3 &scale) {
+Mat4 scaled(Mat4 const& a, Vec3 const& scale) {
     auto result = a;
     math::scale(result, scale);
     return result;

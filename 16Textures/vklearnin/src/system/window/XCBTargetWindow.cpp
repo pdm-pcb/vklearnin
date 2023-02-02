@@ -77,8 +77,8 @@ bool XCBTargetWindow::message_loop() {
 }
 
 //==============================================================================
-void XCBTargetWindow::spawn_window(const uint32_t width, const uint32_t height,
-                                   const int32_t  pos_x, const int32_t  pos_y)
+void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
+                                   int32_t const  pos_x, int32_t const  pos_y)
 {
     _init();
     

@@ -266,8 +266,8 @@ void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
 uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
                           const vk::MemoryRequirements &reqs)
 {
-    const auto &memory_properties = PhysicalDevice::memory_props();
-    const auto type_count = memory_properties.memoryTypeCount;
+    auto const& memory_properties = PhysicalDevice::memory_props();
+    auto const type_count = memory_properties.memoryTypeCount;
 
     // This bit-rithmetic bears some explanation. We're checking two bit fields
     // against our requirements for the memory itself.
@@ -277,7 +277,7 @@ uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
         // we're currently on is enabled, that means we've found a matching
         // memory type.
         if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
-            const auto &props = memory_properties.memoryTypes[type_index];
+            auto const& props = memory_properties.memoryTypes[type_index];
 
             // The second check is against the memory properties. This can be
             // any combination of local to the CPU, local to the GPU, visible

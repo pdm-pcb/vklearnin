@@ -39,7 +39,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     std::vector<vk::DescriptorBufferInfo> buffer_info;
     buffer_info.reserve(_ubos.size());
 
-    for(const auto &ubo : _ubos) {
+    for(auto const& ubo : _ubos) {
         buffer_info.push_back({
             .buffer = ubo.handle,
             .offset = 0u,
@@ -50,7 +50,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
     std::vector<vk::DescriptorImageInfo> image_info;
     image_info.reserve(_textures.size());
 
-    for(const auto &texture : _textures) {
+    for(auto const& texture : _textures) {
         image_info.push_back({
             .sampler     = texture.sampler,
             .imageView   = texture.view,

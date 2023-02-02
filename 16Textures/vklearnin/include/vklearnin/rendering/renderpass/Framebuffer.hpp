@@ -13,7 +13,7 @@ public:
                 const vk::RenderPass &render_pass);
     void destroy();
 
-    inline const auto& native() const { return _framebuffer; }
+    inline auto const& native() const { return _framebuffer; }
 
     Framebuffer();
     ~Framebuffer() = default;

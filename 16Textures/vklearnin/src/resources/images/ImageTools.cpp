@@ -138,7 +138,7 @@ void destroy_view(ImageObject &image) {
 
 // =============================================================================
 void* load_from_file(ImageObject &image, std::string_view filepath) {
-    const auto texture_path = ASSET_PATH / filepath.data();
+    auto const texture_path = ASSET_PATH / filepath.data();
     const std::string path = texture_path.string();
 
     int width    = 0;
@@ -381,12 +381,12 @@ void allocate(ImageObject &image, const vk::MemoryPropertyFlags flags) {
 uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
                           const vk::MemoryRequirements &reqs)
 {
-    const auto &memory_properties = PhysicalDevice::memory_props();
-    const auto type_count = memory_properties.memoryTypeCount;
+    auto const& memory_properties = PhysicalDevice::memory_props();
+    auto const type_count = memory_properties.memoryTypeCount;
 
     for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
         if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
-            const auto &props = memory_properties.memoryTypes[type_index];
+            auto const& props = memory_properties.memoryTypes[type_index];
             if(props.propertyFlags & flags) {
                 return type_index;
             }

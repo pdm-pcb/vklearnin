@@ -7,23 +7,23 @@
 namespace vkl {
 
 struct Mat3 final {
-    explicit Mat3(const std::array<Vec3, 3> &vecs);
-    explicit Mat3(const std::array<Vec4, 3> &vecs);
-    Mat3(const Vec3 &x, const Vec3 &y, const Vec3 &z);
-    Mat3(const Vec4 &x, const Vec4 &y, const Vec4 &z);
+    explicit Mat3(std::array<Vec3, 3> const& vecs);
+    explicit Mat3(std::array<Vec4, 3> const& vecs);
+    Mat3(Vec3 const& x, Vec3 const& y, Vec3 const& z);
+    Mat3(Vec4 const& x, Vec4 const& y, Vec4 const& z);
     Mat3();
 
-    Mat3& operator*=(const Mat3 &other);
+    Mat3& operator*=(Mat3 const& other);
 
     std::array<Vec3, 3> rows;
 
-    static const Mat3 identity;
+    static Mat3 const identity;
 };
 
-Mat3 operator*(const Mat3 &a, const Mat3 &b);
-bool operator==(const Mat3 &a, const Mat3 &b);
+Mat3 operator*(Mat3 const& a, Mat3 const& b);
+bool operator==(Mat3 const& a, Mat3 const& b);
 
-std::ostream& operator<<(std::ostream& out, const Mat3& a);
+std::ostream& operator<<(std::ostream& out, Mat3 const& a);
 
 } // namespace vkl
 

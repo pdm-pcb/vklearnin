@@ -10,7 +10,7 @@ public:
     void create(std::string_view filepath);
     void destroy();
 
-    inline const auto& native() const { return _shader; }
+    inline auto const& native() const { return _shader; }
 
     Shader();
     ~Shader() = default;

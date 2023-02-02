@@ -13,7 +13,7 @@ Vec4::Vec4(const std::array<float, 4> &vec) :
     w { vec[3] }
 { }
 
-Vec4::Vec4(const float x, const float y, const float z, const float w) :
+Vec4::Vec4(float const x, float const y, float const z, float const w) :
     x { x },
     y { y },
     z { z },
@@ -27,7 +27,7 @@ Vec4::Vec4() :
     w { 0.0f }
 { }
 
-Vec4::Vec4(const Vec3 &other, const float w) :
+Vec4::Vec4(const Vec3 &other, float const w) :
     x { other.x },
     y { other.y },
     z { other.z },
@@ -35,7 +35,7 @@ Vec4::Vec4(const Vec3 &other, const float w) :
 { }
 
 // =============================================================================
-Vec4& Vec4::operator+=(const Vec4 &other) {
+Vec4& Vec4::operator+=(Vec4 const& other) {
     x += other.x;
     y += other.y;
     z += other.z;
@@ -44,7 +44,7 @@ Vec4& Vec4::operator+=(const Vec4 &other) {
     return *this;
 }
 
-Vec4& Vec4::operator-=(const Vec4 &other) {
+Vec4& Vec4::operator-=(Vec4 const& other) {
     x -= other.x;
     y -= other.y;
     z -= other.z;
@@ -53,7 +53,7 @@ Vec4& Vec4::operator-=(const Vec4 &other) {
     return *this;
 }
 
-Vec4& Vec4::operator*=(const float scalar) {
+Vec4& Vec4::operator*=(float const scalar) {
     x *= scalar;
     y *= scalar;
     z *= scalar;
@@ -61,7 +61,7 @@ Vec4& Vec4::operator*=(const float scalar) {
     return *this;
 }
 
-Vec4& Vec4::operator/=(const float scalar) {
+Vec4& Vec4::operator/=(float const scalar) {
     x /= scalar;
     y /= scalar;
     z /= scalar;
@@ -70,36 +70,36 @@ Vec4& Vec4::operator/=(const float scalar) {
 }
 
 // =============================================================================
-Vec4 operator+(const Vec4 &a, const Vec4 &b) {
+Vec4 operator+(Vec4 const& a, Vec4 const& b) {
     auto result = a;
     return result += b;
 }
 
-Vec4 operator-(const Vec4 &a, const Vec4 &b) {
+Vec4 operator-(Vec4 const& a, Vec4 const& b) {
     auto result = a;
     return result -= b;
 }
 
-Vec4 operator*(const Vec4 &a, const float scalar) {
+Vec4 operator*(Vec4 const& a, float const scalar) {
     auto result = a;
     return result *= scalar;
 }
 
-Vec4 operator/(const Vec4 &a, const float scalar) {
+Vec4 operator/(Vec4 const& a, float const scalar) {
     auto result = a;
     return result /= scalar;
 }
 
-Vec4 operator-(const Vec4 &a) {
+Vec4 operator-(Vec4 const& a) {
     return { -a.x, -a.y, -a.z, -a.w };
 }
 
 // =============================================================================
-bool operator==(const Vec4 &a, const Vec4 &b) {
-    const float x_diff = (std::fabsf(a.z) - std::fabsf(b.x));
-    const float y_diff = (std::fabsf(a.y) - std::fabsf(b.y));
-    const float z_diff = (std::fabsf(a.z) - std::fabsf(b.z));
-    const float w_diff = (std::fabsf(a.w) - std::fabsf(b.w));
+bool operator==(Vec4 const& a, Vec4 const& b) {
+    float const x_diff = (std::fabsf(a.z) - std::fabsf(b.x));
+    float const y_diff = (std::fabsf(a.y) - std::fabsf(b.y));
+    float const z_diff = (std::fabsf(a.z) - std::fabsf(b.z));
+    float const w_diff = (std::fabsf(a.w) - std::fabsf(b.w));
 
     return x_diff < math::float_epsilon &&
            y_diff < math::float_epsilon &&
@@ -108,7 +108,7 @@ bool operator==(const Vec4 &a, const Vec4 &b) {
 }
 
 // =============================================================================
-std::ostream& operator<<(std::ostream &out, const Vec4 &a) {
+std::ostream& operator<<(std::ostream &out, Vec4 const& a) {
     out << std::fixed << std::setprecision(math::print_precs)
         << std::setw(math::print_width) << a.x << ", "
         << std::setw(math::print_width) << a.y << ", "

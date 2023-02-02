@@ -12,8 +12,8 @@ public:
     static void create();
     static void destroy();
 
-    inline static const auto& native()    { return _logical_device; }
-    inline static const auto& cmd_queue() { return _cmd_queue;      }
+    inline static auto const& native()    { return _logical_device; }
+    inline static auto const& cmd_queue() { return _cmd_queue;      }
     inline static auto& transient_pool()  { return _transient_pool; }
 
     LogicalDevice() = delete;

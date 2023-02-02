@@ -232,7 +232,7 @@ void RenderPass::_find_depth_stencil_format() {
         vk::Format::eD24UnormS8Uint
     };
 
-    for(const auto &option : depth_options) {
+    for(auto const& option : depth_options) {
         auto props = PhysicalDevice::native().getFormatProperties(option);
         if(props.optimalTilingFeatures &
            vk::FormatFeatureFlagBits::eDepthStencilAttachment)

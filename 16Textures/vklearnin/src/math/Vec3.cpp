@@ -6,13 +6,13 @@
 namespace vkl {
 
 // =============================================================================
-Vec3::Vec3(const std::array<float, 4> &vec) :
+Vec3::Vec3(std::array<float, 4> const& vec) :
     x { vec[0] },
     y { vec[1] },
     z { vec[2] }
 { }
 
-Vec3::Vec3(const float x, const float y, const float z) :
+Vec3::Vec3(float const x, float const y, float const z) :
     x { x },
     y { y },
     z { z }
@@ -24,13 +24,13 @@ Vec3::Vec3() :
     z { 0.0f }
 { }
 
-Vec3::Vec3(const Vec4 &other) :
+Vec3::Vec3(Vec4 const& other) :
     x { other.x },
     y { other.y },
     z { other.z }
 { }
 
-Vec3& Vec3::operator=(const Vec4 &other) {
+Vec3& Vec3::operator=(Vec4 const& other) {
     x = other.x;
     y = other.y;
     z = other.z;
@@ -39,7 +39,7 @@ Vec3& Vec3::operator=(const Vec4 &other) {
 }
 
 // =============================================================================
-Vec3& Vec3::operator+=(const Vec3 &other) {
+Vec3& Vec3::operator+=(Vec3 const& other) {
     x += other.x;
     y += other.y;
     z += other.z;
@@ -47,7 +47,7 @@ Vec3& Vec3::operator+=(const Vec3 &other) {
     return *this;
 }
 
-Vec3& Vec3::operator-=(const Vec3 &other) {
+Vec3& Vec3::operator-=(Vec3 const& other) {
     x -= other.x;
     y -= other.y;
     z -= other.z;
@@ -55,7 +55,7 @@ Vec3& Vec3::operator-=(const Vec3 &other) {
     return *this;
 }
 
-Vec3& Vec3::operator*=(const float scalar) {
+Vec3& Vec3::operator*=(float const scalar) {
     x *= scalar;
     y *= scalar;
     z *= scalar;
@@ -63,7 +63,7 @@ Vec3& Vec3::operator*=(const float scalar) {
     return *this;
 }
 
-Vec3& Vec3::operator/=(const float scalar) {
+Vec3& Vec3::operator/=(float const scalar) {
     x /= scalar;
     y /= scalar;
     z /= scalar;
@@ -72,35 +72,35 @@ Vec3& Vec3::operator/=(const float scalar) {
 }
 
 // =============================================================================
-Vec3 operator+(const Vec3 &a, const Vec3 &b) {
+Vec3 operator+(Vec3 const& a, Vec3 const& b) {
     auto result = a;
     return result += b;
 }
 
-Vec3 operator-(const Vec3 &a, const Vec3 &b) {
+Vec3 operator-(Vec3 const& a, Vec3 const& b) {
     auto result = a;
     return result -= b;
 }
 
-Vec3 operator*(const Vec3 &a, const float scalar) {
+Vec3 operator*(Vec3 const& a, float const scalar) {
     auto result = a;
     return result *= scalar;
 }
 
-Vec3 operator/(const Vec3 &a, const float scalar) {
+Vec3 operator/(Vec3 const& a, float const scalar) {
     auto result = a;
     return result /= scalar;
 }
 
-Vec3 operator-(const Vec3 &a) {
+Vec3 operator-(Vec3 const& a) {
     return { -a.x, -a.y, -a.z };
 }
 
 // =============================================================================
-bool operator==(const Vec3 &a, const Vec3 &b) {
-    const float x_diff = (std::fabsf(a.z) - std::fabsf(b.x));
-    const float y_diff = (std::fabsf(a.y) - std::fabsf(b.y));
-    const float z_diff = (std::fabsf(a.z) - std::fabsf(b.z));
+bool operator==(Vec3 const& a, Vec3 const& b) {
+    float const x_diff = (std::fabsf(a.z) - std::fabsf(b.x));
+    float const y_diff = (std::fabsf(a.y) - std::fabsf(b.y));
+    float const z_diff = (std::fabsf(a.z) - std::fabsf(b.z));
 
     return x_diff < math::float_epsilon &&
            y_diff < math::float_epsilon &&
@@ -108,7 +108,7 @@ bool operator==(const Vec3 &a, const Vec3 &b) {
 }
 
 // =============================================================================
-std::ostream& operator<<(std::ostream &out, const Vec3 &a) {
+std::ostream& operator<<(std::ostream &out, Vec3 const& a) {
     out << std::fixed << std::setprecision(math::print_precs)
         << std::setw(math::print_width) << a.x << ", "
         << std::setw(math::print_width) << a.y << ", "

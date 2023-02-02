@@ -34,8 +34,8 @@ void PhysicalDevice::query_devices() {
     CONSOLE_TRACE("Found {} {}", devices.size(),
                   (devices.size() == 1 ? "device" : "devices"));
 
-    for(const auto &device : devices) {
-        const auto &props = device.getProperties();
+    for(auto const& device : devices) {
+        auto const& props = device.getProperties();
 
         // We'll want to know what extensions the devices support
         auto [enumext_result, extensions] =
@@ -51,7 +51,7 @@ void PhysicalDevice::query_devices() {
 
         // Swapchain support is definitely required
         bool swapchain_support = false;
-        for(const auto &extension : extensions) {
+        for(auto const& extension : extensions) {
             if(strcmp(extension.extensionName,
                       VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0)
             {
@@ -70,7 +70,7 @@ void PhysicalDevice::query_devices() {
 
         // Here's some extra property gathering so we can establish which of
         // the available devices has the most VRAM
-        const auto &memory = device.getMemoryProperties();
+        auto const& memory = device.getMemoryProperties();
 
         // Yet more property gathering - this time so we can get a driver
         // version string that matches what the hardware vendor publishes
@@ -80,7 +80,7 @@ void PhysicalDevice::query_devices() {
         };
         
         // Run through what extensions we have until we find the driver info
-        for(const auto &extension : extensions) {
+        for(auto const& extension : extensions) {
             if(strcmp(extension.extensionName,
                       VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) == 0)
             {
@@ -91,7 +91,7 @@ void PhysicalDevice::query_devices() {
 
         // Hold onto the info we've gathered
         _store_physical_device(device, props, memory, driver_props);
-        const auto &properties = _available_devices.back();
+        auto const& properties = _available_devices.back();
 
         CONSOLE_TRACE(
             "\n"
@@ -137,7 +137,7 @@ void PhysicalDevice::query_devices() {
 // two types of commands: graphics and present. The latter requires an existing
 // surface to query, so here we go.
 void PhysicalDevice::select_device() {
-    const auto &surface = TargetWindow::surface();
+    auto const& surface = TargetWindow::surface();
 
     // Set up our hopefully to-be-rectified failure conditions
     std::vector<std::pair<bool, uint32_t>> graphics_support;
@@ -155,8 +155,8 @@ void PhysicalDevice::select_device() {
         ++device_idx)
     {
         // Ask Vulkan for some details
-        const auto &gpu = _available_devices[device_idx].device;
-        const auto props = gpu.getQueueFamilyProperties();
+        auto const& gpu = _available_devices[device_idx].device;
+        auto const props = gpu.getQueueFamilyProperties();
 
         CONSOLE_TRACE("Found {} queue families for {}",
                       props.size(), _available_devices[device_idx].name);
@@ -200,10 +200,10 @@ void PhysicalDevice::select_device() {
         ++device_index)
     {
         const bool gfx = graphics_support[device_index].first;
-        const uint32_t gfx_fam = graphics_support[device_index].second;
+        uint32_t const gfx_fam = graphics_support[device_index].second;
 
         const bool present = present_support[device_index].first;
-        const uint32_t present_fam = present_support[device_index].second;
+        uint32_t const present_fam = present_support[device_index].second;
 
         vk::PhysicalDeviceFeatures features { };
         _available_devices[device_index].device.getFeatures(&features);
@@ -212,7 +212,7 @@ void PhysicalDevice::select_device() {
            present_fam != std::numeric_limits<uint32_t>::max() &&
            features.samplerAnisotropy != 0)
         {
-            const auto &dev_store      = _available_devices[device_index];
+            auto const& dev_store      = _available_devices[device_index];
             _physical_device           = dev_store.device;
             _memory_properties         = dev_store.memory;
             RenderConfig::sample_count = dev_store.max_samples;
@@ -270,7 +270,7 @@ void PhysicalDevice::_store_physical_device(
     }
     store.vram_bytes = vram_bytes;
 
-    const auto sample_counts = properties.limits.framebufferColorSampleCounts;
+    auto const sample_counts = properties.limits.framebufferColorSampleCounts;
     if(sample_counts & vk::SampleCountFlagBits::e64) {
         store.max_samples = 64u;
     }
@@ -307,7 +307,7 @@ void PhysicalDevice::_store_physical_device(
 
 // =============================================================================
 void
-PhysicalDevice::_print_family_flags([[maybe_unused]] const uint32_t family,
+PhysicalDevice::_print_family_flags([[maybe_unused]] uint32_t const family,
                                     [[maybe_unused]] const vk::QueueFlags flags)
 {
 #ifdef VKL_DEBUG

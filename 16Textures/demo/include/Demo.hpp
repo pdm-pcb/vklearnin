@@ -15,17 +15,17 @@ public:
     ~Demo() override = default;
 
     Demo(Demo &&) = delete;
-    Demo(const Demo &) = delete;
+    Demo(Demo const&) = delete;
     
     Demo& operator=(Demo &&) = delete;
-    Demo& operator=(const Demo &) = delete;
+    Demo& operator=(Demo const&) = delete;
 
 private:
     vkl::Camera _persp_camera;
 
     std::vector<vkl::BufferObject> _view_proj_ubos;
 
-    vkl::Cube _cube;
+    vkl::Cube<vkl::VertexTexture> _cube;
     std::vector<vkl::Mat4> _model_matrices;
 
     vkl::Texture2D _bricks;

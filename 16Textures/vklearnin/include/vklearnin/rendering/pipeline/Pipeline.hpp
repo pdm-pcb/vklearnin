@@ -3,7 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/rendering/pipeline/Shader.hpp"
-#include "vklearnin/meshes/Vertex.hpp"
+#include "vklearnin/meshes/VertexTypes.hpp"
 
 namespace vkl {
 
@@ -14,10 +14,8 @@ public:
     void vert_from_spirv(std::string_view filepath);
     void frag_from_spirv(std::string_view filepath);
 
-    void describe_vertex_input(
-        const Vertex::BindingDescriptions &bindings,
-        const Vertex::AttribDescriptions &attributes
-    );
+    void describe_vertex_input(const VertexBindings &bindings,
+                               const VertexAttribs &attributes);
 
     void add_descriptor_set(const vk::DescriptorSetLayout &set_layout);
     void add_push_constant(vk::ShaderStageFlags stage_flags, uint32_t size);
@@ -26,10 +24,10 @@ public:
     void destroy();
     void update_dimensions();
 
-    inline const auto& native()   const { return _pipeline; }
-    inline const auto& layout()   const { return _layout; }
-    inline const auto& viewport() const { return _viewport; }
-    inline const auto& scissor()  const { return _scissor; }
+    inline auto const& native()   const { return _pipeline; }
+    inline auto const& layout()   const { return _layout; }
+    inline auto const& viewport() const { return _viewport; }
+    inline auto const& scissor()  const { return _scissor; }
 
     Pipeline();
     ~Pipeline() = default;

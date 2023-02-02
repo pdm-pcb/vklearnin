@@ -13,8 +13,8 @@ public:
     void create();
     void destroy();
 
-    inline const auto& native()   const { return _layout;   }
-    inline const auto& bindings() const { return _bindings; }
+    inline auto const& native()   const { return _layout;   }
+    inline auto const& bindings() const { return _bindings; }
 
     DescriptorSetLayout();
     ~DescriptorSetLayout() = default;

@@ -6,11 +6,11 @@
 namespace vkl {
 
 // =============================================================================
-Mat4::Mat4(const std::array<Vec4, 4> &vecs) :
+Mat4::Mat4(std::array<Vec4, 4> const& vecs) :
     rows { vecs }
 { }
 
-Mat4::Mat4(const Vec4 &x, const Vec4 &y, const Vec4 &z, const Vec4 &w) :
+Mat4::Mat4(Vec4 const& x, Vec4 const& y, Vec4 const& z, Vec4 const&  w) :
     rows { x, y, z, w }
 { }
 
@@ -24,7 +24,7 @@ Mat4::Mat4() :
 { }
 
 // =============================================================================
-Mat4& Mat4::operator=(const Mat3 &other) {
+Mat4& Mat4::operator=(Mat3 const& other) {
     rows = {{
         { other.rows[0].x, other.rows[0].y, other.rows[0].z, 0.0f },
         { other.rows[1].x, other.rows[1].y, other.rows[1].z, 0.0f },
@@ -36,71 +36,71 @@ Mat4& Mat4::operator=(const Mat3 &other) {
 }
 
 // =============================================================================
-Mat4& Mat4::operator*=(const Mat4 &other) {
-    const float x0 = (rows[0].x * other.rows[0].x) +
+Mat4& Mat4::operator*=(Mat4 const& other) {
+    float const x0 = (rows[0].x * other.rows[0].x) +
                      (rows[0].y * other.rows[1].x) +
                      (rows[0].z * other.rows[2].x) +
                      (rows[0].w * other.rows[3].x);
-    const float y0 = (rows[0].x * other.rows[0].y) +
+    float const y0 = (rows[0].x * other.rows[0].y) +
                      (rows[0].y * other.rows[1].y) +
                      (rows[0].z * other.rows[2].y) +
                      (rows[0].w * other.rows[3].y);
-    const float z0 = (rows[0].x * other.rows[0].z) +
+    float const z0 = (rows[0].x * other.rows[0].z) +
                      (rows[0].y * other.rows[1].z) +
                      (rows[0].z * other.rows[2].z) +
                      (rows[0].w * other.rows[3].z);
-    const float w0 = (rows[0].x * other.rows[0].w) +
+    float const w0 = (rows[0].x * other.rows[0].w) +
                      (rows[0].y * other.rows[1].w) +
                      (rows[0].z * other.rows[2].w) +
                      (rows[0].w * other.rows[3].w);
 
-    const float x1 = (rows[1].x * other.rows[0].x) +
+    float const x1 = (rows[1].x * other.rows[0].x) +
                      (rows[1].y * other.rows[1].x) +
                      (rows[1].z * other.rows[2].x) +
                      (rows[1].w * other.rows[3].x);
-    const float y1 = (rows[1].x * other.rows[0].y) +
+    float const y1 = (rows[1].x * other.rows[0].y) +
                      (rows[1].y * other.rows[1].y) +
                      (rows[1].z * other.rows[2].y) +
                      (rows[1].w * other.rows[3].y);
-    const float z1 = (rows[1].x * other.rows[0].z) +
+    float const z1 = (rows[1].x * other.rows[0].z) +
                      (rows[1].y * other.rows[1].z) +
                      (rows[1].z * other.rows[2].z) +
                      (rows[1].w * other.rows[3].z);
-    const float w1 = (rows[1].x * other.rows[0].w) +
+    float const w1 = (rows[1].x * other.rows[0].w) +
                      (rows[1].y * other.rows[1].w) +
                      (rows[1].z * other.rows[2].w) +
                      (rows[1].w * other.rows[3].w);
 
-    const float x2 = (rows[2].x * other.rows[0].x) +
+    float const x2 = (rows[2].x * other.rows[0].x) +
                      (rows[2].y * other.rows[1].x) +
                      (rows[2].z * other.rows[2].x) +
                      (rows[2].w * other.rows[3].x);
-    const float y2 = (rows[2].x * other.rows[0].y) +
+    float const y2 = (rows[2].x * other.rows[0].y) +
                      (rows[2].y * other.rows[1].y) +
                      (rows[2].z * other.rows[2].y) +
                      (rows[2].w * other.rows[3].y);
-    const float z2 = (rows[2].x * other.rows[0].z) +
+    float const z2 = (rows[2].x * other.rows[0].z) +
                      (rows[2].y * other.rows[1].z) +
                      (rows[2].z * other.rows[2].z) +
                      (rows[2].w * other.rows[3].z);
-    const float w2 = (rows[2].x * other.rows[0].w) +
+    float const w2 = (rows[2].x * other.rows[0].w) +
                      (rows[2].y * other.rows[1].w) +
                      (rows[2].z * other.rows[2].w) +
                      (rows[2].w * other.rows[3].w);
 
-    const float x3 = (rows[3].x * other.rows[0].x) +
+    float const x3 = (rows[3].x * other.rows[0].x) +
                      (rows[3].y * other.rows[1].x) +
                      (rows[3].z * other.rows[2].x) +
                      (rows[3].w * other.rows[3].x);
-    const float y3 = (rows[3].x * other.rows[0].y) +
+    float const y3 = (rows[3].x * other.rows[0].y) +
                      (rows[3].y * other.rows[1].y) +
                      (rows[3].z * other.rows[2].y) +
                      (rows[3].w * other.rows[3].y);
-    const float z3 = (rows[3].x * other.rows[0].z) +
+    float const z3 = (rows[3].x * other.rows[0].z) +
                      (rows[3].y * other.rows[1].z) +
                      (rows[3].z * other.rows[2].z) +
                      (rows[3].w * other.rows[3].z);
-    const float w3 = (rows[3].x * other.rows[0].w) +
+    float const w3 = (rows[3].x * other.rows[0].w) +
                      (rows[3].y * other.rows[1].w) +
                      (rows[3].z * other.rows[2].w) +
                      (rows[3].w * other.rows[3].w);
@@ -116,7 +116,7 @@ Mat4& Mat4::operator*=(const Mat4 &other) {
 }
 
 // =============================================================================
-Mat4 operator*(const Mat4 &a, const Mat4 &b) {
+Mat4 operator*(Mat4 const& a, Mat4 const& b) {
     Mat4 result = a;
     result *= b;
 
@@ -124,7 +124,7 @@ Mat4 operator*(const Mat4 &a, const Mat4 &b) {
 }
 
 // =============================================================================
-bool operator==(const Mat4 &a, const Mat4 &b) {
+bool operator==(Mat4 const& a, Mat4 const& b) {
     return a.rows[0] == b.rows[0] &&
            a.rows[1] == b.rows[1] &&
            a.rows[2] == b.rows[2] &&
@@ -132,7 +132,7 @@ bool operator==(const Mat4 &a, const Mat4 &b) {
 }
 
 // =============================================================================
-std::ostream& operator<<(std::ostream& out, const Mat4& a) {
+std::ostream& operator<<(std::ostream& out, Mat4 const& a) {
     out << "[ " << a.rows[0] << " ]\n"
         << "[ " << a.rows[1] << " ]\n"
         << "[ " << a.rows[2] << " ]\n"

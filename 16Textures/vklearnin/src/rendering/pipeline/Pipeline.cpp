@@ -28,9 +28,8 @@ void Pipeline::frag_from_spirv(std::string_view filepath) {
 }
 
 // =============================================================================
-void Pipeline::describe_vertex_input(
-    const Vertex::BindingDescriptions &bindings,
-    const Vertex::AttribDescriptions &attributes)
+void Pipeline::describe_vertex_input(const VertexBindings &bindings,
+                                     const VertexAttribs &attributes)
 {
     auto binding_count = static_cast<uint32_t>(bindings.size());
     auto attrib_count  = static_cast<uint32_t>(attributes.size());

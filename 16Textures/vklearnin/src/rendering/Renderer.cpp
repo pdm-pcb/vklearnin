@@ -52,13 +52,13 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
             nullptr
         );
 
-        for(const auto &draw : _draws) {
-            uint32_t running_offset = 0u;
-            for(const auto &push_constant : draw.push_constants) {
+        for(auto const& draw : _draws) {
+            size_t running_offset = 0u;
+            for(auto const& push_constant : draw.push_constants) {
                 cmd_buffer.pushConstants(
                     _pipeline.layout(),
                     push_constant.stage_flags,
-                    running_offset,
+                    static_cast<uint32_t>(running_offset),
                     static_cast<uint32_t>(push_constant.size),
                     push_constant.data
                 );
@@ -66,19 +66,18 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
                 running_offset += push_constant.size;
             }
 
-            const auto &mesh = draw.mesh;
             cmd_buffer.bindVertexBuffers(
                 0u,
-                { mesh.vertex_buffer().native() },
+                { draw.vertex_buffer },
                 { 0u }
             );
             cmd_buffer.bindIndexBuffer(
-                mesh.index_buffer().native(),
+                draw.index_buffer,
                 0u,
                 INDEX_TYPE
             );
             cmd_buffer.drawIndexed(
-                static_cast<uint32_t>(mesh.index_count()),
+                static_cast<uint32_t>(draw.index_count),
                 1u, 0u, 0u, 0u
             );
         }
@@ -172,8 +171,8 @@ void Renderer::create_pipelines() {
     );
 
     _pipeline.describe_vertex_input(
-        vkl::Vertex::binding_desc(),
-        vkl::Vertex::attrib_desc()
+        VertexTexture::bindings,
+        VertexTexture::attributes
     );
 
     _pipeline.create(_render_pass);

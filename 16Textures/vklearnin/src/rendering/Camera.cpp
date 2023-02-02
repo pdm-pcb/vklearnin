@@ -13,14 +13,14 @@ void Camera::orient(const Vec3 &position, const Vec3 &target, const Vec3 &up) {
 }
 
 // =============================================================================
-void Camera::set_perspective(const float near_plane,
-                             const float far_plane,
-                             const float vertical_fov_degrees)
+void Camera::set_perspective(float const near_plane,
+                             float const far_plane,
+                             float const vertical_fov_degrees)
 {
-    const float vfov_radians = math::to_radians(vertical_fov_degrees);
-    const float a = std::tanf(vfov_radians * 0.5f);
-    const float b = near_plane - far_plane;
-    const float c = far_plane - near_plane;
+    float const vfov_radians = math::to_radians(vertical_fov_degrees);
+    float const a = std::tanf(vfov_radians * 0.5f);
+    float const b = near_plane - far_plane;
+    float const c = far_plane - near_plane;
 
     _proj_mat = Mat4 {
         { 1.0f / (RenderConfig::window_aspect * a), 0.0f, 0.0f, 0.0f },

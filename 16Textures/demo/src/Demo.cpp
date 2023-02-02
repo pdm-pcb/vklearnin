@@ -2,8 +2,8 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-static constexpr uint32_t CUBES_PER_SIDE = 5u;
-static constexpr float    CUBE_STEP      = 0.5f;
+static uint32_t constexpr CUBES_PER_SIDE = 5u;
+static float    constexpr CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::submit_draws() {
@@ -68,11 +68,14 @@ void Demo::submit_draws() {
 
     for(auto& matrix : _model_matrices) {
         vkl::Renderer::submit({
-            .mesh = _cube,
-            .push_constants {{
+            .vertex_buffer = _cube.vertex_buffer().native(),
+            .index_buffer  = _cube.index_buffer().native(),
+            .index_count   = _cube.index_count(),
+
+            .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                .size = static_cast<uint32_t>(sizeof(vkl::Mat4)),
-                .data = &matrix,
+                .size        = sizeof(vkl::Mat4),
+                .data        = &matrix,
             }}
         });
     }

@@ -20,19 +20,19 @@ namespace vkl {
 
 // These constants help Vulkan advertise the application/engine to the drivers,
 // in case there are any specific optimizations
-static constexpr char APP_NAME[] { "vklearnin: Demo" };
-static constexpr char ENGINE_NAME[] { "vklearnin" };
-static constexpr uint32_t APP_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
-static constexpr uint32_t ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
+static char     constexpr APP_NAME[] { "vklearnin: Demo" };
+static char     constexpr ENGINE_NAME[] { "vklearnin" };
+static uint32_t constexpr APP_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
+static uint32_t constexpr ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
 static constexpr uint32_t VK_API_VER = VK_API_VERSION_1_1;
 
 #if VKL_DEBUG
-static const std::filesystem::path ASSET_PATH("../../assets");
-static const std::string SHADER_EXT("-debug.spv");
+static std::filesystem::path const ASSET_PATH("../../assets");
+static std::string           const SHADER_EXT("-debug.spv");
 #else
-static const std::filesystem::path ASSET_PATH("assets");
-static const std::string SHADER_EXT("-release.spv");
+static std::filesystem::path const ASSET_PATH("assets");
+static std::string           const SHADER_EXT("-release.spv");
 #endif
 
 } // namespace vkl

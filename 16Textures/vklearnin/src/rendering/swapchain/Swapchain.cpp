@@ -187,16 +187,16 @@ void Swapchain::destroy() {
 
 // =============================================================================
 void Swapchain::_query_surface_capabilities() {
-    const auto &gpu = PhysicalDevice::native();
-    const auto &surface = TargetWindow::surface();
-    const auto &result = gpu.getSurfaceCapabilitiesKHR(surface);
+    auto const& gpu = PhysicalDevice::native();
+    auto const& surface = TargetWindow::surface();
+    auto const& result = gpu.getSurfaceCapabilitiesKHR(surface);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
             "Could not get surface capabilities: '{}'",
             to_string(result.result)
         );
     }
-    const auto &capabilities = result.value;
+    auto const& capabilities = result.value;
 
     CONSOLE_TRACE(
         "\nSurface Capabilities:"
@@ -258,16 +258,16 @@ void Swapchain::_query_surface_capabilities() {
 
 // =============================================================================
 void Swapchain::_query_surface_format() {
-    const auto &gpu = PhysicalDevice::native();
-    const auto &surface = TargetWindow::surface();
-    const auto &result  = gpu.getSurfaceFormatsKHR(surface);
+    auto const& gpu = PhysicalDevice::native();
+    auto const& surface = TargetWindow::surface();
+    auto const& result  = gpu.getSurfaceFormatsKHR(surface);
     if(result.result != vk::Result::eSuccess || result.value.empty()) {
         CONSOLE_CRITICAL(
             "Could not get surface formats.: '{}'",
             to_string(result.result)
         );
     }
-    const auto &formats = result.value;
+    auto const& formats = result.value;
     CONSOLE_TRACE("Found {} surface formats.", formats.size());
 
     // First, default to the image format details of the first listed - these
@@ -275,7 +275,7 @@ void Swapchain::_query_surface_format() {
     _image_format = formats[0].format;
     _color_space    = formats[0].colorSpace;
 
-    for(const auto &format : formats) {
+    for(auto const& format : formats) {
         if(format.format == vk::Format::eR8G8B8A8Unorm &&
            format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
         {
@@ -293,9 +293,9 @@ void Swapchain::_query_surface_format() {
 
 // =============================================================================
 void Swapchain::_query_surface_present_modes() {
-    const auto &gpu = PhysicalDevice::native();
-    const auto &surface = TargetWindow::surface();
-    const auto &result = gpu.getSurfacePresentModesKHR(surface);
+    auto const& gpu = PhysicalDevice::native();
+    auto const& surface = TargetWindow::surface();
+    auto const& result = gpu.getSurfacePresentModesKHR(surface);
     if(result.result != vk::Result::eSuccess || result.value.empty()) {
         CONSOLE_CRITICAL(
             "Could not get surface present modes: '{}'",
@@ -303,7 +303,7 @@ void Swapchain::_query_surface_present_modes() {
         );
     }
 
-    const auto &modes = result.value;
+    auto const& modes = result.value;
     CONSOLE_TRACE("Found {} present modes.", modes.size());
 
     bool has_fifo_relaxed = false;
@@ -311,7 +311,7 @@ void Swapchain::_query_surface_present_modes() {
     bool has_immediate    = false;
 
     // iterate available modes, noting what we've got
-    for(const auto mode : modes) {
+    for(auto const mode : modes) {
         CONSOLE_TRACE("    {}", to_string(mode));
         if(mode == vk::PresentModeKHR::eFifoRelaxed) {
             has_fifo_relaxed = true;

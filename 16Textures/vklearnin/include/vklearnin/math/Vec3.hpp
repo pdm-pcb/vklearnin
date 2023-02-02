@@ -8,40 +8,40 @@ namespace vkl {
 struct Vec4;
 
 struct Vec3 final {
-    explicit Vec3(const std::array<float, 4> &vec);
-    Vec3(const float x, const float y, const float z);
+    explicit Vec3(std::array<float, 4> const& vec);
+    Vec3(float const x, float const y, float const z);
     Vec3();
 
-    explicit Vec3(const Vec4 &other);
-    Vec3& operator=(const Vec4 &other);
+    explicit Vec3(Vec4 const& other);
+    Vec3& operator=(Vec4 const& other);
 
-    Vec3& operator+=(const Vec3 &other);
-    Vec3& operator-=(const Vec3 &other);
-    Vec3& operator*=(const float scalar);
-    Vec3& operator/=(const float scalar);
+    Vec3& operator+=(Vec3 const& other);
+    Vec3& operator-=(Vec3 const& other);
+    Vec3& operator*=(float const scalar);
+    Vec3& operator/=(float const scalar);
 
-    friend std::ostream& operator<<(std::ostream& out, const Vec3& a);
+    friend std::ostream& operator<<(std::ostream& out, Vec3 const& a);
 
     float x;
     float y;
     float z;
 
-    static const Vec3 unit_x;
-    static const Vec3 unit_y;
-    static const Vec3 unit_z;
-    static const Vec3 origin;
+    static Vec3 const unit_x;
+    static Vec3 const unit_y;
+    static Vec3 const unit_z;
+    static Vec3 const origin;
 };
 
-Vec3 operator+(const Vec3 &a, const Vec3 &b);
-Vec3 operator-(const Vec3 &a, const Vec3 &b);
-Vec3 operator*(const Vec3 &a, const float scalar);
-Vec3 operator/(const Vec3 &a, const float scalar);
+Vec3 operator+(Vec3 const& a, Vec3 const& b);
+Vec3 operator-(Vec3 const& a, Vec3 const& b);
+Vec3 operator*(Vec3 const& a, float const scalar);
+Vec3 operator/(Vec3 const& a, float const scalar);
 
-Vec3 operator-(const Vec3 &a);
+Vec3 operator-(Vec3 const& a);
 
-bool operator==(const Vec3 &a, const Vec3 &b);
+bool operator==(Vec3 const& a, Vec3 const& b);
 
-std::ostream& operator<<(std::ostream &out, const Vec3 &a);
+std::ostream& operator<<(std::ostream& out, Vec3 const& a);
 
 } // namespace vkl
 

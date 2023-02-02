@@ -17,7 +17,7 @@ public:
                       const vk::SamplerAddressMode mode_v);
     void shutdown();
 
-    inline const auto& image() const { return _image; }
+    inline auto const& image() const { return _image; }
 
     Texture2D();
     ~Texture2D() = default;

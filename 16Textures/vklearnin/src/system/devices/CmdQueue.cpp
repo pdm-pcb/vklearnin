@@ -6,7 +6,7 @@
 namespace vkl {
 
 // =============================================================================
-void CmdQueue::fill_create_info(const uint32_t index, const float priority) {
+void CmdQueue::fill_create_info(uint32_t const index, float const priority) {
     _index    = index;
     _priority = priority;
 

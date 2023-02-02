@@ -7,13 +7,13 @@ namespace vkl {
 
 class CmdQueue final {
 public:
-    void fill_create_info(const uint32_t index, const float priority = 1.0f);
+    void fill_create_info(uint32_t const index, float const priority = 1.0f);
     void request_queue();
 
-    inline const auto& native()      const { return _queue;       }
-    inline const auto& index()       const { return _index;       }
-    inline const auto& priority()    const { return _priority;    }
-    inline const auto& create_info() const { return _create_info; }
+    inline auto const& native()      const { return _queue;       }
+    inline auto const& index()       const { return _index;       }
+    inline auto const& priority()    const { return _priority;    }
+    inline auto const& create_info() const { return _create_info; }
 
     CmdQueue();
     ~CmdQueue() = default;

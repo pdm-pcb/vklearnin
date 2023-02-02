@@ -13,16 +13,16 @@ public:
     static bool message_loop();
 
     // Spawn (and size and place?) a native window
-    static void spawn_window(const uint32_t width  = 0u,
-                             const uint32_t height = 0u,
-                             const int32_t  pos_x  = 0u,
-                             const int32_t  pos_y  = 0u);
+    static void spawn_window(uint32_t const width  = 0u,
+                             uint32_t const height = 0u,
+                             int32_t const  pos_x  = 0u,
+                             int32_t const  pos_y  = 0u);
 
     // Manage the Vulkan surface 
     static void create_surface();
     static void destroy_surface();
 
-    inline static const auto& surface() { return _surface; }
+    inline static auto const& surface() { return _surface; }
 
     // Only one target window at a time
     Win32TargetWindow() = delete;

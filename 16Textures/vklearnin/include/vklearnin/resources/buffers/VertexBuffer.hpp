@@ -2,21 +2,34 @@
 #define VKLEARNIN_RESOURCES_BUFFERS_VERTEXBUFFER_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/meshes/Vertex.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 
 namespace vkl {
 
+template <typename VertexType>
 class VertexBuffer {
 public:
-    void init(const size_t size);
-    void shutdown();
+    void init(const size_t size) {
+        _buffer.size = size;
+        BufferTools::create(
+            _buffer,
+            (vk::BufferUsageFlagBits::eVertexBuffer |
+            vk::BufferUsageFlagBits::eTransferDst),
+            vk::MemoryPropertyFlagBits::eDeviceLocal
+        );
+    }
 
-    void populate_buffer(const std::vector<Vertex> &vertices);
+    void shutdown() {
+        BufferTools::destroy(_buffer);
+    }
 
-    inline const auto& native() const { return _buffer.handle; }
+    void populate_buffer(const std::vector<VertexType> &vertices) {
+        BufferTools::host_to_device(_buffer, vertices.data());
+    }
 
-    VertexBuffer();
+    inline auto const& native() const { return _buffer.handle; }
+
+    VertexBuffer() = default;
     ~VertexBuffer() = default;
 
     VertexBuffer(VertexBuffer &&) = delete;
