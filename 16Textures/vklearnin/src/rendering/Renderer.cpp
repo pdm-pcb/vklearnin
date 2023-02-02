@@ -2,7 +2,8 @@
 #include "vklearnin/rendering/Renderer.hpp"
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
-#include "vklearnin/resources/images/Texture2D.hpp"
+#include "vklearnin/resources/buffers/BufferObject.hpp"
+#include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/meshes/Mesh.hpp"
 
 namespace vkl {
@@ -12,22 +13,13 @@ static constexpr vk::ClearValue clear_values[] = {
     { .depthStencil = 1.0f }
 };
 
-std::vector<Framebuffer>    Renderer::_framebuffers   { };
+std::vector<Framebuffer>    Renderer::_framebuffers   { vkl::RenderConfig::image_count };
 DescriptorPool              Renderer::_desc_pool      { };
 DescriptorSetLayout         Renderer::_desc_layout    { };
-std::vector<DescriptorSet>  Renderer::_desc_sets      { };
-std::vector<BufferObject>   Renderer::_view_proj_ubos { };
+std::vector<DescriptorSet>  Renderer::_desc_sets      { vkl::RenderConfig::image_count };
 vkl::RenderPass             Renderer::_render_pass    { };
 vkl::Pipeline               Renderer::_pipeline       { };
 std::vector<DrawSubmission> Renderer::_draws          { };
-Texture2D                   Renderer::_loltest        { };
-
-// =============================================================================
-void Renderer::update_view_proj(const Camera::ViewProjMats &matrices) {
-    for(const auto &ubo : _view_proj_ubos) {
-        BufferTools::update_buffer(ubo, &matrices);
-    }
-}
 
 // =============================================================================
 void Renderer::submit(const DrawSubmission &draw) {
@@ -98,24 +90,13 @@ void Renderer::render_pass(const vk::CommandBuffer &cmd_buffer) {
 
 // =============================================================================
 void Renderer::init() {
-    _loltest.init_from_file("textures/brickwall017_d.jpg");
-    _loltest.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-
     _render_pass.create();
     _init_framebuffers();
     _init_descriptors();
-    _init_pipeline();
 }
 
 // =============================================================================
 void Renderer::shutdown() {
-    _loltest.shutdown();
-
     _pipeline.destroy();
 
     for(auto &set : _desc_sets) {
@@ -133,8 +114,73 @@ void Renderer::shutdown() {
 }
 
 // =============================================================================
+void Renderer::add_ubo(const std::vector<BufferObject> &ubos,
+                       const vk::ShaderStageFlags stage_flags)
+{
+    if(ubos.size() != RenderConfig::image_count) {
+        CONSOLE_CRITICAL(
+            "UBO vector size of {} does not match image count of {}",
+            ubos.size(),
+            RenderConfig::image_count
+        );
+    }
+
+    _desc_layout.add_binding({
+        .binding = static_cast<uint32_t>(_desc_layout.bindings().size()),
+        .descriptorType     = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount    = 1u,
+        .stageFlags         = stage_flags,
+        .pImmutableSamplers = nullptr
+    });
+
+    for(uint32_t image = 0u; image < RenderConfig::image_count; ++image) {
+        _desc_sets[image].add_ubo(ubos[image]);
+    }
+}
+
+// =============================================================================
+void Renderer::add_texture2D(const ImageObject &texture) {
+    _desc_layout.add_binding({
+        .binding            = 1u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    for(auto &set : _desc_sets) {
+        set.add_texture2D(texture);
+    }
+}
+
+// =============================================================================
+void Renderer::create_pipelines() {
+    _desc_layout.create();
+
+    for(auto &set : _desc_sets) {
+        set.create(_desc_pool, _desc_layout);
+    }
+
+    _pipeline.vert_from_spirv("shaders/02texture.vert");
+    _pipeline.frag_from_spirv("shaders/02texture.frag");
+
+    _pipeline.add_descriptor_set(_desc_layout.native());
+
+    _pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eVertex,
+        sizeof(Mat4)
+    );
+
+    _pipeline.describe_vertex_input(
+        vkl::Vertex::binding_desc(),
+        vkl::Vertex::attrib_desc()
+    );
+
+    _pipeline.create(_render_pass);
+}
+
+// =============================================================================
 void Renderer::_init_framebuffers() {
-    _framebuffers.resize(vkl::RenderConfig::image_count);
     for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
         _framebuffers[frame].create(
             {
@@ -160,62 +206,6 @@ void Renderer::_init_descriptors() {
             .descriptorCount = 10u,
         }}
     );
-
-    _desc_layout.add_binding({
-        .binding = static_cast<uint32_t>(_desc_layout.bindings().size()),
-        .descriptorType     = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eVertex,
-        .pImmutableSamplers = nullptr
-    });
-
-    _desc_layout.add_binding({
-        .binding = static_cast<uint32_t>(_desc_layout.bindings().size()),
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _desc_layout.create();
-
-    _view_proj_ubos.resize(vkl::RenderConfig::image_count);
-    for(auto &ubo : _view_proj_ubos) {
-        ubo.size = sizeof(Camera::ViewProjMats);
-        BufferTools::create(
-            ubo,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            (vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent)
-        );
-    }
-
-    _desc_sets.resize(vkl::RenderConfig::image_count);
-    for(uint32_t set_index = 0; set_index < _desc_sets.size(); ++set_index) {
-        _desc_sets[set_index].add_ubo(_view_proj_ubos[set_index]);
-        _desc_sets[set_index].add_texture2D(_loltest);
-        _desc_sets[set_index].create(_desc_pool, _desc_layout);
-    }
-}
-
-// =============================================================================
-void Renderer::_init_pipeline() {
-    _pipeline.vert_from_spirv("shaders/02flat_color.vert");
-    _pipeline.frag_from_spirv("shaders/02flat_color.frag");
-
-    _pipeline.add_descriptor_set(_desc_layout.native());
-
-    _pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
-        sizeof(Mat4)
-    );
-
-    _pipeline.describe_vertex_input(
-        vkl::Vertex::binding_desc(),
-        vkl::Vertex::attrib_desc()
-    );
-
-    _pipeline.create(_render_pass);
 }
 
 } // namespace vkl

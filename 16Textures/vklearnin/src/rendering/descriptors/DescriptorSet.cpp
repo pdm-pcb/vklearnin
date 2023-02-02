@@ -4,7 +4,6 @@
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
-#include "vklearnin/resources/images/Texture2D.hpp"
 
 namespace vkl {
 
@@ -14,8 +13,8 @@ void DescriptorSet::add_ubo(const BufferObject &ubo) {
 }
 
 // =============================================================================
-void DescriptorSet::add_texture2D(const Texture2D &texture) {
-    _textures.push_back(texture.image());
+void DescriptorSet::add_texture2D(const ImageObject &texture) {
+    _textures.push_back(texture);
 }
 
 // =============================================================================

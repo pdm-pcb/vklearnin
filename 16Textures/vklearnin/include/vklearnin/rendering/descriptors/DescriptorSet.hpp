@@ -9,12 +9,11 @@ namespace vkl {
 
 class DescriptorPool;
 class DescriptorSetLayout;
-class Texture2D;
 
 class DescriptorSet {
 public:
     void add_ubo(const BufferObject &ubo);
-    void add_texture2D(const Texture2D &texture);
+    void add_texture2D(const ImageObject &texture);
 
     void create(const DescriptorPool &descriptor_pool,
                 const DescriptorSetLayout &set_layout);

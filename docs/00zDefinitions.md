@@ -34,13 +34,13 @@ Traditionally, a mutex is a **MUT**ually **EX**clusive control on some shared re
 In keeping with modern rendering techniques, Vulkan presumes your program will require some number of passes to render a given scene. A [vk::RenderPass](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkRenderPass.html) is the first layer of this flavorful cake which facilitates such an approach.
 
 ## Attachment
-A render pass's attachment a collection of traits which fulfill [vk::AttachmentDescription](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkAttachmentDescription.html). The fact that attachments all share one description structure is a little misleading, though - an attachment can be the input or output of a given render pass. A color attachment, for example, is a possible destination for the output of a render pass. By contrast, depth testing requires an attachment which can be written to, but also read from.
+A render pass's attachments are a collection of traits which fulfill [vk::AttachmentDescription](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkAttachmentDescription.html). The fact that attachments all share one description structure is a little misleading, though - an attachment can be the input or output of a given render pass. A color attachment, for example, is a possible destination for the output of a render pass. By contrast, depth testing requires an attachment which can be written to, but also read from.
 
 ## Subpass
 Each render pass much consist of at least one subpass, as detailed in one or more [vk::SubpassDescription](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSubpassDescription.html) structures. [Shadow maps](https://en.wikipedia.org/wiki/Shadow_mapping), [bloom](https://en.wikipedia.org/wiki/Bloom_(shader_effect)), and any post-processing effect will require multiple subpasses to complete.
 
 ## Render Pass Dependencies
-That there may be several subpasses to  a given render pass, it stands to reason that there be an ordering of dependencies between subpasses. This is handled by [vk::SubpassDependency](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSubpassDependency.html), which describes the state of one subpass relative to another as either input or output.
+That there may be several subpasses to a given render pass, it stands to reason that there must be an ordering of dependencies between subpasses. This is handled by [vk::SubpassDependency](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkSubpassDependency.html), which describes the state of one subpass relative to another as either input or output.
 
 ## Pipeline
 A [vk::Pipeline](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPipeline.html) handle refers to the steps taken by Vulkan to execute a device queue's worth of command buffers. The [graphics](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkGraphicsPipelineCreateInfo.html) pipeline is of particular interest to begin with - it consists of both programmable and fixed steps that result in an image ready to be presented on screen.

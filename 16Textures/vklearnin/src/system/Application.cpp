@@ -13,6 +13,7 @@ namespace vkl {
 void Application::run() {
     _engine->init();
     init();
+    Renderer::create_pipelines();
 
     float cummulative_frametime = 0.0f;
     uint32_t cummulative_frame_count = 0u;
@@ -56,9 +57,11 @@ Application::Application() :
     TargetWindow::create_surface();
     GraphicsAPI::create_device();
     Swapchain::create();
+    Renderer::init();
 }
 
 Application::~Application() {
+    Renderer::shutdown();
     Swapchain::destroy();
     GraphicsAPI::destroy_device();
     TargetWindow::destroy_surface();

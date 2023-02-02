@@ -23,8 +23,12 @@ public:
 private:
     vkl::Camera _persp_camera;
 
+    std::vector<vkl::BufferObject> _view_proj_ubos;
+
     vkl::Cube _cube;
     std::vector<vkl::Mat4> _model_matrices;
+
+    vkl::Texture2D _bricks;
 };
 
 #endif // DEMO_HPP

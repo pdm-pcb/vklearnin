@@ -1,10 +1,22 @@
 #include "Demo.hpp"
 
+#include "vklearnin/rendering/swapchain/Swapchain.hpp"
+
 static constexpr uint32_t CUBES_PER_SIDE = 5u;
 static constexpr float    CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::submit_draws() {
+    vkl::Camera::ViewProjMats vpm {
+        .view = _persp_camera.view_matrix(),
+        .proj = _persp_camera.proj_matrix()
+    };
+
+    vkl::BufferTools::update_buffer(
+        _view_proj_ubos[vkl::Swapchain::image_index()],
+        &vpm
+    );
+
     _model_matrices.clear();
 
     float xpos = (CUBES_PER_SIDE / 2) * -CUBE_STEP;
@@ -75,18 +87,37 @@ void Demo::init() {
     );
     _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
 
-    vkl::Renderer::update_view_proj({
-        .view = _persp_camera.view_matrix(),
-        .proj = _persp_camera.proj_matrix()
-    });
+    _view_proj_ubos.resize(vkl::RenderConfig::image_count);
+    for(auto &ubo : _view_proj_ubos) {
+        ubo.size = sizeof(vkl::Camera::ViewProjMats);
+        vkl::BufferTools::create(
+            ubo,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    vkl::Renderer::add_ubo(_view_proj_ubos, vk::ShaderStageFlagBits::eVertex);
 
     _cube.init();
     _model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
+
+    _bricks.init_from_file("textures/brickwall017_d.jpg");
+    _bricks.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+
+    vkl::Renderer::add_texture2D(_bricks.image());
 }
 
 // =============================================================================
 void Demo::shutdown() {
     _cube.shutdown();
+    _bricks.shutdown();
 }
 
 // =============================================================================

@@ -48,14 +48,10 @@ void Engine::init() {
         _cmd_pools[frame].create();
         _cmd_buffers[frame].allocate(_cmd_pools[frame].native());
     }
-
-    Renderer::init();
 }
 
 // =============================================================================
 void Engine::shutdown() {
-    Renderer::shutdown();
-
     for(uint32_t frame = 0; frame < _cmd_pools.size(); ++frame) {
         _cmd_buffers[frame].free();
         _cmd_pools[frame].destroy();
