@@ -184,7 +184,7 @@ void free_file_data(void *data) {
 
 // =============================================================================
 void host_to_device(ImageObject &dst, const void * const data) {
-    vk::BufferImageCopy copy_region {
+    const vk::BufferImageCopy copy_region {
         .bufferOffset = 0u,
         .bufferRowLength = 0u,
         .bufferImageHeight = 0u,
@@ -294,7 +294,7 @@ void create_sampler(ImageObject &image,
                     const vk::SamplerAddressMode mode_u,
                     const vk::SamplerAddressMode mode_v)
 {
-    vk::SamplerCreateInfo sampler_info {
+    const vk::SamplerCreateInfo sampler_info {
         .magFilter        = min_filter,
         .minFilter        = mag_filter,
         .addressModeU     = mode_u,

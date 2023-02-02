@@ -259,22 +259,22 @@ void Pipeline::_init_multisample() {
 
     _multisample_info = {
         .rasterizationSamples  = _samples,
-        .sampleShadingEnable   = false,
+        .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
-        .alphaToCoverageEnable = false,
-        .alphaToOneEnable      = false,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable      = VK_FALSE,
     };
 }
 
 // =============================================================================
 void Pipeline::_init_depth_stencil() {
     _depth_stencil_info = {
-        .depthTestEnable = true,
-        .depthWriteEnable = true,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
         .depthCompareOp = vk::CompareOp::eLess,
-        .depthBoundsTestEnable = false,
-        .stencilTestEnable = false,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
         .front = { },
         .back = { },
         .minDepthBounds = 0.0f,

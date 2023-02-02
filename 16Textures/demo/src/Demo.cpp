@@ -2,8 +2,8 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-static uint32_t constexpr CUBES_PER_SIDE = 5u;
-static float    constexpr CUBE_STEP      = 0.5f;
+static size_t constexpr CUBES_PER_SIDE = 5;
+static float  constexpr CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::submit_draws() {
@@ -19,11 +19,11 @@ void Demo::submit_draws() {
 
     _model_matrices.clear();
 
-    float xpos = (CUBES_PER_SIDE / 2) * -CUBE_STEP;
-    for(uint32_t x = 0; x < CUBES_PER_SIDE; ++x) {
-        float zpos = (CUBES_PER_SIDE / 2) * -CUBE_STEP;
+    float xpos = std::floorf(CUBES_PER_SIDE * 0.5f) * -CUBE_STEP;
+    for(size_t x = 0; x < CUBES_PER_SIDE; ++x) {
+        float zpos = std::floorf(CUBES_PER_SIDE * 0.5f) * -CUBE_STEP;
 
-        for(uint32_t z = 0; z < CUBES_PER_SIDE; ++z) {
+        for(size_t z = 0; z < CUBES_PER_SIDE; ++z) {
             auto translate_top = vkl::math::translated(
                 vkl::Mat4::identity,
                 { xpos, CUBE_STEP, zpos }

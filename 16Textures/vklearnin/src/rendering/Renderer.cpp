@@ -10,7 +10,11 @@ namespace vkl {
 
 static constexpr vk::ClearValue clear_values[] = {
     { .color { vkl::RenderConfig::CLEAR_COLOR }},
-    { .depthStencil = 1.0f }
+    { .depthStencil {
+            .depth = 1.0f,
+            .stencil = 1u,
+        }
+    }
 };
 
 std::vector<Framebuffer>    Renderer::_framebuffers   { vkl::RenderConfig::image_count };

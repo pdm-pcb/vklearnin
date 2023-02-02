@@ -60,7 +60,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
 
     std::vector<vk::WriteDescriptorSet> set_writes;
 
-    if(buffer_info.size() > 0) {
+    if(!buffer_info.empty()) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 0u,
@@ -73,7 +73,7 @@ void DescriptorSet::create(const DescriptorPool &descriptor_pool,
         });
     }
 
-    if(image_info.size() > 0) {
+    if(!image_info.empty()) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 1u,
