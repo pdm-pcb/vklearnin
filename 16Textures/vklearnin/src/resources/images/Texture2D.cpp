@@ -9,7 +9,7 @@ namespace vkl {
 void Texture2D::init_from_file(std::string_view filepath) {
     void *image_data = ImageTools::load_from_file(_image, filepath);
 
-    ImageTools::create_image(
+    ImageTools::create(
         _image,
         vk::ImageType::e2D,
         vk::SampleCountFlagBits::e1,
@@ -44,7 +44,7 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
 
 // =============================================================================
 void Texture2D::shutdown() {
-    ImageTools::destroy_image(_image);
+    ImageTools::destroy(_image);
 }
 
 // =============================================================================

@@ -49,5 +49,6 @@
 #include <fstream>
 #include <set>
 #include <numbers>
+#include <unordered_map>
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

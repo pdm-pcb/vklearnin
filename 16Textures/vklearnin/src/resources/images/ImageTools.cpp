@@ -21,11 +21,11 @@ void transition_layout(ImageObject &image,
                        const vk::ImageLayout new_layout);
 
 // =============================================================================
-void create_image(ImageObject &image,
-                  const vk::ImageType type,
-                  const vk::SampleCountFlagBits samples,
-                  const vk::ImageUsageFlags usage_flags,
-                  const vk::MemoryPropertyFlags memory_properties)
+void create(ImageObject &image,
+            const vk::ImageType type,
+            const vk::SampleCountFlagBits samples,
+            const vk::ImageUsageFlags usage_flags,
+            const vk::MemoryPropertyFlags memory_properties)
 {
     if(image.format == vk::Format::eUndefined) {
         CONSOLE_CRITICAL("Cannot create image with undefined format.");
@@ -62,7 +62,7 @@ void create_image(ImageObject &image,
 }
 
 // =============================================================================
-void destroy_image(ImageObject &image) {
+void destroy(ImageObject &image) {
     CONSOLE_TRACE("Destroying image {:#x}",
                    reinterpret_cast<uint64_t>(::VkImage(image.handle)));
 

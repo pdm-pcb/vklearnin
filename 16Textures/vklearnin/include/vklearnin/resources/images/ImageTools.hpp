@@ -7,13 +7,13 @@
 
 namespace vkl::ImageTools {
 
-void create_image(ImageObject &image,
-                  const vk::ImageType type,
-                  const vk::SampleCountFlagBits samples,
-                  const vk::ImageUsageFlags usage_flags,
-                  const vk::MemoryPropertyFlags memory_properties);
+void create(ImageObject &image,
+            const vk::ImageType type,
+            const vk::SampleCountFlagBits samples,
+            const vk::ImageUsageFlags usage_flags,
+            const vk::MemoryPropertyFlags memory_properties);
 
-void destroy_image(ImageObject &image);
+void destroy(ImageObject &image);
 
 void create_view(ImageObject &image,
                  const vk::ImageViewType view_type,

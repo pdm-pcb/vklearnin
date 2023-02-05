@@ -12,8 +12,8 @@ public:
     void destroy();
 
     inline auto const& native() const { return _render_pass; }
-    inline auto const color_buffer_view() const { return _color_buffer.view; }
-    inline auto const depth_buffer_view() const { return _depth_buffer.view; }
+    inline auto const& color_buffer_view() const { return _color_buffer.view; }
+    inline auto const& depth_buffer_view() const { return _depth_buffer.view; }
 
     RenderPass();
     ~RenderPass() = default;

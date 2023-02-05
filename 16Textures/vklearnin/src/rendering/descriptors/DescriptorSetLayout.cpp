@@ -48,8 +48,8 @@ void DescriptorSetLayout::destroy() {
 
 // =============================================================================
 DescriptorSetLayout::DescriptorSetLayout() :
-    _bindings { },
-    _layout   { }
+    _layout   { },
+    _bindings { }
 { }
 
 } // namespace vkl

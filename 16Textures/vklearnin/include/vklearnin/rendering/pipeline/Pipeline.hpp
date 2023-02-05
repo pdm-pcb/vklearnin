@@ -29,7 +29,7 @@ public:
     inline auto const& viewport() const { return _viewport; }
     inline auto const& scissor()  const { return _scissor; }
 
-    Pipeline() = default;
+    Pipeline();
     ~Pipeline() = default;
 
     Pipeline(Pipeline &&) = delete;

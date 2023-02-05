@@ -15,6 +15,7 @@ struct DrawSubmission {
     vk::Buffer const vertex_buffer;
     vk::Buffer const index_buffer;
     size_t     const index_count;
+    vk::Image  const material;
     std::vector<PushConstant> push_constants;
 };
 

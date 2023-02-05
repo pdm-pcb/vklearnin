@@ -41,8 +41,8 @@ void RenderPass::create() {
 
 // =============================================================================
 void RenderPass::destroy() {
-    ImageTools::destroy_image(_depth_buffer);
-    ImageTools::destroy_image(_color_buffer);
+    ImageTools::destroy(_depth_buffer);
+    ImageTools::destroy(_color_buffer);
     LogicalDevice::native().destroyRenderPass(_render_pass);
     _render_pass = nullptr;
 }
@@ -149,7 +149,7 @@ void RenderPass::_default_subpasses() {
 // =============================================================================
 void RenderPass::_init_color_buffer() {
     if(_color_buffer.handle) {
-        ImageTools::destroy_image(_color_buffer);
+        ImageTools::destroy(_color_buffer);
     }
 
     _get_sample_count();
@@ -161,7 +161,7 @@ void RenderPass::_init_color_buffer() {
         .depth  = 1u
     };
 
-    ImageTools::create_image(
+    ImageTools::create(
         _color_buffer,
         vk::ImageType::e2D,
         _samples,
@@ -200,7 +200,7 @@ void RenderPass::_get_sample_count() {
 // =============================================================================
 void RenderPass::_init_depth_buffer() {
     if(_depth_buffer.handle) {
-        ImageTools::destroy_image(_depth_buffer);
+        ImageTools::destroy(_depth_buffer);
     }
 
     _depth_buffer.extent = {
@@ -209,7 +209,7 @@ void RenderPass::_init_depth_buffer() {
         .depth  = 1u
     };
 
-    ImageTools::create_image(
+    ImageTools::create(
         _depth_buffer,
         vk::ImageType::e2D,
         _samples,

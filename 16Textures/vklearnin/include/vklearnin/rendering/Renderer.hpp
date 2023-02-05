@@ -7,6 +7,7 @@
 #include "vklearnin/rendering/renderpass/Framebuffer.hpp"
 #include "vklearnin/rendering/pipeline/Pipeline.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
+#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 
 namespace vkl {
@@ -16,24 +17,22 @@ struct ImageObject;
 
 class Renderer {
 public:
-    const enum PipelineIndex {
-        // COLOR,
-        TEXTURE,
+    enum DescBindFreq {
+        GLOBAL_UNIFORM,
+        PER_MATERIAL,
+        PER_DRAW,
 
         MAX
     };
 
-    static void submit(const PipelineIndex index, const DrawSubmission &draw);
+    static void submit(const DrawSubmission &draw);
     static void render_pass(const vk::CommandBuffer &cmd_buffer);
 
     static void init();
     static void shutdown();
 
-    static void add_ubo(const PipelineIndex index,
-                        const DescriptorSet::BufferObjects &buffers,
-                        const vk::ShaderStageFlags stage_flags);
-    static void add_texture2D(const PipelineIndex index,
-                              const ImageObject &texture);
+    static void set_global_uniforms(const std::vector<BufferObject> &ubos);
+    static void add_material(const ImageObject &texture);
     static void create_pipelines();
 
     Renderer() = delete;
@@ -41,19 +40,27 @@ public:
 private:
     static DescriptorPool _desc_pool;
 
-    using DrawSubmissions = std::vector<DrawSubmission>;
-    struct FullPipeline {
-        DescriptorSet   desc_set;
-        Pipeline        pipeline;
-        DrawSubmissions draws;
+    static DescriptorSetLayout _global_uniform_set_layout;
+    static DescriptorSetLayout _material_set_layout;
+    static DescriptorSetLayout _draw_set_layout;
+
+    using DescriptorSets = std::vector<DescriptorSet>;
+    static DescriptorSets _global_uniform_sets;
+    static DescriptorSets _material_sets;
+    static DescriptorSets _draw_sets;
+
+    static RenderPass _render_pass;
+    static Pipeline   _pipeline;
+
+    static std::vector<Framebuffer> _framebuffers;
+
+    struct MaterialDrawQueue {
+        size_t const set_index;
+        std::vector<DrawSubmission> queue;
     };
 
-    using Pipelines = std::array<FullPipeline, PipelineIndex::MAX>;
-    static Pipelines _pipelines;
-
-    using Framebuffers = std::vector<Framebuffer>;
-    static Framebuffers _framebuffers;
-    static RenderPass   _render_pass;
+    using Draws = std::unordered_map<uint64_t, MaterialDrawQueue>;
+    static Draws _draws;
 
     static void _init_framebuffers();
     static void _init_descriptors();
