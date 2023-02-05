@@ -17,15 +17,14 @@ struct ImageObject;
 
 class Renderer {
 public:
-    enum DescBindFreq {
-        GLOBAL_UNIFORM,
-        PER_MATERIAL,
-        PER_DRAW,
+    enum PipelineType {
+        COLOR,
+        TEXTURE,
 
         MAX
     };
 
-    static void submit(const DrawSubmission &draw);
+    static void submit(const PipelineType pipeline, const DrawSubmission &draw);
     static void render_pass(const vk::CommandBuffer &cmd_buffer);
 
     static void init();
@@ -38,6 +37,12 @@ public:
     Renderer() = delete;
 
 private:
+    enum DescBindFreq {
+        GLOBAL_UNIFORM,
+        PER_MATERIAL,
+        PER_DRAW
+    };
+
     static DescriptorPool _desc_pool;
 
     static DescriptorSetLayout _global_uniform_set_layout;
@@ -50,20 +55,27 @@ private:
     static DescriptorSets _draw_sets;
 
     static RenderPass _render_pass;
-    static Pipeline   _pipeline;
+    static std::array<Pipeline, PipelineType::MAX> _pipelines;
 
     static std::vector<Framebuffer> _framebuffers;
+
+    static std::vector<DrawSubmission> _color_draws;
 
     struct MaterialDrawQueue {
         size_t const set_index;
         std::vector<DrawSubmission> queue;
     };
-
     using Draws = std::unordered_map<uint64_t, MaterialDrawQueue>;
-    static Draws _draws;
+    static Draws _texture_draws;
 
     static void _init_framebuffers();
     static void _init_descriptors();
+
+    static void _init_color_pipeline();
+    static void _init_texture_pipeline();
+
+    static void _execute_color_pipeline(const vk::CommandBuffer &cmd_buffer);
+    static void _execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer);
 };
 
 } // namespace vkl

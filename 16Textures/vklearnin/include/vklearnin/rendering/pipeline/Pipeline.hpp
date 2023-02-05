@@ -18,7 +18,7 @@ public:
                                const VertexAttribs &attributes);
 
     void add_descriptor_set(const vk::DescriptorSetLayout &set_layout);
-    void add_push_constant(vk::ShaderStageFlags stage_flags, uint32_t size);
+    void add_push_constant(vk::ShaderStageFlags stage_flags, size_t size);
 
     void create(const RenderPass &render_pass);
     void destroy();
@@ -62,6 +62,7 @@ private:
 
     std::vector<vk::DescriptorSetLayout> _desc_set_layouts;
     std::vector<vk::PushConstantRange>   _push_constants;
+    size_t _push_constant_offset;
 
     vk::PipelineLayout _layout;
     vk::Pipeline       _pipeline;

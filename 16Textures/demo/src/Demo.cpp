@@ -17,7 +17,8 @@ void Demo::submit_draws() {
         &vpm
     );
 
-    _model_matrices.clear();
+    _color_model_matrices.clear();
+    _texture_model_matrices.clear();
 
     float xpos = std::floorf(CUBES_PER_SIDE * 0.5f) * -CUBE_STEP;
     for(size_t x = 0; x < CUBES_PER_SIDE; ++x) {
@@ -33,6 +34,20 @@ void Demo::submit_draws() {
                 vkl::Mat4::identity,
                 {
                     vkl::Timekeeper::runtime() * 15.0f,
+                    vkl::Timekeeper::runtime() * 20.0f,
+                    0.0f
+                }
+            );
+
+            auto translate_middle = vkl::math::translated(
+                vkl::Mat4::identity,
+                { xpos, 0.0f, zpos }
+            );
+
+            auto rotate_middle = vkl::math::rotated(
+                vkl::Mat4::identity,
+                {
+                    0.0f,
                     vkl::Timekeeper::runtime() * 20.0f,
                     0.0f
                 }
@@ -57,8 +72,9 @@ void Demo::submit_draws() {
                 { 0.1f, 0.1f, 0.1f, }
             );
 
-            _model_matrices.push_back(scale * rotate_top * translate_top);
-            _model_matrices.push_back(scale * rotate_bottom * translate_bottom);
+            _texture_model_matrices.push_back(scale * rotate_top * translate_top);
+            _color_model_matrices.push_back(scale * rotate_middle * translate_middle);
+            _texture_model_matrices.push_back(scale * rotate_bottom * translate_bottom);
 
             zpos += CUBE_STEP;
         }
@@ -66,22 +82,41 @@ void Demo::submit_draws() {
         xpos += CUBE_STEP;
     }
 
-    for(uint32_t mat_idx = 0u; mat_idx < _model_matrices.size(); ++mat_idx) {
+    for(auto& matrix : _color_model_matrices) {
+        vkl::Renderer::submit(
+            vkl::Renderer::PipelineType::COLOR,
+            {
+                .vertex_buffer = _color_cube.vertex_buffer().native(),
+                .index_buffer  = _color_cube.index_buffer().native(),
+                .index_count   = _color_cube.index_count(),
+                .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &matrix,
+                }}
+            }
+        );
+    }
+
+    for(uint32_t mat_idx = 0u; mat_idx < _texture_model_matrices.size(); ++mat_idx) {
         auto material = (mat_idx % 2 == 0) ?
                          _bricks_a.image().handle :
                          _bricks_b.image().handle;
 
-        vkl::Renderer::submit({
-            .vertex_buffer = _cube.vertex_buffer().native(),
-            .index_buffer  = _cube.index_buffer().native(),
-            .index_count   = _cube.index_count(),
-            .material      = material,
-            .push_constants = {{
-                .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                .size        = sizeof(vkl::Mat4),
-                .data        = &_model_matrices[mat_idx],
-            }}
-        });
+        vkl::Renderer::submit(
+            vkl::Renderer::PipelineType::TEXTURE,
+            {
+                .vertex_buffer = _texture_cube.vertex_buffer().native(),
+                .index_buffer  = _texture_cube.index_buffer().native(),
+                .index_count   = _texture_cube.index_count(),
+                .material      = material,
+                .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_texture_model_matrices[mat_idx],
+                }}
+            }
+        );
     }
 }
 
@@ -107,8 +142,23 @@ void Demo::init() {
 
     vkl::Renderer::set_global_uniforms(_view_proj_ubos);
 
-    _cube.init();
-    _model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
+    _color_cube.init(
+        1.0f,
+        {{
+            { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
+            { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
+            { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
+            { 1.0f, 1.0f, 1.0f, 1.0f }, // White
+            { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
+            { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
+            { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
+            { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
+        }}
+    );
+    _color_model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE);
+
+    _texture_cube.init(1.0f, 1.0f);
+    _texture_model_matrices.reserve(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
 
     _bricks_a.init_from_file("textures/brickwall017_d.jpg");
     _bricks_a.init_sampler(
@@ -133,14 +183,17 @@ void Demo::init() {
 
 // =============================================================================
 void Demo::shutdown() {
-    _cube.shutdown();
+    _color_cube.shutdown();
+    _texture_cube.shutdown();
     _bricks_a.shutdown();
     _bricks_b.shutdown();
 }
 
 // =============================================================================
 Demo::Demo() :
-    _persp_camera   { },
-    _cube           { },
-    _model_matrices { }
+    _persp_camera           { },
+    _color_cube             { },
+    _texture_cube           { },
+    _color_model_matrices   { },
+    _texture_model_matrices { }
 { }

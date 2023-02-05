@@ -3,7 +3,7 @@
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec4 in_color;
 
-layout(binding = 0) uniform CameraData {
+layout(set = 0, binding = 0) uniform CameraData {
     mat4 view_mat;
     mat4 proj_mat;
 };

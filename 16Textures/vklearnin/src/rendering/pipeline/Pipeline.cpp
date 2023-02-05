@@ -53,17 +53,15 @@ void Pipeline::add_descriptor_set(const vk::DescriptorSetLayout &set_layout) {
 
 // =============================================================================
 void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
-                                 uint32_t size)
+                                 size_t size)
 {
-    static uint32_t running_offset = 0u;
-
     _push_constants.push_back({
         .stageFlags = stage_flags,
-        .offset = running_offset,
-        .size = size
+        .offset = static_cast<uint32_t>(_push_constant_offset),
+        .size = static_cast<uint32_t>(size)
     });
 
-    running_offset += size;
+    _push_constant_offset += size;
 }
 
 // =============================================================================
@@ -351,19 +349,20 @@ void Pipeline::_init_layout() {
 
 // =============================================================================
 Pipeline::Pipeline() :
-    _viewport           { },
-    _scissor            { },
-    _vert_input_info    { },
-    _assembly_info      { },
-    _viewport_info      { },
-    _raster_info        { },
-    _multisample_info   { },
-    _dynamic_state_info { },
-    _samples            { },
-    _desc_set_layouts   { },
-    _push_constants     { },
-    _layout             { },
-    _pipeline           { }
+    _viewport             { },
+    _scissor              { },
+    _vert_input_info      { },
+    _assembly_info        { },
+    _viewport_info        { },
+    _raster_info          { },
+    _multisample_info     { },
+    _dynamic_state_info   { },
+    _samples              { },
+    _desc_set_layouts     { },
+    _push_constants       { },
+    _push_constant_offset { 0 },
+    _layout               { },
+    _pipeline             { }
 { }
 
 } // namespace vkl

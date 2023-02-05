@@ -9,7 +9,48 @@ namespace vkl {
 template <typename VertexType>
 class Cube final : public Mesh<VertexType> {
 public:
-    void init(float const scale = 1.0f, float const tile = 1.0f) {
+    using CornerColors = std::array<std::array<float, 4>, 8>;
+    void init(const float scale, const CornerColors corner_colors) {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale,  scale, 1.0f }, corner_colors[0]},
+            {{ -scale,  scale,  scale, 1.0f }, corner_colors[1]},
+            {{  scale,  scale,  scale, 1.0f }, corner_colors[2]},
+            {{  scale, -scale,  scale, 1.0f }, corner_colors[3]},
+            
+            {{  scale, -scale, -scale, 1.0f }, corner_colors[4]},
+            {{  scale,  scale, -scale, 1.0f }, corner_colors[5]},
+            {{ -scale,  scale, -scale, 1.0f }, corner_colors[6]},
+            {{ -scale, -scale, -scale, 1.0f }, corner_colors[7]},
+        });
+
+        Mesh<VertexType>::_set_indices({
+            // front face
+            0, 1, 2,
+            0, 2, 3,
+
+            // back face
+            4, 5, 6,
+            4, 6, 7,
+
+            // top face
+            1, 6, 5,
+            1, 5, 2,
+
+            // bottom face
+            7, 0, 3,
+            7, 3, 4,
+
+            // left face
+            7, 6, 1,
+            7, 1, 0,
+
+            // right face
+            3, 2, 5,
+            3, 5, 4,
+        });
+    }
+
+    void init(float const scale, float const tile) {
         Mesh<VertexType>::_set_vertices({
             // front face
             {{ -scale, -scale,  scale, 1.0f }, { 0.0f, 0.0f }}, // 0
