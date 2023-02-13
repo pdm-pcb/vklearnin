@@ -6,10 +6,14 @@
 
 class Demo final : public vkl::Application {
 public:
+    void update() override;
     void submit_draws() override;
 
     void init() override;
     void shutdown() override;
+
+    void on_key_press(const vkl::KeyPressEvent &event);
+    void on_key_release(const vkl::KeyReleaseEvent &event);
 
     Demo();
     ~Demo() override = default;
@@ -21,6 +25,32 @@ public:
     Demo& operator=(Demo const&) = delete;
 
 private:
+    struct KeyboardState {
+        bool w;
+        bool a;
+        bool s;
+        bool d;
+
+        bool up;
+        bool down;
+        bool left;
+        bool right;
+    } _kb;
+
+    struct CamData {
+        vkl::Vec4 pos;
+        vkl::Vec4 forward;
+
+        float speed = 5.0f;
+        float pitch = 0.0f;
+        float yaw   = -90.0f;
+    } _cam_data;
+
+    struct VPMatrices {
+        vkl::Mat4 view;
+        vkl::Mat4 proj;
+    } _vp_matrices;
+
     vkl::Camera _persp_camera;
 
     std::vector<vkl::BufferObject> _view_proj_ubos;

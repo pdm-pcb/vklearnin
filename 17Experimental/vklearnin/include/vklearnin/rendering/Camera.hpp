@@ -7,23 +7,17 @@
 namespace vkl {
 
 class Camera final {
-public:
-    struct ViewProjMats {
-        Mat4 view;
-        Mat4 proj;
-    };
-
-    void orient(const Vec3 &position, const Vec3 &target, const Vec3 &up);
-    void set_perspective(float const near_plane,
-                         float const far_plane,
+public:    
+    void set_perspective(float const near, float const far,
                          float const vertical_fov_degrees);
+
+    void orient(Vec4 const &position, Vec4 const &forward);
 
     inline auto const& view_matrix() const { return _view_mat; }
     inline auto const& proj_matrix() const { return _proj_mat; }
 
     Camera();
     ~Camera() = default;
-    Camera(const Vec3 &position, const Vec3 &target, const Vec3 &up);
 
     Camera(Camera &&) = delete;
     Camera(const Camera &) = delete;
@@ -32,16 +26,8 @@ public:
     Camera& operator=(const Camera &) = delete;
 
 private:
-    Vec3 _position;
-    Vec3 _target;
-    Vec3 _up;
-    Vec3 _side;
-    Vec3 _forward;
-
     Mat4 _view_mat;
     Mat4 _proj_mat;
-
-    void _set_view_mat();
 };
 
 } // namespace vkl

@@ -50,5 +50,6 @@
 #include <set>
 #include <numbers>
 #include <list>
+#include <type_traits>
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

@@ -1,11 +1,12 @@
 #ifndef  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
 #define  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
 
+#include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
 
 namespace vkl {
 
-inline Keycode win32_to_vkl(uint32_t vkey) {
+inline Keycode win32_to_vkl(::WPARAM vkey) {
     Keycode code = KB_UNKNOWN;
 
     switch(vkey) {
@@ -85,7 +86,7 @@ inline Keycode win32_to_vkl(uint32_t vkey) {
         case 345: code = KB_RCTRL;         break; // Right Ctrl
         case 346: code = KB_RALT;          break; // Right Alt
 
-        default: code = vkey; break;
+        default: code = static_cast<uint32_t>(vkey); break;
     }
 
     return code;

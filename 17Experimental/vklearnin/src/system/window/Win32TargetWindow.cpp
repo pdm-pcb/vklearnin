@@ -38,6 +38,13 @@ void Win32TargetWindow::message_loop() {
                 // Kick off the process of cleaning up after ourselves
                 ::SendMessage(window, WM_CLOSE, wparam, lparam);
             }
+            else {
+                EventBroker::emit<KeyPressEvent>(win32_to_vkl(wparam));
+            }
+            break;
+
+        case WM_KEYUP:
+            EventBroker::emit<KeyReleaseEvent>(win32_to_vkl(wparam));
             break;
 
         case WM_CLOSE: // The first message received in the shutdown process
@@ -86,8 +93,8 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
     }
 
     RenderConfig::window_aspect =
-        static_cast<float>(RenderConfig::window_width) /
-        static_cast<float>(RenderConfig::window_height);
+        static_cast<float>(RenderConfig::window_height) /
+        static_cast<float>(RenderConfig::window_width);
 
     // Determine the window's eventual position on screen
     auto half_width  = static_cast<int32_t>(RenderConfig::window_width)  / 2;

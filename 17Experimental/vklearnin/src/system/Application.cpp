@@ -20,6 +20,7 @@ void Application::run() {
 
     while(_running) {
         TargetWindow::message_loop();
+        update();
         _engine->render_loop();
 
         cummulative_frametime   += Timekeeper::frametime();
@@ -60,6 +61,10 @@ Application::Application() :
     _engine  { new Engine(*this) }
 {
     EventBroker::init();
+    EventBroker::subscribe<WindowCloseEvent>(
+        this,
+        &Application::on_window_close
+    );
 
     ConsoleLog::init();
     GraphicsAPI::init();
@@ -68,11 +73,6 @@ Application::Application() :
     GraphicsAPI::create_device();
     Swapchain::create();
     Renderer::init();
-
-    EventBroker::subscribe<WindowCloseEvent>(
-        this,
-        &Application::on_window_close
-    );
 }
 
 Application::~Application() {

@@ -13,6 +13,7 @@ class Application {
 public:
     void run();
 
+    virtual void update() = 0;
     virtual void submit_draws() = 0;
 
     virtual void init() = 0;

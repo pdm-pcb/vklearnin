@@ -6,23 +6,29 @@
 
 namespace vkl {
 
-struct Mat3;
-
-struct Mat4 final {
-    explicit Mat4(std::array<Vec4, 4> const& vecs);
-    Mat4(Vec4 const& x, Vec4 const& y, Vec4 const& z, Vec4 const& w);
-    Mat4();
-
-    Mat4& operator=(Mat3 const& other);
-    Mat4& operator*=(Mat4 const& other);
-
-    std::array<Vec4, 4> rows;
-
+struct Mat4 {
     static Mat4 const identity;
-};
 
-Mat4 operator*(Mat4 const& a, Mat4 const& b);
-bool operator==(Mat4 const& a, Mat4 const& b);
+// =============================================================================
+    void transpose();
+    Mat4 transposed() const;
+
+// =============================================================================
+    Mat4 & operator*=(Mat4 const &other);
+    Mat4 operator*(Mat4 const &other) const;
+    
+    Vec4 operator*(Vec4 const &v) const;
+
+// =============================================================================
+    bool operator==(Mat4 const &other) const;
+    friend std::ostream& operator<<(std::ostream& out, Mat4 const& a);
+
+// =============================================================================
+    Vec4 x = Vec4::unit_x;
+    Vec4 y = Vec4::unit_y;
+    Vec4 z = Vec4::unit_z;
+    Vec4 w = Vec4::origin;
+};
 
 std::ostream& operator<<(std::ostream& out, Mat4 const& a);
 
