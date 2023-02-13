@@ -4,74 +4,73 @@
 namespace vkl {
 
 // =============================================================================
-void Camera::orient(const Vec3 &position, const Vec3 &target, const Vec3 &up) {
-    _position = position;
-    _target   = target;
-    _up       = up;
-
-    _set_view_mat();
-}
-
-// =============================================================================
-void Camera::set_perspective(float const near_plane,
-                             float const far_plane,
-                             float const vertical_fov_degrees)
+void Camera::set_perspective(float const near, float const far,
+                             float const vfov)
 {
-    float const vfov_radians = math::to_radians(vertical_fov_degrees);
-    float const a = std::tanf(vfov_radians * 0.5f);
-    float const b = near_plane - far_plane;
-    float const c = far_plane - near_plane;
+    float const aspect = RenderConfig::window_aspect;
+    float const a = std::tanf(math::to_radians(vfov) * 0.5f);
+    float const b = far - near;
+
+// This is the "incorrect" option; doing a GL style projection and flipping
+// m[1][1] to be negative. It results in:
+
+// proj_mat {1.358, 0.00,    0.00,    0.00}
+//          {0.00, -2.41421, 0.00,    0.00}
+//          {0.00,  0.00,    1.0001, -0.10001}
+//          {0.00,  0.00,    1.00,    0.00} 64 float4x4 (column_major)
 
     _proj_mat = Mat4 {
-        { 1.0f / (RenderConfig::window_aspect * a), 0.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f / a, 0.0f, 0.0f },
-        { 0.0f, 0.0f, far_plane / b, -1.0f },
-        { 0.0f, 0.0f, -(far_plane * near_plane) / c, 0.0f },
+        { aspect / a,  0.0f,      0.0f,             0.0f },
+        { 0.0f,       -1.0f / a,  0.0f,             0.0f },
+        { 0.0f,        0.0f,      far / b,          1.0f },
+        { 0.0f,        0.0f,     -(far * near) / b, 0.0f },
     };
 
-    CONSOLE_TRACE("\n{}", fmt::streamed(_proj_mat));
+// Meanwhile, the below "correct" version gives this, but it doesn't work with
+// my already established stuff. Probably the view matrix in specific?
+
+// proj_mat {1.358, 0.00,    0.00,    0.00}
+//          {0.00,  2.41421, 0.00,    0.00}
+//          {0.00,  0.00,    1.0001, -99.99001}
+//          {0.00,  0.00,    1.00,    0.00} 64 float4x4 (column_major)
+
+    // _proj_mat = Mat4 {
+    //     { aspect / a, 0.0f,     0.0f,      0.0f },
+    //     { 0.0f,       1.0f / a, 0.0f,      0.0f },
+    //     { 0.0f,       0.0f,     far / b,   1.0f },
+    //     { 0.0f,       0.0f,     -near * b, 0.0f },
+    // };
 }
 
 // =============================================================================
-void Camera::_set_view_mat() {
-    _forward = math::normalized(_target - _position);
-    _side    = math::normalized(math::cross(_forward, _up));
-    _up      = math::normalized(math::cross(_side, _forward));
+void Camera::orient(Vec4 const &position, Vec4 const &forward) {
+    if(forward.length2() <= 0.0f) {
+        CONSOLE_CRITICAL(
+            "Cannot orient camera with forward vector [{}]",
+            fmt::streamed(forward)
+        );
+        return;
+    }
 
-    _view_mat = {
-        { _side,     0.0f },
-        { _up,       0.0f },
-        { -_forward, 0.0f },
+    Vec4 const fore = forward.normalized();
+    Vec4 const side = math::cross(fore, Vec4::unit_y).normalized();
+    Vec4 const up   = math::cross(fore, side);
+
+    _view_mat = Mat4 {
+        { side.x, side.y, side.z, 0.0f },
+        { up.x,   up.y,   up.z,   0.0f },
+        { fore.x, fore.y, fore.z, 0.0f },
         {
-            -math::dot(_side,    _position),
-            -math::dot(_up,      _position),
-             math::dot(_forward, _position),
+            -math::dot(side, position),
+            -math::dot(up,   position),
+            -math::dot(fore, position),
             1.0f
-        }
+        },
     };
-
-    CONSOLE_TRACE("\n{}", fmt::streamed(_view_mat));
 }
 
 // =============================================================================
-Camera::Camera(const Vec3 &position, const Vec3 &target, const Vec3 &up) :
-    _position { position },
-    _target   { target },
-    _up       { up },
-    _side     { },
-    _forward  { },
-    _view_mat { Mat4::identity },
-    _proj_mat { Mat4::identity }
-{
-    orient(position, target, up);
-}
-
 Camera::Camera() :
-    _position { },
-    _target   { },
-    _up       { },
-    _side     { },
-    _forward  { },
     _view_mat { Mat4::identity },
     _proj_mat { Mat4::identity }
 { }
