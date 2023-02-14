@@ -163,7 +163,7 @@ void* load_from_file(ImageObject &image, std::string_view filepath) {
     else {
         CONSOLE_TRACE("Loaded image {}", filepath);
 
-        image.extent = {
+        image.extent = vk::Extent3D {
             .width  = static_cast<uint32_t>(width),
             .height = static_cast<uint32_t>(height),
             .depth  = 1u
