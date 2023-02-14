@@ -194,7 +194,7 @@ void _allocate(const vk::MemoryPropertyFlags memory_properties,
     // Once a suitable memory type (and its index) is located, we're ready to
     // actually allocate the buffer.
     const vk::MemoryAllocateInfo alloc_info {
-        .allocationSize = buffer.size,
+        .allocationSize =mem_reqs.size,
         .memoryTypeIndex = type_index,
     };
 

@@ -155,7 +155,7 @@ void RenderPass::_init_color_buffer() {
     _get_sample_count();
 
     _color_buffer.format = Swapchain::image_format();
-    _color_buffer.extent = {
+    _color_buffer.extent = vk::Extent3D {
         .width  = Swapchain::extent().width,
         .height = Swapchain::extent().height,
         .depth  = 1u
@@ -203,7 +203,7 @@ void RenderPass::_init_depth_buffer() {
         ImageTools::destroy_image(_depth_buffer);
     }
 
-    _depth_buffer.extent = {
+    _depth_buffer.extent = vk::Extent3D {
         .width  = Swapchain::extent().width,
         .height = Swapchain::extent().height,
         .depth  = 1u

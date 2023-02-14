@@ -171,7 +171,7 @@ void* load_from_file(ImageObject &image, std::string_view filepath) {
 
         channels = static_cast<uint32_t>(::STBI_rgb_alpha);
         image.size = image.extent.width * image.extent.height * channels;
-        image.format = Swapchain::image_format();
+        image.format = vk::Format::eR8G8B8A8Unorm;
     }
 
     return data;
