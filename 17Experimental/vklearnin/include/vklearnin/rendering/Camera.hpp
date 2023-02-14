@@ -2,16 +2,16 @@
 #define VKLEARNIN_RENDERING_CAMERA_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/math/math.hpp"
 
 namespace vkl {
 
 class Camera final {
-public:    
+public:
+    void set_orthographic(float const top = 1.0f, float const bottom = -1.0f);
     void set_perspective(float const near, float const far,
                          float const vertical_fov_degrees);
 
-    void orient(Vec4 const &position, Vec4 const &forward);
+    void orient(glm::vec3 const &position, glm::vec3 const &forward);
 
     inline auto const& view_matrix() const { return _view_mat; }
     inline auto const& proj_matrix() const { return _proj_mat; }
@@ -26,8 +26,8 @@ public:
     Camera& operator=(const Camera &) = delete;
 
 private:
-    Mat4 _view_mat;
-    Mat4 _proj_mat;
+    glm::mat4 _view_mat;
+    glm::mat4 _proj_mat;
 };
 
 } // namespace vkl

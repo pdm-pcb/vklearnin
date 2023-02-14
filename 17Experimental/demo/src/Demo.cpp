@@ -7,9 +7,9 @@ static float  constexpr CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::update() {
-    auto const fore  = _cam_data.forward.normalized();
-    auto const side  = vkl::math::cross(fore, vkl::Vec4::unit_y).normalized();
-    auto const up    = vkl::math::cross(fore, side);
+    auto const fore  = glm::normalize(_cam_data.forward);
+    auto const side  = glm::cross(fore, { 0.0f, 1.0f, 0.0f });
+    auto const up    = glm::cross(fore, side);
     auto const speed = _cam_data.speed * vkl::Timekeeper::frametime();
 
     if(_kb.w)      { _cam_data.pos += fore * speed; }
@@ -17,29 +17,23 @@ void Demo::update() {
     if(_kb.a)      { _cam_data.pos -= side * speed; }
     else if(_kb.d) { _cam_data.pos += side * speed; }
 
-    if(_kb.up) {
-        _cam_data.forward =
-            vkl::math::axis_angle(_cam_data.forward, side, speed * 10.0f);
-    }
-    else if(_kb.down) {
-        _cam_data.forward =
-            vkl::math::axis_angle(_cam_data.forward, side, -speed * 10.0f);
-    }
-    if(_kb.left) {
-        _cam_data.forward =
-            vkl::math::axis_angle(_cam_data.forward, up, -speed * 10.0f);
-    }
-    else if(_kb.right) {
-        _cam_data.forward =
-            vkl::math::axis_angle(_cam_data.forward, up, speed * 10.0f);
-    }
+    if(_kb.up)         { _cam_data.pitch += 15.0f * speed; }
+    else if(_kb.down)  { _cam_data.pitch -= 15.0f * speed; }
+    if(_kb.left)       { _cam_data.yaw   -= 15.0f * speed; }
+    else if(_kb.right) { _cam_data.yaw   += 15.0f * speed; }
+
+    auto const cos_yaw   = std::cosf(glm::radians(_cam_data.yaw));
+    auto const sin_yaw   = std::sinf(glm::radians(_cam_data.yaw));
+    auto const cos_pitch = std::cosf(glm::radians(_cam_data.pitch));
+    auto const sin_pitch = std::sinf(glm::radians(_cam_data.pitch));
+
+    _cam_data.forward.x = cos_yaw * cos_pitch;
+    _cam_data.forward.y = sin_pitch;
+    _cam_data.forward.z = sin_yaw * cos_pitch;
 
     _persp_camera.orient(
         _cam_data.pos,
-        // _cam_data.forward
-        // { 0.0f, 0.0f, -1.0f } // dead on
-        { 0.0f, 0.5f, -1.0f } // camera rotated up
-        // { 0.0f, -0.5f, -1.0f } // camera rotated down
+        _cam_data.forward
     );
 
     _vp_matrices.view = _persp_camera.view_matrix();
@@ -56,7 +50,7 @@ void Demo::update() {
 /*
 void Demo::submit_draws() {
     _color_model_matrices.clear();
-    _color_model_matrices.push_back(vkl::Mat4::identity);
+    _color_model_matrices.push_back(glm::mat4(1.0f));
 
     vkl::Renderer::submit(
         vkl::Renderer::PipelineType::COLOR,
@@ -66,7 +60,7 @@ void Demo::submit_draws() {
             .index_count   = _color_cube.index_count(),
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                .size        = sizeof(vkl::Mat4),
+                .size        = sizeof(glm::mat4),
                 .data        = &_color_model_matrices.back(),
             }}
         }
@@ -84,13 +78,14 @@ void Demo::submit_draws() {
         float zpos = std::floorf(CUBES_PER_SIDE * 0.5f) * -CUBE_STEP;
 
         for(size_t z = 0; z < CUBES_PER_SIDE; ++z) {
-            auto translate_top = vkl::math::translate(
-                vkl::Mat4::identity,
+            auto translate_top = glm::translate(
+                glm::mat4(1.0f),
                 { xpos, CUBE_STEP, zpos }
             );
 
-            auto rotate_top = vkl::math::rotate(
-                vkl::Mat4::identity,
+            auto rotate_top = glm::rotate(
+                glm::mat4(1.0f),
+                vkl::Timekeeper::runtime(),
                 {
                     vkl::Timekeeper::runtime() * 15.0f,
                     vkl::Timekeeper::runtime() * 20.0f,
@@ -98,13 +93,14 @@ void Demo::submit_draws() {
                 }
             );
 
-            auto translate_middle = vkl::math::translate(
-                vkl::Mat4::identity,
+            auto translate_middle = glm::translate(
+                glm::mat4(1.0f),
                 { xpos, 0.0f, zpos }
             );
 
-            auto rotate_middle = vkl::math::rotate(
-                vkl::Mat4::identity,
+            auto rotate_middle = glm::rotate(
+                glm::mat4(1.0f),
+                vkl::Timekeeper::runtime(),
                 {
                     0.0f,
                     vkl::Timekeeper::runtime() * 20.0f,
@@ -112,13 +108,14 @@ void Demo::submit_draws() {
                 }
             );
 
-            auto translate_bottom = vkl::math::translate(
-                vkl::Mat4::identity,
+            auto translate_bottom = glm::translate(
+                glm::mat4(1.0f),
                 { xpos, -CUBE_STEP, zpos }
             );
 
-            auto rotate_bottom = vkl::math::rotate(
-                vkl::Mat4::identity,
+            auto rotate_bottom = glm::rotate(
+                glm::mat4(1.0f),
+                vkl::Timekeeper::runtime(),
                 {
                     0.0f,
                     vkl::Timekeeper::runtime() * 20.0f,
@@ -126,9 +123,13 @@ void Demo::submit_draws() {
                 }
             );
 
-            _texture_model_matrices.emplace_back(rotate_top * translate_top);
-            _color_model_matrices.emplace_back(rotate_middle * translate_middle);
-            _texture_model_matrices.emplace_back(rotate_bottom * translate_bottom);
+            // _texture_model_matrices.emplace_back(rotate_top * translate_top);
+            // _color_model_matrices.emplace_back(rotate_middle * translate_middle);
+            // _texture_model_matrices.emplace_back(rotate_bottom * translate_bottom);
+
+            _texture_model_matrices.emplace_back(translate_top);
+            _color_model_matrices.emplace_back(translate_middle);
+            _texture_model_matrices.emplace_back(translate_bottom);
 
             zpos += CUBE_STEP;
         }
@@ -145,7 +146,7 @@ void Demo::submit_draws() {
                 .index_count   = _color_cube.index_count(),
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                    .size        = sizeof(vkl::Mat4),
+                    .size        = sizeof(glm::mat4),
                     .data        = &matrix,
                 }}
             }
@@ -166,7 +167,7 @@ void Demo::submit_draws() {
                 .material      = material,
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                    .size        = sizeof(vkl::Mat4),
+                    .size        = sizeof(glm::mat4),
                     .data        = &_texture_model_matrices[mat_idx],
                 }}
             }
@@ -188,8 +189,8 @@ void Demo::init() {
     );
 
     _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
-    _cam_data.pos     =  vkl::Vec4::unit_z * 3.0f;
-    _cam_data.forward = -vkl::Vec4::unit_z;
+    _cam_data.pos     = 3.0f * glm::vec3{ 0.0f, 0.0f, 1.0f };
+    _cam_data.forward = -1.0f * glm::vec3{ 0.0f, 0.0f, 1.0f };
 
     _view_proj_ubos.resize(vkl::RenderConfig::image_count);
     for(auto &ubo : _view_proj_ubos) {

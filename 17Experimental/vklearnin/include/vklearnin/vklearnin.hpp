@@ -16,8 +16,6 @@
 #include "vklearnin/resources/images/ImageTools.hpp"
 #include "vklearnin/resources/buffers/BufferTools.hpp"
 
-#include "vklearnin/math/math.hpp"
-
 namespace vkl {
 
 // These constants help Vulkan advertise the application/engine to the drivers,

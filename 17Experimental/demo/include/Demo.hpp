@@ -38,17 +38,17 @@ private:
     } _kb;
 
     struct CamData {
-        vkl::Vec4 pos;
-        vkl::Vec4 forward;
+        glm::vec3 pos;
+        glm::vec3 forward;
 
-        float speed = 5.0f;
+        float speed = 3.0f;
         float pitch = 0.0f;
-        float yaw   = -90.0f;
+        float yaw = -90.0f;
     } _cam_data;
 
     struct VPMatrices {
-        vkl::Mat4 view;
-        vkl::Mat4 proj;
+        glm::mat4 view;
+        glm::mat4 proj;
     } _vp_matrices;
 
     vkl::Camera _persp_camera;
@@ -58,8 +58,8 @@ private:
     vkl::Cube<vkl::VertexColor>   _color_cube;
     vkl::Cube<vkl::VertexTexture> _texture_cube;
 
-    std::vector<vkl::Mat4> _color_model_matrices;
-    std::vector<vkl::Mat4> _texture_model_matrices;
+    std::vector<glm::mat4> _color_model_matrices;
+    std::vector<glm::mat4> _texture_model_matrices;
 
     vkl::Texture2D _bricks_a;
     vkl::Texture2D _bricks_b;

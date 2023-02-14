@@ -30,6 +30,7 @@ target_include_directories(
 target_include_directories(
     vklearnin SYSTEM PUBLIC
     "${spdlog_SOURCE_DIR}"
+    "${glm_SOURCE_DIR}"
 )
 
 target_precompile_headers(
@@ -41,6 +42,7 @@ target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
     spdlog
+    glm
     third_party
 )
 
