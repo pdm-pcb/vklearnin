@@ -162,7 +162,7 @@ void Renderer::create_pipelines() {
         pipeline.add_descriptor_set(_global_uniform_set_layout.native());
         pipeline.add_push_constant(
             vk::ShaderStageFlagBits::eVertex,
-            sizeof(glm::mat4)
+            sizeof(Mat4)
         );
     }
 

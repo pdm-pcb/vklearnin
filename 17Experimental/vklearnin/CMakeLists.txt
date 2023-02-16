@@ -1,5 +1,9 @@
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
+
 include(FetchDeps)
+message(NOTICE "Fetch spdlog")
+FetchContent_MakeAvailable(spdlog)
+
 include(CompileShaders)
 
 find_package(Vulkan REQUIRED)
@@ -30,7 +34,6 @@ target_include_directories(
 target_include_directories(
     vklearnin SYSTEM PUBLIC
     "${spdlog_SOURCE_DIR}"
-    "${glm_SOURCE_DIR}"
 )
 
 target_precompile_headers(
@@ -42,9 +45,25 @@ target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
     spdlog
-    glm
     third_party
 )
+
+    message(NOTICE "Fetch glm")
+    FetchContent_MakeAvailable(glm)
+    target_include_directories(
+        vklearnin SYSTEM PUBLIC
+        "${glm_SOURCE_DIR}"
+    )
+    target_link_libraries(
+        vklearnin PUBLIC
+        glm
+    )
+if(VKL_USE_GLM)
+    target_compile_definitions(
+		vklearnin PUBLIC
+		"VKL_USE_GLM"
+	)
+endif()
 
 file(
     GLOB SHADER_SOURCE
