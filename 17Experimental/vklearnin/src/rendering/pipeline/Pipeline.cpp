@@ -143,12 +143,12 @@ void Pipeline::update_dimensions() {
     auto [x, y]          = Swapchain::offset();
 
     _viewport = vk::Viewport {
-        .x         =  static_cast<float>(x),
-        .y         =  static_cast<float>(height),
-        .width     =  static_cast<float>(width),
+        .x         = static_cast<float>(x),
+        .y         = static_cast<float>(height),
+        .width     = static_cast<float>(width),
         .height    = -static_cast<float>(height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
+        .minDepth  = 0.0f,
+        .maxDepth  = 1.0f,
     };
 
     _scissor = vk::Rect2D {
@@ -219,7 +219,7 @@ void Pipeline::_init_raster() {
         // but either way one of the sides of the triangle is not visible. To
         // save on running the fragment shader for every fragment on the side
         // of the triangle facing away from us, we cull the back-facing data.
-        .cullMode = vk::CullModeFlagBits::eBack,
+        .cullMode = vk::CullModeFlagBits::eNone,
 
         // Which order are the now-processed vertices connected in? Who's on
         // first? This is also called triangle winding, and for us the order

@@ -35,8 +35,8 @@ struct Vec4 {
     float w = 0.0f;
 };
 
-Vec4 operator*(Vec4 const &v, float scalar);
-Vec4 operator*(float scalar, Vec4 const &v);
+[[nodiscard]] Vec4 operator*(Vec4 const &v, float scalar);
+[[nodiscard]] Vec4 operator*(float scalar, Vec4 const &v);
 
 std::ostream& operator<<(std::ostream& out, Vec4 const& v);
 #endif // VKL_USE_GLM

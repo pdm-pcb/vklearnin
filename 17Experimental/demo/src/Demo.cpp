@@ -99,6 +99,15 @@ void Demo::submit_draws() {
                 { 15.0f, 20.0f, 0.0f, 0.0f }
             );
 
+            auto scale_top = vkl::math::scale(
+#ifdef VKL_USE_GLM
+                glm::mat4(1.0f),
+#else
+                vkl::Mat4::identity,
+#endif // VKL_USE_GLM
+                { 1.5f, 1.0f, 1.0f, 0.0f }
+            );
+
             auto translate_middle = vkl::math::translate(
 #ifdef VKL_USE_GLM
                 glm::mat4(1.0f),
@@ -116,6 +125,15 @@ void Demo::submit_draws() {
 #endif // VKL_USE_GLM
                 vkl::Timekeeper::runtime() * 20.0f,
                 { 0.0f, 20.0f, 0.0f, 0.0f }
+            );
+
+            auto scale_middle = vkl::math::scale(
+#ifdef VKL_USE_GLM
+                glm::mat4(1.0f),
+#else
+                vkl::Mat4::identity,
+#endif // VKL_USE_GLM
+                { 1.0f, 1.5f, 1.0f, 0.0f }
             );
 
             auto translate_bottom = vkl::math::translate(
@@ -137,9 +155,30 @@ void Demo::submit_draws() {
                 { 0.0f, 20.0f, 25.0f, 0.0f }
             );
 
-            _texture_model_matrices.emplace_back(translate_top * rotate_top);
-            _color_model_matrices.emplace_back(translate_middle * rotate_middle);
-            _texture_model_matrices.emplace_back(translate_bottom * rotate_bottom);
+            auto scale_bottom = vkl::math::scale(
+#ifdef VKL_USE_GLM
+                glm::mat4(1.0f),
+#else
+                vkl::Mat4::identity,
+#endif // VKL_USE_GLM
+                { 1.0f, 1.0f, 1.5f, 0.0f }
+            );
+
+            _texture_model_matrices.emplace_back(
+                translate_top *
+                rotate_top *
+                scale_top
+            );
+            _color_model_matrices.emplace_back(
+                translate_middle *
+                rotate_middle *
+                scale_middle
+            );
+            _texture_model_matrices.emplace_back(
+                translate_bottom *
+                rotate_bottom *
+                scale_bottom
+            );
 
             zpos += CUBE_STEP;
         }

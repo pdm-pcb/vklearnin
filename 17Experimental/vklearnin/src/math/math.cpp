@@ -87,8 +87,7 @@ Mat4 translate(Mat4 const &m, Vec4 const &v) {
     return glm::translate(m, glm::vec3(v));
 #else
     auto result = m;
-    // result.w = m.x * v.x + m.y * v.y + m.z * v.z + m.w;
-    result.w = { v.x, v.y, v.z, 1.0f };
+    result.w = (m.x * v.x) + (m.y * v.y) + (m.z * v.z) + m.w;
     return result;
 #endif // VKL_USE_GLM
 }
@@ -132,12 +131,13 @@ Mat4 scale(Mat4 const &m, Vec4 const &v) {
 #ifdef VKL_USE_GLM
     return glm::scale(m, glm::vec3(v));
 #else
-    auto result = m;
-    result.x.x = v.x;
-    result.x.y = v.y;
-    result.x.z = v.z;
+    Mat4 result;
+    result.x = m.x * v.x;
+    result.y = m.y * v.y;
+    result.z = m.z * v.z;
+    result.w = m.w;
 
-    return m;
+    return result;
 #endif // VKL_USE_GLM
 }
 
