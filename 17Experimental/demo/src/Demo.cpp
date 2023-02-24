@@ -422,7 +422,11 @@ void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
         CUBES_PER_SIDE -= 1;
     }
 
-    CONSOLE_INFO("{} cubes per side", CUBES_PER_SIDE);
+    CONSOLE_INFO(
+        "{} offset, {} cubes per side",
+        event.vert_offset,
+        CUBES_PER_SIDE
+    );
 }
 
 // =============================================================================

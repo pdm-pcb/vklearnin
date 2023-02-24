@@ -11,7 +11,7 @@ namespace vkl {
 ::LPCSTR Win32TargetWindow::_classname    = nullptr;
 ::LPCSTR Win32TargetWindow::_window_title = nullptr;
 ::HDC    Win32TargetWindow::_device       = nullptr;
-::LPBYTE Win32TargetWindow::_raw_message  = new ::BYTE[64];
+::LPBYTE Win32TargetWindow::_raw_message  = nullptr;
 
 Win32TargetWindow::ScreenPos Win32TargetWindow::_center;
 
@@ -51,7 +51,7 @@ void Win32TargetWindow::message_loop() {
             // Check message size
             ::UINT message_size;
             auto result = ::GetRawInputData(
-                (::HRAWINPUT) lparam,
+                reinterpret_cast<::HRAWINPUT>(lparam),
                 RID_INPUT,
                 nullptr,
                 &message_size,
@@ -65,7 +65,7 @@ void Win32TargetWindow::message_loop() {
 
             // Get actual message
             result = ::GetRawInputData(
-                (::HRAWINPUT) lparam,
+                reinterpret_cast<::HRAWINPUT>(lparam),
                 RID_INPUT,
                 _raw_message,
                 &message_size,
@@ -80,11 +80,11 @@ void Win32TargetWindow::message_loop() {
             }
 
             // Cast to useful type
-            ::RAWINPUT *input = (::RAWINPUT *)_raw_message;
+            auto const *input = reinterpret_cast<::RAWINPUT *>(_raw_message);
 
             switch(input->header.dwType) {
                 case RIM_TYPEMOUSE: {
-                    auto const mouse = input->data.mouse;
+                    auto const &mouse = input->data.mouse;
 
                     if(mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
                         EventBroker::emit<MouseButtonPressEvent>(
@@ -121,7 +121,7 @@ void Win32TargetWindow::message_loop() {
 
                     if(mouse.usButtonFlags & RI_MOUSE_WHEEL) {
                         EventBroker::emit<MouseScrollEvent>(
-                            (short) mouse.usButtonData / WHEEL_DELTA,
+                            static_cast<short>(mouse.usButtonData),
                             0
                         );
                     }
@@ -129,7 +129,7 @@ void Win32TargetWindow::message_loop() {
                     if(mouse.usButtonFlags & RI_MOUSE_HWHEEL) {
                         EventBroker::emit<MouseScrollEvent>(
                             0,
-                            (short) mouse.usButtonData / WHEEL_DELTA
+                            static_cast<short>(mouse.usButtonData)
                         );
                     }
 
@@ -245,7 +245,7 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
 // =============================================================================
 void Win32TargetWindow::create_surface() {
     // The details Vulkan cares about
-    const vk::Win32SurfaceCreateInfoKHR surface_info {
+    vk::Win32SurfaceCreateInfoKHR const surface_info {
         .hinstance = nullptr,
         .hwnd = _window,
     };
@@ -305,19 +305,32 @@ void Win32TargetWindow::init() {
     wcex.lpszClassName = _classname;
 
     // Check to see if Windows wants us to use this class definition
-    const ::HRESULT result = ::RegisterClassExA(&wcex);
+    auto const result = ::RegisterClassExA(&wcex);
     if(!SUCCEEDED(result)) {
         CONSOLE_CRITICAL("Could not register WNDCLASSEX with Windows.");
+        return;
     }
+
+    // Allocate the message structure for raw device input
+    _raw_message  = new ::BYTE[64];
 }
 
 // =============================================================================
 void Win32TargetWindow::shutdown() {
     delete[] _raw_message;
+    _raw_message = nullptr;
 }
 
 // =============================================================================
 void Win32TargetWindow::_register_input() {
+    if(_raw_message == nullptr) {
+        CONSOLE_CRITICAL(
+            "Win32TargetWindow::_raw_message cannot be null. Did you forget to "
+            "call Win32TargetWindow::init()?"
+        );
+        return;
+    }
+
     ::RAWINPUTDEVICE devices[2];
 
     devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
@@ -330,15 +343,20 @@ void Win32TargetWindow::_register_input() {
     devices[1].dwFlags     = RIDEV_NOLEGACY;
     devices[1].hwndTarget  = _window;
 
-    if(!::RegisterRawInputDevices(devices, 2, sizeof(::RAWINPUTDEVICE))) {
-        ::MessageBox(
-            nullptr, "Could not register for raw HID input:",
-            "Error", MB_OK
+    auto result =
+        ::RegisterRawInputDevices(devices, 2, sizeof(::RAWINPUTDEVICE));
+
+    if(result == FALSE) {
+        auto const error = ::GetLastError();
+        auto const error_message = std::system_category().message(error);
+        CONSOLE_CRITICAL(
+            "Failed to register for raw win32 input with error: '{}'",
+            error_message
         );
+        return;
     }
-    else {
-        CONSOLE_TRACE("Registered for raw win32 input");
-    }
+
+    CONSOLE_TRACE("Registered for raw win32 input");
 }
 
 // =============================================================================
@@ -356,7 +374,7 @@ void Win32TargetWindow::_size_and_place() {
         RenderConfig::window_pos_x, RenderConfig::window_pos_y
     );
 
-    ::SetWindowPos(
+    auto result = ::SetWindowPos(
         _window, nullptr,
         static_cast<int>(RenderConfig::window_pos_x),
         static_cast<int>(RenderConfig::window_pos_y),
@@ -364,6 +382,17 @@ void Win32TargetWindow::_size_and_place() {
         static_cast<int>(RenderConfig::window_height),
         0
     );
+   
+
+    if(result == FALSE) {
+        auto const error = ::GetLastError();
+        auto const error_message = std::system_category().message(error);
+        CONSOLE_CRITICAL(
+            "Failed to set win32 window position with error: '{}'",
+            error_message
+        );
+        return;
+    }
 
     ::SetCursorPos(_center.x, _center.y);
     ::SetCursor(nullptr);

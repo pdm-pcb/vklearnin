@@ -55,5 +55,6 @@
 #include <numbers>
 #include <list>
 #include <type_traits>
+#include <system_error>
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP
