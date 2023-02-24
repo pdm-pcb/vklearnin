@@ -14,13 +14,17 @@ public:
 
     void on_key_press(const vkl::KeyPressEvent &event);
     void on_key_release(const vkl::KeyReleaseEvent &event);
+    void on_mouse_move(const vkl::MouseMoveEvent &event);
+    void on_mouse_button_press(const vkl::MouseButtonPressEvent &event);
+    void on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event);
+    void on_mouse_scroll(const vkl::MouseScrollEvent &event);
 
     Demo();
     ~Demo() override = default;
 
     Demo(Demo &&) = delete;
     Demo(Demo const&) = delete;
-    
+
     Demo& operator=(Demo &&) = delete;
     Demo& operator=(Demo const&) = delete;
 
@@ -30,20 +34,24 @@ private:
         bool a;
         bool s;
         bool d;
-
-        bool up;
-        bool down;
-        bool left;
-        bool right;
     } _kb;
+
+    struct MouseState {
+        int32_t x_offset = 0;
+        int32_t y_offset = 0;
+    } _mouse;
 
     struct CamData {
         vkl::Vec4 pos;
         vkl::Vec4 forward;
+        vkl::Vec4 side;
+        vkl::Vec4 up;
 
-        float speed = 3.0f;
         float pitch = 0.0f;
-        float yaw = -90.0f;
+        float yaw   = -90.0f;
+
+        float kb_speed    = 3.0f;
+        float mouse_speed = 5.0f;
     } _cam_data;
 
     struct VPMatrices {

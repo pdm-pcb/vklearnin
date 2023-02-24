@@ -25,7 +25,7 @@ void PhysicalDevice::query_devices() {
         );
         return;
     }
-    
+
     if(devices.empty()) {
         CONSOLE_CRITICAL("No physical devices found.");
         return;
@@ -40,7 +40,7 @@ void PhysicalDevice::query_devices() {
         // We'll want to know what extensions the devices support
         auto [enumext_result, extensions] =
             device.enumerateDeviceExtensionProperties();
-        
+
         if(enumext_result != vk::Result::eSuccess) {
             CONSOLE_CRITICAL(
                 "Failed to enumerate device extensions: '{}'",
@@ -78,7 +78,7 @@ void PhysicalDevice::query_devices() {
         vk::PhysicalDeviceProperties2KHR physical_props2 {
             .pNext = &driver_props
         };
-        
+
         // Run through what extensions we have until we find the driver info
         for(auto const& extension : extensions) {
             if(strcmp(extension.extensionName,
@@ -118,7 +118,7 @@ void PhysicalDevice::query_devices() {
             {
                 return true;
             }
-            
+
             if((dev_a.type == vk::PhysicalDeviceType::eDiscreteGpu &&
                 dev_b.type == vk::PhysicalDeviceType::eDiscreteGpu) ||
                (dev_a.type == vk::PhysicalDeviceType::eIntegratedGpu &&
@@ -215,7 +215,7 @@ void PhysicalDevice::select_device() {
             auto const& dev_store      = _available_devices[device_index];
             _physical_device           = dev_store.device;
             _memory_properties         = dev_store.memory;
-            RenderConfig::sample_count = dev_store.max_samples;
+            RenderConfig::msaa_samples = dev_store.max_samples;
             gfx_queue_index            = graphics_support[device_index].second;
             present_queue_index        = present_support[device_index].second;
 
@@ -237,7 +237,7 @@ void PhysicalDevice::select_device() {
         CONSOLE_CRITICAL("Could not find a device with support for a graphics "
                          "and present command queues.");
     }
-    
+
     if(gfx_queue_index != present_queue_index) {
         CONSOLE_CRITICAL("Device must support drawing and presenting in a "
                          "single queue.");

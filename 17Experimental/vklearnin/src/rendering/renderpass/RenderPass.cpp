@@ -152,7 +152,7 @@ void RenderPass::_init_color_buffer() {
         ImageTools::destroy(_color_buffer);
     }
 
-    _get_sample_count();
+    _get_msaa_samples();
 
     _color_buffer.format = Swapchain::image_format();
     _color_buffer.extent = vk::Extent3D {
@@ -180,8 +180,8 @@ void RenderPass::_init_color_buffer() {
 }
 
 // =============================================================================
-void RenderPass::_get_sample_count() {
-    switch(RenderConfig::sample_count) {
+void RenderPass::_get_msaa_samples() {
+    switch(RenderConfig::msaa_samples) {
         case 64u: _samples = vk::SampleCountFlagBits::e64; break;
         case 32u: _samples = vk::SampleCountFlagBits::e32; break;
         case 16u: _samples = vk::SampleCountFlagBits::e16; break;
@@ -192,7 +192,7 @@ void RenderPass::_get_sample_count() {
         default:
             CONSOLE_CRITICAL(
                 "Unsupported color buffer sample count {}.",
-                RenderConfig::sample_count
+                RenderConfig::msaa_samples
             );
     }
 }
@@ -254,7 +254,7 @@ RenderPass::RenderPass() :
     _attach_descs        { },
     _color_attachments   { },
     _depth_attachment    { },
-    _resolve_attachments { }, 
+    _resolve_attachments { },
     _subpasses           { },
     _subpass_deps        { },
     _render_pass         { },

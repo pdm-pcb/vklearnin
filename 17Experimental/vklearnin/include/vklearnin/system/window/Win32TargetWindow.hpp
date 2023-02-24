@@ -12,13 +12,16 @@ public:
     // Give the OS a moment to speak up
     static void message_loop();
 
+    static void init();
+    static void shutdown();
+
     // Spawn (and size and place?) a native window
     static void spawn_window(uint32_t const width  = 0u,
                              uint32_t const height = 0u,
                              int32_t const  pos_x  = 0u,
                              int32_t const  pos_y  = 0u);
 
-    // Manage the Vulkan surface 
+    // Manage the Vulkan surface
     static void create_surface();
     static void destroy_surface();
 
@@ -32,9 +35,11 @@ private:
     static ::HWND   _window;
     static ::LPCSTR _classname;
     static ::LPCSTR _window_title;
-    
+    static ::HDC    _device;
+    static ::LPBYTE _raw_message;
+
     // Helps with centering the window on screen
-    static struct CenterPos {
+    static struct ScreenPos {
         int32_t x = 0;
         int32_t y = 0;
     } _center;
@@ -46,7 +51,7 @@ private:
     static ::LRESULT CALLBACK
     _wndproc(::HWND window, ::UINT message, ::WPARAM wparam, ::LPARAM lparam);
 
-    static void _init();
+    static void _register_input();
 
     // Make it just right
     static void _size_and_place();

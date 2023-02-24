@@ -8,11 +8,11 @@
 namespace vkl {
 
 struct KeyPressEvent {
-    Keycode keycode;
+    Keycode code;
 };
 
 struct KeyReleaseEvent {
-    Keycode keycode;
+    Keycode code;
 };
 
 } //namespace vkl

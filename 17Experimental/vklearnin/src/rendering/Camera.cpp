@@ -47,7 +47,9 @@ void Camera::set_perspective(float const near, float const far,
 }
 
 // =============================================================================
-void Camera::orient(Vec4 const &position, Vec4 const &forward, Vec4 const &up) {
+void Camera::orient(Vec4 const &position, Vec4 const &forward, Vec4 const &side,
+                    Vec4 const &up)
+{
     if(math::length2(forward) <= 0.0f) {
         CONSOLE_CRITICAL("Cannot orient camera with zero forward vector.");
         return;
@@ -60,24 +62,21 @@ void Camera::orient(Vec4 const &position, Vec4 const &forward, Vec4 const &up) {
         glm::vec3(up)
     );
 #else
-    auto const fore    = math::normalize(forward);
-    auto const side    = math::normalize(math::cross(fore, up));
-    auto const true_up = math::cross(side, fore);
 
     _view_mat = Mat4::identity;
 
     _view_mat.x.x = side.x;
     _view_mat.y.x = side.y;
     _view_mat.z.x = side.z;
-    _view_mat.x.y = true_up.x;
-    _view_mat.y.y = true_up.y;
-    _view_mat.z.y = true_up.z;
-    _view_mat.x.z = -fore.x;
-    _view_mat.y.z = -fore.y;
-    _view_mat.z.z = -fore.z;
+    _view_mat.x.y = up.x;
+    _view_mat.y.y = up.y;
+    _view_mat.z.y = up.z;
+    _view_mat.x.z = -forward.x;
+    _view_mat.y.z = -forward.y;
+    _view_mat.z.z = -forward.z;
     _view_mat.w.x = -math::dot(side, position);
-    _view_mat.w.y = -math::dot(true_up, position);
-    _view_mat.w.z =  math::dot(fore, position);
+    _view_mat.w.y = -math::dot(up, position);
+    _view_mat.w.z =  math::dot(forward, position);
 #endif // VKL_USE_GLM
 }
 

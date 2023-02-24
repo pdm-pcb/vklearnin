@@ -11,7 +11,7 @@ public:
     void set_perspective(float const near, float const far,
                          float const vertical_fov_degrees);
 
-    void orient(Vec4 const &position, Vec4 const &forward,
+    void orient(Vec4 const &position, Vec4 const &forward, Vec4 const &side,
 #ifdef VKL_USE_GLM
                 Vec4 const &up = Vec4(0.0f, 1.0f, 0.0f, 0.0f));
 #else

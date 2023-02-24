@@ -2,27 +2,32 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-static size_t constexpr CUBES_PER_SIDE = 5;
-static float  constexpr CUBE_STEP      = 0.5f;
+static size_t CUBES_PER_SIDE = 5;
+static float  CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::update() {
-    auto const fore  = vkl::math::normalize(_cam_data.forward);
-    auto const side  = vkl::math::cross(fore, { 0.0f, 1.0f, 0.0f, 0.0f });
-    auto const speed = _cam_data.speed * vkl::Timekeeper::frametime();
+    auto const mouse_speed =
+        _cam_data.mouse_speed * vkl::Timekeeper::frametime();
+    _cam_data.pitch += _mouse.y_offset * mouse_speed;
+    _cam_data.yaw   += _mouse.x_offset * mouse_speed;
 
-    if(_kb.w)      { _cam_data.pos += fore * speed; }
-    else if(_kb.s) { _cam_data.pos -= fore * speed; }
-    if(_kb.a)      { _cam_data.pos -= side * speed; }
-    else if(_kb.d) { _cam_data.pos += side * speed; }
-
-    if(_kb.up)         { _cam_data.pitch += 15.0f * speed; }
-    else if(_kb.down)  { _cam_data.pitch -= 15.0f * speed; }
-    if(_kb.left)       { _cam_data.yaw   -= 15.0f * speed; }
-    else if(_kb.right) { _cam_data.yaw   += 15.0f * speed; }
+    _mouse.y_offset = 0;
+    _mouse.x_offset = 0;
 
     if(_cam_data.pitch > 89.9f)       { _cam_data.pitch = 89.9f;  }
     else if(_cam_data.pitch < -89.9f) { _cam_data.pitch = -89.9f; }
+
+    static float min_yaw = _cam_data.yaw;
+    if(_cam_data.yaw < min_yaw) min_yaw = _cam_data.yaw;
+    static float max_yaw = _cam_data.yaw;
+    if(_cam_data.yaw > max_yaw) max_yaw = _cam_data.yaw;
+    static float time_passed = 0.0f;
+    time_passed += vkl::Timekeeper::frametime();
+    if(time_passed >= 0.5f) {
+        CONSOLE_ERROR("min/max yaw: {:.02f}/{:.02f}", min_yaw, max_yaw);
+        time_passed = 0.0f;
+    }
 
     auto const cos_yaw   = std::cosf(vkl::math::radians(_cam_data.yaw));
     auto const sin_yaw   = std::sinf(vkl::math::radians(_cam_data.yaw));
@@ -33,9 +38,37 @@ void Demo::update() {
     _cam_data.forward.y = sin_pitch;
     _cam_data.forward.z = sin_yaw * cos_pitch;
 
+    _cam_data.forward = vkl::math::normalize(_cam_data.forward);
+    _cam_data.side = vkl::math::normalize(
+        vkl::math::cross(_cam_data.forward, vkl::Vec4::unit_y)
+    );
+    _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
+
+    // // lol.
+    // vkl::Vec4 cam_axis { _cam_data.pitch, _cam_data.yaw, 1.0f, 0.0f };
+    // auto camera_rotation = vkl::math::rotate(
+    //     vkl::Mat4::identity,
+    //     vkl::math::length2(cam_axis),
+    //     cam_axis
+    // );
+
+    // _cam_data.forward = vkl::math::normalize(camera_rotation * _cam_data.forward);
+    // _cam_data.side = vkl::math::normalize(
+    //     vkl::math::cross(_cam_data.forward, vkl::Vec4::unit_y)
+    // );
+    // _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
+
+    auto const kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
+    if(_kb.w)      { _cam_data.pos += _cam_data.forward * kb_speed; }
+    else if(_kb.s) { _cam_data.pos -= _cam_data.forward * kb_speed; }
+    if(_kb.a)      { _cam_data.pos -= _cam_data.side    * kb_speed; }
+    else if(_kb.d) { _cam_data.pos += _cam_data.side    * kb_speed; }
+
     _persp_camera.orient(
         _cam_data.pos,
-        _cam_data.forward
+        _cam_data.forward,
+        _cam_data.side,
+        _cam_data.up
     );
 
     _vp_matrices.view = _persp_camera.view_matrix();
@@ -237,6 +270,26 @@ void Demo::init() {
         &Demo::on_key_release
     );
 
+    vkl::EventBroker::subscribe<vkl::MouseMoveEvent>(
+        this,
+        &Demo::on_mouse_move
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseButtonPressEvent>(
+        this,
+        &Demo::on_mouse_button_press
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseButtonReleaseEvent>(
+        this,
+        &Demo::on_mouse_button_release
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseScrollEvent>(
+        this,
+        &Demo::on_mouse_scroll
+    );
+
     _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
     // _persp_camera.set_orthographic(1.0f, -1.0f);
 
@@ -274,10 +327,10 @@ void Demo::init() {
             { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
         }}
     );
-    _color_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE);
+    _color_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 10);
 
     _texture_cube.init(0.1f, 1.0f);
-    _texture_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
+    _texture_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 2 * 10);
 
     _bricks_a.init_from_file("textures/brickwall017_d.jpg");
     _bricks_a.init_sampler(
@@ -302,7 +355,7 @@ void Demo::init() {
 
 // =============================================================================
 void Demo::on_key_press(const vkl::KeyPressEvent &event) {
-    switch(event.keycode) {
+    switch(event.code) {
         case vkl::KB_W :
             _kb.w = true;
             _kb.s = false;
@@ -320,42 +373,56 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
             _kb.a = false;
             break;
 
-        case vkl::KB_UP :
-            _kb.up = true;
-            _kb.down = false;
-            break;
-        case vkl::KB_DOWN :
-            _kb.down = true;
-            _kb.up = false;
-            break;
-        case vkl::KB_LEFT :
-            _kb.left = true;
-            _kb.right = false;
-            break;
-        case vkl::KB_RIGHT :
-            _kb.right = true;
-            _kb.left = false;
-            break;
-
         default: break;
     }
 }
 
 // =============================================================================
 void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
-    switch(event.keycode) {
+    switch(event.code) {
         case vkl::KB_W : _kb.w = false; break;
         case vkl::KB_A : _kb.a = false; break;
         case vkl::KB_S : _kb.s = false; break;
         case vkl::KB_D : _kb.d = false; break;
 
-        case vkl::KB_UP    : _kb.up    = false; break;
-        case vkl::KB_DOWN  : _kb.down  = false; break;
-        case vkl::KB_LEFT  : _kb.left  = false; break;
-        case vkl::KB_RIGHT : _kb.right = false; break;
-
         default: break;
     }
+}
+
+// =============================================================================
+void Demo::on_mouse_move(const vkl::MouseMoveEvent &event) {
+    _mouse.x_offset = event.x_offset;
+    _mouse.y_offset = -event.y_offset;
+}
+
+// =============================================================================
+void Demo::on_mouse_button_press(const vkl::MouseButtonPressEvent &event) {
+    switch(event.code) {
+        case vkl::MOUSE_BUTTON_LEFT   : CONSOLE_INFO("LMB down"); break;
+        case vkl::MOUSE_BUTTON_RIGHT  : CONSOLE_INFO("RMB down"); break;
+        case vkl::MOUSE_BUTTON_MIDDLE : CONSOLE_INFO("MMB down"); break;
+    }
+}
+
+// =============================================================================
+void Demo::on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event) {
+    switch(event.code) {
+        case vkl::MOUSE_BUTTON_LEFT   : CONSOLE_INFO("LMB up"); break;
+        case vkl::MOUSE_BUTTON_RIGHT  : CONSOLE_INFO("RMB up"); break;
+        case vkl::MOUSE_BUTTON_MIDDLE : CONSOLE_INFO("MMB up"); break;
+    }
+}
+
+// =============================================================================
+void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
+    if(event.vert_offset > 0 && CUBES_PER_SIDE < 100) {
+        CUBES_PER_SIDE += 1;
+    }
+    else if(event.vert_offset < 0 && CUBES_PER_SIDE > 1) {
+        CUBES_PER_SIDE -= 1;
+    }
+
+    CONSOLE_INFO("{} cubes per side", CUBES_PER_SIDE);
 }
 
 // =============================================================================

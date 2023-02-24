@@ -38,7 +38,7 @@ Mat4 Mat4::operator*(Mat4 const &other) const {
     result *= other;
     return result;
 }
-    
+
 Vec4 Mat4::operator*(Vec4 const &v) const {
     return {
         (x.x * v.x) + (x.y * v.y) + (x.z * v.z) + (x.w * v.w),

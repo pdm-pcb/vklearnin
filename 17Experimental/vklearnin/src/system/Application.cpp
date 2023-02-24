@@ -68,6 +68,7 @@ Application::Application() :
 
     ConsoleLog::init();
     GraphicsAPI::init();
+    TargetWindow::init();
     TargetWindow::spawn_window();
     TargetWindow::create_surface();
     GraphicsAPI::create_device();
@@ -80,6 +81,7 @@ Application::~Application() {
     Swapchain::destroy();
     GraphicsAPI::destroy_device();
     TargetWindow::destroy_surface();
+    TargetWindow::shutdown();
     GraphicsAPI::shutdown();
 
     delete _engine;

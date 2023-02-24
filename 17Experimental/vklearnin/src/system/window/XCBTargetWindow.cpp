@@ -14,7 +14,7 @@ vk::SurfaceKHR       XCBTargetWindow::_surface       { };
 ::xcb_atom_t         XCBTargetWindow::_delete_atom   = 0u;
 ::xcb_atom_t         XCBTargetWindow::_wm_state_atom = 0u;
 
-XCBTargetWindow::CenterPos XCBTargetWindow::_center;
+XCBTargetWindow::ScreenPos XCBTargetWindow::_center;
 
 using client_msg        = ::xcb_client_message_event_t *;
 using config_notify     = ::xcb_configure_notify_event_t *;
@@ -28,7 +28,7 @@ static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
 bool XCBTargetWindow::message_loop() {
     ::xcb_generic_event_t *event = nullptr;
 
-    while((event = ::xcb_poll_for_event(_connection))) {       
+    while((event = ::xcb_poll_for_event(_connection))) {
         uint32_t event_type =
             event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
         switch(event_type) {
@@ -81,7 +81,7 @@ void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
                                    int32_t const  pos_x, int32_t const  pos_y)
 {
     _init();
-    
+
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL |
                           ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
@@ -97,9 +97,9 @@ void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
     // If width and height aren't provided by Application, then just opt for
     // 75% of the available real estate
     if(width == 0u || height == 0u) {
-        RenderConfig::window_width  = 
+        RenderConfig::window_width  =
             static_cast<uint32_t>(RenderConfig::screen_width * 0.75f);
-        RenderConfig::window_height = 
+        RenderConfig::window_height =
             static_cast<uint32_t>(RenderConfig::screen_height * 0.75f);
     }
     else {
@@ -213,7 +213,7 @@ void XCBTargetWindow::_init() {
 
 //==============================================================================
 void XCBTargetWindow::_query_randr() {
-    
+
     auto reply = ::xcb_randr_get_monitors_reply(
         _connection,
         ::xcb_randr_get_monitors(
@@ -258,7 +258,7 @@ void XCBTargetWindow::_query_randr() {
 
 //==============================================================================
 void XCBTargetWindow::_redirect_delete() {
-    
+
     auto *delete_reply = ::xcb_intern_atom_reply(
         _connection,
         ::xcb_intern_atom(
@@ -300,7 +300,7 @@ void XCBTargetWindow::_redirect_delete() {
 
 //==============================================================================
 void XCBTargetWindow::_remove_decorations() {
-    
+
     auto *motif_reply = ::xcb_intern_atom_reply(
         _connection,
         ::xcb_intern_atom(

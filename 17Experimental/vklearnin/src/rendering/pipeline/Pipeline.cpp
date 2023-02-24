@@ -126,7 +126,7 @@ void Pipeline::create(const RenderPass &render_pass) {
 void Pipeline::destroy() {
     _vert.destroy();
     _frag.destroy();
-    
+
     CONSOLE_TRACE(
         "Destroying graphics pipeline {:#x}, layout {:#x}",
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline)),
@@ -240,7 +240,7 @@ void Pipeline::_init_raster() {
 
 // =============================================================================
 void Pipeline::_init_multisample() {
-    switch(RenderConfig::sample_count) {
+    switch(RenderConfig::msaa_samples) {
         case 64u: _samples = vk::SampleCountFlagBits::e64; break;
         case 32u: _samples = vk::SampleCountFlagBits::e32; break;
         case 16u: _samples = vk::SampleCountFlagBits::e16; break;
@@ -251,7 +251,7 @@ void Pipeline::_init_multisample() {
         default:
             CONSOLE_CRITICAL(
                 "Unsupported color buffer sample count {}.",
-                RenderConfig::sample_count
+                RenderConfig::msaa_samples
             );
     }
 
@@ -307,7 +307,7 @@ void Pipeline::_init_blend() {
 void Pipeline::_init_dynamic_states() {
     // Setting the viewport and scissor states to dynamic allows us to change
     // the size of the target surface without recreating the entire pipeline.
-    _dynamic_states = { 
+    _dynamic_states = {
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor,
     };

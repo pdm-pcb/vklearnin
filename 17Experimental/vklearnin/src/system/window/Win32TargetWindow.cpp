@@ -10,16 +10,16 @@ namespace vkl {
 ::HWND   Win32TargetWindow::_window       = nullptr;
 ::LPCSTR Win32TargetWindow::_classname    = nullptr;
 ::LPCSTR Win32TargetWindow::_window_title = nullptr;
+::HDC    Win32TargetWindow::_device       = nullptr;
+::LPBYTE Win32TargetWindow::_raw_message  = new ::BYTE[64];
 
-Win32TargetWindow::CenterPos Win32TargetWindow::_center;
+Win32TargetWindow::ScreenPos Win32TargetWindow::_center;
 
 vk::SurfaceKHR Win32TargetWindow::_surface { };
 
 // =============================================================================
 // Given that this is a single threaded project (for now...) there needs to be
 // one function that drops in and checks on the OS in a non-blocking manner.
-// In this case, I'm also using the opportunity to keep Application abreast
-// of whether or not TargetWindow wants to close.
 void Win32TargetWindow::message_loop() {
     ::MSG message { };
     while(::PeekMessageA(&message, _window, 0u, 0u, PM_REMOVE) != 0) {
@@ -47,6 +47,110 @@ void Win32TargetWindow::message_loop() {
             EventBroker::emit<KeyReleaseEvent>(win32_to_vkl(wparam));
             break;
 
+        case WM_INPUT: {
+            // Check message size
+            ::UINT message_size;
+            auto result = ::GetRawInputData(
+                (::HRAWINPUT) lparam,
+                RID_INPUT,
+                nullptr,
+                &message_size,
+                sizeof(::RAWINPUTHEADER)
+            );
+
+            if(result == (::UINT) -1) {
+                CONSOLE_CRITICAL("Failed to get win32 raw input message");
+                break;
+            }
+
+            // Get actual message
+            result = ::GetRawInputData(
+                (::HRAWINPUT) lparam,
+                RID_INPUT,
+                _raw_message,
+                &message_size,
+                sizeof(::RAWINPUTHEADER)
+            );
+            if(result != message_size) {
+                CONSOLE_CRITICAL(
+                    "Win32 raw input expected {} bytes, got {} bytes instead",
+                    message_size, result
+                );
+                break;
+            }
+
+            // Cast to useful type
+            ::RAWINPUT *input = (::RAWINPUT *)_raw_message;
+
+            switch(input->header.dwType) {
+                case RIM_TYPEMOUSE: {
+                    auto const mouse = input->data.mouse;
+
+                    if(mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
+                        EventBroker::emit<MouseButtonPressEvent>(
+                            MOUSE_BUTTON_LEFT
+                        );
+                    }
+                    else if(mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP) {
+                        EventBroker::emit<MouseButtonReleaseEvent>(
+                            MOUSE_BUTTON_LEFT
+                        );
+                    }
+
+                    if(mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN) {
+                        EventBroker::emit<MouseButtonPressEvent>(
+                            MOUSE_BUTTON_RIGHT
+                        );
+                    }
+                    else if(mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP) {
+                        EventBroker::emit<MouseButtonReleaseEvent>(
+                            MOUSE_BUTTON_RIGHT
+                        );
+                    }
+
+                    if(mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_DOWN) {
+                        EventBroker::emit<MouseButtonPressEvent>(
+                            MOUSE_BUTTON_MIDDLE
+                        );
+                    }
+                    else if(mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_UP) {
+                        EventBroker::emit<MouseButtonReleaseEvent>(
+                            MOUSE_BUTTON_MIDDLE
+                        );
+                    }
+
+                    if(mouse.usButtonFlags & RI_MOUSE_WHEEL) {
+                        EventBroker::emit<MouseScrollEvent>(
+                            (short) mouse.usButtonData / WHEEL_DELTA,
+                            0
+                        );
+                    }
+
+                    if(mouse.usButtonFlags & RI_MOUSE_HWHEEL) {
+                        EventBroker::emit<MouseScrollEvent>(
+                            0,
+                            (short) mouse.usButtonData / WHEEL_DELTA
+                        );
+                    }
+
+                    if(mouse.lLastX != 0 || mouse.lLastY != 0) {
+                        EventBroker::emit<MouseMoveEvent>(
+                            mouse.lLastX,
+                            mouse.lLastY
+                        );
+
+                        ::SetCursorPos(_center.x, _center.y);
+                        ::SetCursor(nullptr);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            break;
+        }
+
         case WM_CLOSE: // The first message received in the shutdown process
             ::DestroyWindow(_window);
             ::UnregisterClassA(_classname, nullptr);
@@ -73,8 +177,6 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
                                      int32_t const  pos_y)
 {
     assert(_window == nullptr);
-
-    _init();
 
     // If width and height aren't provided by Application, then just opt for
     // two-thirds of the available real estate
@@ -126,8 +228,10 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
 
     if(_window == nullptr) {
         CONSOLE_CRITICAL("Unable to create win32 window.");
+        return;
     }
 
+    _register_input();
     _size_and_place();
 
     CONSOLE_TRACE(
@@ -172,7 +276,7 @@ void Win32TargetWindow::destroy_surface() {
 }
 
 // =============================================================================
-void Win32TargetWindow::_init() {
+void Win32TargetWindow::init() {
     // Making use of these constexprs again
     _classname    = ENGINE_NAME;
     _window_title = APP_NAME;
@@ -208,6 +312,36 @@ void Win32TargetWindow::_init() {
 }
 
 // =============================================================================
+void Win32TargetWindow::shutdown() {
+    delete[] _raw_message;
+}
+
+// =============================================================================
+void Win32TargetWindow::_register_input() {
+    ::RAWINPUTDEVICE devices[2];
+
+    devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    devices[0].usUsage     = HID_USAGE_GENERIC_KEYBOARD;
+    devices[0].dwFlags     = 0; // RIDEV_NOLEGACY ?
+    devices[0].hwndTarget  = _window;
+
+    devices[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    devices[1].usUsage     = HID_USAGE_GENERIC_MOUSE;
+    devices[1].dwFlags     = RIDEV_NOLEGACY;
+    devices[1].hwndTarget  = _window;
+
+    if(!::RegisterRawInputDevices(devices, 2, sizeof(::RAWINPUTDEVICE))) {
+        ::MessageBox(
+            nullptr, "Could not register for raw HID input:",
+            "Error", MB_OK
+        );
+    }
+    else {
+        CONSOLE_TRACE("Registered for raw win32 input");
+    }
+}
+
+// =============================================================================
 void Win32TargetWindow::_size_and_place() {
     // The only noteworthy detail here is that, as it is currently set up,
     // win32 is not DPI-aware. That means that if you've got display scaling
@@ -230,6 +364,9 @@ void Win32TargetWindow::_size_and_place() {
         static_cast<int>(RenderConfig::window_height),
         0
     );
+
+    ::SetCursorPos(_center.x, _center.y);
+    ::SetCursor(nullptr);
 }
 
 } // namespace vkl

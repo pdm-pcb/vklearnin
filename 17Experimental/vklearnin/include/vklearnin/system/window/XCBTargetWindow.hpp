@@ -18,7 +18,7 @@ public:
                              int32_t const  pos_x  = 0u,
                              int32_t const  pos_y  = 0u);
 
-    // Manage the Vulkan surface 
+    // Manage the Vulkan surface
     static void create_surface();
     static void destroy_surface();
 
@@ -31,7 +31,7 @@ private:
     static bool _carry_on;
 
     // Helps with centering the window on screen
-    static struct CenterPos {
+    static struct ScreenPos {
         int32_t x = 0;
         int32_t y = 0;
     } _center;
