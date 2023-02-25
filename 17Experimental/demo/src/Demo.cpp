@@ -7,37 +7,6 @@ float  CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::update() {
-    _cam_data.pitch += _mouse.y_offset * _cam_data.mouse_speed;
-    _cam_data.yaw   += _mouse.x_offset * _cam_data.mouse_speed;
-
-    _mouse.y_offset = 0;
-    _mouse.x_offset = 0;
-
-    if(_cam_data.pitch > 89.9f)       { _cam_data.pitch = 89.9f;  }
-    else if(_cam_data.pitch < -89.9f) { _cam_data.pitch = -89.9f; }
-
-    static float min_pitch = _cam_data.pitch;
-    static float max_pitch = _cam_data.pitch;
-    static float min_yaw   = _cam_data.yaw;
-    static float max_yaw   = _cam_data.yaw;
-
-    if(_cam_data.pitch < min_pitch) min_pitch = _cam_data.pitch;
-    if(_cam_data.pitch > max_pitch) max_pitch = _cam_data.pitch;
-    if(_cam_data.yaw < min_yaw) min_yaw = _cam_data.yaw;
-    if(_cam_data.yaw > max_yaw) max_yaw = _cam_data.yaw;
-
-    static float time_passed = 0.0f;
-    time_passed += vkl::Timekeeper::frametime();
-    if(time_passed >= 1.0f) {
-        CONSOLE_ERROR(
-            "\nmin/max pitch: {:.02f}/{:.02f}"
-            "\nmin/max yaw:   {:.02f}/{:.02f}",
-            min_pitch, max_pitch,
-            min_yaw, max_yaw
-        );
-        time_passed = 0.0f;
-    }
-
     auto const cos_yaw   = std::cosf(vkl::math::radians(_cam_data.yaw));
     auto const sin_yaw   = std::sinf(vkl::math::radians(_cam_data.yaw));
     auto const cos_pitch = std::cosf(vkl::math::radians(_cam_data.pitch));
@@ -54,10 +23,12 @@ void Demo::update() {
     _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
 
     auto const kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
-    if(_kb.w)      { _cam_data.pos += _cam_data.forward * kb_speed; }
-    else if(_kb.s) { _cam_data.pos -= _cam_data.forward * kb_speed; }
-    if(_kb.a)      { _cam_data.pos -= _cam_data.side    * kb_speed; }
-    else if(_kb.d) { _cam_data.pos += _cam_data.side    * kb_speed; }
+    if(_kb.w)          { _cam_data.pos += _cam_data.forward * kb_speed; }
+    else if(_kb.s)     { _cam_data.pos -= _cam_data.forward * kb_speed; }
+    if(_kb.a)          { _cam_data.pos -= _cam_data.side    * kb_speed; }
+    else if(_kb.d)     { _cam_data.pos += _cam_data.side    * kb_speed; }
+    if(_kb.space)      { _cam_data.pos += _cam_data.up      * kb_speed; }
+    else if(_kb.lctrl) { _cam_data.pos -= _cam_data.up      * kb_speed; }
 
     _persp_camera.orient(
         _cam_data.pos,
@@ -76,7 +47,6 @@ void Demo::update() {
 }
 
 // =============================================================================
-
 /*
 void Demo::submit_draws() {
     _color_model_matrices.clear();
@@ -334,6 +304,14 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
             _kb.d = true;
             _kb.a = false;
             break;
+        case vkl::KB_LCTRL:
+            _kb.lctrl = true;
+            _kb.space = false;
+            break;
+        case vkl::KB_SPACE:
+            _kb.space = true;
+            _kb.lctrl = false;
+            break;
 
         default: break;
     }
@@ -342,10 +320,12 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
 // =============================================================================
 void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
     switch(event.code) {
-        case vkl::KB_W : _kb.w = false; break;
-        case vkl::KB_A : _kb.a = false; break;
-        case vkl::KB_S : _kb.s = false; break;
-        case vkl::KB_D : _kb.d = false; break;
+        case vkl::KB_W     : _kb.w     = false; break;
+        case vkl::KB_A     : _kb.a     = false; break;
+        case vkl::KB_S     : _kb.s     = false; break;
+        case vkl::KB_D     : _kb.d     = false; break;
+        case vkl::KB_LCTRL : _kb.lctrl = false;  CONSOLE_INFO("LCTRL Up");break;
+        case vkl::KB_SPACE : _kb.space = false; break;
 
         default: break;
     }
@@ -353,8 +333,11 @@ void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
 
 // =============================================================================
 void Demo::on_mouse_move(const vkl::MouseMoveEvent &event) {
-    _mouse.x_offset += event.x_offset;
-    _mouse.y_offset += -event.y_offset;
+    _cam_data.pitch += -event.y_offset * _cam_data.mouse_speed;
+    _cam_data.yaw   += event.x_offset * _cam_data.mouse_speed;
+
+    if(_cam_data.pitch > 89.9f)       { _cam_data.pitch = 89.9f;  }
+    else if(_cam_data.pitch < -89.9f) { _cam_data.pitch = -89.9f; }
 }
 
 // =============================================================================
@@ -407,7 +390,6 @@ Demo::Demo() :
         .s = false,
         .d = false,
     },
-    _cam_data     { },
     _vp_matrices  { },
     _persp_camera { },
     _color_cube   { },

@@ -30,16 +30,13 @@ public:
 
 private:
     struct KeyboardState {
-        bool w;
-        bool a;
-        bool s;
-        bool d;
+        bool w = false;
+        bool a = false;
+        bool s = false;
+        bool d = false;
+        bool lctrl = false;
+        bool space = false;
     } _kb;
-
-    struct MouseState {
-        int32_t x_offset = 0;
-        int32_t y_offset = 0;
-    } _mouse;
 
     struct CamData {
         vkl::Vec4 pos;
@@ -51,7 +48,7 @@ private:
         float yaw   = -90.0f;
 
         float kb_speed    = 3.0f;
-        float mouse_speed = 0.1f;
+        float mouse_speed = 0.075f;
     } _cam_data;
 
     struct VPMatrices {

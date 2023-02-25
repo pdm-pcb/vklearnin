@@ -35,20 +35,9 @@ void Win32TargetWindow::message_loop() {
                                       ::WPARAM wparam, ::LPARAM lparam)
 {
     switch(message) {
-        case WM_KEYDOWN: // Basic input handling
-            EventBroker::emit<KeyPressEvent>(win32_to_vkl(wparam));
-            if(wparam == VK_ESCAPE) {
-                // Kick off the process of cleaning up after ourselves
-                ::SendMessage(window, WM_CLOSE, wparam, lparam);
-            }
-            break;
-
-        case WM_KEYUP:
-            EventBroker::emit<KeyReleaseEvent>(win32_to_vkl(wparam));
-            break;
-
+        // Handle raw input messages
         case WM_INPUT: {
-            // Check message size
+            // Check for message size
             ::UINT message_size;
             auto result = ::GetRawInputData(
                 reinterpret_cast<::HRAWINPUT>(lparam),
@@ -57,13 +46,12 @@ void Win32TargetWindow::message_loop() {
                 &message_size,
                 sizeof(::RAWINPUTHEADER)
             );
-
             if(result == (::UINT) -1) {
                 CONSOLE_CRITICAL("Failed to get win32 raw input message");
                 break;
             }
 
-            // Get actual message
+            // Get the actual message
             result = ::GetRawInputData(
                 reinterpret_cast<::HRAWINPUT>(lparam),
                 RID_INPUT,
@@ -79,9 +67,114 @@ void Win32TargetWindow::message_loop() {
                 break;
             }
 
+            // -----------------------------------------------------------------
+            // Thanks to Stefan Reinalter for much of the following code
+            // https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
+            //
+
             // Cast to useful type
             auto const *input = reinterpret_cast<::RAWINPUT *>(_raw_message);
             switch(input->header.dwType) {
+                case RIM_TYPEKEYBOARD: {
+                    ::UINT vkey  = input->data.keyboard.VKey;
+                    ::UINT code  = input->data.keyboard.MakeCode;
+                    ::UINT flags = input->data.keyboard.Flags;
+
+                    // discard "fake keys" which are part of an escaped sequence
+                    if(vkey == 255) break;
+
+                    // correct left-hand / right-hand SHIFT
+                    else if(vkey == VK_SHIFT) {
+                        vkey = MapVirtualKey(code, MAPVK_VSC_TO_VK_EX);
+                    }
+
+                    // correct PAUSE/BREAK and NUM LOCK silliness, and set
+                    // the extended bit
+                    else if(vkey == VK_NUMLOCK) {
+                        code = (MapVirtualKey(vkey, MAPVK_VK_TO_VSC) | 0x100);
+                    }
+
+                    // exit condition
+                    else if(vkey == VK_ESCAPE) {
+                        EventBroker::emit<WindowCloseEvent>();
+                        ::SendMessage(window, WM_CLOSE, wparam, lparam);
+                        break;
+                    }
+
+                    // e0 and e1 are escape sequences used for certain special
+                    // keys, such as PRINT and PAUSE/BREAK.
+                    // http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
+                    const bool isE0 = ((flags & RI_KEY_E0) != 0);
+                    const bool isE1 = ((flags & RI_KEY_E1) != 0);
+
+                    if(isE1) {
+                        // for escaped sequences, turn the virtual key into the
+                        // correct scan code using MapVirtualKey.
+                        // however, MapVirtualKey is unable to map VK_PAUSE
+                        // (this is a known bug), hence we map that by hand.
+                        if(vkey == VK_PAUSE) {
+                            code = 0x45;
+                        }
+                        else {
+                            code = MapVirtualKey(vkey, MAPVK_VK_TO_VSC);
+                        }
+                    }
+
+                    switch(vkey) {
+                        // right-hand CONTROL and ALT have their e0 bit set
+                        case VK_CONTROL:
+                            if(isE0) { vkey = KB_RCTRL; }
+                            else     { vkey = KB_LCTRL; }
+                            break;
+
+                        case VK_MENU:
+                            if(isE0) { vkey = KB_RALT; }
+                            else     { vkey = KB_LALT; }
+                            break;
+
+                        // NUMPAD ENTER has its e0 bit set
+                        case VK_RETURN: if(isE0) vkey = KB_NP_ENTER; break;
+
+                        // the standard INSERT, DELETE, HOME, END, PRIOR and
+                        // NEXT keys will always have their e0 bit set, but the
+                        // corresponding keys on the NUMPAD will not.
+                        case VK_INSERT: if(!isE0) vkey = KB_NP_0;       break;
+                        case VK_DELETE: if(!isE0) vkey = KB_NP_DECIMAL; break;
+                        case VK_HOME:   if(!isE0) vkey = KB_NP_7;       break;
+                        case VK_END:    if(!isE0) vkey = KB_NP_1;       break;
+                        case VK_PRIOR:  if(!isE0) vkey = KB_NP_9;       break;
+                        case VK_NEXT:   if(!isE0) vkey = KB_NP_3;       break;
+
+                        // the standard arrow keys will always have their e0 bit
+                        // set, but the corresponding keys on the NUMPAD will
+                        // not.
+                        case VK_LEFT:  if(!isE0) vkey = KB_NP_4; break;
+                        case VK_RIGHT: if(!isE0) vkey = KB_NP_6; break;
+                        case VK_UP:    if(!isE0) vkey = KB_NP_8; break;
+                        case VK_DOWN:  if(!isE0) vkey = KB_NP_2; break;
+
+                        // NUMPAD 5 doesn't have its e0 bit set
+                        case VK_CLEAR: if(!isE0) vkey = KB_NP_5; break;
+
+                        default: break;
+                    }
+
+                    // a key can either produce a "make" or "break" scancode.
+                    // this is used to differentiate between down-presses and
+                    // releases
+                    // http://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
+                    const bool release = ((flags & RI_KEY_BREAK) != 0);
+
+                    if(release) {
+                        EventBroker::emit<KeyReleaseEvent>(win32_to_vkl(vkey));
+                    }
+                    else {
+                        EventBroker::emit<KeyPressEvent>(win32_to_vkl(vkey));
+                    }
+
+                    break;
+                }
+
                 case RIM_TYPEMOUSE: {
                     auto const &mouse = input->data.mouse;
 
