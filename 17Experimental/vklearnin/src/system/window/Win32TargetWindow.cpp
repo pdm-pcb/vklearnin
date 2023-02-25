@@ -23,7 +23,9 @@ vk::SurfaceKHR Win32TargetWindow::_surface { };
 void Win32TargetWindow::message_loop() {
     ::MSG message { };
     while(::PeekMessageA(&message, _window, 0u, 0u, PM_REMOVE) != 0) {
-        ::TranslateMessage(&message);
+        // Only needed for textual input, ala WM_CHAR. Keep it around for an
+        // eventual dev terminal perhaps?
+        // ::TranslateMessage(&message);
         ::DispatchMessageA(&message);
     }
 }
@@ -34,12 +36,10 @@ void Win32TargetWindow::message_loop() {
 {
     switch(message) {
         case WM_KEYDOWN: // Basic input handling
+            EventBroker::emit<KeyPressEvent>(win32_to_vkl(wparam));
             if(wparam == VK_ESCAPE) {
                 // Kick off the process of cleaning up after ourselves
                 ::SendMessage(window, WM_CLOSE, wparam, lparam);
-            }
-            else {
-                EventBroker::emit<KeyPressEvent>(win32_to_vkl(wparam));
             }
             break;
 
@@ -138,9 +138,6 @@ void Win32TargetWindow::message_loop() {
                             mouse.lLastX,
                             mouse.lLastY
                         );
-
-                        ::SetCursorPos(_center.x, _center.y);
-                        ::SetCursor(nullptr);
                     }
                     break;
                 }
@@ -233,6 +230,7 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
 
     _register_input();
     _size_and_place();
+    _restrict_cursor();
 
     CONSOLE_TRACE(
         "Created Win32 target window: {}x{} @ {:0.3f}",
@@ -319,6 +317,8 @@ void Win32TargetWindow::init() {
 void Win32TargetWindow::shutdown() {
     delete[] _raw_message;
     _raw_message = nullptr;
+
+    _release_cursor();
 }
 
 // =============================================================================
@@ -360,6 +360,32 @@ void Win32TargetWindow::_register_input() {
 }
 
 // =============================================================================
+void Win32TargetWindow::_restrict_cursor() {
+	::RECT client_area; 
+	::GetClientRect(_window, &client_area);
+	::MapWindowPoints(
+        _window,
+        nullptr, // Convert window-relative coordinates to desktop coordinates
+        reinterpret_cast<::POINT *>(&client_area),
+        2
+    );
+    // Restrict the cursor to moving within the client area
+	::ClipCursor(&client_area);
+
+    // Run through all requests to show a cursor until there are none
+    while(::ShowCursor(FALSE) >= 0);
+}
+
+// =============================================================================
+void Win32TargetWindow::_release_cursor() {
+    // Allow the cursor to travel outside the client space
+    ::ClipCursor(nullptr);
+
+    // Queue requests until there are some
+    while(::ShowCursor(TRUE) < 0);
+}
+
+// =============================================================================
 void Win32TargetWindow::_size_and_place() {
     // The only noteworthy detail here is that, as it is currently set up,
     // win32 is not DPI-aware. That means that if you've got display scaling
@@ -393,9 +419,6 @@ void Win32TargetWindow::_size_and_place() {
         );
         return;
     }
-
-    ::SetCursorPos(_center.x, _center.y);
-    ::SetCursor(nullptr);
 }
 
 } // namespace vkl

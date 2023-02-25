@@ -18,8 +18,8 @@ public:
     // Spawn (and size and place?) a native window
     static void spawn_window(uint32_t const width  = 0u,
                              uint32_t const height = 0u,
-                             int32_t const  pos_x  = 0u,
-                             int32_t const  pos_y  = 0u);
+                             int32_t  const pos_x  = 0u,
+                             int32_t  const pos_y  = 0u);
 
     // Manage the Vulkan surface
     static void create_surface();
@@ -52,6 +52,8 @@ private:
     _wndproc(::HWND window, ::UINT message, ::WPARAM wparam, ::LPARAM lparam);
 
     static void _register_input();
+    static void _restrict_cursor();
+    static void _release_cursor();
 
     // Make it just right
     static void _size_and_place();
