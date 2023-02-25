@@ -7,10 +7,8 @@ float  CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::update() {
-    auto const mouse_speed =
-        _cam_data.mouse_speed * vkl::Timekeeper::frametime();
-    _cam_data.pitch += _mouse.y_offset * mouse_speed;
-    _cam_data.yaw   += _mouse.x_offset * mouse_speed;
+    _cam_data.pitch += _mouse.y_offset * _cam_data.mouse_speed;
+    _cam_data.yaw   += _mouse.x_offset * _cam_data.mouse_speed;
 
     _mouse.y_offset = 0;
     _mouse.x_offset = 0;
@@ -54,20 +52,6 @@ void Demo::update() {
         vkl::math::cross(_cam_data.forward, vkl::Vec4::unit_y)
     );
     _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
-
-    // // lol.
-    // vkl::Vec4 cam_axis { _cam_data.pitch, _cam_data.yaw, 1.0f, 0.0f };
-    // auto camera_rotation = vkl::math::rotate(
-    //     vkl::Mat4::identity,
-    //     vkl::math::length2(cam_axis),
-    //     cam_axis
-    // );
-
-    // _cam_data.forward = vkl::math::normalize(camera_rotation * _cam_data.forward);
-    // _cam_data.side = vkl::math::normalize(
-    //     vkl::math::cross(_cam_data.forward, vkl::Vec4::unit_y)
-    // );
-    // _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
 
     auto const kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
     if(_kb.w)      { _cam_data.pos += _cam_data.forward * kb_speed; }
@@ -125,86 +109,50 @@ void Demo::submit_draws() {
 
         for(size_t z = 0; z < CUBES_PER_SIDE; ++z) {
             auto translate_top = vkl::math::translate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { xpos, CUBE_STEP, zpos, 0.0f }
             );
 
             auto rotate_top = vkl::math::rotate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 vkl::Timekeeper::runtime() * 20.0f,
                 { 15.0f, 20.0f, 0.0f, 0.0f }
             );
 
             auto scale_top = vkl::math::scale(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { 1.5f, 1.0f, 1.0f, 0.0f }
             );
 
             auto translate_middle = vkl::math::translate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { xpos, 0.0f, zpos, 0.0f }
             );
 
             auto rotate_middle = vkl::math::rotate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 vkl::Timekeeper::runtime() * 20.0f,
                 { 0.0f, 20.0f, 0.0f, 0.0f }
             );
 
             auto scale_middle = vkl::math::scale(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { 1.0f, 1.5f, 1.0f, 0.0f }
             );
 
             auto translate_bottom = vkl::math::translate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { xpos, -CUBE_STEP, zpos, 0.0f }
             );
 
             auto rotate_bottom = vkl::math::rotate(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 vkl::Timekeeper::runtime() * 20.0f,
                 { 0.0f, 20.0f, 25.0f, 0.0f }
             );
 
             auto scale_bottom = vkl::math::scale(
-#ifdef VKL_USE_GLM
-                glm::mat4(1.0f),
-#else
                 vkl::Mat4::identity,
-#endif // VKL_USE_GLM
                 { 1.0f, 1.0f, 1.5f, 0.0f }
             );
 
@@ -405,8 +353,8 @@ void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
 
 // =============================================================================
 void Demo::on_mouse_move(const vkl::MouseMoveEvent &event) {
-    _mouse.x_offset = event.x_offset;
-    _mouse.y_offset = -event.y_offset;
+    _mouse.x_offset += event.x_offset;
+    _mouse.y_offset += -event.y_offset;
 }
 
 // =============================================================================

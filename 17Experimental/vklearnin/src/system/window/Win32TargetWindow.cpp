@@ -151,6 +151,15 @@ void Win32TargetWindow::message_loop() {
             _restrict_cursor();
             break;
 
+        case WM_ACTIVATE:
+            if(wparam == WA_ACTIVE || wparam == WA_CLICKACTIVE) {
+                _restrict_cursor();
+            }
+            else if(wparam == WA_INACTIVE) {
+                _release_cursor();
+            }
+            break;
+
         case WM_CLOSE: // The first message received in the shutdown process
             ::DestroyWindow(_window);
             ::UnregisterClassA(_classname, nullptr);

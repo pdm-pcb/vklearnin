@@ -51,7 +51,7 @@ private:
         float yaw   = -90.0f;
 
         float kb_speed    = 3.0f;
-        float mouse_speed = 5.0f;
+        float mouse_speed = 0.1f;
     } _cam_data;
 
     struct VPMatrices {
