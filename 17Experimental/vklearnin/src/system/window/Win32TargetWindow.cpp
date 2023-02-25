@@ -81,7 +81,6 @@ void Win32TargetWindow::message_loop() {
 
             // Cast to useful type
             auto const *input = reinterpret_cast<::RAWINPUT *>(_raw_message);
-
             switch(input->header.dwType) {
                 case RIM_TYPEMOUSE: {
                     auto const &mouse = input->data.mouse;
@@ -119,6 +118,13 @@ void Win32TargetWindow::message_loop() {
                         );
                     }
 
+                    if(mouse.lLastX != 0 || mouse.lLastY != 0) {
+                        EventBroker::emit<MouseMoveEvent>(
+                            mouse.lLastX,
+                            mouse.lLastY
+                        );
+                    }
+
                     if(mouse.usButtonFlags & RI_MOUSE_WHEEL) {
                         EventBroker::emit<MouseScrollEvent>(
                             static_cast<short>(mouse.usButtonData),
@@ -132,13 +138,6 @@ void Win32TargetWindow::message_loop() {
                             static_cast<short>(mouse.usButtonData)
                         );
                     }
-
-                    if(mouse.lLastX != 0 || mouse.lLastY != 0) {
-                        EventBroker::emit<MouseMoveEvent>(
-                            mouse.lLastX,
-                            mouse.lLastY
-                        );
-                    }
                     break;
                 }
                 default:
@@ -147,6 +146,10 @@ void Win32TargetWindow::message_loop() {
 
             break;
         }
+
+        case WM_CREATE:
+            _restrict_cursor();
+            break;
 
         case WM_CLOSE: // The first message received in the shutdown process
             ::DestroyWindow(_window);
@@ -157,6 +160,7 @@ void Win32TargetWindow::message_loop() {
             ::PostQuitMessage(0);
             // Let Application know we're done for
             EventBroker::emit<WindowCloseEvent>();
+            _release_cursor();
             return 0;
 
         default:
@@ -173,7 +177,10 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
                                      int32_t const  pos_x,
                                      int32_t const  pos_y)
 {
-    assert(_window == nullptr);
+    if(_window != nullptr) {
+        CONSOLE_CRITICAL("Only one target window at a time is allowed.");
+        return;
+    }
 
     // If width and height aren't provided by Application, then just opt for
     // two-thirds of the available real estate
@@ -230,7 +237,6 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
 
     _register_input();
     _size_and_place();
-    _restrict_cursor();
 
     CONSOLE_TRACE(
         "Created Win32 target window: {}x{} @ {:0.3f}",
@@ -279,6 +285,9 @@ void Win32TargetWindow::init() {
     _classname    = ENGINE_NAME;
     _window_title = APP_NAME;
 
+    // Set DPI awareness before querying for resolution
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
     // Win32 does make it very easy to query the primary display's resolution,
     // but I am 100% sure this would break on even the most modest variation
     // on a standard setup. I'd like to try it with a laptop and HDMI out to
@@ -317,8 +326,6 @@ void Win32TargetWindow::init() {
 void Win32TargetWindow::shutdown() {
     delete[] _raw_message;
     _raw_message = nullptr;
-
-    _release_cursor();
 }
 
 // =============================================================================
@@ -361,7 +368,7 @@ void Win32TargetWindow::_register_input() {
 
 // =============================================================================
 void Win32TargetWindow::_restrict_cursor() {
-	::RECT client_area; 
+	::RECT client_area;
 	::GetClientRect(_window, &client_area);
 	::MapWindowPoints(
         _window,
@@ -387,13 +394,6 @@ void Win32TargetWindow::_release_cursor() {
 
 // =============================================================================
 void Win32TargetWindow::_size_and_place() {
-    // The only noteworthy detail here is that, as it is currently set up,
-    // win32 is not DPI-aware. That means that if you've got display scaling
-    // enabled (Windows often enables it by default) the resolution you passed
-    // in from Application won't reflect that true resolution on your monitor.
-    // Instead, it'll be scaled proportionately. The above code default works
-    // regardless of scaling, of course.
-
     CONSOLE_TRACE(
         "Window size: {}x{}, position: {}x{}",
         RenderConfig::window_width, RenderConfig::window_height,
@@ -408,7 +408,7 @@ void Win32TargetWindow::_size_and_place() {
         static_cast<int>(RenderConfig::window_height),
         0
     );
-   
+
 
     if(result == FALSE) {
         auto const error = ::GetLastError();

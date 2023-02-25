@@ -13,7 +13,7 @@ public:
     static void next_image();
     static void reset_fence();
 
-    static void submit(const std::vector<vk::CommandBuffer> &buffers);
+    static void submit(vk::CommandBuffer const &buffer);
     static void present();
 
     static void create();
@@ -43,7 +43,7 @@ private:
     static vk::Extent2D       _extent;
     static vk::Offset2D       _offset;
     static vk::PresentModeKHR _present_mode;
-    
+
     static vk::SwapchainCreateInfoKHR _create_info;
     static vk::SwapchainKHR _swapchain;
 

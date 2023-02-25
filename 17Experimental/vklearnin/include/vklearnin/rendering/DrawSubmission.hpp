@@ -8,7 +8,7 @@ namespace vkl {
 struct PushConstant {
     vk::ShaderStageFlags const stage_flags;
     size_t               const size;
-    const void*          const data;
+    void                 const *data;
 };
 
 struct DrawSubmission {

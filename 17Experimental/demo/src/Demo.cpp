@@ -2,8 +2,8 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-static size_t CUBES_PER_SIDE = 5;
-static float  CUBE_STEP      = 0.5f;
+size_t CUBES_PER_SIDE = 5;
+float  CUBE_STEP      = 0.5f;
 
 // =============================================================================
 void Demo::update() {
@@ -18,14 +18,25 @@ void Demo::update() {
     if(_cam_data.pitch > 89.9f)       { _cam_data.pitch = 89.9f;  }
     else if(_cam_data.pitch < -89.9f) { _cam_data.pitch = -89.9f; }
 
-    static float min_yaw = _cam_data.yaw;
+    static float min_pitch = _cam_data.pitch;
+    static float max_pitch = _cam_data.pitch;
+    static float min_yaw   = _cam_data.yaw;
+    static float max_yaw   = _cam_data.yaw;
+
+    if(_cam_data.pitch < min_pitch) min_pitch = _cam_data.pitch;
+    if(_cam_data.pitch > max_pitch) max_pitch = _cam_data.pitch;
     if(_cam_data.yaw < min_yaw) min_yaw = _cam_data.yaw;
-    static float max_yaw = _cam_data.yaw;
     if(_cam_data.yaw > max_yaw) max_yaw = _cam_data.yaw;
+
     static float time_passed = 0.0f;
     time_passed += vkl::Timekeeper::frametime();
-    if(time_passed >= 0.5f) {
-        CONSOLE_ERROR("min/max yaw: {:.02f}/{:.02f}", min_yaw, max_yaw);
+    if(time_passed >= 1.0f) {
+        CONSOLE_ERROR(
+            "\nmin/max pitch: {:.02f}/{:.02f}"
+            "\nmin/max yaw:   {:.02f}/{:.02f}",
+            min_pitch, max_pitch,
+            min_yaw, max_yaw
+        );
         time_passed = 0.0f;
     }
 
@@ -235,7 +246,10 @@ void Demo::submit_draws() {
         );
     }
 
-    for(uint32_t mat_idx = 0u; mat_idx < _texture_model_matrices.size(); ++mat_idx) {
+    for(uint32_t mat_idx = 0u;
+        mat_idx < _texture_model_matrices.size();
+        ++mat_idx)
+    {
         auto material = (mat_idx % 2 == 0) ?
                          _bricks_a.image().handle :
                          _bricks_b.image().handle;

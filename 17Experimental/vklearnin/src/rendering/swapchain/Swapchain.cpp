@@ -69,7 +69,7 @@ void Swapchain::reset_fence() {
 }
 
 // =============================================================================
-void Swapchain::submit(const std::vector<vk::CommandBuffer> &buffers) {
+void Swapchain::submit(vk::CommandBuffer const &buffer) {
     // Internally, the command queue needs to know when to begin. In this case,
     // waiting on a completed presentation means there's an image available for
     // writing to.
@@ -94,8 +94,8 @@ void Swapchain::submit(const std::vector<vk::CommandBuffer> &buffers) {
         .waitSemaphoreCount = static_cast<uint32_t>(std::size(wait_sems)),
         .pWaitSemaphores = wait_sems,
         .pWaitDstStageMask = wait_dst_stage,
-        .commandBufferCount = static_cast<uint32_t>(buffers.size()),
-        .pCommandBuffers = buffers.data(),
+        .commandBufferCount = 1u,
+        .pCommandBuffers = &buffer,
         .signalSemaphoreCount =
             static_cast<uint32_t>(std::size(signal_sems)),
         .pSignalSemaphores = signal_sems,
@@ -181,7 +181,7 @@ void Swapchain::destroy() {
     for(auto &image : _images) {
         ImageTools::destroy_view(image);
     }
-    
+
     LogicalDevice::native().destroy(_swapchain);
 }
 
@@ -418,7 +418,7 @@ void Swapchain::_get_images() {
             _images.size(), RenderConfig::image_count
         );
     }
-    
+
     _images.resize(RenderConfig::image_count);
     for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
         _images[image_idx] = {
