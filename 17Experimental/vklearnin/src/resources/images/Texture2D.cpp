@@ -9,15 +9,15 @@ namespace vkl {
 void Texture2D::init_from_file(std::string_view filepath) {
     void *image_data = ImageTools::load_from_file(_image, filepath);
 
-    // auto const longest_side = std::max(
-    //     static_cast<float>(_image.extent.width),
-    //     static_cast<float>(_image.extent.height)
-    // );
+    auto const longest_side = std::max(
+        static_cast<float>(_image.extent.width),
+        static_cast<float>(_image.extent.height)
+    );
 
-    // auto const mip_levels =
-    //     static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
+    auto const mip_levels =
+        static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
 
-    // _image.mip_levels = mip_levels;
+    _image.mip_levels = mip_levels;
 
     ImageTools::create(
         _image,
@@ -25,8 +25,9 @@ void Texture2D::init_from_file(std::string_view filepath) {
         vk::SampleCountFlagBits::e1,
         (
             vk::ImageUsageFlagBits::eSampled |
-            vk::ImageUsageFlagBits::eTransferDst
-        ),
+            vk::ImageUsageFlagBits::eTransferDst |
+            vk::ImageUsageFlagBits::eTransferSrc // This bit is required for
+        ),                                       // generating mips
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 
@@ -59,7 +60,7 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
         mode_v
     );
 
-    // ImageTools::generate_mipmaps(_image);
+    ImageTools::generate_mipmap(_image, min_filter);
 }
 
 // =============================================================================

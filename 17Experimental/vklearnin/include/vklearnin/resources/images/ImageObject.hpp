@@ -7,7 +7,7 @@ namespace vkl {
 
 struct ImageObject final {
     size_t           size       { 0 };
-    vk::Extent3D     extent     { };
+    vk::Extent3D     extent     { 0u, 0u, 0u };
     uint32_t         mip_levels { 1u };
     vk::Format       format     { vk::Format::eUndefined };
     vk::ImageLayout  layout     { vk::ImageLayout::eUndefined };

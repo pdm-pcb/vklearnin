@@ -280,8 +280,6 @@ void create_sampler(ImageObject &image,
                     const vk::SamplerAddressMode mode_u,
                     const vk::SamplerAddressMode mode_v)
 {
-    generate_mipmaps(image);
-
     const vk::SamplerCreateInfo sampler_info {
         .magFilter        = min_filter,
         .minFilter        = mag_filter,
@@ -293,9 +291,9 @@ void create_sampler(ImageObject &image,
         .maxAnisotropy    = RenderConfig::anisotropy,
         .compareEnable    = false,
         .compareOp        = vk::CompareOp::eAlways,
-        .minLod           = 1.0f,
+        .minLod           = 0.0f,   // TODO: best value for this?
         .maxLod           = static_cast<float>(image.mip_levels),
-        .borderColor      = vk::BorderColor::eIntOpaqueBlack,
+        .borderColor      = vk::BorderColor::eIntOpaqueWhite,
         .unnormalizedCoordinates = false
     };
 
@@ -314,7 +312,15 @@ void create_sampler(ImageObject &image,
 }
 
 // =============================================================================
-void generate_mipmaps(ImageObject &image) {
+void destroy_sampler(ImageObject &image) {
+    CONSOLE_TRACE("Destroying image sampler {:#x}",
+                   reinterpret_cast<uint64_t>(::VkSampler(image.sampler)));
+    LogicalDevice::native().destroySampler(image.sampler);
+    image.sampler = nullptr;
+}
+
+// =============================================================================
+void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     auto const format_props =
         PhysicalDevice::native().getFormatProperties(image.format);
 
@@ -328,17 +334,13 @@ void generate_mipmaps(ImageObject &image) {
         return;
     }
 
-    CONSOLE_TRACE("Generating {} mips", image.mip_levels);
-
     auto cmd_buffer = CmdBuffer::begin_one_time_submit();
 
     int32_t mip_width  = static_cast<int32_t>(image.extent.width);
     int32_t mip_height = static_cast<int32_t>(image.extent.height);
 
-    for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level)
-    {
+    for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level) {
         CONSOLE_TRACE("Generating mip level {}", mip_level);
-
         transition_layout(
             image,
             cmd_buffer.native(),
@@ -350,20 +352,20 @@ void generate_mipmaps(ImageObject &image) {
 
         vk::ImageBlit blit {
             .srcSubresource {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .mipLevel = mip_level - 1,
+                .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                .mipLevel       = mip_level - 1,
                 .baseArrayLayer = 0u,
-                .layerCount = 1u,
+                .layerCount     = 1u,
             },
             .srcOffsets = std::array<vk::Offset3D, 2> {
                 vk::Offset3D { 0, 0, 0 },
                 vk::Offset3D { mip_width, mip_height, 1 }
             },
             .dstSubresource {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .mipLevel = mip_level,
+                .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                .mipLevel       = mip_level,
                 .baseArrayLayer = 0u,
-                .layerCount = 1u,
+                .layerCount     = 1u,
             },
             .dstOffsets = std::array<vk::Offset3D, 2> {
                 vk::Offset3D { 0, 0, 0 },
@@ -381,7 +383,7 @@ void generate_mipmaps(ImageObject &image) {
             image.handle,
             vk::ImageLayout::eTransferDstOptimal,
             { blit },
-            vk::Filter::eLinear
+            filter
         );
 
         transition_layout(
@@ -407,14 +409,6 @@ void generate_mipmaps(ImageObject &image) {
     );
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
-}
-
-// =============================================================================
-void destroy_sampler(ImageObject &image) {
-    CONSOLE_TRACE("Destroying image sampler {:#x}",
-                   reinterpret_cast<uint64_t>(::VkSampler(image.sampler)));
-    LogicalDevice::native().destroySampler(image.sampler);
-    image.sampler = nullptr;
 }
 
 // =============================================================================
@@ -515,8 +509,9 @@ void transition_layout(ImageObject &image,
     };
 
     CONSOLE_TRACE(
-        "Image {:#x}: '{}' -> '{}'",
+        "Image {:#x}, mip {}/{}: '{}' -> '{}'",
         reinterpret_cast<uint64_t>(VkImage(image.handle)),
+        base_mip_level, level_count,
         to_string(barrier.oldLayout),
         to_string(barrier.newLayout)
     );

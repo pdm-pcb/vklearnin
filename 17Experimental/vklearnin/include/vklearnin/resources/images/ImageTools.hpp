@@ -36,7 +36,7 @@ void create_sampler(ImageObject &image,
 
 void destroy_sampler(ImageObject &image);
 
-void generate_mipmaps(ImageObject &image);
+void generate_mipmap(ImageObject &image, const vk::Filter filter);
 
 } // namespace vkl::ImageTools
 
