@@ -67,14 +67,48 @@ CmdBuffer CmdBuffer::begin_one_time_submit() {
 }
 
 // =============================================================================
-void CmdBuffer::end_one_time_submit(CmdBuffer &buffer) {
-    auto result = buffer.native().end();
+void CmdBuffer::end_one_time_submit(CmdBuffer &cmd_buffer) {
+    auto result = cmd_buffer.native().end();
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
             "Could not end recording for one time submit command buffer."
         );
         return;
     }
+
+    const vk::SubmitInfo submit_info{
+        .waitSemaphoreCount   = 0u,
+        .pWaitSemaphores      = nullptr,
+        .pWaitDstStageMask    = { },
+        .commandBufferCount   = 1u,
+        .pCommandBuffers      = &(cmd_buffer.native()),
+        .signalSemaphoreCount = 0u,
+        .pSignalSemaphores    = nullptr,
+    };
+
+    result = LogicalDevice::cmd_queue().native().submit(
+        submit_info,
+        nullptr
+    );
+    if(result!=vk::Result::eSuccess) {
+        CONSOLE_ERROR(
+            "Could not submit command buffer: '{}'",
+            to_string(result)
+        );
+        return;
+    }
+
+    result = LogicalDevice::native().waitIdle();
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Failed to wait for device idle after command buffer submission: "
+            "'{}'",
+            to_string(result)
+        );
+        return;
+    }
+
+    cmd_buffer.free();
 }
 
 // =============================================================================

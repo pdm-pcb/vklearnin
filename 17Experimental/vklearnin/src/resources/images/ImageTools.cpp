@@ -223,57 +223,10 @@ void host_to_device(ImageObject &dst, const void * const data) {
             copy_region
         );
 
-        // TODO: This either needs to be removed only if mipmaps are used
-        //      or a transition from shader read-only -> transfer dst
-        //      needs to be added
-        // 
-        //transition_layout(
-        //    dst,
-        //    cmd_buffer.native(),
-        //    vk::ImageLayout::eTransferDstOptimal,
-        //    vk::ImageLayout::eShaderReadOnlyOptimal,
-        //    0u,
-        //    dst.mip_levels
-        //);
-
     CmdBuffer::end_one_time_submit(cmd_buffer);
-
-    const vk::SubmitInfo submit_info {
-        .waitSemaphoreCount   = 0u,
-        .pWaitSemaphores      = nullptr,
-        .pWaitDstStageMask    = { },
-        .commandBufferCount   = 1u,
-        .pCommandBuffers      = &(cmd_buffer.native()),
-        .signalSemaphoreCount = 0u,
-        .pSignalSemaphores    = nullptr,
-    };
-
-    auto result = LogicalDevice::cmd_queue().native().submit(
-        submit_info,
-        nullptr
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_ERROR(
-            "Could not submit command buffer copy commands: '{}'",
-            to_string(result)
-        );
-        return;
-    }
+    BufferTools::destroy(staging_buffer);
 
     CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
-
-    result = LogicalDevice::native().waitIdle();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to wait for device idle after copy from staging buffer: "
-            "'{}'",
-            to_string(result)
-        );
-        return;
-    }
-
-    cmd_buffer.free();
-    BufferTools::destroy(staging_buffer);
 }
 
 // =============================================================================
@@ -295,8 +248,8 @@ void create_sampler(ImageObject &image,
         .maxAnisotropy    = RenderConfig::anisotropy,
         .compareEnable    = false,
         .compareOp        = vk::CompareOp::eAlways,
-        .minLod           = 0.0f,   // TODO: best value for this?
-        .maxLod           = static_cast<float>(image.mip_levels),
+        .minLod           = 0.0f,
+        .maxLod           = VK_LOD_CLAMP_NONE,
         .borderColor      = vk::BorderColor::eIntOpaqueWhite,
         .unnormalizedCoordinates = false
     };
@@ -413,29 +366,6 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     );
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
-
-    const vk::SubmitInfo submit_info{
-        .waitSemaphoreCount=0u,
-        .pWaitSemaphores=nullptr,
-        .pWaitDstStageMask={ },
-        .commandBufferCount=1u,
-        .pCommandBuffers=&(cmd_buffer.native()),
-        .signalSemaphoreCount=0u,
-        .pSignalSemaphores=nullptr,
-    };
-
-    auto result=LogicalDevice::cmd_queue().native().submit(
-        submit_info,
-        nullptr
-    );
-    if(result!=vk::Result::eSuccess)
-    {
-        CONSOLE_ERROR(
-            "Could not submit command buffer copy commands: '{}'",
-            to_string(result)
-        );
-        return;
-    }
 }
 
 // =============================================================================

@@ -120,43 +120,9 @@ void host_to_device(const BufferObject &dst, const void * const data) {
         );
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
-
-    const vk::SubmitInfo submit_info {
-        .waitSemaphoreCount   = 0u,
-        .pWaitSemaphores      = nullptr,
-        .pWaitDstStageMask    = { },
-        .commandBufferCount   = 1u,
-        .pCommandBuffers      = &(cmd_buffer.native()),
-        .signalSemaphoreCount = 0u,
-        .pSignalSemaphores    = nullptr,
-    };
-
-    auto result = LogicalDevice::cmd_queue().native().submit(
-        submit_info,
-        nullptr
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_ERROR(
-            "Could not submit command buffer copy commands: '{}'",
-            to_string(result)
-        );
-        return;
-    }
+    BufferTools::destroy(staging_buffer);
 
     CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
-
-    result = LogicalDevice::native().waitIdle();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to wait for device idle after copy from staging buffer: "
-            "'{}'",
-            to_string(result)
-        );
-        return;
-    }
-
-    cmd_buffer.free();
-    BufferTools::destroy(staging_buffer);
 }
 
 // =============================================================================

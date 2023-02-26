@@ -13,7 +13,7 @@ public:
     inline auto const& native() const { return _buffer; }
 
     static CmdBuffer begin_one_time_submit();
-    static void end_one_time_submit(CmdBuffer &buffer);
+    static void end_one_time_submit(CmdBuffer &cmd_buffer);
 
     CmdBuffer();
     ~CmdBuffer() = default;
