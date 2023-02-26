@@ -223,14 +223,18 @@ void host_to_device(ImageObject &dst, const void * const data) {
             copy_region
         );
 
-        transition_layout(
-            dst,
-            cmd_buffer.native(),
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            0u,
-            dst.mip_levels
-        );
+        // TODO: This either needs to be removed only if mipmaps are used
+        //      or a transition from shader read-only -> transfer dst
+        //      needs to be added
+        // 
+        //transition_layout(
+        //    dst,
+        //    cmd_buffer.native(),
+        //    vk::ImageLayout::eTransferDstOptimal,
+        //    vk::ImageLayout::eShaderReadOnlyOptimal,
+        //    0u,
+        //    dst.mip_levels
+        //);
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
 
@@ -409,6 +413,29 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     );
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
+
+    const vk::SubmitInfo submit_info{
+        .waitSemaphoreCount=0u,
+        .pWaitSemaphores=nullptr,
+        .pWaitDstStageMask={ },
+        .commandBufferCount=1u,
+        .pCommandBuffers=&(cmd_buffer.native()),
+        .signalSemaphoreCount=0u,
+        .pSignalSemaphores=nullptr,
+    };
+
+    auto result=LogicalDevice::cmd_queue().native().submit(
+        submit_info,
+        nullptr
+    );
+    if(result!=vk::Result::eSuccess)
+    {
+        CONSOLE_ERROR(
+            "Could not submit command buffer copy commands: '{}'",
+            to_string(result)
+        );
+        return;
+    }
 }
 
 // =============================================================================
