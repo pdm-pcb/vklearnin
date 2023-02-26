@@ -219,7 +219,7 @@ void Pipeline::_init_raster() {
         // but either way one of the sides of the triangle is not visible. To
         // save on running the fragment shader for every fragment on the side
         // of the triangle facing away from us, we cull the back-facing data.
-        .cullMode = vk::CullModeFlagBits::eNone,
+        .cullMode = vk::CullModeFlagBits::eBack,
 
         // Which order are the now-processed vertices connected in? Who's on
         // first? This is also called triangle winding, and for us the order
