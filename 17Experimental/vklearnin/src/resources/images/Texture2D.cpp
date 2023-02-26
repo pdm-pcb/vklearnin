@@ -9,6 +9,16 @@ namespace vkl {
 void Texture2D::init_from_file(std::string_view filepath) {
     void *image_data = ImageTools::load_from_file(_image, filepath);
 
+    // auto const longest_side = std::max(
+    //     static_cast<float>(_image.extent.width),
+    //     static_cast<float>(_image.extent.height)
+    // );
+
+    // auto const mip_levels =
+    //     static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
+
+    // _image.mip_levels = mip_levels;
+
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
@@ -36,10 +46,20 @@ void Texture2D::init_from_file(std::string_view filepath) {
 
 void Texture2D::init_sampler(const vk::Filter min_filter,
                              const vk::Filter mag_filter,
+                             const vk::SamplerMipmapMode mip_filter,
                              const vk::SamplerAddressMode mode_u,
                              const vk::SamplerAddressMode mode_v)
 {
-    ImageTools::create_sampler(_image, min_filter, mag_filter, mode_u, mode_v);
+    ImageTools::create_sampler(
+        _image,
+        min_filter,
+        mag_filter,
+        mip_filter,
+        mode_u,
+        mode_v
+    );
+
+    // ImageTools::generate_mipmaps(_image);
 }
 
 // =============================================================================

@@ -42,6 +42,7 @@ void LogicalDevice::create() {
         .ppEnabledLayerNames     = layers.data(),
         .enabledExtensionCount   = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
+        .pEnabledFeatures        = &(PhysicalDevice::enabled_features()),
     };
 
     // Attempt creation

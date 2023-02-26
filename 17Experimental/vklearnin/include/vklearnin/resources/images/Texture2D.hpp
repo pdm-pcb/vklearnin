@@ -13,6 +13,7 @@ public:
     void init_from_file(std::string_view filepath);
     void init_sampler(const vk::Filter min_filter,
                       const vk::Filter mag_filter,
+                      const vk::SamplerMipmapMode mip_filter,
                       const vk::SamplerAddressMode mode_u,
                       const vk::SamplerAddressMode mode_v);
     void shutdown();

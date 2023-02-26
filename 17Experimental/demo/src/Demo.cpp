@@ -268,6 +268,7 @@ void Demo::init() {
     _bricks_a.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
@@ -278,6 +279,7 @@ void Demo::init() {
     _bricks_b.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );

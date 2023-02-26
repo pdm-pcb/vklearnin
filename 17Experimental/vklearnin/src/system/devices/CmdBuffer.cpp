@@ -49,6 +49,35 @@ void CmdBuffer::free() {
 }
 
 // =============================================================================
+CmdBuffer CmdBuffer::begin_one_time_submit() {
+    vk::CommandBufferBeginInfo const begin_info {
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+    };
+
+    CmdBuffer cmd_buffer;
+    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
+    auto result = cmd_buffer.native().begin(&begin_info);
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Could not begin recording for one time submit command buffer."
+        );
+    }
+
+    return cmd_buffer;
+}
+
+// =============================================================================
+void CmdBuffer::end_one_time_submit(CmdBuffer &buffer) {
+    auto result = buffer.native().end();
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Could not end recording for one time submit command buffer."
+        );
+        return;
+    }
+}
+
+// =============================================================================
 CmdBuffer::CmdBuffer() :
     _pool   { },
     _buffer { }

@@ -21,6 +21,7 @@ struct RenderConfig final {
     static bool vsync_on;
 
     static uint8_t msaa_samples;
+    static float anisotropy;
 
     static constexpr std::array<float, 4>
         CLEAR_COLOR { 0.08f, 0.08f, 0.16f, 1.0f };

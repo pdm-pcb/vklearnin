@@ -34,7 +34,7 @@
 #elif defined(VKL_WINDOWS)
     #define WIN32_LEAN_AND_MEAN // Probably doesn't do much nowadays
     #include <Windows.h>
-    #include <hidusage.h>
+    #include <hidusage.h> // For raw keyboard and mouse input
 
     #undef min // Defining NOMINMAX above doesn't give the desired results with
     #undef max // how I've got things set up. This is a blunt approach, but

@@ -7,11 +7,16 @@
 namespace vkl {
 
 PhysicalDevice::DeviceList PhysicalDevice::_available_devices;
-vk::PhysicalDevice           PhysicalDevice::_physical_device { };
+
+vk::PhysicalDevice PhysicalDevice::_physical_device { };
 
 uint32_t PhysicalDevice::_queue_index = std::numeric_limits<uint32_t>::max();
 
 vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties { };
+vk::PhysicalDeviceFeatures PhysicalDevice::_enabled_features {
+    .fillModeNonSolid  = true,
+    .samplerAnisotropy = true,
+};
 
 // =============================================================================
 void PhysicalDevice::query_devices() {
@@ -99,12 +104,14 @@ void PhysicalDevice::query_devices() {
             "\tDevice Type:    {}\n"
             "\tVRAM:           {} MB\n"
             "\tMax MSAA:       x{}\n"
+            "\tMax Anisotropy: {:.02f}\n"
             "\tDriver Version: {}\n"
             "\tVulkan Version: {}\n",
             properties.name,
             to_string(properties.type),
             properties.vram_bytes / 1000 / 1000,
             properties.max_samples,
+            properties.max_aniso,
             properties.driver_version,
             properties.vkapi_version
         );
@@ -292,6 +299,8 @@ void PhysicalDevice::_store_physical_device(
     else if(sample_counts & vk::SampleCountFlagBits::e1) {
         store.max_samples = 1u;
     }
+
+    store.max_aniso = properties.limits.maxSamplerAnisotropy;
 
     store.driver_version = std::string(drivers.driverInfo.data());
 

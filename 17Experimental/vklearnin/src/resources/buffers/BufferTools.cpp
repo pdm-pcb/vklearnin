@@ -111,21 +111,7 @@ void host_to_device(const BufferObject &dst, const void * const data) {
     };
 
     auto staging_buffer = stage_data(dst.size, data);
-
-    const vk::CommandBufferBeginInfo begin_info {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
-    };
-
-    CmdBuffer cmd_buffer;
-    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
-    auto result = cmd_buffer.native().begin(&begin_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not begin recording for buffer transfer: '{}'",
-            to_string(result)
-        );
-        return;
-    }
+    auto cmd_buffer = CmdBuffer::begin_one_time_submit();
 
         cmd_buffer.native().copyBuffer(
             staging_buffer.handle,
@@ -133,14 +119,7 @@ void host_to_device(const BufferObject &dst, const void * const data) {
             copy_region
         );
 
-    result = cmd_buffer.native().end();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to end recording for buffer transfer: '{}'",
-            to_string(result)
-        );
-        return;
-    }
+    CmdBuffer::end_one_time_submit(cmd_buffer);
 
     const vk::SubmitInfo submit_info {
         .waitSemaphoreCount   = 0u,
@@ -152,7 +131,7 @@ void host_to_device(const BufferObject &dst, const void * const data) {
         .pSignalSemaphores    = nullptr,
     };
 
-    result = LogicalDevice::cmd_queue().native().submit(
+    auto result = LogicalDevice::cmd_queue().native().submit(
         submit_info,
         nullptr
     );
@@ -243,7 +222,7 @@ void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
 
     buffer.memory = alloc_result.value;
 
-    // Finally, 
+    // Finally,
     auto bind_result = LogicalDevice::native().bindBufferMemory(
         buffer.handle,
         buffer.memory,

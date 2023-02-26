@@ -422,9 +422,9 @@ void Swapchain::_get_images() {
     _images.resize(RenderConfig::image_count);
     for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
         _images[image_idx] = {
-            .handle = result.value[image_idx],
             .format = _image_format,
             .layout =  vk::ImageLayout::eUndefined,
+            .handle = result.value[image_idx],
         };
     }
 }
