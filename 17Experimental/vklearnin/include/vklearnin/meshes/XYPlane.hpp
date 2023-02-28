@@ -9,23 +9,41 @@ namespace vkl {
 template <typename VertexType>
 class XYPlane final : public Mesh<VertexType> {
 public:
-    void init(float const scale = 1.0f, float const tile = 1.0f) {
-        Mesh::_set_vertices({
-            {{ -scale, -scale,  scale, 1.0f }, { 0.0f, tile }},
-            {{  scale, -scale,  scale, 1.0f }, { tile, tile }},
-            {{  scale,  scale,  scale, 1.0f }, { tile, 0.0f }},
-            {{ -scale,  scale,  scale, 1.0f }, { 0.0f, 0.0f }},
+    using CornerColors = std::array<std::array<float, 4>, 4>;
+
+    void init(float const scale, CornerColors const corner_colors)
+    requires std::is_same_v<VertexType, VertexFlatColor>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale, 0.0f, 1.0f }, corner_colors[0]},
+            {{ -scale,  scale, 0.0f, 1.0f }, corner_colors[1]},
+            {{  scale,  scale, 0.0f, 1.0f }, corner_colors[2]},
+            {{  scale, -scale, 0.0f, 1.0f }, corner_colors[3]},
         });
 
-        Mesh::_set_indices({
+        Mesh<VertexType>::_set_indices({
             0, 1, 2,
             0, 2, 3
         });
     }
 
-    void shutdown() {
-        Mesh::_shutdown_buffers();
+    void init(float const scale, float const tile)
+    requires std::is_same_v<VertexType, VertexFlatTexture>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale, 0.0f, 1.0f }, { 0.0f, tile }},
+            {{ -scale,  scale, 0.0f, 1.0f }, { tile, tile }},
+            {{  scale,  scale, 0.0f, 1.0f }, { tile, 0.0f }},
+            {{  scale, -scale, 0.0f, 1.0f }, { 0.0f, 0.0f }},
+        });
+
+        Mesh<VertexType>::_set_indices({
+            0, 1, 2,
+            0, 2, 3
+        });
     }
+
+    void shutdown() { Mesh<VertexType>::_shutdown_buffers(); }
 
     XYPlane() = default;
     ~XYPlane() = default;

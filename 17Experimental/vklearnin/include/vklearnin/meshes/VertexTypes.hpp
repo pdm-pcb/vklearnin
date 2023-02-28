@@ -9,29 +9,29 @@ using VertexBindings = std::vector<vk::VertexInputBindingDescription>;
 using VertexAttribs = std::vector<vk::VertexInputAttributeDescription>;
 
 // =============================================================================
-struct VertexColor final {
+struct VertexFlatColor final {
     std::array<float, 4> position;
     std::array<float, 4> color;
 
     static const VertexBindings bindings;
     static const VertexAttribs attributes;
 
-    VertexColor(const std::array<float, 4> &position,
+    VertexFlatColor(const std::array<float, 4> &position,
                 const std::array<float, 4> &color);
-    VertexColor() = delete;
+    VertexFlatColor() = delete;
 };
 
 // =============================================================================
-struct VertexTexture final {
+struct VertexFlatTexture final {
     std::array<float, 4> position;
     std::array<float, 2> uv;
 
     static const VertexBindings bindings;
     static const VertexAttribs attributes;
 
-    VertexTexture(const std::array<float, 4> &position,
+    VertexFlatTexture(const std::array<float, 4> &position,
                   const std::array<float, 2> &uv);
-    VertexTexture() = delete;
+    VertexFlatTexture() = delete;
 };
 
 } // namespace vkl

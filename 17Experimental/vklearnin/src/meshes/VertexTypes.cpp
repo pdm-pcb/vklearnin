@@ -4,52 +4,52 @@
 namespace vkl {
 
 // =============================================================================
-VertexBindings const VertexColor::bindings {{
+VertexBindings const VertexFlatColor::bindings {{
     .binding   = 0u,
-    .stride    = sizeof(VertexColor),
+    .stride    = sizeof(VertexFlatColor),
     .inputRate = vk::VertexInputRate::eVertex
 }};
 
-VertexAttribs const VertexColor::attributes {{
+VertexAttribs const VertexFlatColor::attributes {{
     .location = 0u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexColor, position)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexFlatColor, position)),
 },
 {
     .location = 1u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexColor, color)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexFlatColor, color)),
 }};
 
-VertexColor::VertexColor(const std::array<float, 4> &position,
+VertexFlatColor::VertexFlatColor(const std::array<float, 4> &position,
                          const std::array<float, 4> &color) :
     position { position },
     color    { color }
 { }
 
 // =============================================================================
-VertexBindings const VertexTexture::bindings {{
+VertexBindings const VertexFlatTexture::bindings {{
     .binding   = 0u,
-    .stride    = sizeof(VertexTexture),
+    .stride    = sizeof(VertexFlatTexture),
     .inputRate = vk::VertexInputRate::eVertex
 }};
 
-VertexAttribs const VertexTexture::attributes {{
+VertexAttribs const VertexFlatTexture::attributes {{
     .location = 0u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, position)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexFlatTexture, position)),
 },
 {
     .location = 1u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, uv)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexFlatTexture, uv)),
 }};
 
-VertexTexture::VertexTexture(const std::array<float, 4> &position,
+VertexFlatTexture::VertexFlatTexture(const std::array<float, 4> &position,
                              const std::array<float, 2> &uv) :
     position { position },
     uv       { uv }

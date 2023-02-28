@@ -47,28 +47,6 @@ void Demo::update() {
 }
 
 // =============================================================================
-/*
-void Demo::submit_draws() {
-    _color_model_matrices.clear();
-    _color_model_matrices.push_back(vkl::Mat4::identity);
-
-    vkl::Renderer::submit(
-        vkl::Renderer::PipelineType::COLOR,
-        {
-            .vertex_buffer = _color_cube.vertex_buffer().native(),
-            .index_buffer  = _color_cube.index_buffer().native(),
-            .index_count   = _color_cube.index_count(),
-            .push_constants = {{
-                .stage_flags = vk::ShaderStageFlagBits::eVertex,
-                .size        = sizeof(vkl::Mat4),
-                .data        = &_color_model_matrices.back(),
-            }}
-        }
-    );
-}
-//*/
-
-//*
 void Demo::submit_draws() {
     _color_model_matrices.clear();
     _texture_model_matrices.clear();
@@ -187,8 +165,37 @@ void Demo::submit_draws() {
             }
         );
     }
+
+    vkl::Renderer::submit(
+        vkl::Renderer::PipelineType::TEXTURE,
+        {
+            .vertex_buffer = _wall_mesh.vertex_buffer().native(),
+            .index_buffer  = _wall_mesh.index_buffer().native(),
+            .index_count   = _wall_mesh.index_count(),
+            .material      = _wall_texture.image().handle,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_wall_matrix,
+                }}
+        }
+    );
+
+    vkl::Renderer::submit(
+        vkl::Renderer::PipelineType::TEXTURE,
+        {
+            .vertex_buffer = _floor_mesh.vertex_buffer().native(),
+            .index_buffer  = _floor_mesh.index_buffer().native(),
+            .index_count   = _floor_mesh.index_count(),
+            .material      = _floor_texture.image().handle,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_floor_matrix,
+                }}
+        }
+    );
 }
-//*/
 
 // =============================================================================
 void Demo::init() {
@@ -259,10 +266,24 @@ void Demo::init() {
             { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
         }}
     );
-    _color_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 10);
 
     _texture_cube.init(0.1f, 1.0f);
-    _texture_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 2 * 10);
+
+    _color_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE);
+    _texture_model_matrices.resize(CUBES_PER_SIDE * CUBES_PER_SIDE * 2);
+
+    _wall_mesh.init(2.0f, 5.0f);
+    _floor_mesh.init(2.0f, 10.0f);
+
+    _wall_matrix = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 0.0f, 1.0f, -2.0f, 1.0f }
+    );
+
+    _floor_matrix = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 0.0f, -1.0f, 0.0f, 1.0f }
+    );
 
     _bricks_a.init_from_file("textures/brickwall017_d.jpg");
     _bricks_a.init_sampler(
@@ -272,7 +293,6 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-
     vkl::Renderer::add_material(_bricks_a.image());
 
     _bricks_b.init_from_file("textures/bricks082c_d.jpg");
@@ -283,8 +303,27 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-
     vkl::Renderer::add_material(_bricks_b.image());
+
+    _wall_texture.init_from_file("textures/scifimetalpanel_004_d.jpg");
+    _wall_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+    vkl::Renderer::add_material(_wall_texture.image());
+
+    _floor_texture.init_from_file("textures/woodfloor_051_d.jpg");
+    _floor_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+    vkl::Renderer::add_material(_floor_texture.image());
 }
 
 // =============================================================================
@@ -362,17 +401,10 @@ void Demo::on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event) {
 
 // =============================================================================
 void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
-    if(event.vert_offset > 0 && CUBES_PER_SIDE < 100) {
-        CUBES_PER_SIDE += 1;
-    }
-    else if(event.vert_offset < 0 && CUBES_PER_SIDE > 1) {
-        CUBES_PER_SIDE -= 1;
-    }
-
     CONSOLE_INFO(
-        "{} offset, {} cubes per side",
+        "Mouse scroll vert: {}, horiz: {}",
         event.vert_offset,
-        CUBES_PER_SIDE
+        event.horiz_offset
     );
 }
 
@@ -380,8 +412,15 @@ void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
 void Demo::shutdown() {
     _color_cube.shutdown();
     _texture_cube.shutdown();
+
+    _wall_mesh.shutdown();
+    _floor_mesh.shutdown();
+
     _bricks_a.shutdown();
     _bricks_b.shutdown();
+
+    _wall_texture.shutdown();
+    _floor_texture.shutdown();
 }
 
 // =============================================================================
@@ -392,10 +431,16 @@ Demo::Demo() :
         .s = false,
         .d = false,
     },
-    _vp_matrices  { },
-    _persp_camera { },
-    _color_cube   { },
-    _texture_cube { },
-    _bricks_a     { },
-    _bricks_b     { }
+    _vp_matrices   { },
+    _persp_camera  { },
+    _color_cube    { },
+    _texture_cube  { },
+    _wall_mesh     { },
+    _floor_mesh    { },
+    _wall_matrix   { },
+    _floor_matrix  { },
+    _bricks_a      { },
+    _bricks_b      { },
+    _wall_texture  { },
+    _floor_texture { }
 { }

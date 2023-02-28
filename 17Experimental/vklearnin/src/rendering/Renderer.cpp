@@ -210,8 +210,8 @@ void Renderer::_init_color_pipeline() {
     pipeline.frag_from_spirv("shaders/01color.frag");
 
     pipeline.describe_vertex_input(
-        VertexColor::bindings,
-        VertexColor::attributes
+        VertexFlatColor::bindings,
+        VertexFlatColor::attributes
     );
 }
 
@@ -222,8 +222,8 @@ void Renderer::_init_texture_pipeline() {
     pipeline.frag_from_spirv("shaders/02texture.frag");
 
     pipeline.describe_vertex_input(
-        VertexTexture::bindings,
-        VertexTexture::attributes
+        VertexFlatTexture::bindings,
+        VertexFlatTexture::attributes
     );
 }
 

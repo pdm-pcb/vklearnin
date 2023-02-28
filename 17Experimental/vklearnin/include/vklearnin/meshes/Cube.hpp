@@ -10,13 +10,16 @@ template <typename VertexType>
 class Cube final : public Mesh<VertexType> {
 public:
     using CornerColors = std::array<std::array<float, 4>, 8>;
-    void init(const float scale, const CornerColors corner_colors) {
+
+    void init(float const scale, CornerColors const corner_colors)
+    requires std::is_same_v<VertexType, VertexFlatColor>
+    {
         Mesh<VertexType>::_set_vertices({
             {{ -scale, -scale,  scale, 1.0f }, corner_colors[0]},
             {{ -scale,  scale,  scale, 1.0f }, corner_colors[1]},
             {{  scale,  scale,  scale, 1.0f }, corner_colors[2]},
             {{  scale, -scale,  scale, 1.0f }, corner_colors[3]},
-            
+
             {{  scale, -scale, -scale, 1.0f }, corner_colors[4]},
             {{  scale,  scale, -scale, 1.0f }, corner_colors[5]},
             {{ -scale,  scale, -scale, 1.0f }, corner_colors[6]},
@@ -50,14 +53,16 @@ public:
         });
     }
 
-    void init(float const scale, float const tile) {
+    void init(float const scale, float const tile)
+    requires std::is_same_v<VertexType, VertexFlatTexture>
+    {
         Mesh<VertexType>::_set_vertices({
             // front face
             {{ -scale, -scale,  scale, 1.0f }, { 0.0f, 0.0f }}, // 0
             {{ -scale,  scale,  scale, 1.0f }, { 0.0f, tile }}, // 1
             {{  scale,  scale,  scale, 1.0f }, { tile, tile }}, // 2
             {{  scale, -scale,  scale, 1.0f }, { tile, 0.0f }}, // 3
-            
+
             // back face
             {{  scale, -scale, -scale, 1.0f }, { tile, 0.0f }}, // 4
             {{  scale,  scale, -scale, 1.0f }, { tile, tile }}, // 5
@@ -69,19 +74,19 @@ public:
             {{ -scale,  scale, -scale, 1.0f }, { 0.0f, tile }}, // 9
             {{  scale,  scale, -scale, 1.0f }, { tile, tile }}, // 10
             {{  scale,  scale,  scale, 1.0f }, { tile, 0.0f }}, // 11
-            
+
             // bottom face
             {{ -scale, -scale, -scale, 1.0f }, { tile, 0.0f }}, // 12
             {{ -scale, -scale,  scale, 1.0f }, { tile, tile }}, // 13
             {{  scale, -scale,  scale, 1.0f }, { 0.0f, tile }}, // 14
             {{  scale, -scale, -scale, 1.0f }, { 0.0f, 0.0f }}, // 15
-        
+
             // left face
             {{ -scale, -scale, -scale, 1.0f }, { 0.0f, 0.0f }}, // 16
             {{ -scale,  scale, -scale, 1.0f }, { 0.0f, tile }}, // 17
             {{ -scale,  scale,  scale, 1.0f }, { tile, tile }}, // 18
             {{ -scale, -scale,  scale, 1.0f }, { tile, 0.0f }}, // 19
-            
+
             // right face
             {{  scale, -scale,  scale, 1.0f }, { tile, 0.0f }}, // 20
             {{  scale,  scale,  scale, 1.0f }, { tile, tile }}, // 21
@@ -116,9 +121,7 @@ public:
         });
     }
 
-    void shutdown() {
-        Mesh<VertexType>::_shutdown_buffers();
-    }
+    void shutdown() { Mesh<VertexType>::_shutdown_buffers(); }
 
     Cube() = default;
     ~Cube() = default;

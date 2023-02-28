@@ -3,6 +3,8 @@
 
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/meshes/Cube.hpp"
+#include "vklearnin/meshes/XYPlane.hpp"
+#include "vklearnin/meshes/XZPlane.hpp"
 
 class Demo final : public vkl::Application {
 public:
@@ -60,14 +62,20 @@ private:
 
     std::vector<vkl::BufferObject> _vp_ubos;
 
-    vkl::Cube<vkl::VertexColor>   _color_cube;
-    vkl::Cube<vkl::VertexTexture> _texture_cube;
+    vkl::Cube<vkl::VertexFlatColor>      _color_cube;
+    vkl::Cube<vkl::VertexFlatTexture>    _texture_cube;
+    vkl::XYPlane<vkl::VertexFlatTexture> _wall_mesh;
+    vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
 
     std::vector<vkl::Mat4> _color_model_matrices;
     std::vector<vkl::Mat4> _texture_model_matrices;
+    vkl::Mat4 _wall_matrix;
+    vkl::Mat4 _floor_matrix;
 
     vkl::Texture2D _bricks_a;
     vkl::Texture2D _bricks_b;
+    vkl::Texture2D _wall_texture;
+    vkl::Texture2D _floor_texture;
 };
 
 #endif // DEMO_HPP
