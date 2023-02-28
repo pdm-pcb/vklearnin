@@ -128,10 +128,10 @@ void Demo::submit_draws() {
 
     for(auto& matrix : _color_model_matrices) {
         vkl::Renderer::submit(
-            vkl::Renderer::PipelineType::COLOR,
+            vkl::Renderer::PipelineType::FLAT_COLOR,
             {
-                .vertex_buffer = _color_cube.vertex_buffer().native(),
-                .index_buffer  = _color_cube.index_buffer().native(),
+                .vertex_buffer = _color_cube.vertex_buffer().buffer(),
+                .index_buffer  = _color_cube.index_buffer().buffer(),
                 .index_count   = _color_cube.index_count(),
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
@@ -146,17 +146,13 @@ void Demo::submit_draws() {
         mat_idx < _texture_model_matrices.size();
         ++mat_idx)
     {
-        auto material = (mat_idx % 2 == 0) ?
-                         _bricks_a.image().handle :
-                         _bricks_b.image().handle;
-
         vkl::Renderer::submit(
-            vkl::Renderer::PipelineType::TEXTURE,
+            vkl::Renderer::PipelineType::FLAT_TEXTURE,
             {
-                .vertex_buffer = _texture_cube.vertex_buffer().native(),
-                .index_buffer  = _texture_cube.index_buffer().native(),
+                .vertex_buffer = _texture_cube.vertex_buffer().buffer(),
+                .index_buffer  = _texture_cube.index_buffer().buffer(),
                 .index_count   = _texture_cube.index_count(),
-                .material      = material,
+                .material      = (mat_idx % 2 == 0) ? _bricks_a : _bricks_b,
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -167,12 +163,12 @@ void Demo::submit_draws() {
     }
 
     vkl::Renderer::submit(
-        vkl::Renderer::PipelineType::TEXTURE,
+        vkl::Renderer::PipelineType::FLAT_TEXTURE,
         {
-            .vertex_buffer = _wall_mesh.vertex_buffer().native(),
-            .index_buffer  = _wall_mesh.index_buffer().native(),
+            .vertex_buffer = _wall_mesh.vertex_buffer().buffer(),
+            .index_buffer  = _wall_mesh.index_buffer().buffer(),
             .index_count   = _wall_mesh.index_count(),
-            .material      = _wall_texture.image().handle,
+            .material      = _wall_texture,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -182,12 +178,12 @@ void Demo::submit_draws() {
     );
 
     vkl::Renderer::submit(
-        vkl::Renderer::PipelineType::TEXTURE,
+        vkl::Renderer::PipelineType::FLAT_TEXTURE,
         {
-            .vertex_buffer = _floor_mesh.vertex_buffer().native(),
-            .index_buffer  = _floor_mesh.index_buffer().native(),
+            .vertex_buffer = _floor_mesh.vertex_buffer().buffer(),
+            .index_buffer  = _floor_mesh.index_buffer().buffer(),
             .index_count   = _floor_mesh.index_count(),
-            .material      = _floor_texture.image().handle,
+            .material      = _floor_texture,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -365,7 +361,7 @@ void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
         case vkl::KB_A     : _kb.a     = false; break;
         case vkl::KB_S     : _kb.s     = false; break;
         case vkl::KB_D     : _kb.d     = false; break;
-        case vkl::KB_LCTRL : _kb.lctrl = false;  CONSOLE_INFO("LCTRL Up");break;
+        case vkl::KB_LCTRL : _kb.lctrl = false; break;
         case vkl::KB_SPACE : _kb.space = false; break;
 
         default: break;

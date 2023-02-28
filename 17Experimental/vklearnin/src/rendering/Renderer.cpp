@@ -41,9 +41,11 @@ Renderer::Draws Renderer::_texture_draws;
 // =============================================================================
 void Renderer::submit(const PipelineType pipeline, const DrawSubmission &draw) {
     switch(pipeline) {
-        case COLOR: _color_draws.push_back(draw); break;
-        case TEXTURE: {
-            auto mat_index = reinterpret_cast<uint64_t>(VkImage(draw.material));
+        case FLAT_COLOR: _color_draws.push_back(draw); break;
+        case FLAT_TEXTURE: {
+            auto mat_index = reinterpret_cast<uint64_t>(
+                VkImage(draw.material.image().handle)
+            );
             _texture_draws.at(mat_index).queue.push_back(draw);
             break;
         }
@@ -166,7 +168,7 @@ void Renderer::create_pipelines() {
         );
     }
 
-    auto &texture_pipeline = _pipelines[PipelineType::TEXTURE];
+    auto &texture_pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
     texture_pipeline.add_descriptor_set(_material_set_layout.native());
 
     for(auto& pipeline : _pipelines) {
@@ -205,7 +207,7 @@ void Renderer::_init_descriptors() {
 
 // =============================================================================
 void Renderer::_init_color_pipeline() {
-    auto &pipeline = _pipelines[PipelineType::COLOR];
+    auto &pipeline = _pipelines[PipelineType::FLAT_COLOR];
     pipeline.vert_from_spirv("shaders/01color.vert");
     pipeline.frag_from_spirv("shaders/01color.frag");
 
@@ -217,7 +219,7 @@ void Renderer::_init_color_pipeline() {
 
 // =============================================================================
 void Renderer::_init_texture_pipeline() {
-    auto &pipeline = _pipelines[PipelineType::TEXTURE];
+    auto &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
     pipeline.vert_from_spirv("shaders/02texture.vert");
     pipeline.frag_from_spirv("shaders/02texture.frag");
 
@@ -229,7 +231,7 @@ void Renderer::_init_texture_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_color_pipeline(const vk::CommandBuffer &cmd_buffer) {
-    auto &pipeline = _pipelines[PipelineType::COLOR];
+    auto &pipeline = _pipelines[PipelineType::FLAT_COLOR];
 
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
@@ -262,11 +264,11 @@ void Renderer::_execute_color_pipeline(const vk::CommandBuffer &cmd_buffer) {
 
         cmd_buffer.bindVertexBuffers(
             0u,
-            { draw.vertex_buffer },
+            { draw.vertex_buffer.handle },
             { 0u }
         );
         cmd_buffer.bindIndexBuffer(
-            draw.index_buffer,
+            draw.index_buffer.handle,
             0u,
             INDEX_TYPE
         );
@@ -281,7 +283,7 @@ void Renderer::_execute_color_pipeline(const vk::CommandBuffer &cmd_buffer) {
 
 // =============================================================================
 void Renderer::_execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer) {
-    auto &pipeline = _pipelines[PipelineType::TEXTURE];
+    auto &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
 
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
@@ -298,18 +300,16 @@ void Renderer::_execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer) {
         nullptr
     );
 
-    for(auto& kvp : _texture_draws) {
-        auto& mdq = kvp.second;
-
+    for(auto &[material_id, draw_queue] : _texture_draws) {
         cmd_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             pipeline.layout(),
             DescBindFreq::PER_MATERIAL,
-            { _material_sets[mdq.set_index].native() },
+            { _material_sets[draw_queue.set_index].native() },
             nullptr
         );
 
-        for(auto const& draw : mdq.queue) {
+        for(auto const& draw : draw_queue.queue) {
             size_t running_offset = 0u;
             for(auto const& push_constant : draw.push_constants) {
                 cmd_buffer.pushConstants(
@@ -325,11 +325,11 @@ void Renderer::_execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer) {
 
             cmd_buffer.bindVertexBuffers(
                 0u,
-                { draw.vertex_buffer },
+                { draw.vertex_buffer.handle },
                 { 0u }
             );
             cmd_buffer.bindIndexBuffer(
-                draw.index_buffer,
+                draw.index_buffer.handle,
                 0u,
                 INDEX_TYPE
             );
@@ -339,7 +339,7 @@ void Renderer::_execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer) {
             );
         }
 
-        mdq.queue.clear();
+        draw_queue.queue.clear();
     }
 }
 

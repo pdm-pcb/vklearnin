@@ -27,7 +27,7 @@ public:
         BufferTools::host_to_device(_buffer, vertices.data());
     }
 
-    inline auto const& native() const { return _buffer.handle; }
+    inline auto const & buffer() const { return _buffer; }
 
     VertexBuffer() = default;
     ~VertexBuffer() = default;

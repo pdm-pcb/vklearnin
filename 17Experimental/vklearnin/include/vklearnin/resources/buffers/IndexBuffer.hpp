@@ -14,7 +14,7 @@ public:
 
     void populate_buffer(const std::vector<Index> &indices);
 
-    inline auto const& native() const { return _buffer.handle; }
+    inline auto const & buffer() const { return _buffer; }
 
     IndexBuffer();
     ~IndexBuffer() = default;

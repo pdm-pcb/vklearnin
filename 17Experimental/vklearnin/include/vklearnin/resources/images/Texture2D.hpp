@@ -24,10 +24,10 @@ public:
     ~Texture2D() = default;
 
     Texture2D(Texture2D &&) = delete;
-    Texture2D(const Texture2D &) = delete;
+    Texture2D(const Texture2D &) = default;
 
     Texture2D& operator=(Texture2D &&) = delete;
-    Texture2D& operator=(const Texture2D &) = delete;
+    Texture2D& operator=(const Texture2D &) = default;
 
 private:
     ImageObject  _image;

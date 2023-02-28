@@ -18,8 +18,8 @@ struct ImageObject;
 class Renderer {
 public:
     enum PipelineType {
-        COLOR,
-        TEXTURE,
+        FLAT_COLOR,
+        FLAT_TEXTURE,
 
         MAX
     };
