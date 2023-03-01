@@ -57,7 +57,7 @@ private:
     vk::PipelineColorBlendStateCreateInfo    _blend_info;
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
-    
+
     vk::SampleCountFlagBits _samples;
 
     std::vector<vk::DescriptorSetLayout> _desc_set_layouts;

@@ -191,6 +191,21 @@ void Demo::submit_draws() {
                 }}
         }
     );
+
+    // vkl::Renderer::submit(
+    //     vkl::Renderer::PipelineType::SKYBOX,
+    //     {
+    //         .vertex_buffer  = _skybox_mesh.vertex_buffer().buffer(),
+    //         .index_buffer   = _skybox_mesh.index_buffer().buffer(),
+    //         .index_count    = _skybox_mesh.index_count(),
+    //         .material       = _skybox_texture,
+    //         .push_constants = {{
+    //             .stage_flags = vk::ShaderStageFlagBits::eVertex,
+    //             .size        = sizeof(vkl::Mat4),
+    //             .data        = &vkl::Mat4::identity,
+    //         }}
+    //     }
+    // );
 }
 
 // =============================================================================
@@ -228,13 +243,8 @@ void Demo::init() {
     _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
     // _persp_camera.set_orthographic(1.0f, -1.0f);
 
-#ifdef VKL_USE_GLM
-    _cam_data.pos     =  { 0.0f, 0.0f, 3.0f, 0.0f };
-    _cam_data.forward =  { 0.0f, 0.0f, -1.0f, 0.0f };
-#else
     _cam_data.pos     =  3.0f * vkl::Vec4::unit_z;
     _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
-#endif // VKL_USE_GLM
 
     _vp_ubos.resize(vkl::RenderConfig::image_count);
     for(auto &ubo : _vp_ubos) {
@@ -256,6 +266,7 @@ void Demo::init() {
             { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
             { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
             { 1.0f, 1.0f, 1.0f, 1.0f }, // White
+
             { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
             { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
             { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
@@ -271,6 +282,8 @@ void Demo::init() {
     _wall_mesh.init(2.0f, 5.0f);
     _floor_mesh.init(2.0f, 10.0f);
 
+    _skybox_mesh.init(5.0f, 1.0f);
+
     _wall_matrix = vkl::math::translate(
         vkl::Mat4::identity,
         { 0.0f, 1.0f, -2.0f, 1.0f }
@@ -281,7 +294,7 @@ void Demo::init() {
         { 0.0f, -1.0f, 0.0f, 1.0f }
     );
 
-    _bricks_a.init_from_file("textures/brickwall017_d.jpg");
+    _bricks_a.texture_from_file("textures/brickwall017_d.jpg");
     _bricks_a.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -291,7 +304,7 @@ void Demo::init() {
     );
     vkl::Renderer::add_material(_bricks_a.image());
 
-    _bricks_b.init_from_file("textures/bricks082c_d.jpg");
+    _bricks_b.texture_from_file("textures/bricks082c_d.jpg");
     _bricks_b.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -301,7 +314,7 @@ void Demo::init() {
     );
     vkl::Renderer::add_material(_bricks_b.image());
 
-    _wall_texture.init_from_file("textures/scifimetalpanel_004_d.jpg");
+    _wall_texture.texture_from_file("textures/scifimetalpanel_004_d.jpg");
     _wall_texture.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -311,7 +324,7 @@ void Demo::init() {
     );
     vkl::Renderer::add_material(_wall_texture.image());
 
-    _floor_texture.init_from_file("textures/woodfloor_051_d.jpg");
+    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
     _floor_texture.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -320,6 +333,24 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat
     );
     vkl::Renderer::add_material(_floor_texture.image());
+
+    // https://polyhaven.com/a/belfast_sunset_puresky
+    _skybox_texture.cubemap_from_files({{
+        "textures/skybox/px.png",
+        "textures/skybox/nx.png",
+        "textures/skybox/py.png",
+        "textures/skybox/ny.png",
+        "textures/skybox/pz.png",
+        "textures/skybox/nz.png",
+    }});
+    _skybox_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+    vkl::Renderer::add_material(_skybox_texture.image());
 }
 
 // =============================================================================
@@ -412,11 +443,15 @@ void Demo::shutdown() {
     _wall_mesh.shutdown();
     _floor_mesh.shutdown();
 
+    _skybox_mesh.shutdown();
+
     _bricks_a.shutdown();
     _bricks_b.shutdown();
 
     _wall_texture.shutdown();
     _floor_texture.shutdown();
+
+    _skybox_texture.shutdown();
 }
 
 // =============================================================================
@@ -427,16 +462,18 @@ Demo::Demo() :
         .s = false,
         .d = false,
     },
-    _vp_matrices   { },
-    _persp_camera  { },
-    _color_cube    { },
-    _texture_cube  { },
-    _wall_mesh     { },
-    _floor_mesh    { },
-    _wall_matrix   { },
-    _floor_matrix  { },
-    _bricks_a      { },
-    _bricks_b      { },
-    _wall_texture  { },
-    _floor_texture { }
+    _vp_matrices    { },
+    _persp_camera   { },
+    _color_cube     { },
+    _texture_cube   { },
+    _wall_mesh      { },
+    _floor_mesh     { },
+    _skybox_mesh    { },
+    _wall_matrix    { },
+    _floor_matrix   { },
+    _bricks_a       { },
+    _bricks_b       { },
+    _wall_texture   { },
+    _floor_texture  { },
+    _skybox_texture { }
 { }

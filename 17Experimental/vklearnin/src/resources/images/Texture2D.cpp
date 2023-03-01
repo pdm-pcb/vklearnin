@@ -6,18 +6,10 @@
 namespace vkl {
 
 // =============================================================================
-void Texture2D::init_from_file(std::string_view filepath) {
-    void *image_data = ImageTools::load_from_file(_image, filepath);
+void Texture2D::texture_from_file(std::string_view filepath) {
+    void *image_data = ImageTools::image_from_file(_image, filepath);
 
-    auto const longest_side = std::max(
-        static_cast<float>(_image.extent.width),
-        static_cast<float>(_image.extent.height)
-    );
-
-    auto const mip_levels =
-        static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
-
-    _image.mip_levels = mip_levels;
+    _calc_mip_levels();
 
     ImageTools::create(
         _image,
@@ -36,7 +28,7 @@ void Texture2D::init_from_file(std::string_view filepath) {
         image_data
     );
 
-    ImageTools::free_file_data(image_data);
+    ImageTools::free_image_data(image_data);
 
     ImageTools::create_view(
         _image,
@@ -45,6 +37,38 @@ void Texture2D::init_from_file(std::string_view filepath) {
     );
 }
 
+// =============================================================================
+void Texture2D::cubemap_from_files(std::array<std::string_view, 6> filepaths) {
+    void *image_data = ImageTools::cubemap_from_files(_image, filepaths);
+
+    ImageTools::create(
+        _image,
+        vk::ImageType::e2D,
+        vk::SampleCountFlagBits::e1,
+        (
+            vk::ImageUsageFlagBits::eSampled |
+            vk::ImageUsageFlagBits::eTransferDst |
+            vk::ImageUsageFlagBits::eTransferSrc // This bit is required for
+        ),                                       // generating mips
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        vk::ImageCreateFlagBits::eCubeCompatible // Required cubemap flag
+    );
+
+    ImageTools::host_to_device(
+        _image,
+        image_data
+    );
+
+    ImageTools::free_cubemap_data(image_data);
+
+    ImageTools::create_view(
+        _image,
+        vk::ImageViewType::eCube,
+        vk::ImageAspectFlagBits::eColor
+    );
+}
+
+// =============================================================================
 void Texture2D::init_sampler(const vk::Filter min_filter,
                              const vk::Filter mag_filter,
                              const vk::SamplerMipmapMode mip_filter,
@@ -66,6 +90,19 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
 // =============================================================================
 void Texture2D::shutdown() {
     ImageTools::destroy(_image);
+}
+
+// =============================================================================
+void Texture2D::_calc_mip_levels() {
+    auto const longest_side = std::max(
+        static_cast<float>(_image.extent.width),
+        static_cast<float>(_image.extent.height)
+    );
+
+    auto const mip_levels =
+        static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
+
+    _image.mip_levels = mip_levels;
 }
 
 // =============================================================================

@@ -10,7 +10,9 @@ struct BufferObject;
 
 class Texture2D final {
 public:
-    void init_from_file(std::string_view filepath);
+    void texture_from_file(std::string_view filepath);
+    void cubemap_from_files(std::array<std::string_view, 6> filepaths);
+
     void init_sampler(const vk::Filter min_filter,
                       const vk::Filter mag_filter,
                       const vk::SamplerMipmapMode mip_filter,
@@ -31,6 +33,8 @@ public:
 
 private:
     ImageObject  _image;
+
+    void _calc_mip_levels();
 };
 
 } // namespace vkl

@@ -55,4 +55,22 @@ VertexFlatTexture::VertexFlatTexture(const std::array<float, 4> &position,
     uv       { uv }
 { }
 
+// =============================================================================
+VertexBindings const VertexSkybox::bindings {{
+    .binding   = 0u,
+    .stride    = sizeof(VertexFlatTexture),
+    .inputRate = vk::VertexInputRate::eVertex
+}};
+
+VertexAttribs const VertexSkybox::attributes {{
+    .location = 0u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexSkybox, position)),
+}};
+
+VertexSkybox::VertexSkybox(const std::array<float, 4> &position) :
+    position { position }
+{ }
+
 } // namespace vkl

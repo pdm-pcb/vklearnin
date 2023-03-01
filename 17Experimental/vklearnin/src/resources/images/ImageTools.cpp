@@ -27,18 +27,20 @@ void create(ImageObject &image,
             const vk::ImageType type,
             const vk::SampleCountFlagBits samples,
             const vk::ImageUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties)
+            const vk::MemoryPropertyFlags memory_properties,
+            const vk::ImageCreateFlags flags)
 {
     if(image.format == vk::Format::eUndefined) {
         CONSOLE_CRITICAL("Cannot create image with undefined format.");
     }
 
     const vk::ImageCreateInfo image_info {
+        .flags         = flags,
         .imageType     = type,
         .format        = image.format,
         .extent        = image.extent,
         .mipLevels     = image.mip_levels,
-        .arrayLayers   = 1u,
+        .arrayLayers   = image.array_layers,
         .samples       = samples,
         .tiling        = vk::ImageTiling::eOptimal,
         .usage         = usage_flags,
@@ -108,10 +110,10 @@ void create_view(ImageObject &image,
             .aspectMask = aspect_flags, // Aspect flags describe suitable
                                         // interpretations for this image's
                                         // data
-            .baseMipLevel   = 0u,               // Starting mip level
-            .levelCount     = image.mip_levels, // Total mip levels
-            .baseArrayLayer = 0u, // Starting array layer
-            .layerCount     = 1u  // Total array layers
+            .baseMipLevel   = 0u,                // Starting mip level
+            .levelCount     = image.mip_levels,  // Total mip levels
+            .baseArrayLayer = 0u,                // Starting array layer
+            .layerCount     = image.array_layers // Total array layers
         }
     };
 
@@ -139,7 +141,7 @@ void destroy_view(ImageObject &image) {
 }
 
 // =============================================================================
-void* load_from_file(ImageObject &image, std::string_view filepath) {
+void * image_from_file(ImageObject &image, std::string_view filepath) {
     auto const texture_path = ASSET_PATH / filepath.data();
     const std::string path = texture_path.string();
 
@@ -180,8 +182,105 @@ void* load_from_file(ImageObject &image, std::string_view filepath) {
 }
 
 // =============================================================================
-void free_file_data(void *data) {
+void * cubemap_from_files(ImageObject &image,
+                          std::array<std::string_view, 6> filepaths)
+{
+    struct ImageData {
+        ::stbi_uc *data = nullptr;
+
+        int width    = 0;
+        int height   = 0;
+        int channels = 0;
+    };
+
+    std::vector<ImageData> image_data;
+    image_data.resize(filepaths.size());
+    auto current_image = image_data.begin();
+
+    for(auto const filepath : filepaths) {
+        auto const texture_path = ASSET_PATH / filepath.data();
+        const std::string path = texture_path.string();
+
+        current_image->data = ::stbi_load(
+            path.c_str(),
+            &(current_image->width),
+            &(current_image->height),
+            &(current_image->channels),
+            ::STBI_rgb_alpha
+        );
+
+        if(current_image->data == nullptr) {
+            CONSOLE_CRITICAL(
+                "Failed to load image '{}'\n\t"
+                "{}x{} @ {}bpc\n\t"
+                "Error: '{}'",
+                path,
+                current_image->width,
+                current_image->height,
+                current_image->channels,
+                ::stbi_failure_reason()
+            );
+            return nullptr;
+        }
+
+        current_image->channels = static_cast<uint32_t>(::STBI_rgb_alpha);
+
+        CONSOLE_TRACE("Loaded image {}", filepath);
+        ++current_image;
+    }
+
+    current_image = std::next(image_data.begin());
+    while(current_image != image_data.end()) {
+        if(current_image->width != image_data.begin()->width ||
+           current_image->height != image_data.begin()->height)
+        {
+            CONSOLE_ERROR("Cubemap images must have identical dimensions");
+            return nullptr;
+        }
+        ++current_image;
+    }
+
+    image.array_layers = static_cast<uint32_t>(filepaths.size());
+
+    image.extent = vk::Extent3D {
+        .width  = static_cast<uint32_t>(image_data.begin()->width),
+        .height = static_cast<uint32_t>(image_data.begin()->height),
+        .depth  = 1u
+    };
+
+    image.size = image.extent.width *
+                 image.extent.height *
+                 image_data.begin()->channels *
+                 filepaths.size();
+
+    image.format = vk::Format::eR8G8B8A8Unorm;
+
+    char *consolidated_image = new char[image.size];
+    char *offset = consolidated_image;
+    size_t const layer_size = image.extent.width *
+                              image.extent.height *
+                              image_data.begin()->channels;
+
+    for(auto const &image_struct : image_data) {
+        memcpy(offset, image_struct.data, layer_size);
+        offset += layer_size;
+    }
+
+    for(const auto &image_struct : image_data) {
+        ::stbi_image_free(image_struct.data);
+    }
+
+    return consolidated_image;
+}
+
+// =============================================================================
+void free_image_data(void *data) {
     ::stbi_image_free(data);
+}
+
+// =============================================================================
+void free_cubemap_data(void *data) {
+    delete[] data;
 }
 
 // =============================================================================

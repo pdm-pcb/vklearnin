@@ -34,6 +34,17 @@ struct VertexFlatTexture final {
     VertexFlatTexture() = delete;
 };
 
+// =============================================================================
+struct VertexSkybox final {
+    std::array<float, 4> position;
+
+    static const VertexBindings bindings;
+    static const VertexAttribs attributes;
+
+    VertexSkybox(const std::array<float, 4> &position);
+    VertexSkybox() = delete;
+};
+
 } // namespace vkl
 
 #endif // VKLEARNIN_MESHES_VERTEXTYPES_HPP

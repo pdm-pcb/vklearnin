@@ -5,6 +5,7 @@
 #include "vklearnin/meshes/Cube.hpp"
 #include "vklearnin/meshes/XYPlane.hpp"
 #include "vklearnin/meshes/XZPlane.hpp"
+#include "vklearnin/meshes/Skybox.hpp"
 
 class Demo final : public vkl::Application {
 public:
@@ -66,6 +67,7 @@ private:
     vkl::Cube<vkl::VertexFlatTexture>    _texture_cube;
     vkl::XYPlane<vkl::VertexFlatTexture> _wall_mesh;
     vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
+    vkl::Skybox<vkl::VertexFlatTexture>  _skybox_mesh;
 
     std::vector<vkl::Mat4> _color_model_matrices;
     std::vector<vkl::Mat4> _texture_model_matrices;
@@ -76,6 +78,7 @@ private:
     vkl::Texture2D _bricks_b;
     vkl::Texture2D _wall_texture;
     vkl::Texture2D _floor_texture;
+    vkl::Texture2D _skybox_texture;
 };
 
 #endif // DEMO_HPP

@@ -12,14 +12,14 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
-    void add_ubo(const BufferObject &ubo);
-    void add_texture2D(const ImageObject &texture);
+    void add_ubo(BufferObject const &ubo);
+    void add_texture2D(ImageObject const &texture);
 
-    void create(const DescriptorPool &descriptor_pool,
-                const DescriptorSetLayout &set_layout);
+    void create(DescriptorPool const &descriptor_pool,
+                DescriptorSetLayout const &set_layout);
     void destroy();
 
-    inline auto const& native() const { return _set; }
+    inline auto const & native() const { return _set; }
 
     DescriptorSet();
     ~DescriptorSet() = default;

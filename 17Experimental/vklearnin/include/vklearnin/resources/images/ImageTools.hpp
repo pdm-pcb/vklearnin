@@ -11,7 +11,8 @@ void create(ImageObject &image,
             const vk::ImageType type,
             const vk::SampleCountFlagBits samples,
             const vk::ImageUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties);
+            const vk::MemoryPropertyFlags memory_properties,
+            const vk::ImageCreateFlags flags = { });
 
 void destroy(ImageObject &image);
 
@@ -21,9 +22,12 @@ void create_view(ImageObject &image,
 
 void destroy_view(ImageObject &image);
 
-void* load_from_file(ImageObject &image, std::string_view filepath);
+void * image_from_file(ImageObject &image, std::string_view filepath);
+void * cubemap_from_files(ImageObject &image,
+                          std::array<std::string_view, 6> filepaths);
 
-void free_file_data(void *data);
+void free_image_data(void *data);
+void free_cubemap_data(void *data);
 
 void host_to_device(ImageObject &dst, const void * const data);
 

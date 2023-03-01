@@ -24,14 +24,14 @@ public:
         MAX
     };
 
-    static void submit(const PipelineType pipeline, const DrawSubmission &draw);
-    static void render_pass(const vk::CommandBuffer &cmd_buffer);
+    static void submit(PipelineType const pipeline, DrawSubmission const &draw);
+    static void render_pass(vk::CommandBuffer const &cmd_buffer);
 
     static void init();
     static void shutdown();
 
-    static void set_global_uniforms(const std::vector<BufferObject> &ubos);
-    static void add_material(const ImageObject &texture);
+    static void set_global_uniforms(std::vector<BufferObject> const &ubos);
+    static void add_material(ImageObject const &texture);
     static void create_pipelines();
 
     Renderer() = delete;
@@ -65,17 +65,28 @@ private:
         size_t const set_index;
         std::vector<DrawSubmission> queue;
     };
-    using Draws = std::unordered_map<uint64_t, MaterialDrawQueue>;
-    static Draws _texture_draws;
+    using TextureDraws = std::unordered_map<uint64_t, MaterialDrawQueue>;
+    static TextureDraws _texture_draws;
+
+    static DescriptorSet  _skybox_desc_set;
+    static DrawSubmission const _skybox_draw;
 
     static void _init_framebuffers();
     static void _init_descriptors();
 
     static void _init_color_pipeline();
     static void _init_texture_pipeline();
+    static void _init_skybox_pipeline();
 
-    static void _execute_color_pipeline(const vk::CommandBuffer &cmd_buffer);
-    static void _execute_texture_pipeline(const vk::CommandBuffer &cmd_buffer);
+    static void _execute_color_pipeline(vk::CommandBuffer const &cmd_buffer);
+    static void _execute_texture_pipeline(vk::CommandBuffer const &cmd_buffer);
+    static void _execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer);
+
+    static void _bind_globals(Pipeline const &pipeline,
+                              vk::CommandBuffer const &cmd_buffer);
+    static void _send_push_constants(Pipeline const &pipeline,
+                                     DrawSubmission const &draw,
+                                     vk::CommandBuffer const &cmd_buffer);
 };
 
 } // namespace vkl

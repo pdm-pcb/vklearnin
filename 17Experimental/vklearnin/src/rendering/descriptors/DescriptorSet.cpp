@@ -8,18 +8,18 @@
 namespace vkl {
 
 // =============================================================================
-void DescriptorSet::add_ubo(const BufferObject &ubo) {
+void DescriptorSet::add_ubo(BufferObject const &ubo) {
     _ubos.push_back(ubo);
 }
 
 // =============================================================================
-void DescriptorSet::add_texture2D(const ImageObject &texture) {
+void DescriptorSet::add_texture2D(ImageObject const &texture) {
     _textures.push_back(texture);
 }
 
 // =============================================================================
-void DescriptorSet::create(const DescriptorPool &descriptor_pool,
-                           const DescriptorSetLayout &set_layout)
+void DescriptorSet::create(DescriptorPool const &descriptor_pool,
+                           DescriptorSetLayout const &set_layout)
 {
     const vk::DescriptorSetAllocateInfo alloc_info {
         .descriptorPool = descriptor_pool.native(),
@@ -94,8 +94,8 @@ void DescriptorSet::destroy() {
     for(auto &buffer : _ubos) {
         BufferTools::destroy(buffer);
     }
-    for(auto &image : _textures) {
-        ImageTools::destroy(image);
+    for(auto &texture : _textures) {
+        ImageTools::destroy(texture);
     }
 }
 
