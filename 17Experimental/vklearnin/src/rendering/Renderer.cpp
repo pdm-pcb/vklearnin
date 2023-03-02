@@ -31,12 +31,14 @@ Renderer::DescriptorSets Renderer::_material_sets   { };
 Renderer::DescriptorSets Renderer::_draw_sets       { };
 
 RenderPass Renderer::_render_pass { };
-std::array<Pipeline, Renderer::PipelineType::MAX> Renderer::_pipelines { };
 
 std::vector<Framebuffer> Renderer::_framebuffers { RenderConfig::image_count };
 
-Renderer::ColorDraws   Renderer::_color_draws;
-Renderer::TextureDraws Renderer::_texture_draws;
+Pipeline Renderer::_flat_color_pipeline;
+Pipeline Renderer::_flat_texture_pipeline;
+
+Renderer::ColorDraws   Renderer::_flat_color_draws;
+Renderer::TextureDraws Renderer::_flat_texture_draws;
 
 // =============================================================================
 void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
@@ -49,7 +51,7 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
     };
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        _bind_global_uniforms(*_pipelines.begin(), cmd_buffer);
+        _bind_global_uniforms(_flat_color_pipeline, cmd_buffer);
 
         _execute_flat_color_pipeline(cmd_buffer);
         _execute_flat_texture_pipeline(cmd_buffer);
@@ -67,9 +69,8 @@ void Renderer::init() {
 
 // =============================================================================
 void Renderer::shutdown() {
-    for(auto& pipeline : _pipelines) {
-        pipeline.destroy();
-    }
+    _flat_color_pipeline.destroy();
+    _flat_texture_pipeline.destroy();
 
     for(auto &set : _global_uniform_sets) {
         set.destroy();
@@ -115,7 +116,7 @@ void Renderer::add_material(ImageObject const &material) {
     _material_sets.resize(_material_sets.size() + 1);
     _material_sets.back().add_texture2D(material);
 
-    _texture_draws.insert({
+    _flat_texture_draws.insert({
         reinterpret_cast<uint64_t>(VkImage(material.handle)),
         MaterialDrawQueue {
             .set_index = _material_sets.size() - 1,
@@ -147,21 +148,6 @@ void Renderer::create_pipelines() {
     _init_flat_color_pipeline();
     _init_flat_texture_pipeline();
     // _init_skybox_pipeline();
-
-    for(auto& pipeline : _pipelines) {
-        pipeline.add_descriptor_set(_global_uniform_set_layout.native());
-        pipeline.add_push_constant(
-            vk::ShaderStageFlagBits::eVertex,
-            sizeof(Mat4)
-        );
-    }
-
-    auto &flat_texture_pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
-    flat_texture_pipeline.add_descriptor_set(_material_set_layout.native());
-
-    for(auto& pipeline : _pipelines) {
-        pipeline.create(_render_pass);
-    }
 }
 
 // =============================================================================
@@ -195,7 +181,7 @@ void Renderer::_init_descriptors() {
 
 // =============================================================================
 void Renderer::_init_flat_color_pipeline() {
-    auto &pipeline = _pipelines[PipelineType::FLAT_COLOR];
+    auto &pipeline = _flat_color_pipeline;
     pipeline.vert_from_spirv("shaders/01color.vert");
     pipeline.frag_from_spirv("shaders/01color.frag");
 
@@ -203,11 +189,19 @@ void Renderer::_init_flat_color_pipeline() {
         VertexFlatColor::bindings,
         VertexFlatColor::attributes
     );
+
+    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eVertex,
+        sizeof(Mat4)
+    );
+
+    pipeline.create(_render_pass);
 }
 
 // =============================================================================
 void Renderer::_init_flat_texture_pipeline() {
-    auto &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
+    auto &pipeline = _flat_texture_pipeline;
     pipeline.vert_from_spirv("shaders/02texture.vert");
     pipeline.frag_from_spirv("shaders/02texture.frag");
 
@@ -215,6 +209,16 @@ void Renderer::_init_flat_texture_pipeline() {
         VertexFlatTexture::bindings,
         VertexFlatTexture::attributes
     );
+
+    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eVertex,
+        sizeof(Mat4)
+    );
+
+    pipeline.add_descriptor_set(_material_set_layout.native());
+
+    pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -232,7 +236,7 @@ void Renderer::_init_skybox_pipeline() {
 // =============================================================================
 void
 Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
-    auto const &pipeline = _pipelines[PipelineType::FLAT_COLOR];
+    auto const &pipeline = _flat_color_pipeline;
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         pipeline.native()
@@ -240,7 +244,7 @@ Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
 
-    for(auto const &draw : _color_draws) {
+    for(auto const &draw : _flat_color_draws) {
         _send_push_constants(pipeline, draw, cmd_buffer);
 
         cmd_buffer.bindVertexBuffers(
@@ -259,13 +263,13 @@ Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
         );
     }
 
-    _color_draws.clear();
+    _flat_color_draws.clear();
 }
 
 // =============================================================================
 void
 Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
-    auto const &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
+    auto const &pipeline = _flat_texture_pipeline;
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         pipeline.native()
@@ -273,7 +277,7 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
 
-    for(auto &[material_id, draw_queue] : _texture_draws) {
+    for(auto &[material_id, draw_queue] : _flat_texture_draws) {
         cmd_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             pipeline.layout(),

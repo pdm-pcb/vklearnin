@@ -33,13 +33,6 @@ public:
     Renderer() = delete;
 
 private:
-    enum PipelineType {
-        FLAT_COLOR,
-        FLAT_TEXTURE,
-
-        MAX
-    };
-
     enum DescBindFreq {
         GLOBAL_UNIFORM,
         PER_MATERIAL,
@@ -58,19 +51,21 @@ private:
     static DescriptorSets _draw_sets;
 
     static RenderPass _render_pass;
-    static std::array<Pipeline, PipelineType::MAX> _pipelines;
 
     static std::vector<Framebuffer> _framebuffers;
 
+    static Pipeline _flat_color_pipeline;
+    static Pipeline _flat_texture_pipeline;
+
     using ColorDraws = std::vector<DrawSubmission<VertexFlatColor>>;
-    static ColorDraws _color_draws;
+    static ColorDraws _flat_color_draws;
 
     struct MaterialDrawQueue {
         size_t const set_index;
         std::vector<DrawSubmission<VertexFlatTexture>> queue;
     };
     using TextureDraws = std::unordered_map<uint64_t, MaterialDrawQueue>;
-    static TextureDraws _texture_draws;
+    static TextureDraws _flat_texture_draws;
 
     static void _init_framebuffers();
     static void _init_descriptors();
@@ -98,24 +93,25 @@ private:
 
 // =============================================================================
 template <typename VertexType>
-void Renderer::submit(DrawSubmission<VertexType> const &draw) {
+inline void Renderer::submit(DrawSubmission<VertexType> const &draw) {
     if constexpr(std::is_same_v<VertexType, VertexFlatColor>) {
-        _color_draws.push_back(draw);
+        _flat_color_draws.push_back(draw);
     }
 
     if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
         auto mat_index = reinterpret_cast<uint64_t>(
             VkImage(draw.material->image().handle)
         );
-        _texture_draws.at(mat_index).queue.push_back(draw);
+        _flat_texture_draws.at(mat_index).queue.push_back(draw);
     }
 }
 
 // =============================================================================
 template <typename VertexType>
-void Renderer::_send_push_constants(Pipeline const &pipeline,
-                                    DrawSubmission<VertexType> const &draw,
-                                    vk::CommandBuffer const &cmd_buffer)
+inline void
+Renderer::_send_push_constants(Pipeline const &pipeline,
+                               DrawSubmission<VertexType> const &draw,
+                               vk::CommandBuffer const &cmd_buffer)
 {
     size_t running_offset = 0u;
     for(auto const& push_constant : draw.push_constants) {
