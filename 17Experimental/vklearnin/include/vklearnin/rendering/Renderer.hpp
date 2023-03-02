@@ -74,16 +74,20 @@ private:
     static void _init_framebuffers();
     static void _init_descriptors();
 
-    static void _init_color_pipeline();
-    static void _init_texture_pipeline();
+    static void _init_flat_color_pipeline();
+    static void _init_flat_texture_pipeline();
     static void _init_skybox_pipeline();
 
-    static void _execute_color_pipeline(vk::CommandBuffer const &cmd_buffer);
-    static void _execute_texture_pipeline(vk::CommandBuffer const &cmd_buffer);
+    static void
+    _execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer);
+
+    static void
+    _execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer);
+
     static void _execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer);
 
-    static void _bind_globals(Pipeline const &pipeline,
-                              vk::CommandBuffer const &cmd_buffer);
+    static void _bind_global_uniforms(Pipeline const &pipeline,
+                                      vk::CommandBuffer const &cmd_buffer);
     static void _send_push_constants(Pipeline const &pipeline,
                                      DrawSubmission const &draw,
                                      vk::CommandBuffer const &cmd_buffer);

@@ -70,10 +70,10 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
     };
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        _bind_globals(*_pipelines.begin(), cmd_buffer);
+        _bind_global_uniforms(*_pipelines.begin(), cmd_buffer);
 
-        _execute_color_pipeline(cmd_buffer);
-        _execute_texture_pipeline(cmd_buffer);
+        _execute_flat_color_pipeline(cmd_buffer);
+        _execute_flat_texture_pipeline(cmd_buffer);
         // _execute_skybox_pipeline(cmd_buffer);
 
     cmd_buffer.endRenderPass();
@@ -165,8 +165,8 @@ void Renderer::create_pipelines() {
         set.create(_desc_pool, _material_set_layout);
     }
 
-    _init_color_pipeline();
-    _init_texture_pipeline();
+    _init_flat_color_pipeline();
+    _init_flat_texture_pipeline();
     // _init_skybox_pipeline();
 
     for(auto& pipeline : _pipelines) {
@@ -177,8 +177,8 @@ void Renderer::create_pipelines() {
         );
     }
 
-    auto &texture_pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
-    texture_pipeline.add_descriptor_set(_material_set_layout.native());
+    auto &flat_texture_pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
+    flat_texture_pipeline.add_descriptor_set(_material_set_layout.native());
 
     for(auto& pipeline : _pipelines) {
         pipeline.create(_render_pass);
@@ -215,7 +215,7 @@ void Renderer::_init_descriptors() {
 }
 
 // =============================================================================
-void Renderer::_init_color_pipeline() {
+void Renderer::_init_flat_color_pipeline() {
     auto &pipeline = _pipelines[PipelineType::FLAT_COLOR];
     pipeline.vert_from_spirv("shaders/01color.vert");
     pipeline.frag_from_spirv("shaders/01color.frag");
@@ -227,7 +227,7 @@ void Renderer::_init_color_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_init_texture_pipeline() {
+void Renderer::_init_flat_texture_pipeline() {
     auto &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
     pipeline.vert_from_spirv("shaders/02texture.vert");
     pipeline.frag_from_spirv("shaders/02texture.frag");
@@ -251,7 +251,8 @@ void Renderer::_init_skybox_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_execute_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
+void
+Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
     auto const &pipeline = _pipelines[PipelineType::FLAT_COLOR];
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
@@ -283,7 +284,8 @@ void Renderer::_execute_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
 }
 
 // =============================================================================
-void Renderer::_execute_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
+void
+Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
     auto const &pipeline = _pipelines[PipelineType::FLAT_TEXTURE];
     cmd_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
@@ -323,8 +325,6 @@ void Renderer::_execute_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
         draw_queue.queue.clear();
     }
 }
-
-
 
 // =============================================================================
 void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
@@ -372,8 +372,8 @@ void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
 }
 
 // =============================================================================
-void Renderer::_bind_globals(Pipeline const &pipeline,
-                             vk::CommandBuffer const &cmd_buffer)
+void Renderer::_bind_global_uniforms(Pipeline const &pipeline,
+                                     vk::CommandBuffer const &cmd_buffer)
 {
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
