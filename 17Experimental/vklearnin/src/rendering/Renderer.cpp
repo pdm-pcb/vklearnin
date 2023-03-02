@@ -29,35 +29,14 @@ Renderer::DescriptorSets Renderer::_global_uniform_sets {
 
 Renderer::DescriptorSets Renderer::_material_sets   { };
 Renderer::DescriptorSets Renderer::_draw_sets       { };
-DescriptorSet            Renderer::_skybox_desc_set { };
 
 RenderPass Renderer::_render_pass { };
 std::array<Pipeline, Renderer::PipelineType::MAX> Renderer::_pipelines { };
 
 std::vector<Framebuffer> Renderer::_framebuffers { RenderConfig::image_count };
 
-std::vector<DrawSubmission> Renderer::_color_draws;
-Renderer::TextureDraws      Renderer::_texture_draws;
-DrawSubmission const        Renderer::_skybox_draw { };
-
-// =============================================================================
-void Renderer::submit(PipelineType const pipeline, DrawSubmission const &draw) {
-    switch(pipeline) {
-        case FLAT_COLOR: _color_draws.push_back(draw); break;
-        case FLAT_TEXTURE: {
-            auto mat_index = reinterpret_cast<uint64_t>(
-                VkImage(draw.material.image().handle)
-            );
-            _texture_draws.at(mat_index).queue.push_back(draw);
-            break;
-        }
-        // case SKYBOX:
-        //     _skybox_draw = draw;
-        //     break;
-        default:
-            CONSOLE_CRITICAL("Submitting draw to unknown pipeline type");
-    }
-}
+Renderer::ColorDraws   Renderer::_color_draws;
+Renderer::TextureDraws Renderer::_texture_draws;
 
 // =============================================================================
 void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
@@ -266,16 +245,16 @@ Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
 
         cmd_buffer.bindVertexBuffers(
             0u,
-            { draw.vertex_buffer.handle },
+            { draw.mesh->vertex_buffer().buffer().handle },
             { 0u }
         );
         cmd_buffer.bindIndexBuffer(
-            draw.index_buffer.handle,
+            draw.mesh->index_buffer().buffer().handle,
             0u,
             INDEX_TYPE
         );
         cmd_buffer.drawIndexed(
-            static_cast<uint32_t>(draw.index_count),
+            static_cast<uint32_t>(draw.mesh->index_count()),
             1u, 0u, 0u, 0u
         );
     }
@@ -308,16 +287,16 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
 
             cmd_buffer.bindVertexBuffers(
                 0u,
-                { draw.vertex_buffer.handle },
+                { draw.mesh->vertex_buffer().buffer().handle },
                 { 0u }
             );
             cmd_buffer.bindIndexBuffer(
-                draw.index_buffer.handle,
+                draw.mesh->index_buffer().buffer().handle,
                 0u,
                 INDEX_TYPE
             );
             cmd_buffer.drawIndexed(
-                static_cast<uint32_t>(draw.index_count),
+                static_cast<uint32_t>(draw.mesh->index_count()),
                 1u, 0u, 0u, 0u
             );
         }
@@ -382,25 +361,6 @@ void Renderer::_bind_global_uniforms(Pipeline const &pipeline,
         { _global_uniform_sets[Swapchain::image_index()].native() },
         nullptr
     );
-}
-
-// =============================================================================
-void Renderer::_send_push_constants(Pipeline const &pipeline,
-                                    DrawSubmission const &draw,
-                                    vk::CommandBuffer const &cmd_buffer)
-{
-    size_t running_offset = 0u;
-    for(auto const& push_constant : draw.push_constants) {
-        cmd_buffer.pushConstants(
-            pipeline.layout(),
-            push_constant.stage_flags,
-            static_cast<uint32_t>(running_offset),
-            static_cast<uint32_t>(push_constant.size),
-            push_constant.data
-        );
-
-        running_offset += push_constant.size;
-    }
 }
 
 } // namespace vkl

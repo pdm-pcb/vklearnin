@@ -9,6 +9,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
+#include "vklearnin/meshes/VertexTypes.hpp"
 
 namespace vkl {
 
@@ -17,14 +18,9 @@ struct ImageObject;
 
 class Renderer {
 public:
-    enum PipelineType {
-        FLAT_COLOR,
-        FLAT_TEXTURE,
+    template <typename VertexType>
+    static void submit(DrawSubmission<VertexType> const &draw);
 
-        MAX
-    };
-
-    static void submit(PipelineType const pipeline, DrawSubmission const &draw);
     static void render_pass(vk::CommandBuffer const &cmd_buffer);
 
     static void init();
@@ -37,6 +33,13 @@ public:
     Renderer() = delete;
 
 private:
+    enum PipelineType {
+        FLAT_COLOR,
+        FLAT_TEXTURE,
+
+        MAX
+    };
+
     enum DescBindFreq {
         GLOBAL_UNIFORM,
         PER_MATERIAL,
@@ -59,17 +62,15 @@ private:
 
     static std::vector<Framebuffer> _framebuffers;
 
-    static std::vector<DrawSubmission> _color_draws;
+    using ColorDraws = std::vector<DrawSubmission<VertexFlatColor>>;
+    static ColorDraws _color_draws;
 
     struct MaterialDrawQueue {
         size_t const set_index;
-        std::vector<DrawSubmission> queue;
+        std::vector<DrawSubmission<VertexFlatTexture>> queue;
     };
     using TextureDraws = std::unordered_map<uint64_t, MaterialDrawQueue>;
     static TextureDraws _texture_draws;
-
-    static DescriptorSet  _skybox_desc_set;
-    static DrawSubmission const _skybox_draw;
 
     static void _init_framebuffers();
     static void _init_descriptors();
@@ -88,10 +89,47 @@ private:
 
     static void _bind_global_uniforms(Pipeline const &pipeline,
                                       vk::CommandBuffer const &cmd_buffer);
+
+    template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,
-                                     DrawSubmission const &draw,
+                                     DrawSubmission<VertexType> const &draw,
                                      vk::CommandBuffer const &cmd_buffer);
 };
+
+// =============================================================================
+template <typename VertexType>
+void Renderer::submit(DrawSubmission<VertexType> const &draw) {
+    if constexpr(std::is_same_v<VertexType, VertexFlatColor>) {
+        _color_draws.push_back(draw);
+    }
+
+    if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
+        auto mat_index = reinterpret_cast<uint64_t>(
+            VkImage(draw.material->image().handle)
+        );
+        _texture_draws.at(mat_index).queue.push_back(draw);
+    }
+}
+
+// =============================================================================
+template <typename VertexType>
+void Renderer::_send_push_constants(Pipeline const &pipeline,
+                                    DrawSubmission<VertexType> const &draw,
+                                    vk::CommandBuffer const &cmd_buffer)
+{
+    size_t running_offset = 0u;
+    for(auto const& push_constant : draw.push_constants) {
+        cmd_buffer.pushConstants(
+            pipeline.layout(),
+            push_constant.stage_flags,
+            static_cast<uint32_t>(running_offset),
+            static_cast<uint32_t>(push_constant.size),
+            push_constant.data
+        );
+
+        running_offset += push_constant.size;
+    }
+}
 
 } // namespace vkl
 

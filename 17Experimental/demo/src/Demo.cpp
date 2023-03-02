@@ -128,11 +128,8 @@ void Demo::submit_draws() {
 
     for(auto& matrix : _color_model_matrices) {
         vkl::Renderer::submit(
-            vkl::Renderer::PipelineType::FLAT_COLOR,
-            {
-                .vertex_buffer  = _color_cube.vertex_buffer().buffer(),
-                .index_buffer   = _color_cube.index_buffer().buffer(),
-                .index_count    = _color_cube.index_count(),
+        vkl::DrawSubmission<vkl::VertexFlatColor> {
+                .mesh = &_color_cube,
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -147,12 +144,9 @@ void Demo::submit_draws() {
         ++mat_idx)
     {
         vkl::Renderer::submit(
-            vkl::Renderer::PipelineType::FLAT_TEXTURE,
-            {
-                .vertex_buffer  = _texture_cube.vertex_buffer().buffer(),
-                .index_buffer   = _texture_cube.index_buffer().buffer(),
-                .index_count    = _texture_cube.index_count(),
-                .material       = (mat_idx % 2 == 0) ? _bricks_a : _bricks_b,
+        vkl::DrawSubmission<vkl::VertexFlatTexture> {
+                .mesh = &_texture_cube,
+                .material = (mat_idx % 2 == 0) ? &_bricks_a : &_bricks_b,
                 .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -163,12 +157,9 @@ void Demo::submit_draws() {
     }
 
     vkl::Renderer::submit(
-        vkl::Renderer::PipelineType::FLAT_TEXTURE,
-        {
-            .vertex_buffer  = _wall_mesh.vertex_buffer().buffer(),
-            .index_buffer   = _wall_mesh.index_buffer().buffer(),
-            .index_count    = _wall_mesh.index_count(),
-            .material       = _wall_texture,
+        vkl::DrawSubmission<vkl::VertexFlatTexture> {
+            .mesh     = &_wall_mesh,
+            .material = &_wall_texture,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -178,12 +169,9 @@ void Demo::submit_draws() {
     );
 
     vkl::Renderer::submit(
-        vkl::Renderer::PipelineType::FLAT_TEXTURE,
-        {
-            .vertex_buffer  = _floor_mesh.vertex_buffer().buffer(),
-            .index_buffer   = _floor_mesh.index_buffer().buffer(),
-            .index_count    = _floor_mesh.index_count(),
-            .material       = _floor_texture,
+        vkl::DrawSubmission<vkl::VertexFlatTexture> {
+            .mesh     = &_floor_mesh,
+            .material = &_floor_texture,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -191,21 +179,6 @@ void Demo::submit_draws() {
                 }}
         }
     );
-
-    // vkl::Renderer::submit(
-    //     vkl::Renderer::PipelineType::SKYBOX,
-    //     {
-    //         .vertex_buffer  = _skybox_mesh.vertex_buffer().buffer(),
-    //         .index_buffer   = _skybox_mesh.index_buffer().buffer(),
-    //         .index_count    = _skybox_mesh.index_count(),
-    //         .material       = _skybox_texture,
-    //         .push_constants = {{
-    //             .stage_flags = vk::ShaderStageFlagBits::eVertex,
-    //             .size        = sizeof(vkl::Mat4),
-    //             .data        = &vkl::Mat4::identity,
-    //         }}
-    //     }
-    // );
 }
 
 // =============================================================================

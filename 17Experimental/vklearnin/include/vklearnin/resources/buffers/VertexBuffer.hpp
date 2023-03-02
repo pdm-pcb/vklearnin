@@ -3,6 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
+#include "vklearnin/resources/buffers/BufferTools.hpp"
 
 namespace vkl {
 
