@@ -262,7 +262,7 @@ void Demo::init() {
     _wall_mesh.init(2.0f, 5.0f);
     _floor_mesh.init(2.0f, 10.0f);
 
-    _skybox_mesh.init(1.0f);
+    _skybox_mesh.init(5.0f);
 
     _wall_matrix = vkl::math::translate(
         vkl::Mat4::identity,

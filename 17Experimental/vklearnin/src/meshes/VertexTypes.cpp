@@ -58,7 +58,7 @@ VertexFlatTexture::VertexFlatTexture(std::array<float, 4> const &position,
 // =============================================================================
 VertexBindings const VertexSkybox::bindings {{
     .binding   = 0u,
-    .stride    = sizeof(VertexFlatTexture),
+    .stride    = sizeof(VertexSkybox),
     .inputRate = vk::VertexInputRate::eVertex
 }};
 
