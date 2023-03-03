@@ -295,7 +295,7 @@ void host_to_device(ImageObject &dst, const void * const data) {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .mipLevel = 0u,
             .baseArrayLayer = 0u,
-            .layerCount = 1u,
+            .layerCount = dst.array_layers,
         },
         .imageOffset {
             .x = 0,

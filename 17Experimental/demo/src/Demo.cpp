@@ -262,7 +262,7 @@ void Demo::init() {
     _wall_mesh.init(2.0f, 5.0f);
     _floor_mesh.init(2.0f, 10.0f);
 
-    _skybox_mesh.init(5.0f);
+    _skybox_mesh.init(500.0f);
 
     _wall_matrix = vkl::math::translate(
         vkl::Mat4::identity,
@@ -315,13 +315,14 @@ void Demo::init() {
     vkl::Renderer::add_flat_texture(_floor_texture);
 
     // https://polyhaven.com/a/belfast_sunset_puresky
+    // https://opengameart.org/content/space-skyboxes-0
     _skybox_texture.cubemap_from_files({{
-        "textures/skybox/px.png",
-        "textures/skybox/nx.png",
-        "textures/skybox/py.png",
-        "textures/skybox/ny.png",
-        "textures/skybox/pz.png",
-        "textures/skybox/nz.png",
+        "textures/skybox/blue_nebula/px.png",
+        "textures/skybox/blue_nebula/nx.png",
+        "textures/skybox/blue_nebula/py.png",
+        "textures/skybox/blue_nebula/ny.png",
+        "textures/skybox/blue_nebula/pz.png",
+        "textures/skybox/blue_nebula/nz.png",
     }});
     _skybox_texture.init_sampler(
         vk::Filter::eLinear,
