@@ -59,8 +59,6 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
     };
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        _bind_global_uniforms(_flat_color_pipeline, cmd_buffer);
-
         _execute_flat_color_pipeline(cmd_buffer);
         _execute_flat_texture_pipeline(cmd_buffer);
         _execute_skybox_pipeline(cmd_buffer);
@@ -79,6 +77,7 @@ void Renderer::init() {
 void Renderer::shutdown() {
     _flat_color_pipeline.destroy();
     _flat_texture_pipeline.destroy();
+    _skybox_pipeline.destroy();
 
     for(auto &set : _global_uniform_sets) {
         set.destroy();
@@ -182,22 +181,24 @@ void Renderer::_init_descriptors() {
 
 // =============================================================================
 void Renderer::_init_flat_color_pipeline() {
-    auto &pipeline = _flat_color_pipeline;
-    pipeline.vert_from_spirv("shaders/01color.vert");
-    pipeline.frag_from_spirv("shaders/01color.frag");
+    _flat_color_pipeline.vert_from_spirv("shaders/01color.vert");
+    _flat_color_pipeline.frag_from_spirv("shaders/01color.frag");
 
-    pipeline.describe_vertex_input(
+    _flat_color_pipeline.describe_vertex_input(
         VertexFlatColor::bindings,
         VertexFlatColor::attributes
     );
 
-    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
-    pipeline.add_push_constant(
+    _flat_color_pipeline.add_descriptor_set(
+        _global_uniform_set_layout.native()
+    );
+
+    _flat_color_pipeline.add_push_constant(
         vk::ShaderStageFlagBits::eVertex,
         sizeof(Mat4)
     );
 
-    pipeline.create(_render_pass);
+    _flat_color_pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -215,24 +216,28 @@ void Renderer::_init_flat_texture_pipeline() {
         set.create(_desc_pool, _flat_texture_set_layout);
     }
 
-    auto &pipeline = _flat_texture_pipeline;
-    pipeline.vert_from_spirv("shaders/02texture.vert");
-    pipeline.frag_from_spirv("shaders/02texture.frag");
+    _flat_texture_pipeline.vert_from_spirv("shaders/02texture.vert");
+    _flat_texture_pipeline.frag_from_spirv("shaders/02texture.frag");
 
-    pipeline.describe_vertex_input(
+    _flat_texture_pipeline.describe_vertex_input(
         VertexFlatTexture::bindings,
         VertexFlatTexture::attributes
     );
 
-    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
-    pipeline.add_push_constant(
+    _flat_texture_pipeline.add_descriptor_set(
+        _global_uniform_set_layout.native()
+    );
+
+    _flat_texture_pipeline.add_push_constant(
         vk::ShaderStageFlagBits::eVertex,
         sizeof(Mat4)
     );
 
-    pipeline.add_descriptor_set(_flat_texture_set_layout.native());
+    _flat_texture_pipeline.add_descriptor_set(
+        _flat_texture_set_layout.native()
+    );
 
-    pipeline.create(_render_pass);
+    _flat_texture_pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -248,24 +253,18 @@ void Renderer::_init_skybox_pipeline() {
     _skybox_set_layout.create();
     _skybox_set.create(_desc_pool, _skybox_set_layout);
 
-    auto &pipeline = _skybox_pipeline;
-    pipeline.vert_from_spirv("shaders/03skybox.vert");
-    pipeline.frag_from_spirv("shaders/03skybox.frag");
+    _skybox_pipeline.vert_from_spirv("shaders/03skybox.vert");
+    _skybox_pipeline.frag_from_spirv("shaders/03skybox.frag");
 
-    pipeline.describe_vertex_input(
+    _skybox_pipeline.describe_vertex_input(
         VertexSkybox::bindings,
         VertexSkybox::attributes
     );
 
-    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
-    pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
-        sizeof(Mat4)
-    );
+    _skybox_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
 
-    pipeline.add_descriptor_set(_skybox_set_layout.native());
-
-    pipeline.create(_render_pass);
+    _skybox_pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -278,6 +277,8 @@ Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
     );
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
+
+    _bind_global_uniforms(pipeline, cmd_buffer);
 
     for(auto const &draw : _flat_color_draws) {
         _send_push_constants(pipeline, draw, cmd_buffer);
@@ -311,6 +312,8 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
     );
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
+
+    _bind_global_uniforms(pipeline, cmd_buffer);
 
     for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
         cmd_buffer.bindDescriptorSets(
@@ -354,6 +357,8 @@ void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
 
+    _bind_global_uniforms(pipeline, cmd_buffer);
+
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         pipeline.layout(),
@@ -361,8 +366,6 @@ void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
         { _skybox_set.native() },
         nullptr
     );
-
-    _send_push_constants(pipeline, _skybox_draw, cmd_buffer);
 
     cmd_buffer.bindVertexBuffers(
         0u,

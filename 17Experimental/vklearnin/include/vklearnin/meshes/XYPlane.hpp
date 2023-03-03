@@ -43,8 +43,6 @@ public:
         });
     }
 
-    void shutdown() { Mesh<VertexType>::_shutdown_buffers(); }
-
     XYPlane() = default;
     ~XYPlane() = default;
 

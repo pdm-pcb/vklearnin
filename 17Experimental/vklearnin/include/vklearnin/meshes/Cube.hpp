@@ -121,8 +121,6 @@ public:
         });
     }
 
-    void shutdown() { Mesh<VertexType>::_shutdown_buffers(); }
-
     Cube() = default;
     ~Cube() = default;
 

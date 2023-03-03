@@ -43,8 +43,6 @@ public:
         });
     }
 
-    void shutdown() { Mesh<VertexType>::_shutdown_buffers(); }
-
     XZPlane() = default;
     ~XZPlane() = default;
 

@@ -11,6 +11,18 @@ void Texture2D::texture_from_file(std::string_view filepath) {
 
     _calc_mip_levels();
 
+    CONSOLE_TRACE(
+        "\nCreating image with"
+        "\n\tSize:         {} bytes"
+        "\n\tExtent:       {}x{}x{}"
+        "\n\tMip Levels:   {}"
+        "\n\tArray Layers: {}",
+        _image.size,
+        _image.extent.width, _image.extent.height, _image.extent.depth,
+        _image.mip_levels,
+        _image.array_layers
+    );
+
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
@@ -18,8 +30,8 @@ void Texture2D::texture_from_file(std::string_view filepath) {
         (
             vk::ImageUsageFlagBits::eSampled |
             vk::ImageUsageFlagBits::eTransferDst |
-            vk::ImageUsageFlagBits::eTransferSrc // This bit is required for
-        ),                                       // generating mips
+            vk::ImageUsageFlagBits::eTransferSrc // Required to create a mipmap
+        ),
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 
@@ -41,6 +53,20 @@ void Texture2D::texture_from_file(std::string_view filepath) {
 void Texture2D::cubemap_from_files(std::array<std::string_view, 6> filepaths) {
     void *image_data = ImageTools::cubemap_from_files(_image, filepaths);
 
+    _calc_mip_levels();
+
+    CONSOLE_TRACE(
+        "\nCreating image with"
+        "\n\tSize:         {} bytes"
+        "\n\tExtent:       {}x{}x{}"
+        "\n\tMip Levels:   {}"
+        "\n\tArray Layers: {}",
+        _image.size,
+        _image.extent.width, _image.extent.height, _image.extent.depth,
+        _image.mip_levels,
+        _image.array_layers
+    );
+
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
@@ -48,8 +74,8 @@ void Texture2D::cubemap_from_files(std::array<std::string_view, 6> filepaths) {
         (
             vk::ImageUsageFlagBits::eSampled |
             vk::ImageUsageFlagBits::eTransferDst |
-            vk::ImageUsageFlagBits::eTransferSrc // This bit is required for
-        ),                                       // generating mips
+            vk::ImageUsageFlagBits::eTransferSrc // Required to create a mipmap
+        ),
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         vk::ImageCreateFlagBits::eCubeCompatible // Required cubemap flag
     );

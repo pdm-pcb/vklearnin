@@ -11,6 +11,11 @@ namespace vkl {
 template <typename VertexType>
 class Mesh {
 public:
+    void shutdown() {
+        _index_buffer.shutdown();
+        _vertex_buffer.shutdown();
+    }
+
     inline auto const& vertex_buffer() const { return _vertex_buffer; }
     inline auto vertex_count()         const { return _vertex_data.size(); }
 
@@ -37,11 +42,6 @@ protected:
         _index_data = indices;
         _index_buffer.init(sizeof(Index) * _index_data.size());
         _index_buffer.populate_buffer(_index_data);
-    }
-
-    void _shutdown_buffers() {
-        _index_buffer.shutdown();
-        _vertex_buffer.shutdown();
     }
 
 private:

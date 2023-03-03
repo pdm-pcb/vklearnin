@@ -20,7 +20,9 @@ void transition_layout(ImageObject &image,
                        const vk::ImageLayout old_layout,
                        const vk::ImageLayout new_layout,
                        const uint32_t base_mip_level,
-                       const uint32_t level_count);
+                       const uint32_t mip_levels,
+                       const uint32_t base_array_layer,
+                       const uint32_t array_layers);
 
 // =============================================================================
 void create(ImageObject &image,
@@ -312,7 +314,9 @@ void host_to_device(ImageObject &dst, const void * const data) {
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eTransferDstOptimal,
             0u,
-            dst.mip_levels
+            dst.mip_levels,
+            0u,
+            dst.array_layers
         );
 
         cmd_buffer.native().copyBufferToImage(
@@ -392,77 +396,87 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
 
     auto cmd_buffer = CmdBuffer::begin_one_time_submit();
 
-    int32_t mip_width  = static_cast<int32_t>(image.extent.width);
-    int32_t mip_height = static_cast<int32_t>(image.extent.height);
+    for(uint32_t layer = 0u; layer < image.array_layers; ++layer) {
+        CONSOLE_TRACE("Processing array layer {}", layer);
 
-    for(uint32_t mip_level = 1u; mip_level < image.mip_levels; ++mip_level) {
-        CONSOLE_TRACE("Generating mip level {}", mip_level);
+        int32_t mip_width  = static_cast<int32_t>(image.extent.width);
+        int32_t mip_height = static_cast<int32_t>(image.extent.height);
+
+        for(uint32_t mip = 1u; mip < image.mip_levels; ++mip) {
+            CONSOLE_TRACE("Generating mip level {}", mip);
+            transition_layout(
+                image,
+                cmd_buffer.native(),
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::ImageLayout::eTransferSrcOptimal,
+                mip - 1u,
+                1u,
+                layer,
+                1u
+            );
+
+            vk::ImageBlit blit {
+                .srcSubresource {
+                    .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel       = mip - 1,
+                    .baseArrayLayer = layer,
+                    .layerCount     = 1u,
+                },
+                .srcOffsets = std::array<vk::Offset3D, 2> {
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D { mip_width, mip_height, 1 }
+                },
+                .dstSubresource {
+                    .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel       = mip,
+                    .baseArrayLayer = layer,
+                    .layerCount     = 1u,
+                },
+                .dstOffsets = std::array<vk::Offset3D, 2> {
+                    vk::Offset3D { 0, 0, 0 },
+                    vk::Offset3D {
+                        (mip_width  > 1 ? mip_width  / 2 : 1),
+                        (mip_height > 1 ? mip_height / 2 : 1),
+                        1
+                    }
+                },
+            };
+
+            cmd_buffer.native().blitImage(
+                image.handle,
+                vk::ImageLayout::eTransferSrcOptimal,
+                image.handle,
+                vk::ImageLayout::eTransferDstOptimal,
+                { blit },
+                filter
+            );
+
+            transition_layout(
+                image,
+                cmd_buffer.native(),
+                vk::ImageLayout::eTransferSrcOptimal,
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                mip - 1u,
+                1u,
+                layer,
+                1u
+            );
+
+            if(mip_width  > 1) { mip_width  /= 2; }
+            if(mip_height > 1) { mip_height /= 2; }
+        }
+
         transition_layout(
             image,
             cmd_buffer.native(),
             vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eTransferSrcOptimal,
-            mip_level - 1u,
-            1u
-        );
-
-        vk::ImageBlit blit {
-            .srcSubresource {
-                .aspectMask     = vk::ImageAspectFlagBits::eColor,
-                .mipLevel       = mip_level - 1,
-                .baseArrayLayer = 0u,
-                .layerCount     = 1u,
-            },
-            .srcOffsets = std::array<vk::Offset3D, 2> {
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D { mip_width, mip_height, 1 }
-            },
-            .dstSubresource {
-                .aspectMask     = vk::ImageAspectFlagBits::eColor,
-                .mipLevel       = mip_level,
-                .baseArrayLayer = 0u,
-                .layerCount     = 1u,
-            },
-            .dstOffsets = std::array<vk::Offset3D, 2> {
-                vk::Offset3D { 0, 0, 0 },
-                vk::Offset3D {
-                    (mip_width  > 1 ? mip_width  / 2 : 1),
-                    (mip_height > 1 ? mip_height / 2 : 1),
-                    1
-                }
-            },
-        };
-
-        cmd_buffer.native().blitImage(
-            image.handle,
-            vk::ImageLayout::eTransferSrcOptimal,
-            image.handle,
-            vk::ImageLayout::eTransferDstOptimal,
-            { blit },
-            filter
-        );
-
-        transition_layout(
-            image,
-            cmd_buffer.native(),
-            vk::ImageLayout::eTransferSrcOptimal,
             vk::ImageLayout::eShaderReadOnlyOptimal,
-            mip_level - 1u,
+            image.mip_levels - 1u,
+            1u,
+            layer,
             1u
         );
-
-        if(mip_width  > 1) { mip_width  /= 2; }
-        if(mip_height > 1) { mip_height /= 2; }
     }
-
-    transition_layout(
-        image,
-        cmd_buffer.native(),
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        image.mip_levels - 1u,
-        1u
-    );
 
     CmdBuffer::end_one_time_submit(cmd_buffer);
 }
@@ -547,7 +561,9 @@ void transition_layout(ImageObject &image,
                        const vk::ImageLayout old_layout,
                        const vk::ImageLayout new_layout,
                        const uint32_t base_mip_level,
-                       const uint32_t level_count)
+                       const uint32_t mip_levels,
+                       const uint32_t base_array_layer,
+                       const uint32_t array_layers)
 {
     vk::ImageMemoryBarrier barrier {
         .oldLayout = old_layout,
@@ -558,19 +574,20 @@ void transition_layout(ImageObject &image,
         .subresourceRange {
             .aspectMask     = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel   = base_mip_level,
-            .levelCount     = level_count,
-            .baseArrayLayer = 0u,
-            .layerCount     = 1u,
+            .levelCount     = mip_levels,
+            .baseArrayLayer = base_array_layer,
+            .layerCount     = array_layers,
         }
     };
 
-    CONSOLE_TRACE(
-        "Image {:#x}, mip {}/{}: '{}' -> '{}'",
-        reinterpret_cast<uint64_t>(VkImage(image.handle)),
-        base_mip_level, level_count,
-        to_string(barrier.oldLayout),
-        to_string(barrier.newLayout)
-    );
+    // CONSOLE_TRACE(
+    //     "Image {:#x}, mip {} ({}), layer {} ({}): '{}' -> '{}'",
+    //     reinterpret_cast<uint64_t>(VkImage(image.handle)),
+    //     base_mip_level, mip_levels,
+    //     base_array_layer, array_layers,
+    //     to_string(barrier.oldLayout),
+    //     to_string(barrier.newLayout)
+    // );
 
     vk::PipelineStageFlags src_stage = vk::PipelineStageFlagBits::eNone;
     vk::PipelineStageFlags dst_stage = vk::PipelineStageFlagBits::eNone;
