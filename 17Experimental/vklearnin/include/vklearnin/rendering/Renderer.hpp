@@ -27,28 +27,23 @@ public:
     static void shutdown();
 
     static void set_global_uniforms(std::vector<BufferObject> const &ubos);
-    static void add_material(ImageObject const &texture);
+    static void add_flat_texture(Texture2D const &texture);
+    static void set_skybox_texture(Texture2D const &texture);
     static void create_pipelines();
 
     Renderer() = delete;
 
 private:
-    enum DescBindFreq {
-        GLOBAL_UNIFORM,
-        PER_MATERIAL,
-        PER_DRAW
-    };
-
     static DescriptorPool _desc_pool;
 
     static DescriptorSetLayout _global_uniform_set_layout;
-    static DescriptorSetLayout _material_set_layout;
-    static DescriptorSetLayout _draw_set_layout;
+    static DescriptorSetLayout _flat_texture_set_layout;
+    static DescriptorSetLayout _skybox_set_layout;
 
     using DescriptorSets = std::vector<DescriptorSet>;
     static DescriptorSets _global_uniform_sets;
-    static DescriptorSets _material_sets;
-    static DescriptorSets _draw_sets;
+    static DescriptorSets _flat_texture_sets;
+    static DescriptorSet  _skybox_set;
 
     static RenderPass _render_pass;
 
@@ -56,16 +51,19 @@ private:
 
     static Pipeline _flat_color_pipeline;
     static Pipeline _flat_texture_pipeline;
+    static Pipeline _skybox_pipeline;
 
     using ColorDraws = std::vector<DrawSubmission<VertexFlatColor>>;
     static ColorDraws _flat_color_draws;
 
-    struct MaterialDrawQueue {
+    struct FlatTextureDrawQueue {
         size_t const set_index;
         std::vector<DrawSubmission<VertexFlatTexture>> queue;
     };
-    using TextureDraws = std::unordered_map<uint64_t, MaterialDrawQueue>;
-    static TextureDraws _flat_texture_draws;
+    using FlatTextureDraws = std::unordered_map<uint64_t, FlatTextureDrawQueue>;
+    static FlatTextureDraws _flat_texture_draws;
+
+    static DrawSubmission<VertexSkybox> _skybox_draw;
 
     static void _init_framebuffers();
     static void _init_descriptors();
@@ -97,12 +95,14 @@ inline void Renderer::submit(DrawSubmission<VertexType> const &draw) {
     if constexpr(std::is_same_v<VertexType, VertexFlatColor>) {
         _flat_color_draws.push_back(draw);
     }
-
-    if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
+    else if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
         auto mat_index = reinterpret_cast<uint64_t>(
             VkImage(draw.material->image().handle)
         );
         _flat_texture_draws.at(mat_index).queue.push_back(draw);
+    }
+    else if constexpr(std::is_same_v<VertexType, VertexSkybox>) {
+        _skybox_draw = draw;
     }
 }
 

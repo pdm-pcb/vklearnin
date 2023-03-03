@@ -179,6 +179,18 @@ void Demo::submit_draws() {
                 }}
         }
     );
+
+    vkl::Renderer::submit(
+        vkl::DrawSubmission<vkl::VertexSkybox> {
+            .mesh     = &_skybox_mesh,
+            .material = &_skybox_texture,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_floor_matrix,
+                }}
+        }
+    );
 }
 
 // =============================================================================
@@ -255,7 +267,7 @@ void Demo::init() {
     _wall_mesh.init(2.0f, 5.0f);
     _floor_mesh.init(2.0f, 10.0f);
 
-    _skybox_mesh.init(5.0f, 1.0f);
+    _skybox_mesh.init(5.0f);
 
     _wall_matrix = vkl::math::translate(
         vkl::Mat4::identity,
@@ -275,7 +287,7 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-    vkl::Renderer::add_material(_bricks_a.image());
+    vkl::Renderer::add_flat_texture(_bricks_a);
 
     _bricks_b.texture_from_file("textures/bricks082c_d.jpg");
     _bricks_b.init_sampler(
@@ -285,7 +297,7 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-    vkl::Renderer::add_material(_bricks_b.image());
+    vkl::Renderer::add_flat_texture(_bricks_b);
 
     _wall_texture.texture_from_file("textures/scifimetalpanel_004_d.jpg");
     _wall_texture.init_sampler(
@@ -295,7 +307,7 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-    vkl::Renderer::add_material(_wall_texture.image());
+    vkl::Renderer::add_flat_texture(_wall_texture);
 
     _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
     _floor_texture.init_sampler(
@@ -305,7 +317,7 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-    vkl::Renderer::add_material(_floor_texture.image());
+    vkl::Renderer::add_flat_texture(_floor_texture);
 
     // https://polyhaven.com/a/belfast_sunset_puresky
     _skybox_texture.cubemap_from_files({{
@@ -323,7 +335,7 @@ void Demo::init() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-    vkl::Renderer::add_material(_skybox_texture.image());
+    vkl::Renderer::set_skybox_texture(_skybox_texture);
 }
 
 // =============================================================================

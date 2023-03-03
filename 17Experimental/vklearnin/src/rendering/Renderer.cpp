@@ -17,18 +17,24 @@ static constexpr vk::ClearValue clear_values[] = {
     }
 };
 
-DescriptorPool Renderer::_desc_pool { };
+const enum DescBindSlot {
+    GLOBAL_UNIFORM,
+    PER_TEXTURE,
+    PER_DRAW
+};
+
+    DescriptorPool Renderer::_desc_pool { };
 
 DescriptorSetLayout Renderer::_global_uniform_set_layout { };
-DescriptorSetLayout Renderer::_material_set_layout       { };
-DescriptorSetLayout Renderer::_draw_set_layout           { };
+DescriptorSetLayout Renderer::_flat_texture_set_layout   { };
+DescriptorSetLayout Renderer::_skybox_set_layout         { };
 
 Renderer::DescriptorSets Renderer::_global_uniform_sets {
     RenderConfig::image_count
 };
 
-Renderer::DescriptorSets Renderer::_material_sets   { };
-Renderer::DescriptorSets Renderer::_draw_sets       { };
+Renderer::DescriptorSets Renderer::_flat_texture_sets { };
+DescriptorSet Renderer::_skybox_set { };
 
 RenderPass Renderer::_render_pass { };
 
@@ -36,9 +42,11 @@ std::vector<Framebuffer> Renderer::_framebuffers { RenderConfig::image_count };
 
 Pipeline Renderer::_flat_color_pipeline;
 Pipeline Renderer::_flat_texture_pipeline;
+Pipeline Renderer::_skybox_pipeline;
 
-Renderer::ColorDraws   Renderer::_flat_color_draws;
-Renderer::TextureDraws Renderer::_flat_texture_draws;
+Renderer::ColorDraws         Renderer::_flat_color_draws;
+Renderer::FlatTextureDraws   Renderer::_flat_texture_draws;
+DrawSubmission<VertexSkybox> Renderer::_skybox_draw;
 
 // =============================================================================
 void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
@@ -55,7 +63,7 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
 
         _execute_flat_color_pipeline(cmd_buffer);
         _execute_flat_texture_pipeline(cmd_buffer);
-        // _execute_skybox_pipeline(cmd_buffer);
+        _execute_skybox_pipeline(cmd_buffer);
 
     cmd_buffer.endRenderPass();
 }
@@ -77,7 +85,8 @@ void Renderer::shutdown() {
     }
 
     _global_uniform_set_layout.destroy();
-    _material_set_layout.destroy();
+    _flat_texture_set_layout.destroy();
+    _skybox_set_layout.destroy();
 
     _desc_pool.destroy();
 
@@ -112,17 +121,22 @@ void Renderer::set_global_uniforms(std::vector<BufferObject> const &ubos) {
 }
 
 // =============================================================================
-void Renderer::add_material(ImageObject const &material) {
-    _material_sets.resize(_material_sets.size() + 1);
-    _material_sets.back().add_texture2D(material);
+void Renderer::add_flat_texture(Texture2D const &texture) {
+    _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
+    _flat_texture_sets.back().add_texture2D(texture.image());
 
     _flat_texture_draws.insert({
-        reinterpret_cast<uint64_t>(VkImage(material.handle)),
-        MaterialDrawQueue {
-            .set_index = _material_sets.size() - 1,
+        reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
+        FlatTextureDrawQueue {
+            .set_index = _flat_texture_sets.size() - 1,
             .queue = { }
         }
     });
+}
+
+// =============================================================================
+void Renderer::set_skybox_texture(Texture2D const &texture) {
+    _skybox_set.add_texture2D(texture.image());
 }
 
 // =============================================================================
@@ -132,22 +146,9 @@ void Renderer::create_pipelines() {
         set.create(_desc_pool, _global_uniform_set_layout);
     }
 
-    _material_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _material_set_layout.create();
-    for(auto &set : _material_sets) {
-        set.create(_desc_pool, _material_set_layout);
-    }
-
     _init_flat_color_pipeline();
     _init_flat_texture_pipeline();
-    // _init_skybox_pipeline();
+    _init_skybox_pipeline();
 }
 
 // =============================================================================
@@ -201,6 +202,19 @@ void Renderer::_init_flat_color_pipeline() {
 
 // =============================================================================
 void Renderer::_init_flat_texture_pipeline() {
+    _flat_texture_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _flat_texture_set_layout.create();
+    for(auto &set : _flat_texture_sets) {
+        set.create(_desc_pool, _flat_texture_set_layout);
+    }
+
     auto &pipeline = _flat_texture_pipeline;
     pipeline.vert_from_spirv("shaders/02texture.vert");
     pipeline.frag_from_spirv("shaders/02texture.frag");
@@ -216,21 +230,42 @@ void Renderer::_init_flat_texture_pipeline() {
         sizeof(Mat4)
     );
 
-    pipeline.add_descriptor_set(_material_set_layout.native());
+    pipeline.add_descriptor_set(_flat_texture_set_layout.native());
 
     pipeline.create(_render_pass);
 }
 
 // =============================================================================
 void Renderer::_init_skybox_pipeline() {
-    // auto &pipeline = _pipelines[PipelineType::SKYBOX];
-    // pipeline.vert_from_spirv("shaders/03skybox.vert");
-    // pipeline.frag_from_spirv("shaders/03skybox.frag");
+    _skybox_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
 
-    // pipeline.describe_vertex_input(
-    //     VertexFlatTexture::bindings,
-    //     VertexFlatTexture::attributes
-    // );
+    _skybox_set_layout.create();
+    _skybox_set.create(_desc_pool, _skybox_set_layout);
+
+    auto &pipeline = _skybox_pipeline;
+    pipeline.vert_from_spirv("shaders/03skybox.vert");
+    pipeline.frag_from_spirv("shaders/03skybox.frag");
+
+    pipeline.describe_vertex_input(
+        VertexSkybox::bindings,
+        VertexSkybox::attributes
+    );
+
+    pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eVertex,
+        sizeof(Mat4)
+    );
+
+    pipeline.add_descriptor_set(_skybox_set_layout.native());
+
+    pipeline.create(_render_pass);
 }
 
 // =============================================================================
@@ -277,12 +312,12 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, pipeline.viewport());
     cmd_buffer.setScissor(0u,  pipeline.scissor());
 
-    for(auto &[material_id, draw_queue] : _flat_texture_draws) {
+    for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
         cmd_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             pipeline.layout(),
-            DescBindFreq::PER_MATERIAL,
-            { _material_sets[draw_queue.set_index].native() },
+            DescBindSlot::PER_TEXTURE,
+            { _flat_texture_sets[draw_queue.set_index].native() },
             nullptr
         );
 
@@ -311,47 +346,38 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
 
 // =============================================================================
 void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
-    // auto const &pipeline = _pipelines[PipelineType::SKYBOX];
+    auto const &pipeline = _skybox_pipeline;
+    cmd_buffer.bindPipeline(
+        vk::PipelineBindPoint::eGraphics,
+        pipeline.native()
+    );
+    cmd_buffer.setViewport(0u, pipeline.viewport());
+    cmd_buffer.setScissor(0u,  pipeline.scissor());
 
-    // cmd_buffer.bindPipeline(
-    //     vk::PipelineBindPoint::eGraphics,
-    //     pipeline.native()
-    // );
-    // cmd_buffer.setViewport(0u, pipeline.viewport());
-    // cmd_buffer.setScissor(0u,  pipeline.scissor());
+    cmd_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        pipeline.layout(),
+        DescBindSlot::PER_TEXTURE,
+        { _skybox_set.native() },
+        nullptr
+    );
 
-    // cmd_buffer.bindDescriptorSets(
-    //     vk::PipelineBindPoint::eGraphics,
-    //     pipeline.layout(),
-    //     DescBindFreq::GLOBAL_UNIFORM,
-    //     { _global_uniform_sets[Swapchain::image_index()].native() },
-    //     nullptr
-    // );
+    _send_push_constants(pipeline, _skybox_draw, cmd_buffer);
 
-    // cmd_buffer.bindDescriptorSets(
-    //     vk::PipelineBindPoint::eGraphics,
-    //     pipeline.layout(),
-    //     DescBindFreq::PER_MATERIAL,
-    //     { _skybox_desc_set.native() },
-    //     nullptr
-    // );
-
-    // _send_push_constants(pipeline, _skybox_draw, cmd_buffer);
-
-    // cmd_buffer.bindVertexBuffers(
-    //     0u,
-    //     { _skybox_draw.vertex_buffer.handle },
-    //     { 0u }
-    // );
-    // cmd_buffer.bindIndexBuffer(
-    //     _skybox_draw.index_buffer.handle,
-    //     0u,
-    //     INDEX_TYPE
-    // );
-    // cmd_buffer.drawIndexed(
-    //     static_cast<uint32_t>(_skybox_draw.index_count),
-    //     1u, 0u, 0u, 0u
-    // );
+    cmd_buffer.bindVertexBuffers(
+        0u,
+        { _skybox_draw.mesh->vertex_buffer().buffer().handle },
+        { 0u }
+    );
+    cmd_buffer.bindIndexBuffer(
+        _skybox_draw.mesh->index_buffer().buffer().handle,
+        0u,
+        INDEX_TYPE
+    );
+    cmd_buffer.drawIndexed(
+        static_cast<uint32_t>(_skybox_draw.mesh->index_count()),
+        1u, 0u, 0u, 0u
+    );
 }
 
 // =============================================================================
@@ -361,7 +387,7 @@ void Renderer::_bind_global_uniforms(Pipeline const &pipeline,
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         pipeline.layout(),
-        DescBindFreq::GLOBAL_UNIFORM,
+        DescBindSlot::GLOBAL_UNIFORM,
         { _global_uniform_sets[Swapchain::image_index()].native() },
         nullptr
     );

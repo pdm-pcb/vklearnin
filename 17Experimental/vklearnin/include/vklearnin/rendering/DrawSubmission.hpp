@@ -8,15 +8,15 @@
 namespace vkl {
 
 struct PushConstant {
-    vk::ShaderStageFlags const stage_flags;
-    size_t               const size;
-    void                 const *data = nullptr;
+    vk::ShaderStageFlags stage_flags = vk::ShaderStageFlagBits::eAll;
+    size_t               size        = 0;
+    void                 *data       = nullptr;
 };
 
 template <typename VertexType>
 struct DrawSubmission {
-    vkl::Mesh<VertexType>     const *mesh = nullptr;
-    vkl::Texture2D            const *material = nullptr;
+    vkl::Mesh<VertexType>     *mesh = nullptr;
+    vkl::Texture2D            *material = nullptr;
     std::vector<PushConstant> push_constants;
 };
 
