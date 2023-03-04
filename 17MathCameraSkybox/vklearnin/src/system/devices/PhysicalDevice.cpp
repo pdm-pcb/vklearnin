@@ -219,14 +219,14 @@ void PhysicalDevice::select_device() {
            present_fam != std::numeric_limits<uint32_t>::max() &&
            features.samplerAnisotropy != 0)
         {
+            gfx_queue_index            = graphics_support[device_index].second;
+            present_queue_index        = present_support[device_index].second;
+
             auto const& dev_store      = _available_devices[device_index];
             _physical_device           = dev_store.device;
             _memory_properties         = dev_store.memory;
             RenderConfig::msaa_samples = dev_store.max_samples;
             RenderConfig::anisotropy   = dev_store.max_aniso;
-            gfx_queue_index            = graphics_support[device_index].second;
-            present_queue_index        = present_support[device_index].second;
-
             CONSOLE_INFO("Selected {}", dev_store.name);
 
             // Just choose the first satisfactory device, as they're already
