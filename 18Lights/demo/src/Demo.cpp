@@ -2,6 +2,8 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
+std::array<float, 4> LIGHT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
+
 // =============================================================================
 void Demo::update() {
     auto const cos_yaw   = std::cosf(vkl::math::radians(_cam_data.yaw));
@@ -49,15 +51,26 @@ void Demo::update() {
 
 // =============================================================================
 void Demo::submit_draws() {
-    _cube_matrix = vkl::math::rotate(
-        vkl::Mat4::identity,
-        vkl::Timekeeper::runtime() * 20.0f,
-        { 15.0f, 20.0f, 0.0f, 0.0f }
+    vkl::Renderer::submit(
+        vkl::DrawSubmission<vkl::VertexFlatColor> {
+            .mesh = &_caster_mesh,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_caster_matrix,
+                }}
+        }
     );
+
+    // _cube_matrix = vkl::math::rotate(
+    //     vkl::Mat4::identity,
+    //     vkl::Timekeeper::runtime() * 20.0f,
+    //     { 15.0f, 20.0f, 0.0f, 0.0f }
+    // );
 
     vkl::Renderer::submit(
         vkl::DrawSubmission<vkl::VertexLitColor> {
-            .mesh     = &_cube_mesh,
+            .mesh = &_cube_mesh,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eVertex,
                     .size        = sizeof(vkl::Mat4),
@@ -81,81 +94,11 @@ void Demo::submit_draws() {
 
 // =============================================================================
 void Demo::init() {
-    vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
-        this,
-        &Demo::on_key_press
-    );
-
-    vkl::EventBroker::subscribe<vkl::KeyReleaseEvent>(
-        this,
-        &Demo::on_key_release
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseMoveEvent>(
-        this,
-        &Demo::on_mouse_move
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseButtonPressEvent>(
-        this,
-        &Demo::on_mouse_button_press
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseButtonReleaseEvent>(
-        this,
-        &Demo::on_mouse_button_release
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseScrollEvent>(
-        this,
-        &Demo::on_mouse_scroll
-    );
-
-    _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
-
-    _cam_data.pos     =  8.0f * vkl::Vec4::unit_z;
-    _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
-
-    _vp_ubos.resize(vkl::RenderConfig::image_count);
-    for(auto &ubo : _vp_ubos) {
-        ubo.size = sizeof(VPMatrices);
-        vkl::BufferTools::create(
-            ubo,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            (vk::MemoryPropertyFlagBits::eHostVisible |
-             vk::MemoryPropertyFlagBits::eHostCoherent)
-        );
-    }
-
-    vkl::Renderer::set_global_uniforms(_vp_ubos);
-
-    _cube_mesh.init(1.0f, {{ 0.15f, 0.65f, 0.25f, 1.0f }});
-    _floor_mesh.init(100.0f, 100.0f);
-
-    _floor_matrix = vkl::math::translate(
-        vkl::Mat4::identity,
-        { 0.0f, -3.0f, 0.0f, 1.0f }
-    );
-
-    _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
-    _cube_texture.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-    vkl::Renderer::add_flat_texture(_cube_texture);
-
-    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
-    _floor_texture.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-    vkl::Renderer::add_flat_texture(_floor_texture);
+    _subscribe_to_events();
+    _init_camera();
+    _init_meshes();
+    _init_trs_matrices();
+    _init_textures();
 }
 
 // =============================================================================
@@ -245,11 +188,117 @@ void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
 
 // =============================================================================
 void Demo::shutdown() {
+    _caster_mesh.shutdown();
     _cube_mesh.shutdown();
     _floor_mesh.shutdown();
 
     _cube_texture.shutdown();
     _floor_texture.shutdown();
+}
+
+// =============================================================================
+void Demo::_subscribe_to_events() {
+vkl::EventBroker::subscribe<vkl::KeyPressEvent>(
+        this,
+        &Demo::on_key_press
+    );
+
+    vkl::EventBroker::subscribe<vkl::KeyReleaseEvent>(
+        this,
+        &Demo::on_key_release
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseMoveEvent>(
+        this,
+        &Demo::on_mouse_move
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseButtonPressEvent>(
+        this,
+        &Demo::on_mouse_button_press
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseButtonReleaseEvent>(
+        this,
+        &Demo::on_mouse_button_release
+    );
+
+    vkl::EventBroker::subscribe<vkl::MouseScrollEvent>(
+        this,
+        &Demo::on_mouse_scroll
+    );
+}
+
+// =============================================================================
+void Demo::_init_camera() {
+    _persp_camera.set_perspective(0.1f, 1000.0f, 45.0f);
+
+    _cam_data.pos     =  8.0f * vkl::Vec4::unit_z;
+    _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
+
+    _vp_ubos.resize(vkl::RenderConfig::image_count);
+    for(auto &ubo : _vp_ubos) {
+        ubo.size = sizeof(VPMatrices);
+        vkl::BufferTools::create(
+            ubo,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    vkl::Renderer::set_global_uniforms(_vp_ubos);
+}
+
+// =============================================================================
+void Demo::_init_meshes() {
+    _caster_mesh.init(
+        0.1f,
+        {{
+            LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR,
+            LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR,
+        }}
+    );
+    _cube_mesh.init(1.0f, {{ 0.15f, 0.65f, 0.25f, 1.0f }});
+    _floor_mesh.init(100.0f, 100.0f);
+}
+
+// =============================================================================
+void Demo::_init_trs_matrices() {
+    _caster_matrix = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 2.0f, 2.0f, 2.0f, 1.0f }
+    );
+
+    _cube_matrix = vkl::Mat4::identity;
+
+    _floor_matrix = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 0.0f, -3.0f, 0.0f, 1.0f }
+    );
+}
+
+// =============================================================================
+void Demo::_init_textures() {
+    _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
+    _cube_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+    vkl::Renderer::add_flat_texture(_cube_texture);
+
+    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
+    _floor_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+    vkl::Renderer::add_flat_texture(_floor_texture);
 }
 
 // =============================================================================
@@ -260,12 +309,20 @@ Demo::Demo() :
         .s = false,
         .d = false,
     },
-    _vp_matrices    { },
-    _persp_camera   { },
-    _cube_mesh      { },
-    _floor_mesh     { },
-    _cube_matrix    { },
-    _floor_matrix   { },
+    _vp_matrices  { },
+    _persp_camera { },
+
+    _point_light     { },
+    _point_light_ubo { },
+
+    _caster_mesh { },
+    _cube_mesh   { },
+    _floor_mesh  { },
+
+    _caster_matrix { },
+    _cube_matrix   { },
+    _floor_matrix  { },
+
     _cube_texture   { },
     _floor_texture  { }
 { }

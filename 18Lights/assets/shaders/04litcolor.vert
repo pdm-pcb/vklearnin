@@ -16,6 +16,6 @@ layout(push_constant) uniform vert_constants {
 layout(location = 0) out vec4 out_color;
 
 void main() {
-	out_color = in_color;
+	out_color = abs(in_normal);
 	gl_Position = proj_mat * view_mat * model_mat * in_pos;
 }

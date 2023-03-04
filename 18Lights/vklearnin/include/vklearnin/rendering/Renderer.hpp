@@ -10,6 +10,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/VertexTypes.hpp"
+#include "vklearnin/lighting/LightProps.hpp"
 
 namespace vkl {
 
@@ -37,11 +38,13 @@ private:
     static DescriptorPool _desc_pool;
 
     static DescriptorSetLayout _global_uniform_set_layout;
+    static DescriptorSetLayout _lit_color_set_layout;
     static DescriptorSetLayout _flat_texture_set_layout;
     static DescriptorSetLayout _skybox_set_layout;
 
     using DescriptorSets = std::vector<DescriptorSet>;
     static DescriptorSets _global_uniform_sets;
+    static DescriptorSets _lit_color_sets;
     static DescriptorSets _flat_texture_sets;
     static DescriptorSet  _skybox_set;
 

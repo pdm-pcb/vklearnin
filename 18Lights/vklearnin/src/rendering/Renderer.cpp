@@ -23,9 +23,10 @@ enum DescBindSlot {
     PER_DRAW
 };
 
-    DescriptorPool Renderer::_desc_pool { };
+DescriptorPool Renderer::_desc_pool { };
 
 DescriptorSetLayout Renderer::_global_uniform_set_layout { };
+DescriptorSetLayout Renderer::_lit_color_set_layout      { };
 DescriptorSetLayout Renderer::_flat_texture_set_layout   { };
 DescriptorSetLayout Renderer::_skybox_set_layout         { };
 
@@ -33,7 +34,9 @@ Renderer::DescriptorSets Renderer::_global_uniform_sets {
     RenderConfig::image_count
 };
 
+Renderer::DescriptorSets Renderer::_lit_color_sets    { };
 Renderer::DescriptorSets Renderer::_flat_texture_sets { };
+
 DescriptorSet Renderer::_skybox_set { };
 
 RenderPass Renderer::_render_pass { };
@@ -88,6 +91,7 @@ void Renderer::shutdown() {
     }
 
     _global_uniform_set_layout.destroy();
+    _lit_color_set_layout.destroy();
     _flat_texture_set_layout.destroy();
     _skybox_set_layout.destroy();
 
@@ -216,9 +220,20 @@ void Renderer::_init_lit_color_pipeline() {
         VertexLitColor::attributes
     );
 
-    _lit_color_pipeline.add_descriptor_set(
-        _global_uniform_set_layout.native()
-    );
+    _lit_color_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+
+    _lit_color_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _lit_color_set_layout.create();
+    for(auto &set : _lit_color_sets) {
+        set.create(_desc_pool, _lit_color_set_layout);
+    }
 
     _lit_color_pipeline.add_push_constant(
         vk::ShaderStageFlagBits::eVertex,
@@ -230,19 +245,6 @@ void Renderer::_init_lit_color_pipeline() {
 
 // =============================================================================
 void Renderer::_init_flat_texture_pipeline() {
-    _flat_texture_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _flat_texture_set_layout.create();
-    for(auto &set : _flat_texture_sets) {
-        set.create(_desc_pool, _flat_texture_set_layout);
-    }
-
     _flat_texture_pipeline.vert_from_spirv("shaders/02texture.vert");
     _flat_texture_pipeline.frag_from_spirv("shaders/02texture.frag");
 
@@ -260,6 +262,19 @@ void Renderer::_init_flat_texture_pipeline() {
         sizeof(Mat4)
     );
 
+    _flat_texture_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _flat_texture_set_layout.create();
+    for(auto &set : _flat_texture_sets) {
+        set.create(_desc_pool, _flat_texture_set_layout);
+    }
+
     _flat_texture_pipeline.add_descriptor_set(
         _flat_texture_set_layout.native()
     );
@@ -269,6 +284,16 @@ void Renderer::_init_flat_texture_pipeline() {
 
 // =============================================================================
 void Renderer::_init_skybox_pipeline() {
+    _skybox_pipeline.vert_from_spirv("shaders/03skybox.vert");
+    _skybox_pipeline.frag_from_spirv("shaders/03skybox.frag");
+
+    _skybox_pipeline.describe_vertex_input(
+        VertexSkybox::bindings,
+        VertexSkybox::attributes
+    );
+
+    _skybox_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+
     _skybox_set_layout.add_binding({
         .binding            = 0u,
         .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
@@ -280,15 +305,6 @@ void Renderer::_init_skybox_pipeline() {
     _skybox_set_layout.create();
     _skybox_set.create(_desc_pool, _skybox_set_layout);
 
-    _skybox_pipeline.vert_from_spirv("shaders/03skybox.vert");
-    _skybox_pipeline.frag_from_spirv("shaders/03skybox.frag");
-
-    _skybox_pipeline.describe_vertex_input(
-        VertexSkybox::bindings,
-        VertexSkybox::attributes
-    );
-
-    _skybox_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
     _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
 
     _skybox_pipeline.create(_render_pass);
