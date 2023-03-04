@@ -470,6 +470,8 @@ void Win32TargetWindow::_register_input() {
 
 // =============================================================================
 void Win32TargetWindow::_restrict_cursor() {
+    ::SetCursorPos(_center.x, _center.y);
+
 	::RECT client_area;
 	::GetClientRect(_window, &client_area);
 	::MapWindowPoints(

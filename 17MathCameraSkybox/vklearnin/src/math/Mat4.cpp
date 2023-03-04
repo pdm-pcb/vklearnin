@@ -5,9 +5,6 @@
 
 namespace vkl {
 
-#ifdef VKL_USE_GLM
-#else
-
 std::ostream& operator<<(std::ostream &out, Mat4 const& m) {
     out << m.x << "\n" << m.y << "\n" << m.z << "\n" << m.w;
     return out;
@@ -57,7 +54,5 @@ bool Mat4::operator==(Mat4 const &other) const {
         w == other.w
     );
 }
-
-#endif // VKL_USE_GLM
 
 } // namespace vkl

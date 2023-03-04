@@ -12,11 +12,7 @@ public:
                          float const vertical_fov_degrees);
 
     void orient(Vec4 const &position, Vec4 const &forward, Vec4 const &side,
-#ifdef VKL_USE_GLM
-                Vec4 const &up = Vec4(0.0f, 1.0f, 0.0f, 0.0f));
-#else
                 Vec4 const &up = Vec4::unit_y);
-#endif // VKL_USE_GLM
 
     inline auto const& view_matrix() const { return _view_mat; }
     inline auto const& proj_matrix() const { return _proj_mat; }

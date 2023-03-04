@@ -4,8 +4,6 @@
 #include "vklearnin/math/math.hpp"
 
 namespace vkl {
-#ifdef VKL_USE_GLM
-#else
 std::ostream& operator<<(std::ostream &out, Vec4 const& v) {
     out << std::fixed << std::setprecision(math::print_precs)
         << std::setw(math::print_width) << v.x << " "
@@ -18,7 +16,7 @@ std::ostream& operator<<(std::ostream &out, Vec4 const& v) {
 
 // =============================================================================
 Vec4 Vec4::operator+(Vec4 const &other) const {
-    return { 
+    return {
         x + other.x,
         y + other.y,
         z + other.z,
@@ -27,7 +25,7 @@ Vec4 Vec4::operator+(Vec4 const &other) const {
 }
 
 Vec4 Vec4::operator-(Vec4 const &other) const {
-    return { 
+    return {
         x - other.x,
         y - other.y,
         z - other.z,
@@ -92,7 +90,7 @@ bool Vec4::operator==(const Vec4 &other) const {
 
 // =============================================================================
 Vec4 operator*(Vec4 const &v, float scalar) {
-    return { 
+    return {
         v.x * scalar,
         v.y * scalar,
         v.z * scalar,
@@ -101,14 +99,12 @@ Vec4 operator*(Vec4 const &v, float scalar) {
 }
 
 Vec4 operator*(float scalar, Vec4 const &v) {
-    return { 
+    return {
         v.x * scalar,
         v.y * scalar,
         v.z * scalar,
         v.w * scalar,
     };
 }
-
-#endif // VKL_USE_GLM
 
 } // namespace vkl

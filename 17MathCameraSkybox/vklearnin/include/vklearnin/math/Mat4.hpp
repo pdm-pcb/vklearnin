@@ -5,9 +5,6 @@
 
 namespace vkl {
 
-#ifdef VKL_USE_GLM
-    using Mat4 = glm::mat4;
-#else
 struct Mat4 {
     static Mat4 const identity;
     static Mat4 const zero;
@@ -15,7 +12,7 @@ struct Mat4 {
 // =============================================================================
     Mat4 & operator*=(Mat4 const &other);
     [[nodiscard]] Mat4 operator*(Mat4 const &other) const;
-    
+
     [[nodiscard]] Vec4 operator*(Vec4 const &v) const;
 
 // =============================================================================
@@ -30,7 +27,6 @@ struct Mat4 {
 };
 
 std::ostream& operator<<(std::ostream& out, Mat4 const& m);
-#endif // VKL_USE_GLM
 
 } // namespace vkl
 

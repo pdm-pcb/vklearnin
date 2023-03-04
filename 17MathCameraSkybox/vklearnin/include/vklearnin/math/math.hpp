@@ -1,13 +1,6 @@
 #ifndef VKLEARNIN_MATH_MATH_HPP
 #define VKLEARNIN_MATH_MATH_HPP
 
-#ifdef VKL_USE_GLM
-    #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-    #include <glm/glm.hpp>
-    #include <glm/gtc/matrix_transform.hpp>
-    #include <glm/gtx/io.hpp>
-#endif // VKL_USE_GLM
-
 #include "vklearnin/math/Vec4.hpp"
 #include "vklearnin/math/Mat4.hpp"
 

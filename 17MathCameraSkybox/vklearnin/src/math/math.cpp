@@ -3,7 +3,6 @@
 
 namespace vkl {
 
-#ifndef VKL_USE_GLM
 // Insist on keeping the math types simple
 static_assert(sizeof(Vec4) ==  sizeof(float) * 4);
 static_assert(sizeof(Mat4) ==  sizeof(Vec4) * 4);
@@ -23,8 +22,6 @@ Mat4 const Mat4::zero {
     { 0.0f, 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f, 0.0f },
 };
-
-#endif // VKL_USE_GLM
 
 namespace math {
 
@@ -64,9 +61,6 @@ Vec4 cross(Vec4 const &a, Vec4 const &b) {
 // =============================================================================
 // Matrix operations
 Mat4 transpose(Mat4 const &m) {
-#ifdef VKL_USE_GLM
-    return glm::transpose(m);
-#else
     auto result = m;
 
     std::swap(result.x.y, result.y.x);
@@ -79,26 +73,17 @@ Mat4 transpose(Mat4 const &m) {
     std::swap(result.z.w, result.w.z);
 
     return result;
-#endif // VKL_USE_GLM
 }
 
 Mat4 translate(Mat4 const &m, Vec4 const &v) {
-#ifdef VKL_USE_GLM
-    return glm::translate(m, glm::vec3(v));
-#else
     auto result = m;
     result.w = (m.x * v.x) + (m.y * v.y) + (m.z * v.z) + m.w;
     return result;
-#endif // VKL_USE_GLM
 }
 
 Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
-    float const theta = radians(angle);
     auto result = m;
-
-#ifdef VKL_USE_GLM
-    result = glm::rotate(m, theta, glm::vec3(axis));
-#else
+    float const theta = radians(angle);
     float const cos_theta = std::cosf(theta);
     float const sin_theta = std::sinf(theta);
 
@@ -122,15 +107,11 @@ Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
     result.y = m.x * rot_mat.y.x + m.y * rot_mat.y.y + m.z * rot_mat.y.z;
     result.z = m.x * rot_mat.z.x + m.y * rot_mat.z.y + m.z * rot_mat.z.z;
     result.w = m.w;
-#endif // VKL_USE_GLM
 
     return result;
 }
 
 Mat4 scale(Mat4 const &m, Vec4 const &v) {
-#ifdef VKL_USE_GLM
-    return glm::scale(m, glm::vec3(v));
-#else
     Mat4 result;
     result.x = m.x * v.x;
     result.y = m.y * v.y;
@@ -138,7 +119,6 @@ Mat4 scale(Mat4 const &m, Vec4 const &v) {
     result.w = m.w;
 
     return result;
-#endif // VKL_USE_GLM
 }
 
 } // namespace math

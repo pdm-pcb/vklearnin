@@ -48,23 +48,6 @@ target_link_libraries(
     third_party
 )
 
-    message(NOTICE "Fetch glm")
-    FetchContent_MakeAvailable(glm)
-    target_include_directories(
-        vklearnin SYSTEM PUBLIC
-        "${glm_SOURCE_DIR}"
-    )
-    target_link_libraries(
-        vklearnin PUBLIC
-        glm
-    )
-if(VKL_USE_GLM)
-    target_compile_definitions(
-		vklearnin PUBLIC
-		"VKL_USE_GLM"
-	)
-endif()
-
 file(
     GLOB SHADER_SOURCE
     "${PROJECT_SOURCE_DIR}/assets/shaders/*.vert"

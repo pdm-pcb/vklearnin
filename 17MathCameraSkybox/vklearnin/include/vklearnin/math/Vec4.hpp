@@ -5,9 +5,6 @@
 
 namespace vkl {
 
-#ifdef VKL_USE_GLM
-    using Vec4 = glm::vec4;
-#else
 struct Vec4 {
     static Vec4 const unit_x;
     static Vec4 const unit_y;
@@ -39,7 +36,6 @@ struct Vec4 {
 [[nodiscard]] Vec4 operator*(float scalar, Vec4 const &v);
 
 std::ostream& operator<<(std::ostream& out, Vec4 const& v);
-#endif // VKL_USE_GLM
 
 } // namespace vkl
 
