@@ -342,20 +342,20 @@ void create_sampler(ImageObject &image,
                     const vk::SamplerAddressMode mode_v)
 {
     const vk::SamplerCreateInfo sampler_info {
-        .magFilter        = min_filter,
-        .minFilter        = mag_filter,
+        .magFilter        = mag_filter,
+        .minFilter        = min_filter,
         .mipmapMode       = mip_filter,
         .addressModeU     = mode_u,
         .addressModeV     = mode_v,
         .mipLodBias       = 0.0f,
-        .anisotropyEnable = true,
+        .anisotropyEnable = VK_TRUE,
         .maxAnisotropy    = RenderConfig::anisotropy,
-        .compareEnable    = false,
+        .compareEnable    = VK_FALSE,
         .compareOp        = vk::CompareOp::eAlways,
         .minLod           = 0.0f,
         .maxLod           = VK_LOD_CLAMP_NONE,
         .borderColor      = vk::BorderColor::eIntOpaqueWhite,
-        .unnormalizedCoordinates = false
+        .unnormalizedCoordinates = VK_FALSE
     };
 
     auto result = LogicalDevice::native().createSampler(sampler_info);
@@ -365,8 +365,20 @@ void create_sampler(ImageObject &image,
     }
 
     CONSOLE_TRACE(
-        "Created image sampler {:#x}",
-                reinterpret_cast<uint64_t>(::VkSampler(result.value))
+        "\nCreated image sampler {:#x}"
+        "\n\tMag Filter: {}"
+        "\n\tMin Filter: {}"
+        "\n\tMip Mode:   {}"
+        "\n\tAddress U:  {}"
+        "\n\tAddress V:  {}"
+        "\n\tAnisotropy: {}",
+        reinterpret_cast<uint64_t>(::VkSampler(result.value)),
+        to_string(sampler_info.magFilter),
+        to_string(sampler_info.minFilter),
+        to_string(sampler_info.mipmapMode),
+        to_string(sampler_info.addressModeU),
+        to_string(sampler_info.addressModeV),
+        sampler_info.maxAnisotropy
     );
 
     image.sampler = result.value;

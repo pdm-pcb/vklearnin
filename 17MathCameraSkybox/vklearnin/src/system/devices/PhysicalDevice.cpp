@@ -157,32 +157,32 @@ void PhysicalDevice::select_device() {
               std::make_pair(false, std::numeric_limits<uint32_t>::max()));
 
     // Loop through all available hardware
-    for(uint32_t device_idx = 0u;
-        device_idx < _available_devices.size();
-        ++device_idx)
+    for(uint32_t device_index = 0u;
+        device_index < _available_devices.size();
+        ++device_index)
     {
         // Ask Vulkan for some details
-        auto const& gpu = _available_devices[device_idx].device;
+        auto const& gpu = _available_devices[device_index].device;
         auto const props = gpu.getQueueFamilyProperties();
 
         CONSOLE_TRACE("Found {} queue families for {}",
-                      props.size(), _available_devices[device_idx].name);
+                      props.size(), _available_devices[device_index].name);
 
         for(uint32_t family = 0u; family < props.size(); ++family) {
             _print_family_flags(family, props[family].queueFlags);
 
             // If the current queue family has the graphics bit set, keep track
-            if(!graphics_support[device_idx].first &&
+            if(!graphics_support[device_index].first &&
                props[family].queueFlags & vk::QueueFlagBits::eGraphics)
             {
-                graphics_support[device_idx] = { true, family };
+                graphics_support[device_index] = { true, family };
             }
 
             // If we don't have present support yet, check this queue family
             // against the surface we created earlier. getSurfaceSupportKHR()
             // actually just checks whether a given queue family can present
             // on a given surface. Poorly named function, but oh well.
-            if(!present_support[device_idx].first) {
+            if(!present_support[device_index].first) {
                 auto result = gpu.getSurfaceSupportKHR(family, surface);
 
                 // Oblige Vulkan-Hpp and check the return value
@@ -193,7 +193,7 @@ void PhysicalDevice::select_device() {
                     );
                 }
                 else {
-                    present_support[device_idx] = { true, family };
+                    present_support[device_index] = { true, family };
                 }
             }
         }
@@ -202,7 +202,7 @@ void PhysicalDevice::select_device() {
     uint32_t gfx_queue_index = 0u;
     uint32_t present_queue_index = 0u;
 
-    for(uint32_t device_index = 0u;
+    for(uint32_t device_index = 1u;
         device_index < _available_devices.size();
         ++device_index)
     {
@@ -223,15 +223,11 @@ void PhysicalDevice::select_device() {
             _physical_device           = dev_store.device;
             _memory_properties         = dev_store.memory;
             RenderConfig::msaa_samples = dev_store.max_samples;
+            RenderConfig::anisotropy   = dev_store.max_aniso;
             gfx_queue_index            = graphics_support[device_index].second;
             present_queue_index        = present_support[device_index].second;
 
-            CONSOLE_TRACE(
-                "Selected {}, queue {} for graphics and {} for present",
-                dev_store.name,
-                gfx_queue_index,
-                present_queue_index
-            );
+            CONSOLE_INFO("Selected {}", dev_store.name);
 
             // Just choose the first satisfactory device, as they're already
             // sorted by VRAM

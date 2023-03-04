@@ -22,7 +22,11 @@ void Demo::update() {
     );
     _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
 
-    auto const kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
+    auto kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
+    if(_kb.lshift) {
+        kb_speed *= 2.0f;
+    }
+
     if(_kb.w)          { _cam_data.pos += _cam_data.forward * kb_speed; }
     else if(_kb.s)     { _cam_data.pos -= _cam_data.forward * kb_speed; }
     if(_kb.a)          { _cam_data.pos -= _cam_data.side    * kb_speed; }
@@ -371,6 +375,8 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
             _kb.lctrl = false;
             break;
 
+        case vkl::KB_LSHIFT: _kb.lshift = true; break;
+
         default: break;
     }
 }
@@ -378,12 +384,13 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
 // =============================================================================
 void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
     switch(event.code) {
-        case vkl::KB_W     : _kb.w     = false; break;
-        case vkl::KB_A     : _kb.a     = false; break;
-        case vkl::KB_S     : _kb.s     = false; break;
-        case vkl::KB_D     : _kb.d     = false; break;
-        case vkl::KB_LCTRL : _kb.lctrl = false; break;
-        case vkl::KB_SPACE : _kb.space = false; break;
+        case vkl::KB_W      : _kb.w      = false; break;
+        case vkl::KB_A      : _kb.a      = false; break;
+        case vkl::KB_S      : _kb.s      = false; break;
+        case vkl::KB_D      : _kb.d      = false; break;
+        case vkl::KB_LCTRL  : _kb.lctrl  = false; break;
+        case vkl::KB_SPACE  : _kb.space  = false; break;
+        case vkl::KB_LSHIFT : _kb.lshift = false; break;
 
         default: break;
     }

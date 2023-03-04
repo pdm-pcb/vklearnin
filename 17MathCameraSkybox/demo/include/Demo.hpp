@@ -37,8 +37,9 @@ private:
         bool a = false;
         bool s = false;
         bool d = false;
-        bool lctrl = false;
-        bool space = false;
+        bool lctrl  = false;
+        bool space  = false;
+        bool lshift = false;
     } _kb;
 
     struct CamData {
