@@ -156,7 +156,7 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
                 "/sdl"      # Security warnings
                 "/Od"       # Optimization disabled
                 "/EHsc"     # Standard exception handling
-                "/diagnostics:column" # Include column number in compiler messages
+                "/diagnostics:column" # Include column in compiler messages
             )
         elseif(CMAKE_BUILD_TYPE MATCHES "Release")
             target_compile_options(
@@ -168,6 +168,8 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
         endif()
     endif()
 endif()
+
+message(NOTICE "Building for ${CMAKE_BUILD_TYPE}")
 
 set_target_properties(
 	vklearnin PROPERTIES

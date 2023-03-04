@@ -282,7 +282,8 @@ void free_image_data(void *data) {
 
 // =============================================================================
 void free_cubemap_data(void *data) {
-    delete[] data;
+    auto *allocated_data = static_cast<char *>(data);
+    delete[] allocated_data;
 }
 
 // =============================================================================

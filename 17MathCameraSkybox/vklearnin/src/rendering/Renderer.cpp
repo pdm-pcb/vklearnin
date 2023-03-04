@@ -17,7 +17,7 @@ static constexpr vk::ClearValue clear_values[] = {
     }
 };
 
-const enum DescBindSlot {
+enum DescBindSlot {
     GLOBAL_UNIFORM,
     PER_TEXTURE,
     PER_DRAW

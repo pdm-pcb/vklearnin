@@ -315,7 +315,6 @@ void Demo::init() {
     vkl::Renderer::add_flat_texture(_floor_texture);
 
     // https://polyhaven.com/a/belfast_sunset_puresky
-    // https://opengameart.org/content/space-skyboxes-0
     _skybox_texture.cubemap_from_files({{
         "textures/skybox/belfast_sunset/px.png",
         "textures/skybox/belfast_sunset/nx.png",
@@ -324,6 +323,16 @@ void Demo::init() {
         "textures/skybox/belfast_sunset/pz.png",
         "textures/skybox/belfast_sunset/nz.png",
     }});
+    // // https://opengameart.org/content/space-skyboxes-0
+    // _skybox_texture.cubemap_from_files({{
+    //     "textures/skybox/blue_nebula/px.png",
+    //     "textures/skybox/blue_nebula/nx.png",
+    //     "textures/skybox/blue_nebula/py.png",
+    //     "textures/skybox/blue_nebula/ny.png",
+    //     "textures/skybox/blue_nebula/pz.png",
+    //     "textures/skybox/blue_nebula/nz.png",
+    // }});
+
     _skybox_texture.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
