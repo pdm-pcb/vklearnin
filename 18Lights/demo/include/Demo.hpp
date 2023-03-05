@@ -42,6 +42,8 @@ private:
         bool lshift = false;
     } _kb;
 
+    vkl::Camera _persp_camera;
+
     struct CamData {
         vkl::Vec4 pos;
         vkl::Vec4 forward;
@@ -60,11 +62,10 @@ private:
         vkl::Mat4 proj;
     } _vp_matrices;
 
-    vkl::Camera _persp_camera;
     std::vector<vkl::BufferObject> _vp_ubos;
 
-    vkl::PointLight   _point_light;
-    vkl::BufferObject _point_light_ubo;
+    vkl::LightProps _light_props;
+    std::vector<vkl::BufferObject> _light_props_ubos;
 
     vkl::Cube<vkl::VertexFlatColor>      _caster_mesh;
     vkl::Cube<vkl::VertexLitColor>       _cube_mesh;
@@ -82,6 +83,7 @@ private:
     void _init_meshes();
     void _init_trs_matrices();
     void _init_textures();
+    void _init_lights();
 };
 
 #endif // DEMO_HPP

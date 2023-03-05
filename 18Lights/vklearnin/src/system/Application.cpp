@@ -12,7 +12,7 @@ namespace vkl {
 // =============================================================================
 void Application::run() {
     _engine->init();
-    init();
+    this->init();
     Renderer::create_pipelines();
 
     float cummulative_frametime = 0.0f;

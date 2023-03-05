@@ -47,6 +47,11 @@ void Demo::update() {
         _vp_ubos[vkl::Swapchain::image_index()],
         &_vp_matrices
     );
+
+    vkl::BufferTools::update_buffer(
+        _light_props_ubos[vkl::Swapchain::image_index()],
+        &_light_props
+    );
 }
 
 // =============================================================================
@@ -99,6 +104,7 @@ void Demo::init() {
     _init_meshes();
     _init_trs_matrices();
     _init_textures();
+    _init_lights();
 }
 
 // =============================================================================
@@ -194,6 +200,14 @@ void Demo::shutdown() {
 
     _cube_texture.shutdown();
     _floor_texture.shutdown();
+
+    for(auto &ubo : _vp_ubos) {
+        vkl::BufferTools::destroy(ubo);
+    }
+
+    for(auto &ubo : _light_props_ubos) {
+        vkl::BufferTools::destroy(ubo);
+    }
 }
 
 // =============================================================================
@@ -237,6 +251,7 @@ void Demo::_init_camera() {
     _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
 
     _vp_ubos.resize(vkl::RenderConfig::image_count);
+    CONSOLE_TRACE("Allocating VP UBOs");
     for(auto &ubo : _vp_ubos) {
         ubo.size = sizeof(VPMatrices);
         vkl::BufferTools::create(
@@ -302,18 +317,33 @@ void Demo::_init_textures() {
 }
 
 // =============================================================================
-Demo::Demo() :
-    _kb {
-        .w = false,
-        .a = false,
-        .s = false,
-        .d = false,
-    },
-    _vp_matrices  { },
-    _persp_camera { },
+void Demo::_init_lights() {
+    _light_props_ubos.resize(vkl::RenderConfig::image_count);
+    CONSOLE_TRACE("Allocating light UBOs");
+    for(auto &ubo : _light_props_ubos) {
+        ubo.size = sizeof(vkl::LightProps);
+        vkl::BufferTools::create(
+            ubo,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
 
-    _point_light     { },
-    _point_light_ubo { },
+    vkl::Renderer::set_light_ubos(_light_props_ubos);
+}
+
+// =============================================================================
+Demo::Demo() :
+    _kb { },
+
+    _persp_camera { },
+    _cam_data     { },
+    _vp_matrices  { },
+    _vp_ubos      { },
+
+    _light_props      { },
+    _light_props_ubos { },
 
     _caster_mesh { },
     _cube_mesh   { },

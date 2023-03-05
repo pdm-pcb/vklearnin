@@ -179,7 +179,7 @@ void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
     }
 
     CONSOLE_TRACE(
-        "\n\tAllocated {} bytes : {:#x}"
+        "\n\tAllocated {} bytes: Device memory {:#x}"
         "\n\tFor buffer {:#x}",
         buffer.size,
         reinterpret_cast<uint64_t>(VkDeviceMemory(alloc_result.value)),

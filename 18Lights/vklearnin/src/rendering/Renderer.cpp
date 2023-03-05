@@ -10,7 +10,8 @@ namespace vkl {
 
 static constexpr vk::ClearValue clear_values[] = {
     { .color { vkl::RenderConfig::CLEAR_COLOR }},
-    { .depthStencil {
+    { .depthStencil
+        {
             .depth = 1.0f,
             .stencil = 1u,
         }
@@ -26,18 +27,19 @@ enum DescBindSlot {
 DescriptorPool Renderer::_desc_pool { };
 
 DescriptorSetLayout Renderer::_global_uniform_set_layout { };
-DescriptorSetLayout Renderer::_lit_color_set_layout      { };
 DescriptorSetLayout Renderer::_flat_texture_set_layout   { };
 DescriptorSetLayout Renderer::_skybox_set_layout         { };
+DescriptorSetLayout Renderer::_lit_color_set_layout      { };
 
-Renderer::DescriptorSets Renderer::_global_uniform_sets {
-    RenderConfig::image_count
-};
+Renderer::DescriptorSets
+Renderer::_global_uniform_sets { RenderConfig::image_count };
 
-Renderer::DescriptorSets Renderer::_lit_color_sets    { };
 Renderer::DescriptorSets Renderer::_flat_texture_sets { };
 
 DescriptorSet Renderer::_skybox_set { };
+
+std::vector<Renderer::DescriptorSets>
+Renderer::_lit_color_sets { RenderConfig::image_count };
 
 RenderPass Renderer::_render_pass { };
 
@@ -76,7 +78,7 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
 void Renderer::init() {
     _render_pass.create();
     _init_framebuffers();
-    _init_descriptors();
+    _init_descriptor_pool();
 }
 
 // =============================================================================
@@ -85,10 +87,6 @@ void Renderer::shutdown() {
     _lit_color_pipeline.destroy();
     _flat_texture_pipeline.destroy();
     _skybox_pipeline.destroy();
-
-    for(auto &set : _global_uniform_sets) {
-        set.destroy();
-    }
 
     _global_uniform_set_layout.destroy();
     _lit_color_set_layout.destroy();
@@ -113,14 +111,6 @@ void Renderer::set_global_uniforms(std::vector<BufferObject> const &ubos) {
             RenderConfig::image_count
         );
     }
-
-    _global_uniform_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eVertex,
-        .pImmutableSamplers = nullptr
-    });
 
     for(uint32_t image = 0u; image < RenderConfig::image_count; ++image) {
         _global_uniform_sets[image].add_ubo(ubos[image]);
@@ -147,12 +137,24 @@ void Renderer::set_skybox_texture(Texture2D const &texture) {
 }
 
 // =============================================================================
-void Renderer::create_pipelines() {
-    _global_uniform_set_layout.create();
-    for(auto &set : _global_uniform_sets) {
-        set.create(_desc_pool, _global_uniform_set_layout);
+void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
+    if(ubos.size() != RenderConfig::image_count) {
+        CONSOLE_CRITICAL(
+            "UBO vector size of {} does not match image count of {}",
+            ubos.size(),
+            RenderConfig::image_count
+        );
     }
 
+    for(uint32_t image = 0u; image < RenderConfig::image_count; ++image) {
+        _lit_color_sets[image].resize(_lit_color_sets[image].size() + 1);
+        _lit_color_sets[image].back().add_ubo(ubos[image]);
+    }
+}
+
+// =============================================================================
+void Renderer::create_pipelines() {
+    _init_descriptor_sets();
     _init_flat_color_pipeline();
     _init_lit_color_pipeline();
     _init_flat_texture_pipeline();
@@ -174,7 +176,7 @@ void Renderer::_init_framebuffers() {
 }
 
 // =============================================================================
-void Renderer::_init_descriptors() {
+void Renderer::_init_descriptor_pool() {
     _desc_pool.create(
         100u,
         {{
@@ -186,6 +188,61 @@ void Renderer::_init_descriptors() {
             .descriptorCount = 10u,
         }}
     );
+}
+
+// =============================================================================
+void Renderer::_init_descriptor_sets() {
+    _global_uniform_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eVertex,
+        .pImmutableSamplers = nullptr
+    });
+
+    _global_uniform_set_layout.create();
+    for(auto &set : _global_uniform_sets) {
+        set.create(_desc_pool, _global_uniform_set_layout);
+    }
+
+    _flat_texture_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _flat_texture_set_layout.create();
+    for(auto &set : _flat_texture_sets) {
+        set.create(_desc_pool, _flat_texture_set_layout);
+    }
+
+    _skybox_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _skybox_set_layout.create();
+    _skybox_set.create(_desc_pool, _skybox_set_layout);
+
+    _lit_color_set_layout.add_binding({
+        .binding            = 0u,
+        .descriptorType     = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount    = 1u,
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr
+    });
+
+    _lit_color_set_layout.create();
+    for(auto &frame : _lit_color_sets) {
+        for(auto &set : frame) {
+            set.create(_desc_pool, _lit_color_set_layout);
+        }
+    }
 }
 
 // =============================================================================
@@ -220,20 +277,13 @@ void Renderer::_init_lit_color_pipeline() {
         VertexLitColor::attributes
     );
 
-    _lit_color_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    _lit_color_pipeline.add_descriptor_set(
+        _global_uniform_set_layout.native()
+    );
 
-    _lit_color_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _lit_color_set_layout.create();
-    for(auto &set : _lit_color_sets) {
-        set.create(_desc_pool, _lit_color_set_layout);
-    }
+    _lit_color_pipeline.add_descriptor_set(
+        _lit_color_set_layout.native()
+    );
 
     _lit_color_pipeline.add_push_constant(
         vk::ShaderStageFlagBits::eVertex,
@@ -262,19 +312,6 @@ void Renderer::_init_flat_texture_pipeline() {
         sizeof(Mat4)
     );
 
-    _flat_texture_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _flat_texture_set_layout.create();
-    for(auto &set : _flat_texture_sets) {
-        set.create(_desc_pool, _flat_texture_set_layout);
-    }
-
     _flat_texture_pipeline.add_descriptor_set(
         _flat_texture_set_layout.native()
     );
@@ -293,20 +330,7 @@ void Renderer::_init_skybox_pipeline() {
     );
 
     _skybox_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
-
-    _skybox_set_layout.add_binding({
-        .binding            = 0u,
-        .descriptorType     = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr
-    });
-
-    _skybox_set_layout.create();
-    _skybox_set.create(_desc_pool, _skybox_set_layout);
-
     _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
-
     _skybox_pipeline.create(_render_pass);
 }
 
@@ -355,6 +379,14 @@ void Renderer::_execute_lit_color_pipeline(vk::CommandBuffer const &cmd_buffer)
     cmd_buffer.setScissor(0u,  _lit_color_pipeline.scissor());
 
     _bind_global_uniforms(_lit_color_pipeline, cmd_buffer);
+
+    cmd_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        _lit_color_pipeline.layout(),
+        DescBindSlot::PER_TEXTURE,
+        { _lit_color_sets[Swapchain::image_index()].back().native() },
+        nullptr
+    );
 
     for(auto const &draw : _lit_color_draws) {
         _send_push_constants(_lit_color_pipeline, draw, cmd_buffer);

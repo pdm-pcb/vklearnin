@@ -30,6 +30,8 @@ public:
     static void set_global_uniforms(std::vector<BufferObject> const &ubos);
     static void add_flat_texture(Texture2D const &texture);
     static void set_skybox_texture(Texture2D const &texture);
+    static void set_light_ubos(std::vector<BufferObject> const &ubos);
+
     static void create_pipelines();
 
     Renderer() = delete;
@@ -38,15 +40,17 @@ private:
     static DescriptorPool _desc_pool;
 
     static DescriptorSetLayout _global_uniform_set_layout;
-    static DescriptorSetLayout _lit_color_set_layout;
     static DescriptorSetLayout _flat_texture_set_layout;
     static DescriptorSetLayout _skybox_set_layout;
 
+    static DescriptorSetLayout _lit_color_set_layout;
+
     using DescriptorSets = std::vector<DescriptorSet>;
     static DescriptorSets _global_uniform_sets;
-    static DescriptorSets _lit_color_sets;
     static DescriptorSets _flat_texture_sets;
     static DescriptorSet  _skybox_set;
+
+    static std::vector<DescriptorSets> _lit_color_sets;
 
     static RenderPass _render_pass;
 
@@ -73,8 +77,9 @@ private:
     static DrawSubmission<VertexSkybox> _skybox_draw;
 
     static void _init_framebuffers();
-    static void _init_descriptors();
+    static void _init_descriptor_pool();
 
+    static void _init_descriptor_sets();
     static void _init_flat_color_pipeline();
     static void _init_lit_color_pipeline();
     static void _init_flat_texture_pipeline();

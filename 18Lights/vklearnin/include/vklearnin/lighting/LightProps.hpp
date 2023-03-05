@@ -5,8 +5,8 @@
 
 namespace vkl {
 
-struct PointLight {
-    float const ambient = 0.1f;
+struct LightProps {
+    float ambient = 0.1f;
 };
 
 } // namespace vkl
