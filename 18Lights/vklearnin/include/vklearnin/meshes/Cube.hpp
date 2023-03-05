@@ -9,7 +9,7 @@ namespace vkl {
 template <typename VertexType>
 class Cube final : public Mesh<VertexType> {
 public:
-    using CornerColors = std::array<std::array<float, 4>, 8>;
+    using CornerColors = std::array<Vec4, 8>;
 
     void init(float const scale, CornerColors const corner_colors)
     requires std::is_same_v<VertexType, VertexFlatColor>
@@ -121,7 +121,7 @@ public:
         });
     }
 
-    void init(float const scale, std::array<float, 4> const &color)
+    void init(float const scale, Vec4 const &color)
     requires std::is_same_v<VertexType, VertexLitColor>
     {
         Mesh<VertexType>::_set_vertices({

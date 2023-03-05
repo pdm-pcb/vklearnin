@@ -67,11 +67,11 @@ private:
     vkl::LightProps _light_props;
     std::vector<vkl::BufferObject> _light_props_ubos;
 
-    vkl::Cube<vkl::VertexFlatColor>      _caster_mesh;
+    vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
     vkl::Cube<vkl::VertexLitColor>       _cube_mesh;
     vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
 
-    vkl::Mat4 _caster_matrix;
+    vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix;
     vkl::Mat4 _floor_matrix;
 

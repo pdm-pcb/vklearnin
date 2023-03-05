@@ -23,8 +23,7 @@ VertexAttribs const VertexFlatColor::attributes {{
     .offset   = static_cast<uint32_t>(offsetof(VertexFlatColor, color)),
 }};
 
-VertexFlatColor::VertexFlatColor(std::array<float, 4> const &position,
-                                 std::array<float, 4> const &color) :
+VertexFlatColor::VertexFlatColor(Vec4 const &position, Vec4 const &color) :
     position { position },
     color    { color }
 { }
@@ -55,9 +54,8 @@ VertexAttribs const VertexLitColor::attributes {{
     .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, color)),
 }};
 
-VertexLitColor::VertexLitColor(std::array<float, 4> const &position,
-                               Vec4 const &normal,
-                               std::array<float, 4> const &color) :
+VertexLitColor::VertexLitColor(Vec4 const &position, Vec4 const &normal,
+                               Vec4 const &color) :
     position { position },
     normal   { normal },
     color    { color }
@@ -83,7 +81,7 @@ VertexAttribs const VertexFlatTexture::attributes {{
     .offset   = static_cast<uint32_t>(offsetof(VertexFlatTexture, uv)),
 }};
 
-VertexFlatTexture::VertexFlatTexture(std::array<float, 4> const &position,
+VertexFlatTexture::VertexFlatTexture(Vec4 const &position,
                                      std::array<float, 2> const &uv) :
     position { position },
     uv       { uv }
@@ -103,7 +101,7 @@ VertexAttribs const VertexSkybox::attributes {{
     .offset   = static_cast<uint32_t>(offsetof(VertexSkybox, position)),
 }};
 
-VertexSkybox::VertexSkybox(std::array<float, 4> const &position) :
+VertexSkybox::VertexSkybox(Vec4 const &position) :
     position { position }
 { }
 

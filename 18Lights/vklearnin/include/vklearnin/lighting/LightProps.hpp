@@ -5,8 +5,21 @@
 
 namespace vkl {
 
+struct DirectionalLight {
+    Vec4 toward = Vec4::unit_y;
+    Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
+};
+
+struct PointLight {
+    Vec4 position = Vec4::origin;
+    Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
+};
+
 struct LightProps {
-    float ambient = 0.1f;
+    DirectionalLight dir { };
+    PointLight point { };
+
+    float ambient = 0.05f;
 };
 
 } // namespace vkl

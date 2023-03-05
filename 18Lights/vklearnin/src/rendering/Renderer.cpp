@@ -260,7 +260,7 @@ void Renderer::_init_flat_color_pipeline() {
     );
 
     _flat_color_pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
+        vk::ShaderStageFlagBits::eAll,
         sizeof(Mat4)
     );
 
@@ -286,7 +286,7 @@ void Renderer::_init_lit_color_pipeline() {
     );
 
     _lit_color_pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
+        vk::ShaderStageFlagBits::eAll,
         sizeof(Mat4)
     );
 
@@ -308,7 +308,7 @@ void Renderer::_init_flat_texture_pipeline() {
     );
 
     _flat_texture_pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eVertex,
+        vk::ShaderStageFlagBits::eAll,
         sizeof(Mat4)
     );
 

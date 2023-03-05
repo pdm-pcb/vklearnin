@@ -2,7 +2,10 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-std::array<float, 4> LIGHT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
+vkl::Vec4 DIR_COLOR { 1.0f,  1.0f, 1.0f, 0.5f };
+vkl::Vec4 DIR_POS   { 1.0f, 1.0f, 1.0f, 1.0f };
+vkl::Vec4 POINT_COLOR {  1.0f,  1.0f, 1.0f, 0.5f };
+vkl::Vec4 POINT_POS   { -2.0f, -2.0f, 2.0f, 1.0f };
 
 // =============================================================================
 void Demo::update() {
@@ -48,6 +51,12 @@ void Demo::update() {
         &_vp_matrices
     );
 
+    _light_props.dir.toward = vkl::math::normalize(DIR_POS);
+    _light_props.dir.color  = DIR_COLOR;
+
+    _light_props.point.position = POINT_POS;
+    _light_props.point.color    = POINT_COLOR;
+
     vkl::BufferTools::update_buffer(
         _light_props_ubos[vkl::Swapchain::image_index()],
         &_light_props
@@ -58,11 +67,11 @@ void Demo::update() {
 void Demo::submit_draws() {
     vkl::Renderer::submit(
         vkl::DrawSubmission<vkl::VertexFlatColor> {
-            .mesh = &_caster_mesh,
+            .mesh = &_lamp_mesh,
             .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .stage_flags = vk::ShaderStageFlagBits::eAll,
                     .size        = sizeof(vkl::Mat4),
-                    .data        = &_caster_matrix,
+                    .data        = &_lamp_matrix,
                 }}
         }
     );
@@ -77,7 +86,7 @@ void Demo::submit_draws() {
         vkl::DrawSubmission<vkl::VertexLitColor> {
             .mesh = &_cube_mesh,
             .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .stage_flags = vk::ShaderStageFlagBits::eAll,
                     .size        = sizeof(vkl::Mat4),
                     .data        = &_cube_matrix,
                 }}
@@ -89,7 +98,7 @@ void Demo::submit_draws() {
             .mesh     = &_floor_mesh,
             .material = &_floor_texture,
             .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eVertex,
+                    .stage_flags = vk::ShaderStageFlagBits::eAll,
                     .size        = sizeof(vkl::Mat4),
                     .data        = &_floor_matrix,
                 }}
@@ -194,7 +203,7 @@ void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
 
 // =============================================================================
 void Demo::shutdown() {
-    _caster_mesh.shutdown();
+    _lamp_mesh.shutdown();
     _cube_mesh.shutdown();
     _floor_mesh.shutdown();
 
@@ -267,22 +276,22 @@ void Demo::_init_camera() {
 
 // =============================================================================
 void Demo::_init_meshes() {
-    _caster_mesh.init(
+    _lamp_mesh.init(
         0.1f,
         {{
-            LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR,
-            LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR, LIGHT_COLOR,
+            DIR_COLOR, DIR_COLOR, DIR_COLOR, DIR_COLOR,
+            DIR_COLOR, DIR_COLOR, DIR_COLOR, DIR_COLOR,
         }}
     );
-    _cube_mesh.init(1.0f, {{ 0.15f, 0.65f, 0.25f, 1.0f }});
+    _cube_mesh.init(1.0f, vkl::Vec4 { 0.15f, 0.65f, 0.25f, 1.0f });
     _floor_mesh.init(100.0f, 100.0f);
 }
 
 // =============================================================================
 void Demo::_init_trs_matrices() {
-    _caster_matrix = vkl::math::translate(
+    _lamp_matrix = vkl::math::translate(
         vkl::Mat4::identity,
-        { 2.0f, 2.0f, 2.0f, 1.0f }
+        POINT_POS
     );
 
     _cube_matrix = vkl::Mat4::identity;
@@ -345,11 +354,11 @@ Demo::Demo() :
     _light_props      { },
     _light_props_ubos { },
 
-    _caster_mesh { },
+    _lamp_mesh { },
     _cube_mesh   { },
     _floor_mesh  { },
 
-    _caster_matrix { },
+    _lamp_matrix { },
     _cube_matrix   { },
     _floor_matrix  { },
 

@@ -9,13 +9,20 @@ layout(set = 0, binding = 0) uniform CameraData {
     mat4 proj_mat;
 };
 
-layout(push_constant) uniform vert_constants {
+layout(push_constant) uniform ModelPush {
 	mat4 model_mat;
 };
 
 layout(location = 0) out vec4 out_color;
+layout(location = 1) out vec3 out_pos;
+layout(location = 2) out vec3 out_normal;
 
 void main() {
-	out_color = abs(in_normal);
-	gl_Position = proj_mat * view_mat * model_mat * in_pos;
+	vec4 world_pos = model_mat * in_pos;
+
+	out_color  = in_color;
+	out_pos    = world_pos.xyz;
+	out_normal = normalize(mat3(model_mat) * in_normal.xyz);
+
+	gl_Position = proj_mat * view_mat * world_pos;
 }
