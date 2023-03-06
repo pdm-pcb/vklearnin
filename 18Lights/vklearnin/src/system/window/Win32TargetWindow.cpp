@@ -7,15 +7,15 @@
 
 namespace vkl {
 
+Win32TargetWindow::ScreenPos Win32TargetWindow::_center;
+
+vk::SurfaceKHR Win32TargetWindow::_surface { };
+
 ::HWND   Win32TargetWindow::_window       = nullptr;
 ::LPCSTR Win32TargetWindow::_classname    = nullptr;
 ::LPCSTR Win32TargetWindow::_window_title = nullptr;
 ::HDC    Win32TargetWindow::_device       = nullptr;
 ::LPBYTE Win32TargetWindow::_raw_message  = nullptr;
-
-Win32TargetWindow::ScreenPos Win32TargetWindow::_center;
-
-vk::SurfaceKHR Win32TargetWindow::_surface { };
 
 // =============================================================================
 // Given that this is a single threaded project (for now...) there needs to be

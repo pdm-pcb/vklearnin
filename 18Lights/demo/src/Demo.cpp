@@ -6,10 +6,10 @@ std::array<float, 4> LIGHT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
 
 // =============================================================================
 void Demo::update() {
-    auto const cos_yaw   = std::cosf(vkl::math::radians(_cam_data.yaw));
-    auto const sin_yaw   = std::sinf(vkl::math::radians(_cam_data.yaw));
-    auto const cos_pitch = std::cosf(vkl::math::radians(_cam_data.pitch));
-    auto const sin_pitch = std::sinf(vkl::math::radians(_cam_data.pitch));
+    auto const cos_yaw   = std::cos(vkl::math::radians(_cam_data.yaw));
+    auto const sin_yaw   = std::sin(vkl::math::radians(_cam_data.yaw));
+    auto const cos_pitch = std::cos(vkl::math::radians(_cam_data.pitch));
+    auto const sin_pitch = std::sin(vkl::math::radians(_cam_data.pitch));
 
     _cam_data.forward.x = cos_yaw * cos_pitch;
     _cam_data.forward.y = sin_pitch;

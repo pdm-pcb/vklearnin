@@ -5,7 +5,9 @@
 #include "vklearnin/math/Mat4.hpp"
 
 #include <cstdint>
+#include <cmath>
 #include <numbers>
+#include <limits>
 
 namespace vkl::math {
 
@@ -34,7 +36,7 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
 }
 
 [[nodiscard]] inline float length(Vec4 const &v) {
-    return std::sqrtf(length2(v));
+    return std::sqrt(length2(v));
 }
 
 [[nodiscard]] float dot(Vec4 const &a, Vec4 const &b);

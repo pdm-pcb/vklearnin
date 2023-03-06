@@ -3,10 +3,14 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/window/XCBTargetWindow.hpp"
 
+#include "vklearnin/system/GraphicsAPI.hpp"
+
 namespace vkl {
 
-bool                 XCBTargetWindow::_carry_on      = true;
-vk::SurfaceKHR       XCBTargetWindow::_surface       { };
+XCBTargetWindow::ScreenPos XCBTargetWindow::_center;
+
+vk::SurfaceKHR XCBTargetWindow::_surface { };
+
 ::xcb_connection_t  *XCBTargetWindow::_connection    = nullptr;
 ::xcb_screen_t      *XCBTargetWindow::_screen        = nullptr;
 ::xcb_key_symbols_t *XCBTargetWindow::_key_symbols   = nullptr;
@@ -14,7 +18,7 @@ vk::SurfaceKHR       XCBTargetWindow::_surface       { };
 ::xcb_atom_t         XCBTargetWindow::_delete_atom   = 0u;
 ::xcb_atom_t         XCBTargetWindow::_wm_state_atom = 0u;
 
-XCBTargetWindow::ScreenPos XCBTargetWindow::_center;
+static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
 
 using client_msg        = ::xcb_client_message_event_t *;
 using config_notify     = ::xcb_configure_notify_event_t *;
@@ -22,10 +26,8 @@ using keypress_notify   = ::xcb_key_press_event_t *;
 using keyrelease_notify = ::xcb_key_release_event_t *;
 using property_notify   = ::xcb_property_notify_event_t *;
 
-static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
-
 //==============================================================================
-bool XCBTargetWindow::message_loop() {
+void XCBTargetWindow::message_loop() {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
@@ -45,7 +47,7 @@ bool XCBTargetWindow::message_loop() {
 
                 switch(key) {
                     case XK_Escape:
-                        _carry_on = false;
+                        EventBroker::emit<WindowCloseEvent>();
                         break;
                 }
                 break;
@@ -72,16 +74,41 @@ bool XCBTargetWindow::message_loop() {
 
         free(event);
     }
+}
 
-    return _carry_on;
+//==============================================================================
+void XCBTargetWindow::init() {
+    int screenp = 0;
+    _connection = ::xcb_connect(nullptr, &screenp);
+
+    if(::xcb_connection_has_error(_connection)) {
+        CONSOLE_CRITICAL("Could not connect to X server.");
+    }
+
+    _key_symbols = xcb_key_symbols_alloc(_connection);
+
+    ::xcb_screen_iterator_t screen_iter =
+        ::xcb_setup_roots_iterator(::xcb_get_setup(_connection));
+
+    for(int screen = screenp; screen > 0; --screen) {
+        ::xcb_screen_next(&screen_iter);
+    }
+
+    _screen = screen_iter.data;
+    _window = ::xcb_generate_id(_connection);
+
+    _query_randr();
+}
+
+//==============================================================================
+void XCBTargetWindow::shutdown() {
+    // lolwut
 }
 
 //==============================================================================
 void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
                                    int32_t const  pos_x, int32_t const  pos_y)
 {
-    _init();
-
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL |
                           ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
@@ -185,30 +212,6 @@ void XCBTargetWindow::destroy_surface() {
     ::xcb_key_symbols_free(_key_symbols);
     ::xcb_destroy_window(_connection, _window);
     ::xcb_disconnect(_connection);
-}
-
-//==============================================================================
-void XCBTargetWindow::_init() {
-    int screenp = 0;
-    _connection = ::xcb_connect(nullptr, &screenp);
-
-    if(::xcb_connection_has_error(_connection)) {
-        CONSOLE_CRITICAL("Could not connect to X server.");
-    }
-
-    _key_symbols = xcb_key_symbols_alloc(_connection);
-
-    ::xcb_screen_iterator_t screen_iter =
-        ::xcb_setup_roots_iterator(::xcb_get_setup(_connection));
-
-    for(int screen = screenp; screen > 0; --screen) {
-        ::xcb_screen_next(&screen_iter);
-    }
-
-    _screen = screen_iter.data;
-    _window = ::xcb_generate_id(_connection);
-
-    _query_randr();
 }
 
 //==============================================================================
