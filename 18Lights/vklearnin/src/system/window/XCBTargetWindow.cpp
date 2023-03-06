@@ -52,24 +52,6 @@ void XCBTargetWindow::message_loop() {
                 }
                 break;
             }
-
-            case XCB_CONFIGURE_NOTIFY:  {
-                auto *config = reinterpret_cast<config_notify>(event);
-                if(config->width  != RenderConfig::window_width ||
-                   config->height != RenderConfig::window_height) {
-                    RenderConfig::window_width  = config->width;
-                    RenderConfig::window_height = config->height;
-
-                    RenderConfig::window_pos_x = RenderConfig::screen_width / 2;
-                    RenderConfig::window_pos_x -= RenderConfig::window_width / 2;
-
-                    RenderConfig::window_pos_y = RenderConfig::screen_height / 2;
-                    RenderConfig::window_pos_y -= RenderConfig::window_height / 2;
-
-                    _size_and_place();
-                }
-                break;
-            }
         }
 
         free(event);
@@ -78,19 +60,20 @@ void XCBTargetWindow::message_loop() {
 
 //==============================================================================
 void XCBTargetWindow::init() {
-    int screenp = 0;
-    _connection = ::xcb_connect(nullptr, &screenp);
+    int screen_ptr = 0;
+    _connection = ::xcb_connect(nullptr, &screen_ptr);
 
     if(::xcb_connection_has_error(_connection)) {
         CONSOLE_CRITICAL("Could not connect to X server.");
+        return;
     }
 
-    _key_symbols = xcb_key_symbols_alloc(_connection);
+    _key_symbols = ::xcb_key_symbols_alloc(_connection);
 
-    ::xcb_screen_iterator_t screen_iter =
+    auto screen_iter =
         ::xcb_setup_roots_iterator(::xcb_get_setup(_connection));
 
-    for(int screen = screenp; screen > 0; --screen) {
+    for(int screen = screen_ptr; screen > 0; --screen) {
         ::xcb_screen_next(&screen_iter);
     }
 
@@ -182,7 +165,7 @@ void XCBTargetWindow::create_surface() {
     // The details Vulkan cares about
     vk::XcbSurfaceCreateInfoKHR surface_info {
         .connection = _connection,
-        .window = _window,
+        .window     = _window,
     };
 
     // Create, check, assign
