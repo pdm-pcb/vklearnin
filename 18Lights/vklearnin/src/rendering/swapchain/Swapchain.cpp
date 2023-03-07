@@ -246,13 +246,15 @@ void Swapchain::_query_surface_capabilities() {
     if(RenderConfig::image_count > capabilities.maxImageCount ||
        RenderConfig::image_count < capabilities.minImageCount)
     {
-        CONSOLE_CRITICAL(
+        CONSOLE_WARN(
             "{} swapchain images requested, but surface allows a minimum of {} "
-            "and a maximum of {} images",
+            "and a maximum of {} images. Defaulting to minimum.",
             RenderConfig::image_count,
             capabilities.minImageCount,
             capabilities.maxImageCount
         );
+
+        RenderConfig::image_count = capabilities.minImageCount;
     }
 }
 
