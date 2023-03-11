@@ -190,7 +190,7 @@ void PhysicalDevice::select_device() {
     uint32_t gfx_queue_index = 0u;
     uint32_t present_queue_index = 0u;
 
-    for(uint32_t device_index = 0u;
+    for(uint32_t device_index = 1u;
         device_index < _available_devices.size();
         ++device_index)
     {

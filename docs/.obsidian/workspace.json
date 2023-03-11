@@ -13,6 +13,18 @@
             "state": {
               "type": "markdown",
               "state": {
+                "file": "09RenderPassesAndFramebuffers.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "213689dcfe9c50ac",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
                 "file": "00zDefinitions.md",
                 "mode": "source",
                 "source": false
@@ -69,7 +81,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 315.5
+    "width": 295.5004348754883
   },
   "right": {
     "id": "de4651be42096052",
@@ -85,7 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "00zDefinitions.md",
+                "file": "09RenderPassesAndFramebuffers.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +114,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "00zDefinitions.md",
+                "file": "09RenderPassesAndFramebuffers.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +137,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "00zDefinitions.md"
+                "file": "09RenderPassesAndFramebuffers.md"
               }
             }
           }
@@ -148,15 +160,15 @@
   },
   "active": "49adfcd541c9117c",
   "lastOpenFiles": [
-    "09RenderPassesAndFramebuffers.md",
     "00zDefinitions.md",
+    "09RenderPassesAndFramebuffers.md",
+    "08Swapchain.md",
     "00bSetup.md",
     "00aIntro.md",
     "11VertexBuffers.md",
     "10ShadersAndPipelines.md",
     "06DevicesAndQueues.md",
     "07Images.md",
-    "08Swapchain.md",
     "02APIAndDebugger.md"
   ]
 }

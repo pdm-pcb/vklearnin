@@ -156,7 +156,7 @@ void PhysicalDevice::select_device() {
               std::make_pair(false, std::numeric_limits<uint32_t>::max()));
 
     // Loop through all available hardware
-    for(uint32_t device_index = 0u;
+    for(uint32_t device_index = 1u;
         device_index < _available_devices.size();
         ++device_index)
     {

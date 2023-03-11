@@ -5,7 +5,7 @@
 
 namespace vkl {
 
-struct Mat4 {
+struct alignas(64) Mat4 {
     static Mat4 const identity;
     static Mat4 const zero;
 

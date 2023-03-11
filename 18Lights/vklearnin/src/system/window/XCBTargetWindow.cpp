@@ -92,6 +92,34 @@ void XCBTargetWindow::shutdown() {
 void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
                                    int32_t const  pos_x, int32_t const  pos_y)
 {
+    // If width and height aren't provided by Application, then just opt for
+    // two-thirds of the available real estate
+    if(width == 0u || height == 0u) {
+        auto width_fraction  = static_cast<float>(RenderConfig::screen_width);
+        auto height_fraction = static_cast<float>(RenderConfig::screen_height);
+        width_fraction  *= 0.75f;
+        height_fraction *= 0.75f;
+
+        RenderConfig::window_width  = static_cast<uint32_t>(width_fraction);
+        RenderConfig::window_height = static_cast<uint32_t>(height_fraction);
+    }
+    else {
+        RenderConfig::window_width = width;
+        RenderConfig::window_height = height;
+    }
+
+    // Determine the window's eventual position on screen
+    auto half_width  = static_cast<int32_t>(RenderConfig::window_width)  / 2;
+    auto half_height = static_cast<int32_t>(RenderConfig::window_height) / 2;
+    if(pos_x == 0 || pos_y == 0) {
+        RenderConfig::window_pos_x = _center.x - half_width;
+        RenderConfig::window_pos_y = _center.y - half_height;
+    }
+    else {
+        RenderConfig::window_pos_x = pos_x;
+        RenderConfig::window_pos_y = pos_y;
+    }
+
     uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL |
                           ::XCB_CW_EVENT_MASK;
     uint32_t value_list[] {
@@ -103,31 +131,6 @@ void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
         ::XCB_EVENT_MASK_EXPOSURE |
         ::XCB_EVENT_MASK_STRUCTURE_NOTIFY
     };
-
-    // If width and height aren't provided by Application, then just opt for
-    // 75% of the available real estate
-    if(width == 0u || height == 0u) {
-        RenderConfig::window_width  =
-            static_cast<uint32_t>(RenderConfig::screen_width * 0.75f);
-        RenderConfig::window_height =
-            static_cast<uint32_t>(RenderConfig::screen_height * 0.75f);
-    }
-    else {
-        RenderConfig::window_width = width;
-        RenderConfig::window_height = height;
-    }
-
-    // Determine the window's eventual position on screen
-    int32_t half_width  = RenderConfig::window_width  / 2;
-    int32_t half_height = RenderConfig::window_height / 2;
-    if(pos_x == 0 || pos_y == 0) {
-        RenderConfig::window_pos_x = _center.x - half_width;
-        RenderConfig::window_pos_y = _center.y - half_height;
-    }
-    else {
-        RenderConfig::window_pos_x = pos_x;
-        RenderConfig::window_pos_y = pos_y;
-    }
 
     ::xcb_create_window(
         _connection,
@@ -340,6 +343,19 @@ void XCBTargetWindow::_acquire_multiuse_atoms() {
 
 //==============================================================================
 void XCBTargetWindow::_size_and_place() {
+    CONSOLE_TRACE(
+        "Window size: {}x{}, position: {}x{}",
+        RenderConfig::window_width, RenderConfig::window_height,
+        RenderConfig::window_pos_x, RenderConfig::window_pos_y
+    );
+
+    // Update the window aspect ratio
+    RenderConfig::window_aspect =
+        static_cast<float>(RenderConfig::window_width) /
+        static_cast<float>(RenderConfig::window_height);
+
+    
+
     uint32_t value_mask = ::XCB_CONFIG_WINDOW_X |
                           ::XCB_CONFIG_WINDOW_Y |
                           ::XCB_CONFIG_WINDOW_WIDTH |

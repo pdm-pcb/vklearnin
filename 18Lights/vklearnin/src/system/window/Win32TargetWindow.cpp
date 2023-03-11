@@ -300,10 +300,6 @@ void Win32TargetWindow::spawn_window(uint32_t const width,
         RenderConfig::window_height = height;
     }
 
-    RenderConfig::window_aspect =
-        static_cast<float>(RenderConfig::window_width) /
-        static_cast<float>(RenderConfig::window_height);
-
     // Determine the window's eventual position on screen
     auto half_width  = static_cast<int32_t>(RenderConfig::window_width)  / 2;
     auto half_height = static_cast<int32_t>(RenderConfig::window_height) / 2;
@@ -503,6 +499,11 @@ void Win32TargetWindow::_size_and_place() {
         RenderConfig::window_width, RenderConfig::window_height,
         RenderConfig::window_pos_x, RenderConfig::window_pos_y
     );
+
+    // Update the window aspect ratio
+    RenderConfig::window_aspect =
+        static_cast<float>(RenderConfig::window_width) /
+        static_cast<float>(RenderConfig::window_height);
 
     auto result = ::SetWindowPos(
         _window, nullptr,

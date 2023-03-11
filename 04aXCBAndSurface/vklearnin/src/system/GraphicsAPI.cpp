@@ -152,7 +152,7 @@ void GraphicsAPI::_init_extensions() {
 
     // Surfaces describe the spaces to which you can draw in Vulkan. They're
     // also platform dependant.
-#if defined(VLK_LINUX)
+#if defined(VKL_LINUX)
     _enabled_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #elif defined(VKL_WINDOWS)
     _enabled_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);

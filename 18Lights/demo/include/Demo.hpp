@@ -57,7 +57,7 @@ private:
         float mouse_speed = 0.075f;
     } _cam_data;
 
-    struct VPMatrices {
+    struct alignas(128) VPMatrices {
         vkl::Mat4 view;
         vkl::Mat4 proj;
     } _vp_matrices;
