@@ -75,10 +75,10 @@ Vec4 & Vec4::operator-() {
 
 // =============================================================================
 bool Vec4::operator==(const Vec4 &other) const {
-    float x_diff = std::fabsf(x - other.x);
-    float y_diff = std::fabsf(y - other.y);
-    float z_diff = std::fabsf(z - other.z);
-    float w_diff = std::fabsf(w - other.w);
+    float x_diff = std::abs(x - other.x);
+    float y_diff = std::abs(y - other.y);
+    float z_diff = std::abs(z - other.z);
+    float w_diff = std::abs(w - other.w);
 
     return (
         x_diff < math::float_epsilon &&

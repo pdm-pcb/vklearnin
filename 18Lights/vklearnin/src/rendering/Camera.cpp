@@ -24,7 +24,7 @@ void Camera::set_perspective(float const near, float const far,
                              float const vfov)
 {
     auto const aspect = RenderConfig::window_aspect;
-    auto const a = std::tanf(math::radians(vfov) * 0.5f);
+    auto const a = std::tan(math::radians(vfov) * 0.5f);
 
     _proj_mat = Mat4::zero;
 

@@ -1,7 +1,7 @@
-#ifdef VKL_WINDOWS
-
 #ifndef VKLEARNIN_SYSTEM_WINDOW_WIN32TARGETWINDOW_HPP
 #define VKLEARNIN_SYSTEM_WINDOW_WIN32TARGETWINDOW_HPP
+
+#ifdef VKL_WINDOWS
 
 #include "vklearnin/system/pch.hpp"
 
@@ -31,13 +31,6 @@ public:
     Win32TargetWindow() = delete;
 
 private:
-    // Win32 specifics
-    static ::HWND   _window;
-    static ::LPCSTR _classname;
-    static ::LPCSTR _window_title;
-    static ::HDC    _device;
-    static ::LPBYTE _raw_message;
-
     // Helps with centering the window on screen
     static struct ScreenPos {
         int32_t x = 0;
@@ -46,6 +39,13 @@ private:
 
     // Vulkan specifics
     static vk::SurfaceKHR _surface;
+
+    // Win32 specifics
+    static ::HWND   _window;
+    static ::LPCSTR _classname;
+    static ::LPCSTR _window_title;
+    static ::HDC    _device;
+    static ::LPBYTE _raw_message;
 
     // The way in for Windows
     static ::LRESULT CALLBACK
@@ -61,6 +61,6 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_SYSTEM_WIN32TARGETWINDOW_HPP
-
 #endif // VKL_WINDOWS
+
+#endif // VKLEARNIN_SYSTEM_WINDOW_WIN32TARGETWINDOW_HPP

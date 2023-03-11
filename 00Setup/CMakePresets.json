@@ -2,46 +2,46 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "base",
+            "name": "base-debug",
             "generator": "Ninja",
             "hidden": true,
-            "binaryDir": "${sourceDir}/build/${presetName}"
-        },
-        {
-            "name": "linux-base",
-            "hidden": true,
-            "inherits": "base"
-        },
-        {
-            "name": "linux-debug",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Linux"
-            },
-            "displayName": "Linux Debug",
-            "inherits": "base",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "linux-release",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Linux"
-            },
-            "displayName": "Linux Release",
-            "inherits": "linux-base",
+            "name": "base-release",
+            "generator": "Ninja",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
+            "name": "linux-debug",
+            "inherits": "base-debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "displayName": "Linux Debug"
+        },
+        {
+            "name": "linux-release",
+            "inherits": "base-release",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "displayName": "Linux Release"
+        },
+        {
             "name": "windows-base-msvc",
             "hidden": true,
-            "inherits": "base",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
@@ -49,6 +49,11 @@
             "toolset": {
                 "value": "host=x64",
                 "strategy": "external"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
@@ -65,7 +70,11 @@
         {
             "name": "windows-base-llvm",
             "hidden": true,
-            "inherits": "base",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++"
@@ -80,55 +89,35 @@
         },
         {
             "name": "windows-debug-msvc",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            },
-            "displayName": "Windows Debug MSVC",
-            "inherits": "windows-base-msvc",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
+            "inherits": [
+                "base-debug",
+                "windows-base-msvc"
+            ],
+            "displayName": "Windows Debug MSVC"
         },
         {
             "name": "windows-release-msvc",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            },
-            "displayName": "Windows Release MSVC",
-            "inherits": "windows-base-msvc",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
+            "inherits": [
+                "base-release",
+                "windows-base-msvc"
+            ],
+            "displayName": "Windows Release MSVC"
         },
         {
             "name": "windows-debug-llvm",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            },
-            "displayName": "Windows Debug LLVM",
-            "inherits": "windows-base-llvm",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
+            "inherits": [
+                "base-debug",
+                "windows-base-llvm"
+            ],
+            "displayName": "Windows Debug LLVM"
         },
         {
             "name": "windows-release-llvm",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            },
-            "displayName": "Windows Release LLVM",
-            "inherits": "windows-base-llvm",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
+            "inherits": [
+                "base-release",
+                "windows-base-llvm"
+            ],
+            "displayName": "Windows Release LLVM"
         }
     ]
 }

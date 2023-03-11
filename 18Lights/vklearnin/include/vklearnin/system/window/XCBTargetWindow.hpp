@@ -1,7 +1,7 @@
-#ifdef VKL_LINUX
-
 #ifndef VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
 #define VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
+
+#ifdef VKL_LINUX
 
 #include "vklearnin/system/pch.hpp"
 
@@ -10,13 +10,16 @@ namespace vkl {
 class XCBTargetWindow {
 public:
     // Give the OS a moment to speak up
-    static bool message_loop();
+    static void message_loop();
+
+    static void init();
+    static void shutdown();
 
     // Spawn (and size and place?) a native window
     static void spawn_window(uint32_t const width  = 0u,
                              uint32_t const height = 0u,
-                             int32_t const  pos_x  = 0u,
-                             int32_t const  pos_y  = 0u);
+                             int32_t  const pos_x  = 0u,
+                             int32_t  const pos_y  = 0u);
 
     // Manage the Vulkan surface
     static void create_surface();
@@ -24,18 +27,18 @@ public:
 
     inline static auto const& surface() { return _surface; }
 
+    // Only one target window at a time
+
     XCBTargetWindow() = delete;
 
 private:
-    // status variable
-    static bool _carry_on;
-
     // Helps with centering the window on screen
     static struct ScreenPos {
         int32_t x = 0;
         int32_t y = 0;
     } _center;
 
+    // Vulkan specifics
     static vk::SurfaceKHR _surface;
 
     struct MotifHints {
@@ -58,14 +61,12 @@ private:
     static void _remove_decorations();
     static void _acquire_multiuse_atoms();
 
-    static void _init();
-
     // Make it just right
     static void _size_and_place();
 };
 
 } // namespace vkl
 
-#endif // VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
-
 #endif // VKL_LINUX
+
+#endif // VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP

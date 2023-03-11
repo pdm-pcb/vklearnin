@@ -1,6 +1,8 @@
 #ifndef  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
 #define  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
 
+#ifdef VKL_WINDOWS
+
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
 
@@ -179,5 +181,7 @@ inline Keycode vkl_to_win32(Keycode vkl_key) {
 }
 
 } // namespace vkl
+
+#endif // VKL_WINDOWS
 
 #endif //  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP

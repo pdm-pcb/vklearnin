@@ -34,7 +34,7 @@ Vec4 normalize(Vec4 const &v) {
     }
 
     auto result = v;
-    float length_inv = 1.0f / std::sqrtf(length);
+    float length_inv = 1.0f / std::sqrt(length);
 
     result.x *= length_inv;
     result.y *= length_inv;
@@ -84,8 +84,8 @@ Mat4 translate(Mat4 const &m, Vec4 const &v) {
 Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
     auto result = m;
     float const theta = radians(angle);
-    float const cos_theta = std::cosf(theta);
-    float const sin_theta = std::sinf(theta);
+    float const cos_theta = std::cos(theta);
+    float const sin_theta = std::sin(theta);
 
     auto const rot_axis = normalize(axis);
     auto const temp = (1.0f - cos_theta) * rot_axis;

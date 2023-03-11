@@ -1,6 +1,8 @@
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
 
 include(FetchDeps)
+message(NOTICE "Fetch fmt")
+FetchContent_MakeAvailable(fmt)
 message(NOTICE "Fetch spdlog")
 FetchContent_MakeAvailable(spdlog)
 
@@ -44,6 +46,7 @@ target_precompile_headers(
 target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
+    fmt
     spdlog
     third_party
 )
