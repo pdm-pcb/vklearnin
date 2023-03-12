@@ -51,7 +51,7 @@ target_link_libraries(
 	Vulkan::Vulkan
     fmt
     spdlog
-    SDL2
+    SDL2-static
     third_party
 )
 

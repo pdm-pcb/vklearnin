@@ -1,4 +1,4 @@
-#ifdef VKL_WINDOWS
+#ifdef VKL_UNUSED
 
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/window/Win32TargetWindow.hpp"
@@ -528,4 +528,4 @@ void Win32TargetWindow::_size_and_place() {
 
 } // namespace vkl
 
-#endif // VKL_WINDOWS
+#endif // VKL_UNUSED

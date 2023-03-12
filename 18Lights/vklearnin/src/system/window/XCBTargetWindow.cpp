@@ -1,4 +1,4 @@
-#ifdef VKL_LINUX
+#ifdef VKL_UNUSED
 
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/system/window/XCBTargetWindow.hpp"
@@ -490,4 +490,4 @@ void XCBTargetWindow::_size_and_place() {
 
 } // namespace vkl
 
-#endif // VKL_LINUX
+#endif // VKL_UNUSED

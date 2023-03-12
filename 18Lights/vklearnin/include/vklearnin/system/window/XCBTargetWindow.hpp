@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
 #define VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
 
-#ifdef VKL_LINUX
+#ifdef VKL_UNUSED
 
 #include "vklearnin/system/pch.hpp"
 
@@ -68,6 +68,6 @@ private:
 
 } // namespace vkl
 
-#endif // VKL_LINUX
+#endif // VKL_UNUSED
 
 #endif // VKLEARNIN_SYSTEM_WINDOW_XCBTARGETWINDOW_HPP
