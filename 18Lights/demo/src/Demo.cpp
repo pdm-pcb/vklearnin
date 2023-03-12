@@ -177,18 +177,22 @@ void Demo::on_mouse_move(const vkl::MouseMoveEvent &event) {
 // =============================================================================
 void Demo::on_mouse_button_press(const vkl::MouseButtonPressEvent &event) {
     switch(event.code) {
-        case vkl::MOUSE_BUTTON_LEFT   : CONSOLE_INFO("LMB down"); break;
-        case vkl::MOUSE_BUTTON_RIGHT  : CONSOLE_INFO("RMB down"); break;
-        case vkl::MOUSE_BUTTON_MIDDLE : CONSOLE_INFO("MMB down"); break;
+        case vkl::MOUSE_BUTTON_LEFT    : CONSOLE_INFO("LMB down");      break;
+        case vkl::MOUSE_BUTTON_RIGHT   : CONSOLE_INFO("RMB down");      break;
+        case vkl::MOUSE_BUTTON_MIDDLE  : CONSOLE_INFO("MMB down");      break;
+        case vkl::MOUSE_BUTTON_BACK    : CONSOLE_INFO("MBack down");    break;
+        case vkl::MOUSE_BUTTON_FORWARD : CONSOLE_INFO("MForward down"); break;
     }
 }
 
 // =============================================================================
 void Demo::on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event) {
     switch(event.code) {
-        case vkl::MOUSE_BUTTON_LEFT   : CONSOLE_INFO("LMB up"); break;
-        case vkl::MOUSE_BUTTON_RIGHT  : CONSOLE_INFO("RMB up"); break;
-        case vkl::MOUSE_BUTTON_MIDDLE : CONSOLE_INFO("MMB up"); break;
+        case vkl::MOUSE_BUTTON_LEFT    : CONSOLE_INFO("LMB up");      break;
+        case vkl::MOUSE_BUTTON_RIGHT   : CONSOLE_INFO("RMB up");      break;
+        case vkl::MOUSE_BUTTON_MIDDLE  : CONSOLE_INFO("MMB up");      break;
+        case vkl::MOUSE_BUTTON_BACK    : CONSOLE_INFO("MBack up");    break;
+        case vkl::MOUSE_BUTTON_FORWARD : CONSOLE_INFO("MForward up"); break;
     }
 }
 

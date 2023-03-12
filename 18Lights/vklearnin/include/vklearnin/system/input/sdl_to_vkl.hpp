@@ -94,8 +94,8 @@ static std::unordered_map<int, Keycode> const mouse_button_table {
     { SDL_BUTTON_LEFT,   MOUSE_BUTTON_LEFT    },
     { SDL_BUTTON_RIGHT,  MOUSE_BUTTON_RIGHT   },
     { SDL_BUTTON_MIDDLE, MOUSE_BUTTON_MIDDLE  },
-    { SDL_BUTTON_X1,     MOUSE_BUTTON_FORWARD },
-    { SDL_BUTTON_X2,     MOUSE_BUTTON_BACK    },
+    { SDL_BUTTON_X1,     MOUSE_BUTTON_BACK    },
+    { SDL_BUTTON_X2,     MOUSE_BUTTON_FORWARD },
 };
 
 inline Keycode sdl_to_vkl(::SDL_Scancode const key) {
