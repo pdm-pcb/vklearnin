@@ -4,6 +4,8 @@ build/
 debug/
 release/
 
+**/vkl_demo
+
 **/*.spv
 **/*.d
 
@@ -11,4 +13,3 @@ release/
 **/*.pdb
 **/*.exe.manifest
 **/*.exe
-/demo

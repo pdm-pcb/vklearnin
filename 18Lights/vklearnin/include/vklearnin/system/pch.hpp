@@ -25,10 +25,10 @@
     #include <xcb/xcb.h>
     #include <xcb/xcb_keysyms.h>
     #include <xcb/randr.h>
+    #include <xcb/xinput.h>
 
     #include <X11/keysym.h>
     #include <X11/keysymdef.h>
-    #include <X11/Xlib-xcb.h>
 
     #include <vulkan/vulkan_xcb.h>
 #elif defined(VKL_WINDOWS)
@@ -56,5 +56,6 @@
 #include <list>
 #include <type_traits>
 #include <system_error>
+#include <unordered_map>
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

@@ -135,7 +135,7 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
             _kb.d = true;
             _kb.a = false;
             break;
-        case vkl::KB_LCTRL:
+        case vkl::KB_LEFT_CTRL:
             _kb.lctrl = true;
             _kb.space = false;
             break;
@@ -144,7 +144,7 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
             _kb.lctrl = false;
             break;
 
-        case vkl::KB_LSHIFT: _kb.lshift = true; break;
+        case vkl::KB_LEFT_SHIFT: _kb.lshift = true; break;
 
         default: break;
     }
@@ -153,13 +153,13 @@ void Demo::on_key_press(const vkl::KeyPressEvent &event) {
 // =============================================================================
 void Demo::on_key_release(const vkl::KeyReleaseEvent &event) {
     switch(event.code) {
-        case vkl::KB_W      : _kb.w      = false; break;
-        case vkl::KB_A      : _kb.a      = false; break;
-        case vkl::KB_S      : _kb.s      = false; break;
-        case vkl::KB_D      : _kb.d      = false; break;
-        case vkl::KB_LCTRL  : _kb.lctrl  = false; break;
-        case vkl::KB_SPACE  : _kb.space  = false; break;
-        case vkl::KB_LSHIFT : _kb.lshift = false; break;
+        case vkl::KB_W          : _kb.w      = false; break;
+        case vkl::KB_A          : _kb.a      = false; break;
+        case vkl::KB_S          : _kb.s      = false; break;
+        case vkl::KB_D          : _kb.d      = false; break;
+        case vkl::KB_LEFT_CTRL  : _kb.lctrl  = false; break;
+        case vkl::KB_SPACE      : _kb.space  = false; break;
+        case vkl::KB_LEFT_SHIFT : _kb.lshift = false; break;
 
         default: break;
     }

@@ -19,3 +19,12 @@ FetchContent_Declare(
 )
 
 set(SPDLOG_FMT_EXTERNAL "ON" CACHE BOOL "" FORCE)
+
+# ------------------------------------------------------------------------------
+# sdl2 -------------------------------------------------------------------------
+FetchContent_Declare(
+    sdl2
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL
+    GIT_TAG 07d0f51fa292895443f563f0cbde4cb3802d87fa # 2023-03-06
+    FIND_PACKAGE_ARGS 2.26.4
+)

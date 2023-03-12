@@ -20,38 +20,102 @@ vk::SurfaceKHR XCBTargetWindow::_surface { };
 
 static constexpr uint32_t XCB_EVENT_RESPONSE_TYPE_MASK = ~0x80u;
 
-using client_msg        = ::xcb_client_message_event_t *;
-using config_notify     = ::xcb_configure_notify_event_t *;
-using keypress_notify   = ::xcb_key_press_event_t *;
-using keyrelease_notify = ::xcb_key_release_event_t *;
-using property_notify   = ::xcb_property_notify_event_t *;
+using client_msg     = ::xcb_client_message_event_t *;
+using config_event   = ::xcb_configure_notify_event_t *;
+using key_press      = ::xcb_key_press_event_t *;
+using key_release    = ::xcb_key_release_event_t *;
+using button_press   = ::xcb_button_press_event_t *;
+using button_release = ::xcb_button_release_event_t *;
+using motion_event   = ::xcb_motion_notify_event_t *;
 
 //==============================================================================
 void XCBTargetWindow::message_loop() {
     ::xcb_generic_event_t *event = nullptr;
 
     while((event = ::xcb_poll_for_event(_connection))) {
-        uint32_t event_type =
-            event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK;
-        switch(event_type) {
-            case 0:
-                break;
+        uint32_t event_type = event->response_type &
+                              XCB_EVENT_RESPONSE_TYPE_MASK;
 
+        switch(event_type) {
             case XCB_KEY_PRESS: {
-                auto *press = reinterpret_cast<keypress_notify>(event);
+                auto *press = reinterpret_cast<key_press>(event);
                 auto key = ::xcb_key_symbols_get_keysym(
                     _key_symbols,
                     press->detail,
                     0
                 );
 
-                switch(key) {
-                    case XK_Escape:
-                        EventBroker::emit<WindowCloseEvent>();
-                        break;
+                EventBroker::emit<KeyPressEvent>(xcb_to_vkl(key));
+
+                if(key == XK_Escape) {
+                    EventBroker::emit<WindowCloseEvent>();
+                }
+
+                break;
+            }
+
+            case XCB_KEY_RELEASE: {
+                auto *release = reinterpret_cast<key_release>(event);
+                auto key = ::xcb_key_symbols_get_keysym(
+                    _key_symbols,
+                    release->detail,
+                    0
+                );
+
+                EventBroker::emit<KeyReleaseEvent>(xcb_to_vkl(key));
+                break;
+            }
+
+            case XCB_BUTTON_PRESS: {
+                auto *press = reinterpret_cast<button_press>(event);
+                EventBroker::emit<MouseButtonPressEvent>(
+                    xcb_to_vkl(press->detail)
+                );
+
+                break;
+            }
+
+            case XCB_BUTTON_RELEASE: {
+                auto *release = reinterpret_cast<button_release>(event);
+                EventBroker::emit<MouseButtonReleaseEvent>(
+                    xcb_to_vkl(release->detail)
+                );
+
+                break;
+            }
+
+            case XCB_MOTION_NOTIFY: {
+                auto *motion = reinterpret_cast<motion_event>(event);
+                CONSOLE_ERROR(
+                    "{}x{}, {}x{}",
+                    motion->root_x, motion->root_y,
+                    motion->event_x, motion->event_y
+                );
+                
+                break;
+            }
+
+            case XCB_CONFIGURE_NOTIFY:  {
+                auto *config = reinterpret_cast<config_event>(event);
+                if(config->width  != RenderConfig::window_width ||
+                   config->height != RenderConfig::window_height) {
+                    RenderConfig::window_width  = config->width;
+                    RenderConfig::window_height = config->height;
+
+                    auto half_width =
+                        static_cast<int32_t>(RenderConfig::window_width)  / 2;
+                    auto half_height =
+                        static_cast<int32_t>(RenderConfig::window_height) / 2;
+
+                    RenderConfig::window_pos_x = _center.x - half_width;
+                    RenderConfig::window_pos_y = _center.y - half_height;
+
+                    _size_and_place();
                 }
                 break;
             }
+
+            default: break;
         }
 
         free(event);
@@ -120,14 +184,15 @@ void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
         RenderConfig::window_pos_y = pos_y;
     }
 
-    uint32_t vakue_mask = ::XCB_CW_BACK_PIXEL |
-                          ::XCB_CW_EVENT_MASK;
-    uint32_t value_list[] {
+    auto const vakue_mask = ::XCB_CW_BACK_PIXEL | ::XCB_CW_EVENT_MASK;
+    uint32_t const value_list[] {
         _screen->black_pixel,
         ::XCB_EVENT_MASK_KEY_PRESS |
         ::XCB_EVENT_MASK_KEY_RELEASE |
         ::XCB_EVENT_MASK_BUTTON_PRESS |
         ::XCB_EVENT_MASK_BUTTON_RELEASE |
+        ::XCB_EVENT_MASK_POINTER_MOTION |
+        ::XCB_EVENT_MASK_BUTTON_MOTION |
         ::XCB_EVENT_MASK_EXPOSURE |
         ::XCB_EVENT_MASK_STRUCTURE_NOTIFY
     };
@@ -151,6 +216,7 @@ void XCBTargetWindow::spawn_window(uint32_t const width, uint32_t const height,
     _redirect_delete();
     _remove_decorations();
     _acquire_multiuse_atoms();
+    _register_input();
 
     ::xcb_map_window(_connection, _window);
     ::xcb_set_input_focus(
@@ -203,7 +269,7 @@ void XCBTargetWindow::destroy_surface() {
 //==============================================================================
 void XCBTargetWindow::_query_randr() {
 
-    auto reply = ::xcb_randr_get_monitors_reply(
+    auto *reply = ::xcb_randr_get_monitors_reply(
         _connection,
         ::xcb_randr_get_monitors(
             _connection,
@@ -239,7 +305,7 @@ void XCBTargetWindow::_query_randr() {
         ::xcb_randr_monitor_info_next(&iter);
     }
 
-    free(reply);
+    ::free(reply);
 
     _center.x = (RenderConfig::screen_width / 2);
     _center.y = (RenderConfig::screen_height / 2);
@@ -283,8 +349,8 @@ void XCBTargetWindow::_redirect_delete() {
         &_delete_atom
     );
 
-    free(delete_reply);
-    free(protocols_reply);
+    ::free(delete_reply);
+    ::free(protocols_reply);
 }
 
 //==============================================================================
@@ -339,6 +405,43 @@ void XCBTargetWindow::_acquire_multiuse_atoms() {
     _wm_state_atom   = wm_state_reply->atom;
 
     free(wm_state_reply);
+}
+
+// =============================================================================
+void XCBTargetWindow::_register_input() {
+    // First, just check for the extension
+    auto const *xi_name = "XInputExtension";
+    auto const xi_cookie =
+        ::xcb_query_extension(_connection, ::strlen(xi_name), xi_name);
+	auto *xi_reply =
+        ::xcb_query_extension_reply(_connection, xi_cookie, nullptr);
+
+	if(xi_reply == nullptr) {
+        CONSOLE_CRITICAL("No XInput extension query reply");
+        return;
+    }
+    ::free(xi_reply);
+
+    // Next, check for the version we want
+    auto const xi_ver_cookie =
+        ::xcb_input_xi_query_version(_connection, 2u, 4u);
+    auto *xi_ver_reply =
+        ::xcb_input_xi_query_version_reply(_connection, xi_ver_cookie, nullptr);
+
+    if(xi_ver_reply == nullptr) {
+        CONSOLE_CRITICAL("No XInput version query reply");
+        return;
+    }
+    ::free(xi_ver_reply);
+
+    // auto const grab_cookie =
+    //     ::xcb_input_xi_grab_device(
+    //         _connection,
+    //         _window,
+    //         0u, // time
+    //         0u, // cursor
+
+    //     )
 }
 
 //==============================================================================

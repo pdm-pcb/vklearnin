@@ -5,6 +5,8 @@ message(NOTICE "Fetch fmt")
 FetchContent_MakeAvailable(fmt)
 message(NOTICE "Fetch spdlog")
 FetchContent_MakeAvailable(spdlog)
+# message(NOTICE "Fetch sdl2")
+# FetchContent_MakeAvailable(sdl2)
 
 include(CompileShaders)
 
@@ -48,6 +50,7 @@ target_link_libraries(
 	Vulkan::Vulkan
     fmt
     spdlog
+    # sdl2
     third_party
 )
 
@@ -84,8 +87,8 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
         vklearnin PUBLIC
         "xcb"
         "xcb-keysyms"
+        "xcb-xinput"
         "xcb-randr"
-        "X11-xcb"
     )
 
     target_compile_options(

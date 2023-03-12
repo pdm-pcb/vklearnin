@@ -187,7 +187,7 @@ void GraphicsAPI::_init_extensions() {
         // very handy when used in conjucntion with RenderDoc, but I'm opting
         // for more self-contained guidance for now.
         // vk::ValidationFeatureEnableEXT::eDebugPrintf,
-        vk::ValidationFeatureEnableEXT::eSynchronizationValidation
+        // vk::ValidationFeatureEnableEXT::eSynchronizationValidation
     };
 #endif // VKL_DEBUG
 

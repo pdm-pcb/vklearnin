@@ -60,6 +60,7 @@ private:
     static void _redirect_delete();
     static void _remove_decorations();
     static void _acquire_multiuse_atoms();
+    static void _register_input();
 
     // Make it just right
     static void _size_and_place();
