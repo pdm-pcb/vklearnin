@@ -3,8 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
-#include "vklearnin/system/input/win32_to_vklkeys.hpp"
-#include "vklearnin/system/input/xcb_to_vklkeys.hpp"
+#include "vklearnin/system/input/sdl_to_vkl.hpp"
 
 namespace vkl {
 

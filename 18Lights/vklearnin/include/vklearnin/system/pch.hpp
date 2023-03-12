@@ -22,15 +22,11 @@
 #include <vulkan/vulkan.hpp>
 
 #if defined(VKL_LINUX)
-    #include <xcb/xcb.h>
-    #include <xcb/xcb_keysyms.h>
-    #include <xcb/randr.h>
-    #include <xcb/xinput.h>
-
-    #include <X11/keysym.h>
-    #include <X11/keysymdef.h>
-
-    #include <vulkan/vulkan_xcb.h>
+    #include <SDL2/SDL.h>
+    #include <SDL2/SDL_vulkan.h>
+    
+    #include <X11/Xlib.h>
+    #include <vulkan/vulkan_xlib.h>
 #elif defined(VKL_WINDOWS)
     #define WIN32_LEAN_AND_MEAN // Probably doesn't do much nowadays
     #include <Windows.h>

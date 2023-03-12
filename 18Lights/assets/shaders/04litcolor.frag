@@ -34,7 +34,7 @@ void main() {
 
 vec3 calc_directional_light(DirectionalLight light) {
     float dir_intensity = max(
-        dot(in_normal, light.toward.xyz),
+        dot(normalize(in_normal), light.toward.xyz),
         0.0
     ) * light.color.w;
 
