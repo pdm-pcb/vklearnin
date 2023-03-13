@@ -102,6 +102,10 @@ void TargetWindow::init() {
         return;
     }
 
+    ::SDL_version ver { };
+    ::SDL_GetVersion(&ver);
+    CONSOLE_INFO("SDL {}.{}.{} initialized", ver.major, ver.minor, ver.patch);
+
     RenderConfig::screen_width  = display_mode.w;
     RenderConfig::screen_height = display_mode.h;
 

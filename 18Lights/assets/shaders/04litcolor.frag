@@ -22,19 +22,21 @@ layout(set = 1, binding = 0) uniform LightProps {
 
 layout(location = 0) out vec4 out_color;
 
-vec3 calc_directional_light(DirectionalLight light);
-vec3 calc_point_light(PointLight light);
+vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal);
+vec3 calc_point_light(PointLight light, vec3 frag_normal);
 
 void main() {
-    vec3 directional = calc_directional_light(lights.dir);
-    vec3 point = calc_point_light(lights.point);
+    vec3 frag_normal = normalize(in_normal);
+
+    vec3 directional = calc_directional_light(lights.dir, frag_normal);
+    vec3 point = calc_point_light(lights.point, frag_normal);
 
     out_color = vec4(directional + point, in_color.w);
 }
 
-vec3 calc_directional_light(DirectionalLight light) {
+vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal) {
     float dir_intensity = max(
-        dot(normalize(in_normal), light.toward.xyz),
+        dot(frag_normal, light.toward.xyz),
         0.0
     ) * light.color.w;
 
@@ -44,14 +46,14 @@ vec3 calc_directional_light(DirectionalLight light) {
     return ambient + diffuse;
 }
 
-vec3 calc_point_light(PointLight light) {
+vec3 calc_point_light(PointLight light, vec3 frag_normal) {
     // a vector dotted with itself is its length squared, so this gives us the
     // inverse square law quickly and cheaply
     vec3 to_light = light.position.xyz - in_pos.xyz;
     float attenuation = 1.0 / dot(to_light, to_light);
 
     float point_intensity = max(
-        dot(normalize(in_normal), normalize(to_light)),
+        dot(frag_normal, normalize(to_light)),
         0.0
     ) * light.color.w * attenuation;
 
