@@ -19,19 +19,17 @@
     #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
+
 #include <vulkan/vulkan.hpp>
 
 #if defined(VKL_LINUX)
-    #include <SDL2/SDL.h>
-    #include <SDL2/SDL_vulkan.h>
-    
     #include <X11/Xlib.h>
     #include <vulkan/vulkan_xlib.h>
 #elif defined(VKL_WINDOWS)
-    #define WIN32_LEAN_AND_MEAN // Probably doesn't do much nowadays
     #include <Windows.h>
-    #include <hidusage.h> // For raw keyboard and mouse input
-
     #undef min // Defining NOMINMAX above doesn't give the desired results with
     #undef max // how I've got things set up. This is a blunt approach, but
                // but nobody should be globally defining 'min' and 'max' in the

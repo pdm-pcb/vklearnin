@@ -38,7 +38,7 @@ target_include_directories(
 target_include_directories(
     vklearnin SYSTEM PUBLIC
     "${spdlog_SOURCE_DIR}"
-    "${SDL2_SOURCE_DIR}"
+    "${SDL2_BINARY_DIR}/include"
 )
 
 target_precompile_headers(
