@@ -43,8 +43,20 @@ private:
     // Make it just right
     static void _size_and_place();
 
-    static void _trap_cursor();
-    static void _free_cursor();
+    // Eventt handlers for window focus
+    static void _focus_gained();
+    static void _focus_lost();
+
+    // Branchless mouse movement handling
+    static void (*_handle_mouse_move)(int x, int y);
+
+    inline static void _handle_mouse_in_focus(int x, int y) {
+        EventBroker::emit<MouseMoveEvent>(x, y);
+    }
+
+    inline static void _handle_mouse_out_of_focus([[maybe_unused]] int x,
+                                                  [[maybe_unused]] int y)
+    { }
 };
 
 } // namespace vkl

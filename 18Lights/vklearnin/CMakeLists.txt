@@ -22,8 +22,6 @@ file(
     "include/vklearnin/*.hpp"
 )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 add_library(
 	vklearnin STATIC
 	${PROJECT_SOURCE}

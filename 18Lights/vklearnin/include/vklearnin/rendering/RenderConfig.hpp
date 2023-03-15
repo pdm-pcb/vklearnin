@@ -17,7 +17,7 @@ struct RenderConfig final {
     static int32_t  window_pos_y;
     static float    window_aspect;
 
-    static uint8_t image_count;
+    static uint32_t image_count;
     static bool vsync_on;
 
     static uint8_t msaa_samples;

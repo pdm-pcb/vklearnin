@@ -36,10 +36,7 @@ void TargetWindow::message_loop() {
                 break;
 
             case ::SDL_MOUSEMOTION:
-                EventBroker::emit<MouseMoveEvent>(
-                    event.motion.xrel,
-                    event.motion.yrel
-                );
+                _handle_mouse_move(event.motion.xrel, event.motion.yrel);
                 break;
 
             case ::SDL_MOUSEBUTTONDOWN:
@@ -63,17 +60,16 @@ void TargetWindow::message_loop() {
 
             case ::SDL_QUIT:
                 EventBroker::emit<WindowCloseEvent>();
-                _free_cursor();
                 break;
 
             case ::SDL_WINDOWEVENT: {
                 switch(event.window.event) {
                     case ::SDL_WINDOWEVENT_FOCUS_GAINED:
-                        _trap_cursor();
+                        _focus_gained();
                         break;
 
                     case ::SDL_WINDOWEVENT_FOCUS_LOST:
-                        _free_cursor();
+                        _focus_lost();
                         break;
                 }
                 break;
@@ -161,6 +157,8 @@ void TargetWindow::spawn_window(uint32_t const width, uint32_t const height,
         ::SDL_WINDOW_SHOWN
         | ::SDL_WINDOW_VULKAN
         | ::SDL_WINDOW_BORDERLESS
+        | ::SDL_WINDOW_INPUT_FOCUS
+        | ::SDL_WINDOW_INPUT_GRABBED
     );
 
     if(_window == nullptr) {
@@ -219,10 +217,12 @@ void TargetWindow::_size_and_place() {
         static_cast<float>(RenderConfig::window_height);
 }
 
-//==============================================================================
-void TargetWindow::_trap_cursor() {
-    auto const relative_result = ::SDL_SetRelativeMouseMode(::SDL_TRUE);
-    if(relative_result != 0) {
+// =============================================================================
+void TargetWindow::_focus_gained() {
+    _handle_mouse_move = &_handle_mouse_in_focus;
+
+    auto const result = ::SDL_SetRelativeMouseMode(::SDL_TRUE);
+    if(result != 0) {
         CONSOLE_ERROR(
             "SDL2 could not enable relative mouse mode: '{}'",
             ::SDL_GetError()
@@ -230,10 +230,12 @@ void TargetWindow::_trap_cursor() {
     }
 }
 
-//==============================================================================
-void TargetWindow::_free_cursor() {
-    auto const relative_result = ::SDL_SetRelativeMouseMode(::SDL_FALSE);
-    if(relative_result != 0) {
+// =============================================================================
+void TargetWindow::_focus_lost() {
+    _handle_mouse_move = &_handle_mouse_out_of_focus;
+
+    auto const result = ::SDL_SetRelativeMouseMode(::SDL_FALSE);
+    if(result != 0) {
         CONSOLE_ERROR(
             "SDL2 could not disable relative mouse mode: '{}'",
             ::SDL_GetError()

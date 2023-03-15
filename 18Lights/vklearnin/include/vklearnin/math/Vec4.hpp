@@ -5,7 +5,7 @@
 
 namespace vkl {
 
-struct alignas(16) Vec4 {
+struct Vec4 {
     static Vec4 const unit_x;
     static Vec4 const unit_y;
     static Vec4 const unit_z;
