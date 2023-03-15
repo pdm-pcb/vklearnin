@@ -9,7 +9,10 @@ TargetWindow::ScreenPos TargetWindow::_center { };
 
 vk::SurfaceKHR TargetWindow::_surface { };
 
-::SDL_Window *TargetWindow::_window { nullptr };
+::SDL_Window * TargetWindow::_window { nullptr };
+
+void (*TargetWindow::_handle_mouse_move)(int x, int y) =
+    TargetWindow::_handle_mouse_in_focus;
 
 //==============================================================================
 void TargetWindow::message_loop() {

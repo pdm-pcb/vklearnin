@@ -2,6 +2,8 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
+vkl::Vec4 MATERIAL_COLOR { 0.15f, 0.65f, 0.25f, 1.0f };
+
 vkl::Vec4 DIR_COLOR { 1.0f,  1.0f, 1.0f, 0.5f };
 vkl::Vec4 DIR_POS   { 1.0f, 1.0f, 1.0f, 1.0f };
 vkl::Vec4 POINT_COLOR {  1.0f,  1.0f, 1.0f, 0.5f };
@@ -283,11 +285,11 @@ void Demo::_init_meshes() {
     _lamp_mesh.init(
         0.1f,
         {{
-            DIR_COLOR, DIR_COLOR, DIR_COLOR, DIR_COLOR,
-            DIR_COLOR, DIR_COLOR, DIR_COLOR, DIR_COLOR,
+            POINT_COLOR, POINT_COLOR, POINT_COLOR, POINT_COLOR,
+            POINT_COLOR, POINT_COLOR, POINT_COLOR, POINT_COLOR,
         }}
     );
-    _cube_mesh.init(1.0f, vkl::Vec4 { 0.15f, 0.65f, 0.25f, 1.0f });
+    _cube_mesh.init(1.0f, MATERIAL_COLOR);
     _floor_mesh.init(100.0f, 100.0f);
 }
 
