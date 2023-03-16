@@ -11,6 +11,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/VertexTypes.hpp"
 #include "vklearnin/lighting/LightProps.hpp"
+#include "vklearnin/lighting/MaterialProps.hpp"
 
 namespace vkl {
 
@@ -27,10 +28,10 @@ public:
     static void init();
     static void shutdown();
 
-    static void set_global_uniforms(std::vector<BufferObject> const &ubos);
-    static void add_flat_texture(Texture2D const &texture);
-    static void set_skybox_texture(Texture2D const &texture);
+    static void set_camera_ubos(std::vector<BufferObject> const &ubos);
     static void set_light_ubos(std::vector<BufferObject> const &ubos);
+    static void set_skybox_texture(Texture2D const &texture);
+    static void add_flat_texture(Texture2D const &texture);
 
     static void create_pipelines();
 
@@ -39,14 +40,13 @@ public:
 private:
     static DescriptorPool _desc_pool;
 
-    static DescriptorSetLayout _global_uniform_set_layout;
+    static DescriptorSetLayout _camera_set_layout;
     static DescriptorSetLayout _flat_texture_set_layout;
     static DescriptorSetLayout _skybox_set_layout;
-
     static DescriptorSetLayout _lit_color_set_layout;
 
     using DescriptorSets = std::vector<DescriptorSet>;
-    static DescriptorSets _global_uniform_sets;
+    static DescriptorSets _camera_uniform_sets;
     static DescriptorSets _flat_texture_sets;
     static DescriptorSet  _skybox_set;
 
@@ -57,15 +57,12 @@ private:
     static std::vector<Framebuffer> _framebuffers;
 
     static Pipeline _flat_color_pipeline;
-    static Pipeline _lit_color_pipeline;
     static Pipeline _flat_texture_pipeline;
     static Pipeline _skybox_pipeline;
+    static Pipeline _lit_color_pipeline;
 
     using FlatColorDraws = std::vector<DrawSubmission<VertexFlatColor>>;
     static FlatColorDraws _flat_color_draws;
-
-    using LitColorDraws = std::vector<DrawSubmission<VertexLitColor>>;
-    static LitColorDraws _lit_color_draws;
 
     struct FlatTextureDrawQueue {
         size_t const set_index;
@@ -75,6 +72,9 @@ private:
     static FlatTextureDraws _flat_texture_draws;
 
     static DrawSubmission<VertexSkybox> _skybox_draw;
+
+    using LitColorDraws = std::vector<DrawSubmission<VertexLitColor>>;
+    static LitColorDraws _lit_color_draws;
 
     static void _init_framebuffers();
     static void _init_descriptor_pool();
@@ -89,14 +89,14 @@ private:
     _execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer);
 
     static void
-    _execute_lit_color_pipeline(vk::CommandBuffer const &cmd_buffer);
-
-    static void
     _execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer);
 
     static void _execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer);
 
-    static void _bind_global_uniforms(Pipeline const &pipeline,
+    static void
+    _execute_lit_color_pipeline(vk::CommandBuffer const &cmd_buffer);
+
+    static void _bind_camera_uniforms(Pipeline const &pipeline,
                                       vk::CommandBuffer const &cmd_buffer);
 
     template <typename VertexType>

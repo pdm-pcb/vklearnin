@@ -19,20 +19,20 @@ static constexpr vk::ClearValue clear_values[] = {
 };
 
 enum DescBindSlot {
-    GLOBAL_UNIFORM,
+    CAMERA_DATA,
     PER_TEXTURE,
     PER_DRAW
 };
 
 DescriptorPool Renderer::_desc_pool { };
 
-DescriptorSetLayout Renderer::_global_uniform_set_layout { };
-DescriptorSetLayout Renderer::_flat_texture_set_layout   { };
-DescriptorSetLayout Renderer::_skybox_set_layout         { };
-DescriptorSetLayout Renderer::_lit_color_set_layout      { };
+DescriptorSetLayout Renderer::_camera_set_layout       { };
+DescriptorSetLayout Renderer::_flat_texture_set_layout { };
+DescriptorSetLayout Renderer::_skybox_set_layout       { };
+DescriptorSetLayout Renderer::_lit_color_set_layout    { };
 
 Renderer::DescriptorSets
-Renderer::_global_uniform_sets { RenderConfig::image_count };
+Renderer::_camera_uniform_sets { RenderConfig::image_count };
 
 Renderer::DescriptorSets Renderer::_flat_texture_sets { };
 
@@ -46,14 +46,14 @@ RenderPass Renderer::_render_pass { };
 std::vector<Framebuffer> Renderer::_framebuffers { RenderConfig::image_count };
 
 Pipeline Renderer::_flat_color_pipeline;
-Pipeline Renderer::_lit_color_pipeline;
 Pipeline Renderer::_flat_texture_pipeline;
 Pipeline Renderer::_skybox_pipeline;
+Pipeline Renderer::_lit_color_pipeline;
 
 Renderer::FlatColorDraws     Renderer::_flat_color_draws;
-Renderer::LitColorDraws      Renderer::_lit_color_draws;
 Renderer::FlatTextureDraws   Renderer::_flat_texture_draws;
 DrawSubmission<VertexSkybox> Renderer::_skybox_draw;
+Renderer::LitColorDraws      Renderer::_lit_color_draws;
 
 // =============================================================================
 void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
@@ -67,9 +67,9 @@ void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
         _execute_flat_color_pipeline(cmd_buffer);
-        _execute_lit_color_pipeline(cmd_buffer);
         _execute_flat_texture_pipeline(cmd_buffer);
         _execute_skybox_pipeline(cmd_buffer);
+        _execute_lit_color_pipeline(cmd_buffer);
 
     cmd_buffer.endRenderPass();
 }
@@ -88,7 +88,7 @@ void Renderer::shutdown() {
     _flat_texture_pipeline.destroy();
     _skybox_pipeline.destroy();
 
-    _global_uniform_set_layout.destroy();
+    _camera_set_layout.destroy();
     _lit_color_set_layout.destroy();
     _flat_texture_set_layout.destroy();
     _skybox_set_layout.destroy();
@@ -103,7 +103,7 @@ void Renderer::shutdown() {
 }
 
 // =============================================================================
-void Renderer::set_global_uniforms(std::vector<BufferObject> const &ubos) {
+void Renderer::set_camera_ubos(std::vector<BufferObject> const &ubos) {
     if(ubos.size() != RenderConfig::image_count) {
         CONSOLE_CRITICAL(
             "UBO vector size of {} does not match image count of {}",
@@ -113,27 +113,8 @@ void Renderer::set_global_uniforms(std::vector<BufferObject> const &ubos) {
     }
 
     for(uint32_t image = 0u; image < RenderConfig::image_count; ++image) {
-        _global_uniform_sets[image].add_ubo(ubos[image]);
+        _camera_uniform_sets[image].add_ubo(ubos[image]);
     }
-}
-
-// =============================================================================
-void Renderer::add_flat_texture(Texture2D const &texture) {
-    _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
-    _flat_texture_sets.back().add_texture2D(texture.image());
-
-    _flat_texture_draws.insert({
-        reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
-        FlatTextureDrawQueue {
-            .set_index = _flat_texture_sets.size() - 1,
-            .queue = { }
-        }
-    });
-}
-
-// =============================================================================
-void Renderer::set_skybox_texture(Texture2D const &texture) {
-    _skybox_set.add_texture2D(texture.image());
 }
 
 // =============================================================================
@@ -153,12 +134,31 @@ void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
 }
 
 // =============================================================================
+void Renderer::set_skybox_texture(Texture2D const &texture) {
+    _skybox_set.add_texture2D(texture.image());
+}
+
+// =============================================================================
+void Renderer::add_flat_texture(Texture2D const &texture) {
+    _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
+    _flat_texture_sets.back().add_texture2D(texture.image());
+
+    _flat_texture_draws.insert({
+        reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
+        FlatTextureDrawQueue {
+            .set_index = _flat_texture_sets.size() - 1,
+            .queue = { }
+        }
+    });
+}
+
+// =============================================================================
 void Renderer::create_pipelines() {
     _init_descriptor_sets();
     _init_flat_color_pipeline();
-    _init_lit_color_pipeline();
     _init_flat_texture_pipeline();
     _init_skybox_pipeline();
+    _init_lit_color_pipeline();
 }
 
 // =============================================================================
@@ -192,17 +192,17 @@ void Renderer::_init_descriptor_pool() {
 
 // =============================================================================
 void Renderer::_init_descriptor_sets() {
-    _global_uniform_set_layout.add_binding({
+    _camera_set_layout.add_binding({
         .binding            = 0u,
         .descriptorType     = vk::DescriptorType::eUniformBuffer,
         .descriptorCount    = 1u,
-        .stageFlags         = vk::ShaderStageFlagBits::eVertex,
+        .stageFlags         = vk::ShaderStageFlagBits::eAll,
         .pImmutableSamplers = nullptr
     });
 
-    _global_uniform_set_layout.create();
-    for(auto &set : _global_uniform_sets) {
-        set.create(_desc_pool, _global_uniform_set_layout);
+    _camera_set_layout.create();
+    for(auto &set : _camera_uniform_sets) {
+        set.create(_desc_pool, _camera_set_layout);
     }
 
     _flat_texture_set_layout.add_binding({
@@ -256,7 +256,7 @@ void Renderer::_init_flat_color_pipeline() {
     );
 
     _flat_color_pipeline.add_descriptor_set(
-        _global_uniform_set_layout.native()
+        _camera_set_layout.native()
     );
 
     _flat_color_pipeline.add_push_constant(
@@ -278,7 +278,7 @@ void Renderer::_init_lit_color_pipeline() {
     );
 
     _lit_color_pipeline.add_descriptor_set(
-        _global_uniform_set_layout.native()
+        _camera_set_layout.native()
     );
 
     _lit_color_pipeline.add_descriptor_set(
@@ -304,7 +304,7 @@ void Renderer::_init_flat_texture_pipeline() {
     );
 
     _flat_texture_pipeline.add_descriptor_set(
-        _global_uniform_set_layout.native()
+        _camera_set_layout.native()
     );
 
     _flat_texture_pipeline.add_push_constant(
@@ -329,7 +329,7 @@ void Renderer::_init_skybox_pipeline() {
         VertexSkybox::attributes
     );
 
-    _skybox_pipeline.add_descriptor_set(_global_uniform_set_layout.native());
+    _skybox_pipeline.add_descriptor_set(_camera_set_layout.native());
     _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
     _skybox_pipeline.create(_render_pass);
 }
@@ -344,7 +344,7 @@ void Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer)
     cmd_buffer.setViewport(0u, _flat_color_pipeline.viewport());
     cmd_buffer.setScissor(0u,  _flat_color_pipeline.scissor());
 
-    _bind_global_uniforms(_flat_color_pipeline, cmd_buffer);
+    _bind_camera_uniforms(_flat_color_pipeline, cmd_buffer);
 
     for(auto const &draw : _flat_color_draws) {
         _send_push_constants(_flat_color_pipeline, draw, cmd_buffer);
@@ -378,7 +378,7 @@ void Renderer::_execute_lit_color_pipeline(vk::CommandBuffer const &cmd_buffer)
     cmd_buffer.setViewport(0u, _lit_color_pipeline.viewport());
     cmd_buffer.setScissor(0u,  _lit_color_pipeline.scissor());
 
-    _bind_global_uniforms(_lit_color_pipeline, cmd_buffer);
+    _bind_camera_uniforms(_lit_color_pipeline, cmd_buffer);
 
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
@@ -420,7 +420,7 @@ Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, _flat_texture_pipeline.viewport());
     cmd_buffer.setScissor(0u,  _flat_texture_pipeline.scissor());
 
-    _bind_global_uniforms(_flat_texture_pipeline, cmd_buffer);
+    _bind_camera_uniforms(_flat_texture_pipeline, cmd_buffer);
 
     for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
         cmd_buffer.bindDescriptorSets(
@@ -467,7 +467,7 @@ void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
     cmd_buffer.setViewport(0u, _skybox_pipeline.viewport());
     cmd_buffer.setScissor(0u,  _skybox_pipeline.scissor());
 
-    _bind_global_uniforms(_skybox_pipeline, cmd_buffer);
+    _bind_camera_uniforms(_skybox_pipeline, cmd_buffer);
 
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
@@ -494,14 +494,14 @@ void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
 }
 
 // =============================================================================
-void Renderer::_bind_global_uniforms(Pipeline const &pipeline,
+void Renderer::_bind_camera_uniforms(Pipeline const &pipeline,
                                      vk::CommandBuffer const &cmd_buffer)
 {
     cmd_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         pipeline.layout(),
-        DescBindSlot::GLOBAL_UNIFORM,
-        { _global_uniform_sets[Swapchain::image_index()].native() },
+        DescBindSlot::CAMERA_DATA,
+        { _camera_uniform_sets[Swapchain::image_index()].native() },
         nullptr
     );
 }

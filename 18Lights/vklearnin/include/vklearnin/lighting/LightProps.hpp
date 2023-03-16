@@ -24,4 +24,4 @@ struct LightProps {
 
 } // namespace vkl
 
-#endif // VKLEARNIN_LIGHTING_SURFACEPROPS_HPP
+#endif // VKLEARNIN_LIGHTING_LIGHTPROPS_HPP

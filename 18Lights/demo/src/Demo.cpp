@@ -2,12 +2,13 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-vkl::Vec4 MATERIAL_COLOR { 0.15f, 0.65f, 0.25f, 1.0f };
+vkl::Vec4 MATERIAL_COLOR { 0.15f, 0.65f, 0.25f, 256.0f };
 
-vkl::Vec4 DIR_COLOR { 1.0f,  1.0f, 1.0f, 0.5f };
-vkl::Vec4 DIR_POS   { 1.0f, 1.0f, 1.0f, 1.0f };
-vkl::Vec4 POINT_COLOR {  1.0f,  1.0f, 1.0f, 0.5f };
-vkl::Vec4 POINT_POS   { -2.0f, -2.0f, 2.0f, 1.0f };
+vkl::Vec4 DIR_COLOR { 1.0f, 1.0f, 1.0f, 0.25f };
+vkl::Vec4 DIR_POS   { 1.0f, 2.0f, 1.0f, 1.0f  };
+
+vkl::Vec4 POINT_COLOR { 1.0f, 1.0f, 1.0f, 0.5f };
+vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 
 // =============================================================================
 void Demo::update() {
@@ -78,11 +79,11 @@ void Demo::submit_draws() {
         }
     );
 
-    // _cube_matrix = vkl::math::rotate(
-    //     vkl::Mat4::identity,
-    //     vkl::Timekeeper::runtime() * 20.0f,
-    //     { 15.0f, 20.0f, 0.0f, 0.0f }
-    // );
+    _cube_matrix = vkl::math::rotate(
+        vkl::Mat4::identity,
+        vkl::Timekeeper::runtime() * 20.0f,
+        { 0.0f, 20.0f, 0.0f, 0.0f }
+    );
 
     vkl::Renderer::submit(
         vkl::DrawSubmission<vkl::VertexLitColor> {
@@ -277,13 +278,13 @@ void Demo::_init_camera() {
         );
     }
 
-    vkl::Renderer::set_global_uniforms(_vp_ubos);
+    vkl::Renderer::set_camera_ubos(_vp_ubos);
 }
 
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(
-        0.1f,
+        0.025f,
         {{
             POINT_COLOR, POINT_COLOR, POINT_COLOR, POINT_COLOR,
             POINT_COLOR, POINT_COLOR, POINT_COLOR, POINT_COLOR,
