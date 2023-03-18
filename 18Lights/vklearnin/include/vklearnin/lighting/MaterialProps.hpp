@@ -6,9 +6,10 @@
 namespace vkl {
 
 struct MaterialProps {
-    Vec4 ambient  { 0.5f, 0.5f, 0.5f, 1.0f };
-    Vec4 diffuse  { 0.5f, 0.5f, 0.5f, 1.0f };
-    Vec4 specular { 0.5f, 0.5f, 0.5f, 1.0f };
+    Vec4 ambient  { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vec4 diffuse  { 1.0f, 1.0f, 1.0f, 1.0f };
+    Vec4 specular { 1.0f, 1.0f, 1.0f, 1.0f };
+
     float shine = 32.0f;
 };
 

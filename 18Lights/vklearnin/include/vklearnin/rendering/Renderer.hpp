@@ -29,9 +29,9 @@ public:
     static void shutdown();
 
     static void set_camera_ubos(std::vector<BufferObject> const &ubos);
-    static void set_light_ubos(std::vector<BufferObject> const &ubos);
-    static void set_skybox_texture(Texture2D const &texture);
     static void add_flat_texture(Texture2D const &texture);
+    static void set_skybox_texture(Texture2D const &texture);
+    static void set_light_ubos(std::vector<BufferObject> const &ubos);
 
     static void create_pipelines();
 

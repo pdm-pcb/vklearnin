@@ -118,6 +118,25 @@ void Renderer::set_camera_ubos(std::vector<BufferObject> const &ubos) {
 }
 
 // =============================================================================
+void Renderer::add_flat_texture(Texture2D const &texture) {
+    _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
+    _flat_texture_sets.back().add_texture2D(texture.image());
+
+    _flat_texture_draws.insert({
+        reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
+        FlatTextureDrawQueue {
+            .set_index = _flat_texture_sets.size() - 1,
+            .queue = { }
+        }
+    });
+}
+
+// =============================================================================
+void Renderer::set_skybox_texture(Texture2D const &texture) {
+    _skybox_set.add_texture2D(texture.image());
+}
+
+// =============================================================================
 void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
     if(ubos.size() != RenderConfig::image_count) {
         CONSOLE_CRITICAL(
@@ -131,25 +150,6 @@ void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
         _lit_color_sets[image].resize(_lit_color_sets[image].size() + 1);
         _lit_color_sets[image].back().add_ubo(ubos[image]);
     }
-}
-
-// =============================================================================
-void Renderer::set_skybox_texture(Texture2D const &texture) {
-    _skybox_set.add_texture2D(texture.image());
-}
-
-// =============================================================================
-void Renderer::add_flat_texture(Texture2D const &texture) {
-    _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
-    _flat_texture_sets.back().add_texture2D(texture.image());
-
-    _flat_texture_draws.insert({
-        reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
-        FlatTextureDrawQueue {
-            .set_index = _flat_texture_sets.size() - 1,
-            .queue = { }
-        }
-    });
 }
 
 // =============================================================================

@@ -120,6 +120,24 @@ void Demo::init() {
 }
 
 // =============================================================================
+void Demo::shutdown() {
+    _lamp_mesh.shutdown();
+    _cube_mesh.shutdown();
+    _floor_mesh.shutdown();
+
+    _cube_texture.shutdown();
+    _floor_texture.shutdown();
+
+    for(auto &ubo : _vp_ubos) {
+        vkl::BufferTools::destroy(ubo);
+    }
+
+    for(auto &ubo : _light_props_ubos) {
+        vkl::BufferTools::destroy(ubo);
+    }
+}
+
+// =============================================================================
 void Demo::on_key_press(const vkl::KeyPressEvent &event) {
     switch(event.code) {
         case vkl::KB_W :
@@ -206,24 +224,6 @@ void Demo::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
         event.vert_offset,
         event.horiz_offset
     );
-}
-
-// =============================================================================
-void Demo::shutdown() {
-    _lamp_mesh.shutdown();
-    _cube_mesh.shutdown();
-    _floor_mesh.shutdown();
-
-    _cube_texture.shutdown();
-    _floor_texture.shutdown();
-
-    for(auto &ubo : _vp_ubos) {
-        vkl::BufferTools::destroy(ubo);
-    }
-
-    for(auto &ubo : _light_props_ubos) {
-        vkl::BufferTools::destroy(ubo);
-    }
 }
 
 // =============================================================================
