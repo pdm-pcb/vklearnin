@@ -41,6 +41,11 @@ void RenderPass::create() {
 
 // =============================================================================
 void RenderPass::destroy() {
+    CONSOLE_TRACE(
+        "Destroying Render Pass {:#x}",
+        reinterpret_cast<uint64_t>(VkRenderPass(_render_pass))
+    );
+
     ImageTools::destroy(_depth_buffer);
     ImageTools::destroy(_color_buffer);
     LogicalDevice::native().destroyRenderPass(_render_pass);

@@ -34,8 +34,8 @@ void Pipeline::describe_vertex_input(const VertexBindings &bindings,
     auto binding_count = static_cast<uint32_t>(bindings.size());
     auto attrib_count  = static_cast<uint32_t>(attributes.size());
 
-    // The caller of this function will provide the details of the vertex
-    // data this pipeline will expect to see in any given vertex buffer.
+    // The caller of this function will provide the details of the data
+    // this pipeline will expect to see in any given vertex buffer.
 
     _vert_input_info = {
         .vertexBindingDescriptionCount = binding_count,

@@ -268,32 +268,6 @@ void Renderer::_init_flat_color_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_init_lit_color_pipeline() {
-    _lit_color_pipeline.vert_from_spirv("shaders/04litcolor.vert");
-    _lit_color_pipeline.frag_from_spirv("shaders/04litcolor.frag");
-
-    _lit_color_pipeline.describe_vertex_input(
-        VertexLitColor::bindings,
-        VertexLitColor::attributes
-    );
-
-    _lit_color_pipeline.add_descriptor_set(
-        _camera_set_layout.native()
-    );
-
-    _lit_color_pipeline.add_descriptor_set(
-        _lit_color_set_layout.native()
-    );
-
-    _lit_color_pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eAll,
-        sizeof(Mat4)
-    );
-
-    _lit_color_pipeline.create(_render_pass);
-}
-
-// =============================================================================
 void Renderer::_init_flat_texture_pipeline() {
     _flat_texture_pipeline.vert_from_spirv("shaders/02texture.vert");
     _flat_texture_pipeline.frag_from_spirv("shaders/02texture.frag");
@@ -332,6 +306,32 @@ void Renderer::_init_skybox_pipeline() {
     _skybox_pipeline.add_descriptor_set(_camera_set_layout.native());
     _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
     _skybox_pipeline.create(_render_pass);
+}
+
+// =============================================================================
+void Renderer::_init_lit_color_pipeline() {
+    _lit_color_pipeline.vert_from_spirv("shaders/04litcolor.vert");
+    _lit_color_pipeline.frag_from_spirv("shaders/04litcolor.frag");
+
+    _lit_color_pipeline.describe_vertex_input(
+        VertexLitColor::bindings,
+        VertexLitColor::attributes
+    );
+
+    _lit_color_pipeline.add_descriptor_set(
+        _camera_set_layout.native()
+    );
+
+    _lit_color_pipeline.add_descriptor_set(
+        _lit_color_set_layout.native()
+    );
+
+    _lit_color_pipeline.add_push_constant(
+        vk::ShaderStageFlagBits::eAll,
+        sizeof(Mat4)
+    );
+
+    _lit_color_pipeline.create(_render_pass);
 }
 
 // =============================================================================

@@ -31,7 +31,8 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -97,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "10ShadersAndPipelines.md",
+                "file": "00zDefinitions.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -114,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "10ShadersAndPipelines.md",
+                "file": "00zDefinitions.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -137,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "10ShadersAndPipelines.md"
+                "file": "00zDefinitions.md"
               }
             }
           }
@@ -158,10 +159,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "49adfcd541c9117c",
+  "active": "213689dcfe9c50ac",
   "lastOpenFiles": [
-    "11VertexBuffers.md",
     "10ShadersAndPipelines.md",
+    "11VertexBuffers.md",
     "09RenderPassesAndFramebuffers.md",
     "00zDefinitions.md",
     "08Swapchain.md",
