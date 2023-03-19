@@ -330,21 +330,12 @@ void Pipeline::_init_layout() {
 
     // Unlike the input state above, we do have to explicitly create the
     // pipeline layout object.
-    auto result = LogicalDevice::native().createPipelineLayout(layout_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not create pipeline layout: '{}'",
-            to_string(result.result)
-        );
-        return;
-    }
+    _layout = LogicalDevice::native().createPipelineLayout(layout_info);
 
     CONSOLE_TRACE(
         "Created pipeline layout {:#x}",
-        reinterpret_cast<uint64_t>(VkPipelineLayout(result.value))
+        reinterpret_cast<uint64_t>(VkPipelineLayout(_layout))
     );
-
-    _layout = result.value;
 }
 
 // =============================================================================

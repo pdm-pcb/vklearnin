@@ -13,7 +13,7 @@ void CmdPool::create(const vk::CommandPoolCreateFlags flags) {
         .queueFamilyIndex = LogicalDevice::cmd_queue().index()
     };
 
-    auto result = LogicalDevice::native().createCommandPool(
+    auto const result = LogicalDevice::native().createCommandPool(
         &pool_info,
         nullptr,
         &_pool

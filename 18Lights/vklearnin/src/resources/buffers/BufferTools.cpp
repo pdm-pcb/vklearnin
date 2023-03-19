@@ -30,22 +30,17 @@ void create(BufferObject &buffer,
         .pQueueFamilyIndices   = nullptr,
     };
 
-    auto result = LogicalDevice::native().createBuffer(buffer_info);
-    if(result.result != vk::Result::eSuccess || !result.value) {
-        CONSOLE_CRITICAL(
-            "Failed to create {}-byte buffer: '{}'",
-            buffer.size,
-            to_string(result.result)
-        );
+    buffer.handle = LogicalDevice::native().createBuffer(buffer_info);
+
+    if(!buffer.handle) {
+        CONSOLE_CRITICAL("Failed to create {}-byte buffer'", buffer.size);
         return;
     }
 
     CONSOLE_TRACE(
         "Created buffer {:#x}",
-        reinterpret_cast<uint64_t>(VkBuffer(result.value))
+        reinterpret_cast<uint64_t>(VkBuffer(buffer.handle))
     );
-
-    buffer.handle = result.value;
 
     allocate(buffer, memory_properties);
 }
@@ -79,21 +74,20 @@ BufferObject stage_data(const size_t size, const void * const data) {
          vk::MemoryPropertyFlagBits::eHostCoherent)
     );
 
-    auto map_result = LogicalDevice::native().mapMemory(
+    auto *mapped = LogicalDevice::native().mapMemory(
         staging_buffer.memory,
         0u,
         staging_buffer.size
     );
 
-    if(map_result.result != vk::Result::eSuccess) {
+    if(mapped == nullptr) {
         CONSOLE_CRITICAL(
-            "Unable to map device memory {:#x}: '{}'",
-            reinterpret_cast<uint64_t>(VkDeviceMemory(staging_buffer.memory)),
-            to_string(map_result.result)
+            "Unable to map device memory {:#x} for staging buffer",
+            reinterpret_cast<uint64_t>(VkDeviceMemory(staging_buffer.memory))
         );
     }
     else {
-        memcpy(map_result.value, data, staging_buffer.size);
+        memcpy(mapped, data, staging_buffer.size);
         LogicalDevice::native().unmapMemory(staging_buffer.memory);
 
         CONSOLE_TRACE("Copied {} bytes to staging buffer", staging_buffer.size);
@@ -127,18 +121,21 @@ void host_to_device(const BufferObject &dst, const void * const data) {
 
 // =============================================================================
 void update_buffer(const BufferObject &buffer, const void * const data) {
-    auto result =
-        LogicalDevice::native().mapMemory(buffer.memory, 0u, buffer.size);
-    if(result.result != vk::Result::eSuccess) {
+    auto *mapped = LogicalDevice::native().mapMemory(
+        buffer.memory,
+        0u,
+        buffer.size
+    );
+
+    if(mapped == nullptr) {
         CONSOLE_CRITICAL(
-            "Unable to map UBO {:#x}: '{}'",
-            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
-            to_string(result.result)
+            "Unable to map UBO {:#x}",
+            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle))
         );
         return;
     }
 
-    memcpy(result.value, data, buffer.size);
+    memcpy(mapped, data, buffer.size);
     LogicalDevice::native().unmapMemory(buffer.memory);
 }
 
@@ -167,44 +164,22 @@ void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags) {
         .memoryTypeIndex = type_index,
     };
 
-    auto alloc_result = LogicalDevice::native().allocateMemory(alloc_info);
-    if(alloc_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to allocate {} bytes for buffer {:#x}: '{}'",
-            buffer.size,
-            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
-            to_string(alloc_result.result)
-        );
-        return;
-    }
+    buffer.memory = LogicalDevice::native().allocateMemory(alloc_info);
 
     CONSOLE_TRACE(
         "\n\tAllocated {} bytes: Device memory {:#x}"
         "\n\tFor buffer {:#x}",
         buffer.size,
-        reinterpret_cast<uint64_t>(VkDeviceMemory(alloc_result.value)),
+        reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.memory)),
         reinterpret_cast<uint64_t>(VkBuffer(buffer.handle))
     );
 
-    buffer.memory = alloc_result.value;
-
     // Finally,
-    auto bind_result = LogicalDevice::native().bindBufferMemory(
+    LogicalDevice::native().bindBufferMemory(
         buffer.handle,
         buffer.memory,
         0u
     );
-
-    if(bind_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Binding attempt failed with '{}' for:"
-            "\n\tBuffer: {:#x}"
-            "\n\tMemory: {:#x}",
-            to_string(bind_result),
-            reinterpret_cast<uint64_t>(VkBuffer(buffer.handle)),
-            reinterpret_cast<uint64_t>(VkDeviceMemory(buffer.memory))
-        );
-    }
 }
 
 // =============================================================================

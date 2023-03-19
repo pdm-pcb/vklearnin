@@ -37,13 +37,7 @@ void Application::run() {
         Timekeeper::update();
     }
 
-    auto result = LogicalDevice::native().waitIdle();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to wait for device idle: '{}'",
-            to_string(result)
-        );
-    }
+    LogicalDevice::native().waitIdle();
 
     shutdown();
     _engine->shutdown();

@@ -20,14 +20,7 @@ void Framebuffer::create(const std::vector<vk::ImageView> &attachments,
         .layers          = 1u,
     };
 
-    auto result = LogicalDevice::native().createFramebuffer(buffer_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to create framebuffer: '{}'",
-            to_string(result.result)
-        );
-    }
-    _framebuffer = result.value;
+    _framebuffer = LogicalDevice::native().createFramebuffer(buffer_info);
 
     CONSOLE_TRACE(
         "Created framebuffer {:#x}",

@@ -24,14 +24,7 @@ void RenderPass::create() {
         .pDependencies   = _subpass_deps.data()
     };
 
-    auto result = LogicalDevice::native().createRenderPass(renderpass_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to create render pass: '{}'",
-            to_string(result.result)
-        );
-    }
-    _render_pass = result.value;
+    _render_pass = LogicalDevice::native().createRenderPass(renderpass_info);
 
     CONSOLE_TRACE(
         "Created Render Pass {:#x}",

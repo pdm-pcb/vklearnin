@@ -63,12 +63,12 @@ void VKDebugger::init(vk::Instance &instance) {
     };
 
     // Give it a shot
-    auto result = instance.createDebugUtilsMessengerEXT(
+    auto const result = instance.createDebugUtilsMessengerEXT(
         &messenger_info,
         nullptr,
         &_debug_messenger
     );
-    
+
     // React accordingly
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(

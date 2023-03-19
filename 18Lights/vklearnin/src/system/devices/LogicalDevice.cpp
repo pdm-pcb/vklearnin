@@ -46,7 +46,7 @@ void LogicalDevice::create() {
     };
 
     // Attempt creation
-    auto result = PhysicalDevice::native().createDevice(
+    auto const result = PhysicalDevice::native().createDevice(
         &device_info,
         nullptr,
         &_logical_device

@@ -59,7 +59,7 @@ void Swapchain::next_image() {
 
 // =============================================================================
 void Swapchain::reset_fence() {
-    auto result = LogicalDevice::native().resetFences(
+    auto const result = LogicalDevice::native().resetFences(
         1u,
         &_image_sync[_present_index].queue_fence
     );
@@ -101,16 +101,10 @@ void Swapchain::submit(vk::CommandBuffer const &buffer) {
         .pSignalSemaphores = signal_sems,
     };
 
-    auto result = LogicalDevice::cmd_queue().native().submit(
+    LogicalDevice::cmd_queue().native().submit(
         submit_info,
         _image_sync[_present_index].queue_fence
     );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_ERROR(
-            "Could not submit command buffers: '{}'",
-            to_string(result)
-        );
-    }
 }
 
 // =============================================================================
@@ -133,7 +127,7 @@ void Swapchain::present() {
         .pImageIndices = &_present_index
     };
 
-    auto result = LogicalDevice::cmd_queue().native().presentKHR(present_info);
+    auto const result = LogicalDevice::cmd_queue().native().presentKHR(present_info);
     if(result == vk::Result::eErrorOutOfDateKHR ||
        result == vk::Result::eSuboptimalKHR)
     {
@@ -148,13 +142,8 @@ void Swapchain::create() {
     _query_surface_present_modes();
     _populate_create_info();
 
-    auto result = LogicalDevice::native().createSwapchainKHR(_create_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to create swapchain: '{}'", to_string(result.result)
-        );
-    }
-    _swapchain = result.value;
+    _swapchain = LogicalDevice::native().createSwapchainKHR(_create_info);
+
     CONSOLE_TRACE("Created swapchain for logical device");
 
     _get_images();
@@ -189,14 +178,7 @@ void Swapchain::destroy() {
 void Swapchain::_query_surface_capabilities() {
     auto const& gpu = PhysicalDevice::native();
     auto const& surface = TargetWindow::surface();
-    auto const& result = gpu.getSurfaceCapabilitiesKHR(surface);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not get surface capabilities: '{}'",
-            to_string(result.result)
-        );
-    }
-    auto const& capabilities = result.value;
+    auto const& capabilities = gpu.getSurfaceCapabilitiesKHR(surface);
 
     CONSOLE_TRACE(
         "\nSurface Capabilities:"
@@ -262,14 +244,8 @@ void Swapchain::_query_surface_capabilities() {
 void Swapchain::_query_surface_format() {
     auto const& gpu = PhysicalDevice::native();
     auto const& surface = TargetWindow::surface();
-    auto const& result  = gpu.getSurfaceFormatsKHR(surface);
-    if(result.result != vk::Result::eSuccess || result.value.empty()) {
-        CONSOLE_CRITICAL(
-            "Could not get surface formats.: '{}'",
-            to_string(result.result)
-        );
-    }
-    auto const& formats = result.value;
+    auto const& formats = gpu.getSurfaceFormatsKHR(surface);
+
     CONSOLE_TRACE("Found {} surface formats.", formats.size());
 
     // First, default to the image format details of the first listed - these
@@ -297,15 +273,8 @@ void Swapchain::_query_surface_format() {
 void Swapchain::_query_surface_present_modes() {
     auto const& gpu = PhysicalDevice::native();
     auto const& surface = TargetWindow::surface();
-    auto const& result = gpu.getSurfacePresentModesKHR(surface);
-    if(result.result != vk::Result::eSuccess || result.value.empty()) {
-        CONSOLE_CRITICAL(
-            "Could not get surface present modes: '{}'",
-            to_string(result.result)
-        );
-    }
+    auto const& modes = gpu.getSurfacePresentModesKHR(surface);
 
-    auto const& modes = result.value;
     CONSOLE_TRACE("Found {} present modes.", modes.size());
 
     bool has_fifo_relaxed = false;
@@ -406,15 +375,10 @@ void Swapchain::_populate_create_info() {
 
 // =============================================================================
 void Swapchain::_get_images() {
-    auto result = LogicalDevice::native().getSwapchainImagesKHR(_swapchain);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not get swapchain images: '{}'",
-            to_string(result.result)
-        );
-    }
+    auto const image_list =
+        LogicalDevice::native().getSwapchainImagesKHR(_swapchain);
 
-    if(result.value.size() != RenderConfig::image_count) {
+    if(image_list.size() != RenderConfig::image_count) {
         CONSOLE_CRITICAL(
             "Swapchain returned {} images; {} requested",
             _images.size(), RenderConfig::image_count
@@ -426,7 +390,7 @@ void Swapchain::_get_images() {
         _images[image_idx] = {
             .format = _image_format,
             .layout =  vk::ImageLayout::eUndefined,
-            .handle = result.value[image_idx],
+            .handle = image_list[image_idx],
         };
     }
 }
@@ -448,32 +412,16 @@ void Swapchain::_create_sync_primitives() {
     _image_sync.resize(RenderConfig::image_count);
 
     const vk::SemaphoreCreateInfo sem_info { };
-    vk::Result result;
 
     for(auto &sync : _image_sync) {
         // First, the semephores which will let us know when the swapchain has
         // finished presenting one of the images
-        std::tie(result, sync.present_complete) =
+        sync.present_complete =
             LogicalDevice::native().createSemaphore(sem_info);
-            if(result != vk::Result::eSuccess) {
-                CONSOLE_CRITICAL(
-                    "Unable to create present semaphore: '{}'",
-                    to_string(result)
-            );
-            return;
-        }
 
         // Next, the semephores letting us know when a draw has completed to the
         // back buffer/image
-        std::tie(result, sync.draw_complete) =
-            LogicalDevice::native().createSemaphore(sem_info);
-            if(result != vk::Result::eSuccess) {
-                CONSOLE_CRITICAL(
-                    "Unable to swapchain draw semaphore: '{}'",
-                    to_string(result)
-            );
-            return;
-        }
+        sync.draw_complete = LogicalDevice::native().createSemaphore(sem_info);
 
         // Once there's a frame being written to the monitor and a frame on the
         // back buffer, the CPU needs to wait on the GPU before more frames can
@@ -481,15 +429,8 @@ void Swapchain::_create_sync_primitives() {
         const vk::FenceCreateInfo fence_info {
             .flags = vk::FenceCreateFlagBits::eSignaled
         };
-        std::tie(result, sync.queue_fence) =
-            LogicalDevice::native().createFence(fence_info);
-            if(result != vk::Result::eSuccess) {
-                CONSOLE_CRITICAL(
-                    "Unable to create swapchain queue fence: '{}'",
-                    to_string(result)
-            );
-            return;
-        }
+
+        sync.queue_fence = LogicalDevice::native().createFence(fence_info);
 
         CONSOLE_TRACE(
             "Created swapchain sync primitives:"

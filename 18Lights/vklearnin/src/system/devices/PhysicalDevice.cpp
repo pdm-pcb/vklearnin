@@ -21,20 +21,12 @@ vk::PhysicalDeviceFeatures PhysicalDevice::_enabled_features {
 // =============================================================================
 void PhysicalDevice::query_devices() {
     // Query and populate the list of physical devices
-    auto [enumdev_result, devices] =
-        GraphicsAPI::native().enumeratePhysicalDevices();
-    if(enumdev_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to enumerate physical devices: '{}'",
-            to_string(enumdev_result)
-        );
-        return;
-    }
-
+    auto const devices = GraphicsAPI::native().enumeratePhysicalDevices();
     if(devices.empty()) {
         CONSOLE_CRITICAL("No physical devices found.");
         return;
     }
+
     CONSOLE_TRACE("Found {} {}", devices.size(),
                   (devices.size() == 1 ? "device" : "devices"));
 
@@ -42,15 +34,7 @@ void PhysicalDevice::query_devices() {
         auto const& props = device.getProperties();
 
         // We'll want to know what extensions the devices support
-        auto [enumext_result, extensions] =
-            device.enumerateDeviceExtensionProperties();
-
-        if(enumext_result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL(
-                "Failed to enumerate device extensions: '{}'",
-                to_string(enumext_result)
-        	);
-        }
+        auto const extensions = device.enumerateDeviceExtensionProperties();
         CONSOLE_TRACE("Found {} physical device extensions", extensions.size());
 
         // Swapchain support is definitely required
@@ -182,18 +166,8 @@ void PhysicalDevice::select_device() {
             // actually just checks whether a given queue family can present
             // on a given surface. Poorly named function, but oh well.
             if(!present_support[device_index].first) {
-                auto result = gpu.getSurfaceSupportKHR(family, surface);
-
-                // Oblige Vulkan-Hpp and check the return value
-                if(result.result != vk::Result::eSuccess) {
-                    CONSOLE_CRITICAL(
-                        "Failed to query surface support: '{}'",
-                        to_string(result.result)
-                    );
-                }
-                else {
-                    present_support[device_index] = { true, family };
-                }
+                auto const support = gpu.getSurfaceSupportKHR(family, surface);
+                present_support[device_index] = { support, family };
             }
         }
     }

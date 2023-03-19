@@ -39,7 +39,7 @@ void Win32TargetWindow::message_loop() {
         case WM_INPUT: {
             // Check for message size
             ::UINT message_size;
-            auto result = ::GetRawInputData(
+            auto const result = ::GetRawInputData(
                 reinterpret_cast<::HRAWINPUT>(lparam),
                 RID_INPUT,
                 nullptr,
@@ -353,7 +353,7 @@ void Win32TargetWindow::create_surface() {
     };
 
     // Create, check, assign
-    auto result = GraphicsAPI::native().createWin32SurfaceKHR(surface_info);
+    auto const result = GraphicsAPI::native().createWin32SurfaceKHR(surface_info);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
             "Unable to create Win32 KHR surface: '{}'",
@@ -448,7 +448,7 @@ void Win32TargetWindow::_register_input() {
     devices[1].dwFlags     = RIDEV_NOLEGACY;
     devices[1].hwndTarget  = _window;
 
-    auto result =
+    auto const result =
         ::RegisterRawInputDevices(devices, 2, sizeof(::RAWINPUTDEVICE));
 
     if(result == FALSE) {
@@ -505,7 +505,7 @@ void Win32TargetWindow::_size_and_place() {
         static_cast<float>(RenderConfig::window_width) /
         static_cast<float>(RenderConfig::window_height);
 
-    auto result = ::SetWindowPos(
+    auto const result = ::SetWindowPos(
         _window, nullptr,
         static_cast<int>(RenderConfig::window_pos_x),
         static_cast<int>(RenderConfig::window_pos_y),

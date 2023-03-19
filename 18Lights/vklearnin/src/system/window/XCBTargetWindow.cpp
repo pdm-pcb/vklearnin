@@ -91,7 +91,7 @@ void XCBTargetWindow::message_loop() {
                     motion->root_x, motion->root_y,
                     motion->event_x, motion->event_y
                 );
-                
+
                 break;
             }
 
@@ -238,7 +238,7 @@ void XCBTargetWindow::create_surface() {
     };
 
     // Create, check, assign
-    auto result = GraphicsAPI::native().createXcbSurfaceKHR(surface_info);
+    auto const result = GraphicsAPI::native().createXcbSurfaceKHR(surface_info);
     if(result.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
             "Unable to create XCB KHR surface: '{}'",
@@ -457,7 +457,7 @@ void XCBTargetWindow::_size_and_place() {
         static_cast<float>(RenderConfig::window_width) /
         static_cast<float>(RenderConfig::window_height);
 
-    
+
 
     uint32_t value_mask = ::XCB_CONFIG_WINDOW_X |
                           ::XCB_CONFIG_WINDOW_Y |

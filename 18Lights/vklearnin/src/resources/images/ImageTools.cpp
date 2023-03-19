@@ -50,19 +50,10 @@ void create(ImageObject &image,
         .initialLayout = vk::ImageLayout::eUndefined,
     };
 
-    auto [result, handle] = LogicalDevice::native().createImage(image_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not create image: '{}'",
-            to_string(result)
-        );
-    }
-    else {
-        CONSOLE_TRACE("Created image {:#x}",
-                      reinterpret_cast<uint64_t>(::VkImage(handle)));
-    }
+    image.handle = LogicalDevice::native().createImage(image_info);
 
-    image.handle = handle;
+    CONSOLE_TRACE("Created image {:#x}",
+                    reinterpret_cast<uint64_t>(::VkImage(image.handle)));
 
     allocate(image, memory_properties);
 }
@@ -119,19 +110,9 @@ void create_view(ImageObject &image,
         }
     };
 
-    auto [result, view] = LogicalDevice::native().createImageView(view_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not create image view: '{}'",
-            to_string(result)
-        );
-    }
-    else {
-        CONSOLE_TRACE("Created image view {:#x}",
-                      reinterpret_cast<uint64_t>(::VkImageView(view)));
-    }
-
-    image.view = view;
+    image.view = LogicalDevice::native().createImageView(view_info);
+    CONSOLE_TRACE("Created image view {:#x}",
+                    reinterpret_cast<uint64_t>(::VkImageView(image.view)));
 }
 
 // =============================================================================
@@ -358,11 +339,7 @@ void create_sampler(ImageObject &image,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    auto result = LogicalDevice::native().createSampler(sampler_info);
-    if(result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to create image sampler");
-        return;
-    }
+    image.sampler = LogicalDevice::native().createSampler(sampler_info);
 
     CONSOLE_TRACE(
         "\nCreated image sampler {:#x}"
@@ -372,7 +349,7 @@ void create_sampler(ImageObject &image,
         "\n\tAddress U:  {}"
         "\n\tAddress V:  {}"
         "\n\tAnisotropy: {}",
-        reinterpret_cast<uint64_t>(::VkSampler(result.value)),
+        reinterpret_cast<uint64_t>(::VkSampler(image.sampler)),
         to_string(sampler_info.magFilter),
         to_string(sampler_info.minFilter),
         to_string(sampler_info.mipmapMode),
@@ -380,8 +357,6 @@ void create_sampler(ImageObject &image,
         to_string(sampler_info.addressModeV),
         sampler_info.maxAnisotropy
     );
-
-    image.sampler = result.value;
 }
 
 // =============================================================================
@@ -509,43 +484,21 @@ void allocate(ImageObject &image, const vk::MemoryPropertyFlags flags) {
         .memoryTypeIndex = type_index,
     };
 
-    auto alloc_result = LogicalDevice::native().allocateMemory(alloc_info);
-    if(alloc_result.result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to allocate {} bytes for image {:#x}: '{}'",
-            mem_reqs.size,
-            reinterpret_cast<uint64_t>(VkImage(image.handle)),
-            to_string(alloc_result.result)
-        );
-        return;
-    }
+    image.memory = LogicalDevice::native().allocateMemory(alloc_info);
 
     CONSOLE_TRACE(
         "\n\tAllocated {} bytes : {:#x}"
         "\n\tFor image {:#x}",
         mem_reqs.size,
-        reinterpret_cast<uint64_t>(VkDeviceMemory(alloc_result.value)),
+        reinterpret_cast<uint64_t>(VkDeviceMemory(image.memory)),
         reinterpret_cast<uint64_t>(VkImage(image.handle))
     );
 
-    image.memory = alloc_result.value;
-
-    auto bind_result = LogicalDevice::native().bindImageMemory(
+    LogicalDevice::native().bindImageMemory(
         image.handle,
         image.memory,
         0u
     );
-
-    if(bind_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Binding attempt failed with '{}' for:"
-            "\n\tImage: {:#x}"
-            "\n\tMemory: {:#x}",
-            to_string(bind_result),
-            reinterpret_cast<uint64_t>(VkImage(image.handle)),
-            reinterpret_cast<uint64_t>(VkDeviceMemory(image.memory))
-        );
-    }
 }
 
 // =============================================================================

@@ -90,7 +90,6 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
         "-Wall"             # All, extra, and pedantic warnings
         "-Wextra"
         "-pedantic"
-        "-fno-exceptions"   # Don't throw, just crash
         "-fno-rtti"         # Disable dynamic_cast
     )
 
@@ -119,7 +118,6 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
             "-Wall"             # All, extra, and pedantic warnings
             "-Wextra"
             "-pedantic"
-            "-fno-exceptions"   # Don't throw, just crash
             "-fno-rtti"         # Disable dynamic_cast
         )
 
@@ -141,7 +139,6 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
             vklearnin PUBLIC
             "_CRT_SECURE_NO_WARNINGS" # Ignore "may be unsafe" warnings
             "WIN64"                   # Prefer 64 bit address space
-            "_HAS_EXCEPTIONS=0"       # Don't throw, just crash
         )
 
         target_compile_options(

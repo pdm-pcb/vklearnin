@@ -47,7 +47,7 @@ void GraphicsAPI::init() {
         .ppEnabledExtensionNames = _enabled_extensions.data()
     };
 
-    auto result = vk::createInstance(
+    auto const result = vk::createInstance(
         &instance_info,
         nullptr,
         &_instance
@@ -64,17 +64,7 @@ void GraphicsAPI::init() {
     // Inform the dynamic dispatcher that we've got an instance.
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_instance);
 
-    // Disabling constructors in Vulkan-Hpp forces the programmer to check the
-    // return status of any function which offers one. So we'll check that
-    // before proceeding to utilize the other return value.
-    auto [ext_result, extensions] = vk::enumerateInstanceExtensionProperties();
-    if(ext_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to enumerate instance extensions: '{}'",
-            to_string(result)
-        );
-    }
-
+    auto const extensions = vk::enumerateInstanceExtensionProperties();
     CONSOLE_TRACE("Found {} instance extensions.", extensions.size());
 
     // At most, three instance extensions are required at this point. Run

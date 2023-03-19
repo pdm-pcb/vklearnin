@@ -20,7 +20,7 @@ void CmdBuffer::allocate(const vk::CommandPool pool, const bool primary) {
         .commandBufferCount = 1u,
     };
 
-    auto result = LogicalDevice::native().allocateCommandBuffers(
+    auto const result = LogicalDevice::native().allocateCommandBuffers(
         &buffer_info,
         &_buffer
     );
@@ -56,7 +56,7 @@ CmdBuffer CmdBuffer::begin_one_time_submit() {
 
     CmdBuffer cmd_buffer;
     cmd_buffer.allocate(LogicalDevice::transient_pool().native());
-    auto result = cmd_buffer.native().begin(&begin_info);
+    auto const result = cmd_buffer.native().begin(&begin_info);
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
             "Could not begin recording for one time submit command buffer."
@@ -68,13 +68,7 @@ CmdBuffer CmdBuffer::begin_one_time_submit() {
 
 // =============================================================================
 void CmdBuffer::end_one_time_submit(CmdBuffer &cmd_buffer) {
-    auto result = cmd_buffer.native().end();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not end recording for one time submit command buffer."
-        );
-        return;
-    }
+    cmd_buffer.native().end();
 
     const vk::SubmitInfo submit_info{
         .waitSemaphoreCount   = 0u,
@@ -86,27 +80,12 @@ void CmdBuffer::end_one_time_submit(CmdBuffer &cmd_buffer) {
         .pSignalSemaphores    = nullptr,
     };
 
-    result = LogicalDevice::cmd_queue().native().submit(
+    LogicalDevice::cmd_queue().native().submit(
         submit_info,
         nullptr
     );
-    if(result!=vk::Result::eSuccess) {
-        CONSOLE_ERROR(
-            "Could not submit command buffer: '{}'",
-            to_string(result)
-        );
-        return;
-    }
 
-    result = LogicalDevice::native().waitIdle();
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Failed to wait for device idle after command buffer submission: "
-            "'{}'",
-            to_string(result)
-        );
-        return;
-    }
+    LogicalDevice::native().waitIdle();
 
     cmd_buffer.free();
 }

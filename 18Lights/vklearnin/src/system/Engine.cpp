@@ -16,26 +16,12 @@ void Engine::render_loop() {
         auto &cmd_buffer = _cmd_buffers[Swapchain::image_index()];
 
         const vk::CommandBufferBeginInfo begin_info { };
-        auto result = cmd_buffer.native().begin(begin_info);
-        if(result != vk::Result::eSuccess) {
-            CONSOLE_ERROR(
-                "Failed to begin command buffer recording: '{}'",
-                to_string(result)
-            );
-            return;
-        }
+        cmd_buffer.native().begin(begin_info);
 
             _application.submit_draws();
             Renderer::render_pass(cmd_buffer.native());
 
-        result = cmd_buffer.native().end();
-        if(result != vk::Result::eSuccess) {
-            CONSOLE_ERROR(
-                "Failed to end command buffer recording: '{}'",
-                to_string(result)
-            );
-            return;
-        }
+        cmd_buffer.native().end();
 
         Swapchain::submit({ cmd_buffer.native() });
         Swapchain::present();

@@ -6,10 +6,6 @@
 // Log all message levels, up to and including trace
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 
-// Disable exceptions in spdlog and fmt
-#define SPDLOG_NO_EXCEPTIONS
-#define FMT_EXCEPTIONS 0
-
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h> // definitely want color, right?
 

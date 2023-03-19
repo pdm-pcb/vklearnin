@@ -18,7 +18,7 @@ void DescriptorPool::create(uint32_t const max_sets, const PoolSizes &sizes) {
         .pPoolSizes = size_list.data()
     };
 
-    auto result = LogicalDevice::native().createDescriptorPool(
+    auto const result = LogicalDevice::native().createDescriptorPool(
         &pool_info,
         nullptr,
         &_pool

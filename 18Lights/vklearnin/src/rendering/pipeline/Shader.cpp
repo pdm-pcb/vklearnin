@@ -16,20 +16,13 @@ void Shader::create(std::string_view filepath) {
         .pCode = shader_binary.data(),
     };
 
-    auto [result, shader_module] =
-        LogicalDevice::native().createShaderModule(module_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Unable to create shader module.");
-        return;
-    }    
+    _shader = LogicalDevice::native().createShaderModule(module_info);
 
     CONSOLE_TRACE(
         "Shader module {:#x} from '{}'",
-        reinterpret_cast<uint64_t>(VkShaderModule(shader_module)),
+        reinterpret_cast<uint64_t>(VkShaderModule(_shader)),
         filepath
     );
-
-    _shader = shader_module;
 }
 
 // =============================================================================
