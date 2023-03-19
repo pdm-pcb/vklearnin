@@ -22,7 +22,7 @@ vk::ValidationFeaturesEXT      GraphicsAPI::_validation_extensions { };
 vk::InstanceCreateInfo         GraphicsAPI::_instance_create_info  { };
 
 // =============================================================================
-void GraphicsAPI::init() {    
+void GraphicsAPI::init() {
     _init_dynamic_loader(); // The first step for using the dynamic loader
     _init_app_info();       // Provide hints about this program to the driver
     _init_layers();         // There are many layers. Validation is our favorite
@@ -39,7 +39,7 @@ void GraphicsAPI::init() {
 #endif // VKL_DEBUG
         .flags = { },
         .pApplicationInfo = &_app_info,
-        .enabledLayerCount = 
+        .enabledLayerCount =
             static_cast<uint32_t>(_enabled_layers.size()),
         .ppEnabledLayerNames = _enabled_layers.data(),
         .enabledExtensionCount =
@@ -75,7 +75,7 @@ void GraphicsAPI::init() {
         );
     }
 
-    CONSOLE_TRACE("Found {} instance extensions.", extensions.size());   
+    CONSOLE_TRACE("Found {} instance extensions.", extensions.size());
 
     // At most, three instance extensions are required at this point. Run
     // through all extensions the driver offers and make sure we've got what
@@ -148,7 +148,6 @@ void GraphicsAPI::_init_app_info() {
     _app_info.engineVersion      = ENGINE_VERSION;
     _app_info.apiVersion         = VK_API_VER;
 }
-
 
 // =============================================================================
 void GraphicsAPI::_init_layers() {

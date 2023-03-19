@@ -95,8 +95,8 @@ void PhysicalDevice::query_devices() {
 
         // Hold onto the info we've gathered
         _store_physical_device(device, props, memory, driver_props);
-        auto const& properties = _available_devices.back();
 
+        auto const& properties = _available_devices.back();
         CONSOLE_TRACE(
             "\n"
             "\tDevice Name:    {}\n"

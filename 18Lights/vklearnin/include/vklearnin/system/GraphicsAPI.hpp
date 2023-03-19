@@ -7,8 +7,6 @@ namespace vkl {
 
 class GraphicsAPI final {
 public:
-    using ValidationFeatures = std::vector<vk::ValidationFeatureEnableEXT>;
-
     static void init();
     static void create_device();
     static void destroy_device();
@@ -32,7 +30,10 @@ private:
     static vk::ApplicationInfo       _app_info;
     static std::vector<const char *> _enabled_layers;
     static std::vector<const char *> _enabled_extensions;
+
+    using ValidationFeatures = std::vector<vk::ValidationFeatureEnableEXT>;
     static ValidationFeatures        _validation_features;
+
     static vk::ValidationFeaturesEXT _validation_extensions;
 
     static vk::InstanceCreateInfo _instance_create_info;

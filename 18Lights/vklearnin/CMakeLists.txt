@@ -1,16 +1,18 @@
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
 
 include(FetchDeps)
-message(NOTICE "Fetch fmt")
-FetchContent_MakeAvailable(fmt)
-message(NOTICE "Fetch spdlog")
-FetchContent_MakeAvailable(spdlog)
-message(NOTICE "Fetch SDL2")
-FetchContent_MakeAvailable(SDL2)
-
 include(CompileShaders)
 
 find_package(Vulkan REQUIRED)
+
+message(NOTICE "Fetch fmt")
+FetchContent_MakeAvailable(fmt)
+
+message(NOTICE "Fetch spdlog")
+FetchContent_MakeAvailable(spdlog)
+
+message(NOTICE "Fetch SDL2")
+FetchContent_MakeAvailable(SDL2)
 
 file(
     GLOB_RECURSE PROJECT_SOURCE
@@ -35,6 +37,7 @@ target_include_directories(
 
 target_include_directories(
     vklearnin SYSTEM PUBLIC
+    "${fmt_SOURCE_DIR}/include"
     "${spdlog_SOURCE_DIR}"
     "${SDL2_BINARY_DIR}/include"
 )
@@ -84,22 +87,24 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
 
     target_compile_options(
         vklearnin PUBLIC
-        "-Wall"
+        "-Wall"             # All, extra, and pedantic warnings
         "-Wextra"
         "-pedantic"
+        "-fno-exceptions"   # Don't throw, just crash
+        "-fno-rtti"         # Disable dynamic_cast
     )
 
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         target_compile_options(
             vklearnin PUBLIC
-            "-O0"
-            "-ggdb3"
+            "-O0"       # No optimization
+            "-ggdb3"    # All the gdb flags
         )
     elseif(CMAKE_BUILD_TYPE MATCHES "Release")
         target_compile_options(
             vklearnin PUBLIC
-            "-O3"
-            "-ffast-math"
+            "-O3"           # Healthy optimization
+            "-ffast-math"   # Imprecise, fast float math
         )
     endif()
 elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
@@ -111,29 +116,32 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     if(CMAKE_C_COMPILER MATCHES "clang")
         target_compile_options(
             vklearnin PUBLIC
-            "-Wall"
+            "-Wall"             # All, extra, and pedantic warnings
             "-Wextra"
             "-pedantic"
+            "-fno-exceptions"   # Don't throw, just crash
+            "-fno-rtti"         # Disable dynamic_cast
         )
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             target_compile_options(
                 vklearnin PUBLIC
-                "-O0"
-                "-ggdb3"
+                "-O0"       # No optimization
+                "-ggdb3"    # All the gdb flags
             )
         elseif(CMAKE_BUILD_TYPE MATCHES "Release")
             target_compile_options(
                 vklearnin PUBLIC
-                "-O3"
-                "-ffast-math"
+                "-O3"           # Healthy optimization
+                "-ffast-math"   # Imprecise, fast float math
             )
         endif()
     else()
         target_compile_definitions(
             vklearnin PUBLIC
-            "_CRT_SECURE_NO_WARNINGS" # ignore "may be unsafe" warnings
-            "WIN64" # shun the 32 bit address space
+            "_CRT_SECURE_NO_WARNINGS" # Ignore "may be unsafe" warnings
+            "WIN64"                   # Prefer 64 bit address space
+            "_HAS_EXCEPTIONS=0"       # Don't throw, just crash
         )
 
         target_compile_options(
@@ -141,6 +149,7 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
             "/nologo"  # Suppress copyright message
             "/W4"	   # Warnin's
             "/wd4312"  # Disable the warning for casting to a larger size
+            "/GR-"     # Disable RTTI
         )
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -152,7 +161,6 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
                 "/GS"       # Buffer overrun checks
                 "/sdl"      # Security warnings
                 "/Od"       # Optimization disabled
-                "/EHsc"     # Standard exception handling
                 "/diagnostics:column" # Include column in compiler messages
             )
         elseif(CMAKE_BUILD_TYPE MATCHES "Release")

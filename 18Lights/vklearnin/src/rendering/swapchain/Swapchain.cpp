@@ -455,11 +455,11 @@ void Swapchain::_create_sync_primitives() {
         // finished presenting one of the images
         std::tie(result, sync.present_complete) =
             LogicalDevice::native().createSemaphore(sem_info);
-        if(result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL(
-                "Unable to create present semaphore: '{}'",
-                to_string(result)
-        );
+            if(result != vk::Result::eSuccess) {
+                CONSOLE_CRITICAL(
+                    "Unable to create present semaphore: '{}'",
+                    to_string(result)
+            );
             return;
         }
 
@@ -467,11 +467,11 @@ void Swapchain::_create_sync_primitives() {
         // back buffer/image
         std::tie(result, sync.draw_complete) =
             LogicalDevice::native().createSemaphore(sem_info);
-        if(result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL(
-                "Unable to swapchain draw semaphore: '{}'",
-                to_string(result)
-        );
+            if(result != vk::Result::eSuccess) {
+                CONSOLE_CRITICAL(
+                    "Unable to swapchain draw semaphore: '{}'",
+                    to_string(result)
+            );
             return;
         }
 
@@ -483,11 +483,11 @@ void Swapchain::_create_sync_primitives() {
         };
         std::tie(result, sync.queue_fence) =
             LogicalDevice::native().createFence(fence_info);
-        if(result != vk::Result::eSuccess) {
-            CONSOLE_CRITICAL(
-                "Unable to create swapchain queue fence: '{}'",
-                to_string(result)
-        );
+            if(result != vk::Result::eSuccess) {
+                CONSOLE_CRITICAL(
+                    "Unable to create swapchain queue fence: '{}'",
+                    to_string(result)
+            );
             return;
         }
 

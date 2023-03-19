@@ -3,13 +3,15 @@
 
 #include <vklearnin/system/pch.hpp>
 
-// This directive lets spdlog know we want to show every type of message, up to
-// and including traces.
+// Log all message levels, up to and including trace
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+
+// Disable exceptions in spdlog and fmt
+#define SPDLOG_NO_EXCEPTIONS
+#define FMT_EXCEPTIONS 0
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h> // definitely want color, right?
-#include <spdlog/fmt/ostr.h> // support for ostream operator overloading
-
 
 namespace vkl {
 
@@ -32,7 +34,7 @@ public:
 #define CONSOLE_INFO(...)     SPDLOG_INFO(__VA_ARGS__)
 #define CONSOLE_WARN(...)     SPDLOG_WARN(__VA_ARGS__)
 #define CONSOLE_ERROR(...)    SPDLOG_ERROR(__VA_ARGS__)
-// I like to have anything I mark as critical immediately halt execution
+// Anything marked as critical will immediately halt (debug) execution
 #define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); assert(false)
 
 } // namespace vkl

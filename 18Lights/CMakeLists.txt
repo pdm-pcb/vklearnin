@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.20) # This minimum requirement allows us to not
+                                     # worry whether CMake is automatically
+                                     # adding the RTTI enable flag to an MSVC
+                                     # build
 
 project(
     vklearnin

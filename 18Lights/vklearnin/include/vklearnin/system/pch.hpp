@@ -35,8 +35,6 @@
     #include <vulkan/vulkan_win32.h>
 #endif
 
-#include "vklearnin/math/math.hpp"
-
 #include <filesystem>
 #include <fstream>
 #include <set>
@@ -45,5 +43,7 @@
 #include <type_traits>
 #include <system_error>
 #include <unordered_map>
+
+#include "vklearnin/math/math.hpp"
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP
