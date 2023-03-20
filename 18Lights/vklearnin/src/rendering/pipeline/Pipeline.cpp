@@ -8,22 +8,25 @@
 namespace vkl {
 
 // =============================================================================
-void Pipeline::vert_from_spirv(std::string_view filepath) {
+void Pipeline::vert_from_spirv(std::string_view filepath,
+                               std::string_view entry_point)
+{
     _vert.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
         .module = _vert.native(),
-        .pName = "main",
+        .pName = entry_point.data(),
     });
 }
 
 // =============================================================================
-void Pipeline::frag_from_spirv(std::string_view filepath) {
+void Pipeline::frag_from_spirv(std::string_view filepath,
+                               std::string_view entry_point) {
     _frag.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,
         .module = _frag.native(),
-        .pName = "main",
+        .pName = entry_point.data(),
     });
 }
 
@@ -65,17 +68,23 @@ void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
 }
 
 // =============================================================================
-void Pipeline::create(const RenderPass &render_pass) {
+void Pipeline::create(RenderPass const &render_pass, Config const &config) {
     _init_assembly();
     _init_viewport();
-    _init_raster();
-    _init_multisample();
+    _init_raster(config);
+    _init_multisample(config);
     _init_depth_stencil();
     _init_blend();
     _init_dynamic_states();
     _init_layout();
 
     const vk::GraphicsPipelineCreateInfo pipeline_info {
+        // If we're in a debug build, don't optimize out unused shader data
+        // and such
+        #ifdef VKL_DEBUG
+            .flags = vk::PipelineCreateFlagBits::eDisableOptimization,
+        #endif // VKL_DEBUG
+
         .stageCount = static_cast<uint32_t>(_shader_stages.size()),
         .pStages    = _shader_stages.data(),
 
@@ -94,7 +103,7 @@ void Pipeline::create(const RenderPass &render_pass) {
         // Which render pass will use this pipeline?
         .renderPass          = render_pass.native(),
         // And within that render pass, which subpass will use this pipeline?
-        .subpass             = 0u,
+        .subpass             = config.subpass_index,
 
         // A new pipeline may be derrived from an existing one, only updating
         // what needs to be updated. The .basePipeline* values designate an
@@ -166,6 +175,16 @@ void Pipeline::update_dimensions() {
 }
 
 // =============================================================================
+void Pipeline::bind(vk::CommandBuffer const &cmd_buffer) {
+    cmd_buffer.bindPipeline(
+        vk::PipelineBindPoint::eGraphics,
+        _pipeline
+    );
+    cmd_buffer.setViewport(0u, _viewport);
+    cmd_buffer.setScissor(0u, _scissor);
+}
+
+// =============================================================================
 void Pipeline::_init_assembly() {
     // The primitive assembly stage requires knowing how to interpret the
     // vertices you've asked it to draw. Again, we're not feeding anything
@@ -197,10 +216,12 @@ void Pipeline::_init_viewport() {
 }
 
 // =============================================================================
-void Pipeline::_init_raster() {
+void Pipeline::_init_raster(Config const &config) {
     _raster_info = {
-        // No depth testing is happening yet, so there's nothing to base any
-        // clamping on.
+        // Depth clamping requires enabling a VkPhysicalDevice feature of the
+        // same name, and changes how the depth test of a given fragment might
+        // go by clamping its Z value to be within the near and far planes of
+        // the view frustum before running the test.
         .depthClampEnable = VK_FALSE,
 
         // There are some situations in which you want a pipeline to complete
@@ -211,7 +232,7 @@ void Pipeline::_init_raster() {
 
         // The rasterizer can take the points of a polygon and fill them in,
         // only draw their outline, or even just draw the points in space.
-        .polygonMode = vk::PolygonMode::eFill,
+        .polygonMode = config.polygon_mode,
 
         // Once the vertex shader has placed a triangle in space, either it's
         // very likely at some oblique angle to the screen. In our case, the
@@ -219,12 +240,12 @@ void Pipeline::_init_raster() {
         // but either way one of the sides of the triangle is not visible. To
         // save on running the fragment shader for every fragment on the side
         // of the triangle facing away from us, we cull the back-facing data.
-        .cullMode = vk::CullModeFlagBits::eBack,
+        .cullMode = config.cull_mode,
 
         // Which order are the now-processed vertices connected in? Who's on
         // first? This is also called triangle winding, and for us the order
         // is clockwise.
-        .frontFace = vk::FrontFace::eClockwise,
+        .frontFace = config.front_face,
 
         // Once more, there is no depth testing being done, so these values are
         // superfluous.
@@ -239,24 +260,9 @@ void Pipeline::_init_raster() {
 }
 
 // =============================================================================
-void Pipeline::_init_multisample() {
-    switch(RenderConfig::msaa_samples) {
-        case 64u: _samples = vk::SampleCountFlagBits::e64; break;
-        case 32u: _samples = vk::SampleCountFlagBits::e32; break;
-        case 16u: _samples = vk::SampleCountFlagBits::e16; break;
-        case 8u:  _samples = vk::SampleCountFlagBits::e8;  break;
-        case 4u:  _samples = vk::SampleCountFlagBits::e4;  break;
-        case 2u:  _samples = vk::SampleCountFlagBits::e2;  break;
-        case 1u:  _samples = vk::SampleCountFlagBits::e1;  break;
-        default:
-            CONSOLE_CRITICAL(
-                "Unsupported color buffer sample count {}.",
-                RenderConfig::msaa_samples
-            );
-    }
-
+void Pipeline::_init_multisample(Config const &config) {
     _multisample_info = {
-        .rasterizationSamples  = _samples,
+        .rasterizationSamples  = config.msaa_samples,
         .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
@@ -348,7 +354,6 @@ Pipeline::Pipeline() :
     _raster_info          { },
     _multisample_info     { },
     _dynamic_state_info   { },
-    _samples              { },
     _desc_set_layouts     { },
     _push_constants       { },
     _push_constant_offset { 0 },

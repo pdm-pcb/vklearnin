@@ -150,7 +150,7 @@ void RenderPass::_init_color_buffer() {
         ImageTools::destroy(_color_buffer);
     }
 
-    _get_msaa_samples();
+    _samples = vulkan_max_msaa_samples();
 
     _color_buffer.format = Swapchain::image_format();
     _color_buffer.extent = vk::Extent3D {
@@ -175,24 +175,6 @@ void RenderPass::_init_color_buffer() {
         vk::ImageViewType::e2D,
         vk::ImageAspectFlagBits::eColor
     );
-}
-
-// =============================================================================
-void RenderPass::_get_msaa_samples() {
-    switch(RenderConfig::msaa_samples) {
-        case 64u: _samples = vk::SampleCountFlagBits::e64; break;
-        case 32u: _samples = vk::SampleCountFlagBits::e32; break;
-        case 16u: _samples = vk::SampleCountFlagBits::e16; break;
-        case 8u:  _samples = vk::SampleCountFlagBits::e8;  break;
-        case 4u:  _samples = vk::SampleCountFlagBits::e4;  break;
-        case 2u:  _samples = vk::SampleCountFlagBits::e2;  break;
-        case 1u:  _samples = vk::SampleCountFlagBits::e1;  break;
-        default:
-            CONSOLE_CRITICAL(
-                "Unsupported color buffer sample count {}.",
-                RenderConfig::msaa_samples
-            );
-    }
 }
 
 // =============================================================================

@@ -127,7 +127,8 @@ void Swapchain::present() {
         .pImageIndices = &_present_index
     };
 
-    auto const result = LogicalDevice::cmd_queue().native().presentKHR(present_info);
+    auto const result =
+        LogicalDevice::cmd_queue().native().presentKHR(present_info);
     if(result == vk::Result::eErrorOutOfDateKHR ||
        result == vk::Result::eSuboptimalKHR)
     {
@@ -222,21 +223,27 @@ void Swapchain::_query_surface_capabilities() {
         );
     }
 
-    // Provided image_count has already been used to set some array sizes (in
+    // Provided image count has already been used to set some array sizes (in
     // LogicalDevice, for example) it's become a hard requirement of the
     // surface itself
-    if(RenderConfig::image_count > capabilities.maxImageCount ||
-       RenderConfig::image_count < capabilities.minImageCount)
+    if(RenderConfig::swapchain_image_count > capabilities.maxImageCount ||
+       RenderConfig::swapchain_image_count < capabilities.minImageCount)
     {
         CONSOLE_WARN(
             "{} swapchain images requested, but surface allows a minimum of {} "
             "and a maximum of {} images. Defaulting to minimum.",
-            RenderConfig::image_count,
+            RenderConfig::swapchain_image_count,
             capabilities.minImageCount,
             capabilities.maxImageCount
         );
 
-        RenderConfig::image_count = capabilities.minImageCount;
+        RenderConfig::swapchain_image_count = capabilities.minImageCount;
+    }
+
+    // The minimum number of concurrent frames the renderer can process is the
+    // minimum number of images required to keep the swapchain fed
+    if(RenderConfig::concurrent_frames < RenderConfig::swapchain_image_count) {
+        RenderConfig::concurrent_frames = RenderConfig::swapchain_image_count;
     }
 }
 
@@ -318,7 +325,7 @@ void Swapchain::_query_surface_present_modes() {
 void Swapchain::_populate_create_info() {
     _create_info = {
         .surface         = TargetWindow::surface(),
-        .minImageCount   = RenderConfig::image_count,
+        .minImageCount   = RenderConfig::swapchain_image_count,
         .imageFormat     = _image_format,
         .imageColorSpace = _color_space,
         .imageExtent     = _extent,
@@ -366,7 +373,7 @@ void Swapchain::_populate_create_info() {
         "\n    Color Space:  {}"
         "\n    Present Mode: {}",
         _extent.width, _extent.height,
-        RenderConfig::image_count,
+        RenderConfig::swapchain_image_count,
         to_string(_image_format),
         to_string(_color_space),
         to_string(_present_mode)
@@ -378,14 +385,14 @@ void Swapchain::_get_images() {
     auto const image_list =
         LogicalDevice::native().getSwapchainImagesKHR(_swapchain);
 
-    if(image_list.size() != RenderConfig::image_count) {
+    if(image_list.size() != RenderConfig::swapchain_image_count) {
         CONSOLE_CRITICAL(
             "Swapchain returned {} images; {} requested",
-            _images.size(), RenderConfig::image_count
+            _images.size(), RenderConfig::swapchain_image_count
         );
     }
 
-    _images.resize(RenderConfig::image_count);
+    _images.resize(RenderConfig::swapchain_image_count);
     for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
         _images[image_idx] = {
             .format = _image_format,
@@ -409,7 +416,7 @@ void Swapchain::_create_image_views() {
 // =============================================================================
 void Swapchain::_create_sync_primitives() {
     // Set aside the room for image-count-number of synchronization primitives
-    _image_sync.resize(RenderConfig::image_count);
+    _image_sync.resize(RenderConfig::swapchain_image_count);
 
     const vk::SemaphoreCreateInfo sem_info { };
 

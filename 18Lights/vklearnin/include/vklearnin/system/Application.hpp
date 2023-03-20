@@ -11,14 +11,12 @@ struct WindowCloseEvent;
 
 class Application {
 public:
-    void run();
-
-    virtual void update() = 0;
+    virtual void update()       = 0;
     virtual void submit_draws() = 0;
+    virtual void init()         = 0;
+    virtual void shutdown()     = 0;
 
-    virtual void init() = 0;
-    virtual void shutdown() = 0;
-
+    void run();
     void on_window_close(const WindowCloseEvent &event);
 
     Application();

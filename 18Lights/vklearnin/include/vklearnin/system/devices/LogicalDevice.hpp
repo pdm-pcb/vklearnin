@@ -9,7 +9,7 @@ namespace vkl {
 
 class LogicalDevice final {
 public:
-    static void create();
+    static void create(std::vector<char const *> const &layer_names = { });
     static void destroy();
 
     inline static auto const& native()    { return _logical_device; }

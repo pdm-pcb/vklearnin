@@ -7,7 +7,7 @@ size_t MemTracker::total_bytes = 0;
 size_t MemTracker::alloc_count = 0;
 size_t MemTracker::free_count  = 0;
 
-const char *success_string =
+char const *success_string =
     "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
     "                         Mission accomplished"
     "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";

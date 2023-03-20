@@ -6,16 +6,24 @@
 namespace vkl {
 
 // =============================================================================
-void
-DescriptorSetLayout::add_binding(const vk::DescriptorSetLayoutBinding &binding)
+auto & DescriptorSetLayout::add_binding(vk::DescriptorType const type,
+                                        vk::ShaderStageFlags const stages,
+                                        uint32_t const descriptor_count)
 {
-    _bindings.push_back(binding);
+    _bindings.push_back({
+        .binding         = static_cast<uint32_t>(_bindings.size()),
+        .descriptorType  = type,
+        .descriptorCount = descriptor_count,
+        .stageFlags      = stages,
+    });
 
     CONSOLE_TRACE(
-        "Adding Descriptor Type: {} Binding: {} ",
-        to_string(binding.descriptorType),
-        binding.binding
+        "Adding Descriptor type: {} binding: {} ",
+        to_string(type),
+        _bindings.back().binding
     );
+
+    return *this;
 }
 
 // =============================================================================
@@ -48,8 +56,8 @@ void DescriptorSetLayout::destroy() {
 
 // =============================================================================
 DescriptorSetLayout::DescriptorSetLayout() :
-    _layout   { },
-    _bindings { }
+    _bindings     { },
+    _layout       { }
 { }
 
 } // namespace vkl

@@ -7,13 +7,23 @@ namespace vkl {
 
 class PhysicalDevice final {
 public:
-    static void query_devices();
+    enum class Features {
+        SAMPLER_ANISOTROPY,
+        FILL_MODE_NONSOLID,
+        LOLNOP
+    };
+
+    static void query_devices(
+        std::vector<std::string_view> const & required_extensions,
+        std::vector<Features> const & required_features
+    );
     static void select_device();
 
-    inline static auto queue_index()              { return _queue_index;       }
-    inline static auto const & native()           { return _physical_device;   }
-    inline static auto const & memory_props()     { return _memory_properties; }
-    inline static auto const & enabled_features() { return _enabled_features;  }
+    inline static auto queue_index()          { return _queue_index;        }
+    inline static auto const & native()       { return _physical_device;    }
+    inline static auto const & memory_props() { return _memory_properties;  }
+    inline static auto const & features()     { return _enabled_features;   }
+    inline static auto const & extensions()   { return _enabled_extensions; }
 
     PhysicalDevice() = delete;
 
@@ -38,6 +48,17 @@ private:
 
     static vk::PhysicalDeviceMemoryProperties _memory_properties;
     static vk::PhysicalDeviceFeatures         _enabled_features;
+    static std::vector<char const *>          _enabled_extensions;
+
+    static bool _check_features(
+        vk::PhysicalDeviceFeatures const &supported_features,
+        std::vector<Features> const &required_features
+    );
+
+    static bool _check_extensions(
+        std::vector<vk::ExtensionProperties> const &supported_extensions,
+        std::vector<std::string_view> const &required_extensions
+    );
 
     static void _store_physical_device(
         const vk::PhysicalDevice &device,

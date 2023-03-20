@@ -48,8 +48,8 @@ void Engine::shutdown() {
 Engine::Engine(Application &app) :
     _application { app }
 {
-    _cmd_pools.resize(vkl::RenderConfig::image_count);
-    _cmd_buffers.resize(vkl::RenderConfig::image_count);
+    _cmd_pools.resize(vkl::RenderConfig::concurrent_frames);
+    _cmd_buffers.resize(vkl::RenderConfig::concurrent_frames);
 }
 
 } // namespace vkl

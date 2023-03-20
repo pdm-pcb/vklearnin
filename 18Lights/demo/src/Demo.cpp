@@ -266,7 +266,7 @@ void Demo::_init_camera() {
     _cam_data.pos     =  8.0f * vkl::Vec4::unit_z;
     _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
 
-    _vp_ubos.resize(vkl::RenderConfig::image_count);
+    _vp_ubos.resize(vkl::RenderConfig::concurrent_frames);
     CONSOLE_TRACE("Allocating VP UBOs");
     for(auto &ubo : _vp_ubos) {
         ubo.size = sizeof(VPMatrices);
@@ -311,42 +311,42 @@ void Demo::_init_trs_matrices() {
 
 // =============================================================================
 void Demo::_init_textures() {
-    _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
-    _cube_texture.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-    vkl::Renderer::add_flat_texture(_cube_texture);
+    // _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
+    // _cube_texture.init_sampler(
+    //     vk::Filter::eLinear,
+    //     vk::Filter::eLinear,
+    //     vk::SamplerMipmapMode::eLinear,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     vk::SamplerAddressMode::eRepeat
+    // );
+    // vkl::Renderer::add_flat_texture(_cube_texture);
 
-    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
-    _floor_texture.init_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
-    );
-    vkl::Renderer::add_flat_texture(_floor_texture);
+    // _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
+    // _floor_texture.init_sampler(
+    //     vk::Filter::eLinear,
+    //     vk::Filter::eLinear,
+    //     vk::SamplerMipmapMode::eLinear,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     vk::SamplerAddressMode::eRepeat
+    // );
+    // vkl::Renderer::add_flat_texture(_floor_texture);
 }
 
 // =============================================================================
 void Demo::_init_lights() {
-    _light_props_ubos.resize(vkl::RenderConfig::image_count);
-    CONSOLE_TRACE("Allocating light UBOs");
-    for(auto &ubo : _light_props_ubos) {
-        ubo.size = sizeof(vkl::LightProps);
-        vkl::BufferTools::create(
-            ubo,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            (vk::MemoryPropertyFlagBits::eHostVisible |
-             vk::MemoryPropertyFlagBits::eHostCoherent)
-        );
-    }
+    // _light_props_ubos.resize(vkl::RenderConfig::concurrent_frames);
+    // CONSOLE_TRACE("Allocating light UBOs");
+    // for(auto &ubo : _light_props_ubos) {
+    //     ubo.size = sizeof(vkl::LightProps);
+    //     vkl::BufferTools::create(
+    //         ubo,
+    //         vk::BufferUsageFlagBits::eUniformBuffer,
+    //         (vk::MemoryPropertyFlagBits::eHostVisible |
+    //          vk::MemoryPropertyFlagBits::eHostCoherent)
+    //     );
+    // }
 
-    vkl::Renderer::set_light_ubos(_light_props_ubos);
+    // vkl::Renderer::set_light_ubos(_light_props_ubos);
 }
 
 // =============================================================================

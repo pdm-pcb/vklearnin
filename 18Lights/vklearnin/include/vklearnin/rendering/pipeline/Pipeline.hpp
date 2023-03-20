@@ -9,10 +9,20 @@ namespace vkl {
 
 class RenderPass;
 
-class Pipeline final {
+class Pipeline {
 public:
-    void vert_from_spirv(std::string_view filepath);
-    void frag_from_spirv(std::string_view filepath);
+    struct Config {
+        vk::PolygonMode         polygon_mode;
+        vk::CullModeFlags       cull_mode;
+        vk::FrontFace           front_face;
+        vk::SampleCountFlagBits msaa_samples;
+        uint32_t                subpass_index;
+    };
+
+    void vert_from_spirv(std::string_view filepath,
+                         std::string_view entry_point = "main");
+    void frag_from_spirv(std::string_view filepath,
+                         std::string_view entry_point = "main");
 
     void describe_vertex_input(const VertexBindings &bindings,
                                const VertexAttribs &attributes);
@@ -20,9 +30,11 @@ public:
     void add_descriptor_set(const vk::DescriptorSetLayout &set_layout);
     void add_push_constant(vk::ShaderStageFlags stage_flags, size_t size);
 
-    void create(const RenderPass &render_pass);
+    void create(RenderPass const &render_pass, Config const &config);
     void destroy();
     void update_dimensions();
+    virtual void execute(uint32_t const frame_index,
+                         vk::CommandBuffer const &cmd_buffer) = 0;
 
     inline auto const& native()   const { return _pipeline; }
     inline auto const& layout()   const { return _layout; }
@@ -30,13 +42,16 @@ public:
     inline auto const& scissor()  const { return _scissor; }
 
     Pipeline();
-    ~Pipeline() = default;
+    virtual ~Pipeline() = default;
 
     Pipeline(Pipeline &&) = delete;
     Pipeline(const Pipeline &) = delete;
 
     Pipeline& operator=(Pipeline &&) = delete;
     Pipeline& operator=(const Pipeline &) = delete;
+
+protected:
+    void bind(vk::CommandBuffer const &cmd_buffer);
 
 private:
     Shader _vert;
@@ -58,8 +73,6 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
-    vk::SampleCountFlagBits _samples;
-
     std::vector<vk::DescriptorSetLayout> _desc_set_layouts;
     std::vector<vk::PushConstantRange>   _push_constants;
     size_t _push_constant_offset;
@@ -69,8 +82,8 @@ private:
 
     void _init_assembly();
     void _init_viewport();
-    void _init_raster();
-    void _init_multisample();
+    void _init_raster(Config const &config);
+    void _init_multisample(Config const &config);
     void _init_depth_stencil();
     void _init_blend();
     void _init_dynamic_states();

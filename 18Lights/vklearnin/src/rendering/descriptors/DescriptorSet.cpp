@@ -8,55 +8,44 @@
 namespace vkl {
 
 // =============================================================================
-void DescriptorSet::add_ubo(BufferObject const &ubo) {
-    _ubos.push_back(ubo);
+auto & DescriptorSet::add_buffer(BufferObject const &buffer) {
+    _buffers.push_back(buffer);
+    return *this;
 }
 
 // =============================================================================
-void DescriptorSet::add_texture2D(ImageObject const &texture) {
-    _textures.push_back(texture);
+auto & DescriptorSet::add_image(ImageObject const &image) {
+    _images.push_back(image);
+    return *this;
 }
 
 // =============================================================================
-void DescriptorSet::create(DescriptorPool const &descriptor_pool,
-                           DescriptorSetLayout const &set_layout)
-{
-    const vk::DescriptorSetAllocateInfo alloc_info {
-        .descriptorPool = descriptor_pool.native(),
-        .descriptorSetCount = 1u,
-        .pSetLayouts = &set_layout.native()
-    };
-
-    auto const result = LogicalDevice::native().allocateDescriptorSets(
-        &alloc_info,
-        &_set
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not allocate descriptor sets");
-        return;
-    }
-
+void DescriptorSet::write_set() {
     std::vector<vk::DescriptorBufferInfo> buffer_info;
-    buffer_info.reserve(_ubos.size());
+    buffer_info.reserve(_buffers.size());
 
-    for(auto const& ubo : _ubos) {
+    for(auto const& buffer : _buffers) {
         buffer_info.push_back({
-            .buffer = ubo.handle,
+            .buffer = buffer.handle,
             .offset = 0u,
             .range = VK_WHOLE_SIZE
         });
     }
 
-    std::vector<vk::DescriptorImageInfo> image_info;
-    image_info.reserve(_textures.size());
+    _buffers.clear();
 
-    for(auto const& texture : _textures) {
+    std::vector<vk::DescriptorImageInfo> image_info;
+    image_info.reserve(_images.size());
+
+    for(auto const& image : _images) {
         image_info.push_back({
-            .sampler     = texture.sampler,
-            .imageView   = texture.view,
-            .imageLayout = texture.layout
+            .sampler     = image.sampler,
+            .imageView   = image.view,
+            .imageLayout = image.layout
         });
     }
+
+    _images.clear();
 
     std::vector<vk::WriteDescriptorSet> set_writes;
 
@@ -90,29 +79,49 @@ void DescriptorSet::create(DescriptorPool const &descriptor_pool,
 }
 
 // =============================================================================
+void DescriptorSet::create(DescriptorPool const &descriptor_pool,
+                           DescriptorSetLayout const &set_layout)
+{
+    const vk::DescriptorSetAllocateInfo alloc_info {
+        .descriptorPool = descriptor_pool.native(),
+        .descriptorSetCount = 1u,
+        .pSetLayouts = &set_layout.native()
+    };
+
+    auto const result = LogicalDevice::native().allocateDescriptorSets(
+        &alloc_info,
+        &_set
+    );
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Could not allocate descriptor sets");
+        return;
+    }
+}
+
+// =============================================================================
 void DescriptorSet::destroy() {
-    for(auto &buffer : _ubos) {
+    for(auto &buffer : _buffers) {
         BufferTools::destroy(buffer);
     }
-    for(auto &texture : _textures) {
-        ImageTools::destroy(texture);
+    for(auto &image : _images) {
+        ImageTools::destroy(image);
     }
 }
 
 // =============================================================================
 DescriptorSet::DescriptorSet() :
-    _ubos     { },
-    _textures { },
-    _set      { }
+    _buffers { },
+    _images  { },
+    _set     { }
 { }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept :
-    _ubos     { std::move(other._ubos) },
-    _textures { std::move(other._textures) },
+    _buffers  { std::move(other._buffers) },
+    _images   { std::move(other._images) },
     _set      { other._set  }
 {
-    other._ubos.clear();
-    other._textures.clear();
+    other._buffers.clear();
+    other._images.clear();
     other._set = nullptr;
 }
 

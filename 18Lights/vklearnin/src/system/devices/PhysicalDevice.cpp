@@ -13,13 +13,14 @@ vk::PhysicalDevice PhysicalDevice::_physical_device { };
 uint32_t PhysicalDevice::_queue_index = std::numeric_limits<uint32_t>::max();
 
 vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties { };
-vk::PhysicalDeviceFeatures PhysicalDevice::_enabled_features {
-    .fillModeNonSolid  = true,
-    .samplerAnisotropy = true,
-};
+vk::PhysicalDeviceFeatures         PhysicalDevice::_enabled_features { };
+std::vector<char const *>          PhysicalDevice::_enabled_extensions;
 
 // =============================================================================
-void PhysicalDevice::query_devices() {
+void PhysicalDevice::query_devices(
+        std::vector<std::string_view> const &required_extensions,
+        std::vector<Features> const &required_features)
+{
     // Query and populate the list of physical devices
     auto const devices = GraphicsAPI::native().enumeratePhysicalDevices();
     if(devices.empty()) {
@@ -27,32 +28,24 @@ void PhysicalDevice::query_devices() {
         return;
     }
 
-    CONSOLE_TRACE("Found {} {}", devices.size(),
-                  (devices.size() == 1 ? "device" : "devices"));
+    CONSOLE_TRACE(
+        "Found {} {}",
+        devices.size(),
+        (devices.size() == 1 ? "device" : "devices")
+    );
 
     for(auto const& device : devices) {
-        auto const& props = device.getProperties();
+        // First, ensure that this device supports the feature set we require
+        auto const &features = device.getFeatures();
+        if(!_check_features(features, required_features)) {
+            continue;
+        }
 
         // We'll want to know what extensions the devices support
         auto const extensions = device.enumerateDeviceExtensionProperties();
         CONSOLE_TRACE("Found {} physical device extensions", extensions.size());
 
-        // Swapchain support is definitely required
-        bool swapchain_support = false;
-        for(auto const& extension : extensions) {
-            if(strcmp(extension.extensionName,
-                      VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0)
-            {
-                swapchain_support = true;
-                break;
-            }
-        }
-
-        if(!swapchain_support) {
-            CONSOLE_WARN(
-                "{} does not suppoprt the swapchain extension.",
-                props.deviceName
-            );
+        if(!_check_extensions(extensions, required_extensions)) {
             continue;
         }
 
@@ -67,18 +60,15 @@ void PhysicalDevice::query_devices() {
             .pNext = &driver_props
         };
 
-        // Run through what extensions we have until we find the driver info
-        for(auto const& extension : extensions) {
-            if(strcmp(extension.extensionName,
-                      VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) == 0)
-            {
-                device.getProperties2(&physical_props2);
-                break;
-            }
-        }
+        device.getProperties2(&physical_props2);
 
         // Hold onto the info we've gathered
-        _store_physical_device(device, props, memory, driver_props);
+        _store_physical_device(
+            device,
+            device.getProperties(),
+            memory,
+            driver_props
+        );
 
         auto const& properties = _available_devices.back();
         CONSOLE_TRACE(
@@ -220,6 +210,69 @@ void PhysicalDevice::select_device() {
     }
 
     _queue_index = gfx_queue_index;
+}
+
+// =============================================================================
+bool PhysicalDevice::_check_features(
+        vk::PhysicalDeviceFeatures const &supported_features,
+        std::vector<Features> const &required_features
+    )
+{
+    for(const auto &feature : required_features) {
+        if(feature == Features::SAMPLER_ANISOTROPY) {
+            if(!supported_features.samplerAnisotropy) {
+                CONSOLE_WARN("No support for sampler anisotropy.");
+                return false;
+            }
+
+            _enabled_features.samplerAnisotropy = VK_TRUE;
+        }
+        else if(feature == Features::FILL_MODE_NONSOLID) {
+            if(!supported_features.fillModeNonSolid) {
+                CONSOLE_WARN("No support for non-solid fill modes.");
+                return false;
+            }
+
+            _enabled_features.fillModeNonSolid = VK_TRUE;
+        }
+        else {
+            CONSOLE_CRITICAL("Requesting unknown physical device feature.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// =============================================================================
+bool PhysicalDevice::_check_extensions(
+        std::vector<vk::ExtensionProperties> const &supported_extensions,
+        std::vector<std::string_view> const &required_extensions
+    )
+{
+    _enabled_extensions.reserve(required_extensions.size());
+
+    for(const auto &ext_name : required_extensions) {
+        bool extension_found = false;
+
+        for(const auto &extension : supported_extensions) {
+            if(strcmp(ext_name.data(), extension.extensionName) == 0) {
+                _enabled_extensions.push_back(ext_name.data());
+                extension_found = true;
+                break;
+            }
+        }
+
+        if(!extension_found) {
+            CONSOLE_WARN(
+                "No support for physical device extension {}",
+                ext_name
+            );
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // =============================================================================

@@ -12,12 +12,13 @@ class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
-    void add_ubo(BufferObject const &ubo);
-    void add_texture2D(ImageObject const &texture);
-
     void create(DescriptorPool const &descriptor_pool,
                 DescriptorSetLayout const &set_layout);
     void destroy();
+
+    auto & add_buffer(BufferObject const &buffer);
+    auto & add_image(ImageObject const &image);
+    void write_set();
 
     inline auto const & native() const { return _set; }
 
@@ -31,8 +32,8 @@ public:
     DescriptorSet& operator=(const DescriptorSet &) = delete;
 
 private:
-    std::vector<BufferObject> _ubos;
-    std::vector<ImageObject>  _textures;
+    std::vector<BufferObject> _buffers;
+    std::vector<ImageObject>  _images;
     vk::DescriptorSet _set;
 };
 

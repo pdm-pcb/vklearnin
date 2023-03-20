@@ -41,6 +41,7 @@ void DescriptorPool::destroy() {
         reinterpret_cast<uint64_t>(VkDescriptorPool(_pool))
     );
     LogicalDevice::native().destroyDescriptorPool(_pool);
+    _pool = nullptr;
 }
 
 

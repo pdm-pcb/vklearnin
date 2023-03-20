@@ -40,7 +40,6 @@ private:
     ImageObject _depth_buffer;
 
     void _init_color_buffer();
-    void _get_msaa_samples();
     void _init_depth_buffer();
     void _default_attachments();
     void _default_subpasses();

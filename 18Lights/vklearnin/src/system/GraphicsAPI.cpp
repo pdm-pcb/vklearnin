@@ -2,8 +2,6 @@
 #include "vklearnin/system/GraphicsAPI.hpp"
 
 #include "vklearnin/tools/VKDebugger.hpp"
-#include "vklearnin/system/devices/PhysicalDevice.hpp"
-#include "vklearnin/system/devices/LogicalDevice.hpp"
 
 // This (and more; see the link) does away with the explicit loading of each
 // function/extension
@@ -12,14 +10,14 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace vkl {
 
-vk::DynamicLoader              GraphicsAPI::_loader   { };
-vk::Instance                   GraphicsAPI::_instance { };
-vk::ApplicationInfo            GraphicsAPI::_app_info { };
-std::vector<const char *>      GraphicsAPI::_enabled_layers;
-std::vector<const char *>      GraphicsAPI::_enabled_extensions;
+vk::DynamicLoader               GraphicsAPI::_loader   { };
+vk::Instance                    GraphicsAPI::_instance { };
+vk::ApplicationInfo             GraphicsAPI::_app_info { };
+std::vector<char const *>       GraphicsAPI::_enabled_layers;
+std::vector<char const *>       GraphicsAPI::_enabled_extensions;
 GraphicsAPI::ValidationFeatures GraphicsAPI::_validation_features;
-vk::ValidationFeaturesEXT      GraphicsAPI::_validation_extensions { };
-vk::InstanceCreateInfo         GraphicsAPI::_instance_create_info  { };
+vk::ValidationFeaturesEXT       GraphicsAPI::_validation_extensions { };
+vk::InstanceCreateInfo          GraphicsAPI::_instance_create_info  { };
 
 // =============================================================================
 void GraphicsAPI::init() {
@@ -28,15 +26,20 @@ void GraphicsAPI::init() {
     _init_layers();         // There are many layers. Validation is our favorite
     _init_extensions();     // Extensions are often implementation defined
 
+    auto const extensions = vk::enumerateInstanceExtensionProperties();
+    CONSOLE_TRACE("Found {} instance extensions.", extensions.size());
+
+    // Run through the extensions the driver offers and make sure we've got
+    // what we need
+    if(!_check_extensions(extensions)) {
+        return;
+    }
+
     // Bringing it all together. If we want validation layer functionality, the
     // pNext member of vk::InstanceCreateInfo must point to the structure
     // assembled above.
     const vk::InstanceCreateInfo instance_info {
-#ifdef VKL_DEBUG
         .pNext = reinterpret_cast<void *>(&_validation_extensions),
-#else
-        .pNext = nullptr,
-#endif // VKL_DEBUG
         .flags = { },
         .pApplicationInfo = &_app_info,
         .enabledLayerCount =
@@ -59,32 +62,11 @@ void GraphicsAPI::init() {
             "Failed to create Vulkan instance: '{}'",
             to_string(result)
         );
+        return;
     }
 
     // Inform the dynamic dispatcher that we've got an instance.
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_instance);
-
-    auto const extensions = vk::enumerateInstanceExtensionProperties();
-    CONSOLE_TRACE("Found {} instance extensions.", extensions.size());
-
-    // At most, three instance extensions are required at this point. Run
-    // through all extensions the driver offers and make sure we've got what
-    // we need
-    for(const char *required_extension : _enabled_extensions) {
-        bool supported = false;
-        for(auto const& extension : extensions) {
-            if(strcmp(required_extension, extension.extensionName) == 0) {
-                supported = true;
-                break;
-            }
-        }
-        if(!supported) {
-            CONSOLE_CRITICAL(
-                "Instance extension '{}' unsupported",
-                required_extension
-            );
-        }
-    }
 
     CONSOLE_INFO(
         "Created Vulkan v{}.{}.{} instance",
@@ -96,18 +78,6 @@ void GraphicsAPI::init() {
 #ifdef VKL_DEBUG
     VKDebugger::init(_instance);
 #endif // VKL_DEBUG
-}
-
-// =============================================================================
-void GraphicsAPI::create_device() {
-    PhysicalDevice::query_devices();
-    PhysicalDevice::select_device();
-    LogicalDevice::create();
-}
-
-// =============================================================================
-void GraphicsAPI::destroy_device() {
-    LogicalDevice::destroy();
 }
 
 // =============================================================================
@@ -172,11 +142,17 @@ void GraphicsAPI::_init_extensions() {
         vk::ValidationFeatureEnableEXT::eGpuAssisted,
         vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
         vk::ValidationFeatureEnableEXT::eBestPractices,
+
         // DebugPrintf and GpuAssisted are mutually exclusive. DebugPrintf is
         // very handy when used in conjucntion with RenderDoc, but I'm opting
         // for more self-contained guidance for now.
         // vk::ValidationFeatureEnableEXT::eDebugPrintf,
-        // vk::ValidationFeatureEnableEXT::eSynchronizationValidation
+
+        // Last time I checked, there were false positives/bugs around
+        // synchronization validation on Linux
+        #if defined(VKL_WINDOWS)
+            vk::ValidationFeatureEnableEXT::eSynchronizationValidation
+        #endif
     };
 #endif // VKL_DEBUG
 
@@ -191,6 +167,26 @@ void GraphicsAPI::_init_extensions() {
     for(auto const& extension : _enabled_extensions) {
         CONSOLE_TRACE("Requesting instance extension '{}'", extension);
     }
+}
+
+// =============================================================================
+bool GraphicsAPI::_check_extensions(Extensions const &supported_extensions) {
+    for(const auto ext_name : _enabled_extensions) {
+        bool extension_found = false;
+
+        for(auto const& extension : supported_extensions) {
+            if(strcmp(ext_name, extension.extensionName) == 0) {
+                extension_found = true;
+                break;
+            }
+        }
+        if(!extension_found) {
+            CONSOLE_WARN("No support for instance extension '{}'", ext_name);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 } // namespace vkl

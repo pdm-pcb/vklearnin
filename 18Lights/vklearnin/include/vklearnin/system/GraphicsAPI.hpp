@@ -8,8 +8,6 @@ namespace vkl {
 class GraphicsAPI final {
 public:
     static void init();
-    static void create_device();
-    static void destroy_device();
     static void shutdown();
 
     inline static auto const& native() { return _instance; }
@@ -28,8 +26,8 @@ private:
     static vk::Instance      _instance;
 
     static vk::ApplicationInfo       _app_info;
-    static std::vector<const char *> _enabled_layers;
-    static std::vector<const char *> _enabled_extensions;
+    static std::vector<char const *> _enabled_layers;
+    static std::vector<char const *> _enabled_extensions;
 
     using ValidationFeatures = std::vector<vk::ValidationFeatureEnableEXT>;
     static ValidationFeatures        _validation_features;
@@ -42,6 +40,9 @@ private:
     static void _init_app_info();
     static void _init_layers();
     static void _init_extensions();
+
+    using Extensions = std::vector<vk::ExtensionProperties>;
+    static bool _check_extensions(Extensions const &supported_extensions);
 };
 
 } // namespace vkl

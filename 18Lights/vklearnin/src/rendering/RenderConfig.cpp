@@ -14,10 +14,11 @@ int32_t  RenderConfig::window_pos_x  = 0;
 int32_t  RenderConfig::window_pos_y  = 0;
 float    RenderConfig::window_aspect = 0.0f;
 
-uint32_t RenderConfig::image_count = 2u;
+uint32_t RenderConfig::concurrent_frames = 2u;
+uint32_t RenderConfig::swapchain_image_count = 2u;
 bool     RenderConfig::vsync_on    = true;
 
-uint8_t RenderConfig::msaa_samples = 1u;
-float   RenderConfig::anisotropy   = 1.0f;
+uint32_t RenderConfig::msaa_samples = 1u;
+float    RenderConfig::anisotropy   = 1.0f;
 
 } // namespace vkl

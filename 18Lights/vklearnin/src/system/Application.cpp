@@ -5,6 +5,7 @@
 #include "vklearnin/system/Engine.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
+#include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
 namespace vkl {
@@ -62,10 +63,29 @@ Application::Application() :
 
     ConsoleLog::init();
     GraphicsAPI::init();
+
     TargetWindow::init();
     TargetWindow::spawn_window();
     TargetWindow::create_surface();
-    GraphicsAPI::create_device();
+
+    PhysicalDevice::query_devices(
+        {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME
+        },
+        {
+            PhysicalDevice::Features::SAMPLER_ANISOTROPY,
+            PhysicalDevice::Features::FILL_MODE_NONSOLID,
+        }
+    );
+    PhysicalDevice::select_device();
+
+    LogicalDevice::create({
+        #ifdef VKL_DEBUG
+            "VK_LAYER_KHRONOS_validation",
+        #endif // VKL_DEBUG
+    });
+
     Swapchain::create();
     Renderer::init();
 }
@@ -73,7 +93,7 @@ Application::Application() :
 Application::~Application() {
     Renderer::shutdown();
     Swapchain::destroy();
-    GraphicsAPI::destroy_device();
+    LogicalDevice::destroy();
     TargetWindow::destroy_surface();
     TargetWindow::shutdown();
     GraphicsAPI::shutdown();

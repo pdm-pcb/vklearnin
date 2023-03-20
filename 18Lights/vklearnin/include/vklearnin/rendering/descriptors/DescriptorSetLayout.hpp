@@ -7,8 +7,9 @@ namespace vkl {
 
 class DescriptorSetLayout {
 public:
-    using DescBindings = std::vector<vk::DescriptorSetLayoutBinding>;
-    void add_binding(const vk::DescriptorSetLayoutBinding &binding);
+    auto & add_binding(vk::DescriptorType const type,
+                       vk::ShaderStageFlags const stages,
+                       uint32_t const descriptor_count = 1u);
 
     void create();
     void destroy();
@@ -26,8 +27,8 @@ public:
     DescriptorSetLayout& operator=(const DescriptorSetLayout &) = delete;
 
 private:
+    std::vector<vk::DescriptorSetLayoutBinding> _bindings;
     vk::DescriptorSetLayout _layout;
-    DescBindings            _bindings;
 };
 
 } // namespace vkl

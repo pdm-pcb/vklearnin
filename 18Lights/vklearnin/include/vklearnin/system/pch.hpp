@@ -1,7 +1,7 @@
 #ifndef VKLEARNIN_SYSTEM_PCH_HPP
 #define VKLEARNIN_SYSTEM_PCH_HPP
 
-// Designated initializers
+// Allow for the use of designated initializers
 // https://github.com/KhronosGroup/Vulkan-Hpp#designated-initializers
 #define VULKAN_HPP_NO_CONSTRUCTORS
 
@@ -31,13 +31,13 @@
 #endif
 
 #include <filesystem>
-#include <fstream>
 #include <set>
-#include <numbers>
-#include <list>
-#include <type_traits>
-#include <system_error>
-#include <unordered_map>
+#include <fstream>
+// #include <numbers>
+// #include <list>
+// #include <type_traits>
+// #include <system_error>
+// #include <unordered_map>
 
 #include "vklearnin/math/math.hpp"
 
