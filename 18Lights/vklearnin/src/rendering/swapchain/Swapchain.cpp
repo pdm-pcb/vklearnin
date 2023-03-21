@@ -3,136 +3,100 @@
 
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
-#include "vklearnin/system/devices/CmdQueue.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
-#include "vklearnin/resources/images/ImageTools.hpp"
-#include "vklearnin/resources/images/Texture2D.hpp"
+#include "vklearnin/rendering/FrameData.hpp"
 
 namespace vkl {
 
-vk::Format         Swapchain::_image_format = vk::Format::eUndefined;
-vk::ColorSpaceKHR  Swapchain::_color_space  = vk::ColorSpaceKHR::eSrgbNonlinear;
 vk::Extent2D       Swapchain::_extent { 0u, 0u };
 vk::Offset2D       Swapchain::_offset { 0, 0 };
+vk::Rect2D         Swapchain::_render_area;
+
+vk::Format         Swapchain::_image_format = vk::Format::eUndefined;
+vk::ColorSpaceKHR  Swapchain::_color_space  = vk::ColorSpaceKHR::eSrgbNonlinear;
 vk::PresentModeKHR Swapchain::_present_mode = vk::PresentModeKHR::eImmediate;
 
-vk::SwapchainCreateInfoKHR Swapchain::_create_info { };
-vk::SwapchainKHR           Swapchain::_swapchain   { };
+vk::SwapchainKHR Swapchain::_swapchain;
 
-std::vector<ImageObject>          Swapchain::_images;
-std::vector<Swapchain::ImageSync> Swapchain::_image_sync;
-
-uint32_t Swapchain::_draw_index    = 0u;
-uint32_t Swapchain::_present_index = 0u;
+std::vector<ImageObject> Swapchain::_images;
 
 // =============================================================================
-void Swapchain::next_image() {
-    auto sync = _image_sync[_present_index];
+void Swapchain::submit_and_present(FrameData const &frame) {
+    static uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
 
-    // Wait for the GPU to signal on the present fence, indicating there's an
-    // image for the CPU to schedule work for
-    auto result = LogicalDevice::native().waitForFences(
-        1u,                // fence count
-        &sync.queue_fence, // which fence to wait on
-        VK_TRUE,           // require all fences to signal?
-        std::numeric_limits<uint64_t>::max() // block effectively forever
-    );
+    auto const acquire_result =
+        LogicalDevice::native().acquireNextImageKHR(
+            _swapchain,
+            std::numeric_limits<uint64_t>::max(),
+            frame.acquire_complete_sem(),
+            VK_NULL_HANDLE,
+            &next_image_index
+        );
 
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("waitForFences() returned '{}'", to_string(result));
+    if(acquire_result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to acquire next swapchain image: '{}'",
+            to_string(acquire_result)
+        );
+        return;
     }
 
-    // Since the fence has been signaled, we can now ask the swapchain which
-    // image it'd like us to work with
-    result = LogicalDevice::native().acquireNextImageKHR(
-        { _swapchain },                      // acquire from yourself
-        std::numeric_limits<int64_t>::max(), // block effectively forever
-        sync.present_complete,               // which sem to signal
-        nullptr,                             // which fence to signal (none)
-        &_draw_index                         // resulting image index
-    );
-
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_WARN("acquireNextImageKHR() returned '{}'", to_string(result));
-    }
-}
-
-// =============================================================================
-void Swapchain::reset_fence() {
-    auto const result = LogicalDevice::native().resetFences(
-        1u,
-        &_image_sync[_present_index].queue_fence
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("resetFences() returned '{}'", to_string(result));
-    }
-}
-
-// =============================================================================
-void Swapchain::submit(vk::CommandBuffer const &buffer) {
-    // Internally, the command queue needs to know when to begin. In this case,
-    // waiting on a completed presentation means there's an image available for
-    // writing to.
-    vk::Semaphore wait_sems[] = {
-        _image_sync[_present_index].present_complete
+    // Once LogicalDevice has acquired an image for us, it'll signal this
+    // semaphore
+    vk::Semaphore const acquire_complete_sems[] {
+        frame.acquire_complete_sem()
     };
 
-    // The above semaphore(s) will wait at this stage. In keeping with the idea
-    // that these are all graphics commands being submitted, waiting at the
-    // very bottom of the pipeline is the right choice.
-    vk::PipelineStageFlags wait_dst_stage[] {
-        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    // We want the image to be fully acquired before beginning to write to it,
+    // so if the color attachemnt output stage is reached but the above
+    // semaphore  hasn't signaled, wait on it.
+    vk::PipelineStageFlags const acquire_before_stage =
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+    // The command buffer we're getting ready to submit
+    vk::CommandBuffer const command_buffers[] {
+        frame.command_buffer().native()
     };
 
-    // Some semaphores may also want to know when this particular batch of
-    // commands is complete, so they get listed here.
-    vk::Semaphore signal_sems[] = {
-        _image_sync[_draw_index].draw_complete
+    // When it comes time for the presentation engine to take this image back
+    // and show it on the display, we'll need a semaphore for it to wait on
+    // in case the command buffer hasn't been completely executed.
+    vk::Semaphore const commands_complete_sems[] {
+        frame.commands_complete_sem()
     };
 
-    const vk::SubmitInfo submit_info {
-        .waitSemaphoreCount = static_cast<uint32_t>(std::size(wait_sems)),
-        .pWaitSemaphores = wait_sems,
-        .pWaitDstStageMask = wait_dst_stage,
-        .commandBufferCount = 1u,
-        .pCommandBuffers = &buffer,
-        .signalSemaphoreCount =
-            static_cast<uint32_t>(std::size(signal_sems)),
-        .pSignalSemaphores = signal_sems,
+    vk::SubmitInfo const submit_info[] {
+        vk::SubmitInfo { }
+            .setWaitSemaphores(acquire_complete_sems)
+            .setWaitDstStageMask(acquire_before_stage)
+            .setCommandBuffers(command_buffers)
+            .setSignalSemaphores(commands_complete_sems)
     };
 
+    // Submit this work to the queue
     LogicalDevice::cmd_queue().native().submit(
         submit_info,
-        _image_sync[_present_index].queue_fence
+        frame.queue_complete_fence()
     );
-}
 
-// =============================================================================
-void Swapchain::present() {
-    // Now that the image being drawn is ready to be presented, these indices
-    // will overlap for a touch
-    _present_index = _draw_index;
-
-    const vk::PresentInfoKHR present_info {
-        // Do make sure the previously submitted work is acctually complete
-        .waitSemaphoreCount = 1u,
-        .pWaitSemaphores = &_image_sync[_draw_index].draw_complete,
-
-        // With only one surface in this setup, there'll only ever be one
-        // swapchain
-        .swapchainCount = 1u,
-        .pSwapchains = &_swapchain,
-
-        // Again, at the moment both image indices are the same
-        .pImageIndices = &_present_index
+    vk::SwapchainKHR const swapchains[] {
+        _swapchain
     };
 
-    auto const result =
-        LogicalDevice::cmd_queue().native().presentKHR(present_info);
-    if(result == vk::Result::eErrorOutOfDateKHR ||
-       result == vk::Result::eSuboptimalKHR)
-    {
-        CONSOLE_WARN("presentKHR() returned '{}'", to_string(result));
+    uint32_t const image_indices[] {
+        next_image_index
+    };
+
+    auto const submit_result =
+        LogicalDevice::cmd_queue().native().presentKHR(
+            vk::PresentInfoKHR { }
+                .setWaitSemaphores(commands_complete_sems)
+                .setSwapchains(swapchains)
+                .setImageIndices(image_indices)
+        );
+
+    if(submit_result != vk::Result::eSuccess) {
+        CONSOLE_WARN("Doooo something.");
     }
 }
 
@@ -141,33 +105,19 @@ void Swapchain::create() {
     _query_surface_capabilities();
     _query_surface_format();
     _query_surface_present_modes();
-    _populate_create_info();
 
-    _swapchain = LogicalDevice::native().createSwapchainKHR(_create_info);
+    vk::SwapchainCreateInfoKHR create_info { };
+    _populate_create_info(create_info);
+
+    _swapchain = LogicalDevice::native().createSwapchainKHR(create_info);
 
     CONSOLE_TRACE("Created swapchain for logical device");
 
     _get_images();
-    _create_image_views();
-    _create_sync_primitives();
 }
 
 // =============================================================================
 void Swapchain::destroy() {
-    for(auto &sync : _image_sync) {
-        CONSOLE_TRACE(
-            "Destroying swapchain sync primitives:"
-            "\n\tavailable semaphore {:#x}"
-            "\n\tdraw      semaphore {:#x}"
-            "\n\tpresent   fence     {:#x}",
-            reinterpret_cast<uint64_t>(VkSemaphore(sync.present_complete)),
-            reinterpret_cast<uint64_t>(VkSemaphore(sync.draw_complete)),
-            reinterpret_cast<uint64_t>(VkFence(sync.queue_fence))
-        );
-        LogicalDevice::native().destroySemaphore(sync.present_complete);
-        LogicalDevice::native().destroySemaphore(sync.draw_complete);
-        LogicalDevice::native().destroyFence(sync.queue_fence);
-    }
     for(auto &image : _images) {
         ImageTools::destroy_view(image);
     }
@@ -223,6 +173,11 @@ void Swapchain::_query_surface_capabilities() {
         );
     }
 
+    _render_area = vk::Rect2D {
+        .offset = _offset,
+        .extent = _extent,
+    };
+
     // Provided image count has already been used to set some array sizes (in
     // LogicalDevice, for example) it's become a hard requirement of the
     // surface itself
@@ -239,12 +194,6 @@ void Swapchain::_query_surface_capabilities() {
 
         RenderConfig::swapchain_image_count = capabilities.minImageCount;
     }
-
-    // The minimum number of concurrent frames the renderer can process is the
-    // minimum number of images required to keep the swapchain fed
-    if(RenderConfig::concurrent_frames < RenderConfig::swapchain_image_count) {
-        RenderConfig::concurrent_frames = RenderConfig::swapchain_image_count;
-    }
 }
 
 // =============================================================================
@@ -258,7 +207,7 @@ void Swapchain::_query_surface_format() {
     // First, default to the image format details of the first listed - these
     // are only used if we can't find the desired combo in the for loop below.
     _image_format = formats[0].format;
-    _color_space    = formats[0].colorSpace;
+    _color_space  = formats[0].colorSpace;
 
     for(auto const& format : formats) {
         if(format.format == vk::Format::eR8G8B8A8Unorm &&
@@ -322,8 +271,8 @@ void Swapchain::_query_surface_present_modes() {
 }
 
 // =============================================================================
-void Swapchain::_populate_create_info() {
-    _create_info = {
+void Swapchain::_populate_create_info(vk::SwapchainCreateInfoKHR &create_info) {
+    create_info = {
         .surface         = TargetWindow::surface(),
         .minImageCount   = RenderConfig::swapchain_image_count,
         .imageFormat     = _image_format,
@@ -382,71 +331,33 @@ void Swapchain::_populate_create_info() {
 
 // =============================================================================
 void Swapchain::_get_images() {
-    auto const image_list =
+    auto const &image_handles =
         LogicalDevice::native().getSwapchainImagesKHR(_swapchain);
 
-    if(image_list.size() != RenderConfig::swapchain_image_count) {
+    if(image_handles.size() != RenderConfig::swapchain_image_count) {
         CONSOLE_CRITICAL(
-            "Swapchain returned {} images; {} requested",
-            _images.size(), RenderConfig::swapchain_image_count
+            "Swapchain supports {} images; {} configured",
+            _images.size(),
+            RenderConfig::swapchain_image_count
         );
+        return;
     }
 
-    _images.resize(RenderConfig::swapchain_image_count);
-    for(uint32_t image_idx = 0u; image_idx < _images.size(); ++image_idx) {
-        _images[image_idx] = {
+    CONSOLE_INFO("Acquired {} swapchain images", image_handles.size());
+
+    _images.reserve(RenderConfig::swapchain_image_count);
+
+    for(auto const &image_handle : image_handles) {
+        _images.emplace_back(ImageObject{
             .format = _image_format,
             .layout =  vk::ImageLayout::eUndefined,
-            .handle = image_list[image_idx],
-        };
-    }
-}
+            .handle = image_handle,
+        });
 
-// =============================================================================
-void Swapchain::_create_image_views() {
-    for(auto &image : _images) {
         ImageTools::create_view(
-            image,
+            _images.back(),
             vk::ImageViewType::e2D,
             vk::ImageAspectFlagBits::eColor
-        );
-    }
-}
-
-// =============================================================================
-void Swapchain::_create_sync_primitives() {
-    // Set aside the room for image-count-number of synchronization primitives
-    _image_sync.resize(RenderConfig::swapchain_image_count);
-
-    const vk::SemaphoreCreateInfo sem_info { };
-
-    for(auto &sync : _image_sync) {
-        // First, the semephores which will let us know when the swapchain has
-        // finished presenting one of the images
-        sync.present_complete =
-            LogicalDevice::native().createSemaphore(sem_info);
-
-        // Next, the semephores letting us know when a draw has completed to the
-        // back buffer/image
-        sync.draw_complete = LogicalDevice::native().createSemaphore(sem_info);
-
-        // Once there's a frame being written to the monitor and a frame on the
-        // back buffer, the CPU needs to wait on the GPU before more frames can
-        // be submitted.
-        const vk::FenceCreateInfo fence_info {
-            .flags = vk::FenceCreateFlagBits::eSignaled
-        };
-
-        sync.queue_fence = LogicalDevice::native().createFence(fence_info);
-
-        CONSOLE_TRACE(
-            "Created swapchain sync primitives:"
-            "\n\tavailable semaphore {:#x}"
-            "\n\tdraw      semaphore {:#x}"
-            "\n\tpresent   fence     {:#x}",
-            reinterpret_cast<uint64_t>(VkSemaphore(sync.present_complete)),
-            reinterpret_cast<uint64_t>(VkSemaphore(sync.draw_complete)),
-            reinterpret_cast<uint64_t>(VkFence(sync.queue_fence))
         );
     }
 }

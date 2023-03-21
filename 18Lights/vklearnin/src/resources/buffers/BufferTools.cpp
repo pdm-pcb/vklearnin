@@ -129,7 +129,7 @@ void update_buffer(const BufferObject &buffer, const void * const data) {
 
     if(mapped == nullptr) {
         CONSOLE_CRITICAL(
-            "Unable to map UBO {:#x}",
+            "Unable to map buffer {:#x}",
             reinterpret_cast<uint64_t>(VkBuffer(buffer.handle))
         );
         return;

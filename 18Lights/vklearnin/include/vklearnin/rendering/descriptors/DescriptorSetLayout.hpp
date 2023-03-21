@@ -7,9 +7,9 @@ namespace vkl {
 
 class DescriptorSetLayout {
 public:
-    auto & add_binding(vk::DescriptorType const type,
-                       vk::ShaderStageFlags const stages,
-                       uint32_t const descriptor_count = 1u);
+    DescriptorSetLayout & add_binding(vk::DescriptorType const type,
+                                      vk::ShaderStageFlags const stages,
+                                      uint32_t const descriptor_count = 1u);
 
     void create();
     void destroy();

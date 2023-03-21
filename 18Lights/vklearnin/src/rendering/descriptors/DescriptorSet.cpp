@@ -8,13 +8,13 @@
 namespace vkl {
 
 // =============================================================================
-auto & DescriptorSet::add_buffer(BufferObject const &buffer) {
+DescriptorSet & DescriptorSet::add_buffer(BufferObject const &buffer) {
     _buffers.push_back(buffer);
     return *this;
 }
 
 // =============================================================================
-auto & DescriptorSet::add_image(ImageObject const &image) {
+DescriptorSet & DescriptorSet::add_image(ImageObject const &image) {
     _images.push_back(image);
     return *this;
 }

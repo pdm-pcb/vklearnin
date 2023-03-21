@@ -8,8 +8,8 @@
 namespace vkl {
 
 // =============================================================================
-void Pipeline::vert_from_spirv(std::string_view filepath,
-                               std::string_view entry_point)
+Pipeline & Pipeline::vert_from_spirv(std::string_view filepath,
+                                     std::string_view entry_point)
 {
     _vert.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
@@ -17,22 +17,26 @@ void Pipeline::vert_from_spirv(std::string_view filepath,
         .module = _vert.native(),
         .pName = entry_point.data(),
     });
+
+    return *this;
 }
 
 // =============================================================================
-void Pipeline::frag_from_spirv(std::string_view filepath,
-                               std::string_view entry_point) {
+Pipeline & Pipeline::frag_from_spirv(std::string_view filepath,
+                                     std::string_view entry_point) {
     _frag.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,
         .module = _frag.native(),
         .pName = entry_point.data(),
     });
+
+    return *this;
 }
 
 // =============================================================================
-void Pipeline::describe_vertex_input(const VertexBindings &bindings,
-                                     const VertexAttribs &attributes)
+Pipeline & Pipeline::describe_vertex_input(const VertexBindings &bindings,
+                                           const VertexAttribs &attributes)
 {
     auto binding_count = static_cast<uint32_t>(bindings.size());
     auto attrib_count  = static_cast<uint32_t>(attributes.size());
@@ -47,16 +51,20 @@ void Pipeline::describe_vertex_input(const VertexBindings &bindings,
         .vertexAttributeDescriptionCount = attrib_count,
         .pVertexAttributeDescriptions   = attributes.data(),
     };
+
+    return *this;
 }
 
 // =============================================================================
-void Pipeline::add_descriptor_set(const vk::DescriptorSetLayout &set_layout) {
+Pipeline &
+Pipeline::add_descriptor_set(const vk::DescriptorSetLayout &set_layout) {
     _desc_set_layouts.push_back(set_layout);
+    return *this;
 }
 
 // =============================================================================
-void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
-                                 size_t size)
+Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
+                                       size_t size)
 {
     _push_constants.push_back({
         .stageFlags = stage_flags,
@@ -65,6 +73,8 @@ void Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
     });
 
     _push_constant_offset += size;
+
+    return *this;
 }
 
 // =============================================================================
@@ -262,7 +272,7 @@ void Pipeline::_init_raster(Config const &config) {
 // =============================================================================
 void Pipeline::_init_multisample(Config const &config) {
     _multisample_info = {
-        .rasterizationSamples  = config.msaa_samples,
+        .rasterizationSamples  = config.max_msaa_samples,
         .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,

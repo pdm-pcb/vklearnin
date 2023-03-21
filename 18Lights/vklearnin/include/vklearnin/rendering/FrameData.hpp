@@ -1,0 +1,57 @@
+#ifndef VKLEARNIN_RENDERING_FRAMEDATA_HPP
+#define VKLEARNIN_RENDERING_FRAMEDATA_HPP
+
+#include "vklearnin/system/pch.hpp"
+#include "vklearnin/system/devices/CmdPool.hpp"
+#include "vklearnin/system/devices/CmdBuffer.hpp"
+
+namespace vkl {
+
+class FrameData {
+public:
+    void wait_on_queue_fence();
+
+    void init();
+    void shutdown();
+
+    inline auto const & command_pool()   const { return _cmd_pool; }
+    inline auto const & command_buffer() const { return _cmd_buffer; }
+
+    inline auto const & acquire_complete_sem() const {
+        return _acquire_complete;
+    }
+
+    inline auto const & commands_complete_sem() const {
+        return _commands_complete;
+    }
+
+    inline auto const & queue_complete_fence() const {
+        return _queue_complete;
+    }
+
+    FrameData();
+    ~FrameData() = default;
+
+    FrameData(FrameData &&other) noexcept;
+    FrameData(FrameData const &) = delete;
+
+    FrameData & operator=(FrameData &&) = default;
+    FrameData & operator=(FrameData const &) = delete;
+
+private:
+    CmdPool   _cmd_pool;
+    CmdBuffer _cmd_buffer;
+
+    vk::Semaphore _acquire_complete;
+    vk::Semaphore _commands_complete;
+    vk::Fence     _queue_complete;
+
+    void _create_cmd_structures();
+    void _destroy_cmd_structures();
+    void _create_sync_primitives();
+    void _destroy_sync_primitives();
+};
+
+} // namespace vkl
+
+#endif // VKLEARNIN_RENDERING_SWAPCHAIN_FrameData_HPP

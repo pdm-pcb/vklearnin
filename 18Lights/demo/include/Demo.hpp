@@ -9,11 +9,10 @@
 
 class Demo final : public vkl::Application {
 public:
-    void update() override;
+    void update()       override;
     void submit_draws() override;
-
-    void init() override;
-    void shutdown() override;
+    void init()         override;
+    void shutdown()     override;
 
     void on_key_press(const vkl::KeyPressEvent &event);
     void on_key_release(const vkl::KeyReleaseEvent &event);
@@ -56,16 +55,6 @@ private:
         float kb_speed    = 3.0f;
         float mouse_speed = 0.075f;
     } _cam_data;
-
-    struct VPMatrices {
-        vkl::Mat4 view;
-        vkl::Mat4 proj;
-    } _vp_matrices;
-
-    std::vector<vkl::BufferObject> _vp_ubos;
-
-    vkl::LightProps _light_props;
-    std::vector<vkl::BufferObject> _light_props_ubos;
 
     vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
     vkl::Cube<vkl::VertexLitColor>       _cube_mesh;

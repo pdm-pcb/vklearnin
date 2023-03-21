@@ -150,7 +150,7 @@ void RenderPass::_init_color_buffer() {
         ImageTools::destroy(_color_buffer);
     }
 
-    _samples = vulkan_max_msaa_samples();
+    _samples = max_msaa_flag();
 
     _color_buffer.format = Swapchain::image_format();
     _color_buffer.extent = vk::Extent3D {

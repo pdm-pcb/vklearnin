@@ -1,7 +1,9 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/Renderer.hpp"
 
+#include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
+#include "vklearnin/rendering/FrameData.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/meshes/Mesh.hpp"
@@ -18,47 +20,73 @@ static vk::ClearValue const clear_values[] = {
     }
 };
 
-DescriptorPool Renderer::_desc_pool { };
+RenderPass               Renderer::_render_pass;
+std::vector<Framebuffer> Renderer::_framebuffers;
+std::vector<FrameData>   Renderer::_frame_data;
+uint32_t                 Renderer::_frame_index = 0u;
+uint64_t                 Renderer::_frame_count = 0u;
 
-DescriptorSetLayout Renderer::_camera_set_layout { };
+// Descriptors -----------------------------------------------------------------
+DescriptorPool Renderer::_desc_pool;
 
-Renderer::DescriptorSets Renderer::_camera_uniform_sets {
-    RenderConfig::concurrent_frames
-};
+DescriptorSetLayout Renderer::_global_buffer_layout;
+Renderer::PerFrameSets Renderer::_global_buffer_sets;
 
-RenderPass Renderer::_render_pass { };
+// Shader Resources ------------------------------------------------------------
+Renderer::PerFrameBuffers Renderer::_global_buffers;
 
-std::vector<Framebuffer> Renderer::_framebuffers {
-    RenderConfig::concurrent_frames
-};
+Pipeline Renderer::_flat_color_pipeline;
 
-FlatColorPipeline Renderer::_flat_color_pipeline;
-
-Renderer::FlatColorDraws     Renderer::_flat_color_draws;
+Renderer::FlatColorDraws Renderer::_flat_color_draws;
 
 // =============================================================================
-void Renderer::render_pass(vk::CommandBuffer const &cmd_buffer) {
+void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
+    BufferTools::update_buffer(_global_buffers[_frame_index], &buffer);
+}
+
+// =============================================================================
+void Renderer::render_pass() {
+    _frame_data[_frame_index].wait_on_queue_fence();
+
+    auto &cmd_buffer = _frame_data[_frame_index].command_buffer().native();
+    vk::CommandBufferBeginInfo const begin_info;
+    auto const begin_result = cmd_buffer.begin(&begin_info);
+    if(begin_result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to begin recording to command buffer: '{}'",
+            to_string(begin_result)
+        );
+        return;
+    }
+
     vk::RenderPassBeginInfo const pass_info {
         .renderPass      = _render_pass.native(),
-        .framebuffer     = _framebuffers[Swapchain::image_index()].native(),
+        .framebuffer     = _framebuffers[_frame_index].native(),
         .renderArea      = vkl::Swapchain::render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
         .pClearValues    = clear_values,
     };
     cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        _flat_color_pipeline.execute(Swapchain::image_index(), cmd_buffer);
+        _execute_flat_color_pipeline(cmd_buffer);
         // _execute_flat_texture_pipeline(cmd_buffer);
         // _execute_skybox_pipeline(cmd_buffer);
         // _execute_lit_color_pipeline(cmd_buffer);
 
     cmd_buffer.endRenderPass();
+    cmd_buffer.end();
+
+    Swapchain::submit_and_present(_frame_data[_frame_index]);
+
+    _frame_count += 1;
+    _frame_index = _frame_count % RenderConfig::swapchain_image_count;
 }
 
 // =============================================================================
 void Renderer::init() {
     _render_pass.create();
     _init_framebuffers();
+    _init_frame_data();
     _init_descriptor_pool();
 }
 
@@ -69,35 +97,24 @@ void Renderer::shutdown() {
     // _flat_texture_pipeline.destroy();
     // _skybox_pipeline.destroy();
 
-    _camera_set_layout.destroy();
+    _global_buffer_layout.destroy();
     // _lit_color_set_layout.destroy();
     // _flat_texture_set_layout.destroy();
     // _skybox_set_layout.destroy();
 
     _desc_pool.destroy();
 
+    _shutdown_shader_resources();
+
     for(auto &framebuffer : _framebuffers) {
         framebuffer.destroy();
     }
 
+    for(auto &frame : _frame_data) {
+        frame.shutdown();
+    }
+
     _render_pass.destroy();
-}
-
-// =============================================================================
-void Renderer::set_camera_ubos(std::vector<BufferObject> const &ubos) {
-    if(ubos.size() != RenderConfig::concurrent_frames) {
-        CONSOLE_CRITICAL(
-            "UBO vector size must match concurrent frame count {}",
-            ubos.size(),
-            RenderConfig::concurrent_frames
-        );
-    }
-
-    for(uint32_t frame = 0u; frame < RenderConfig::concurrent_frames; ++frame) {
-        _camera_uniform_sets[frame]
-            .add_buffer(ubos[frame])
-            .write_set();
-    }
 }
 
 // // =============================================================================
@@ -121,15 +138,15 @@ void Renderer::set_camera_ubos(std::vector<BufferObject> const &ubos) {
 
 // // =============================================================================
 // void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
-//     if(ubos.size() != RenderConfig::concurrent_frames) {
+//     if(ubos.size() != RenderConfig::swapchain_image_count) {
 //         CONSOLE_CRITICAL(
 //             "UBO vector must match concurrent frame count {}",
 //             ubos.size(),
-//             RenderConfig::concurrent_frames
+//             RenderConfig::swapchain_image_count
 //         );
 //     }
 
-//     for(uint32_t frame = 0u; frame < RenderConfig::concurrent_frames; ++frame) {
+//     for(uint32_t frame = 0u; frame < RenderConfig::swapchain_image_count; ++frame) {
 //         _lit_color_sets[frame].resize(_lit_color_sets[frame].size() + 1);
 //         _lit_color_sets[frame].back().add_ubo(ubos[frame]);
 //     }
@@ -138,6 +155,8 @@ void Renderer::set_camera_ubos(std::vector<BufferObject> const &ubos) {
 // =============================================================================
 void Renderer::create_pipelines() {
     _init_descriptor_sets();
+    _init_shader_resources();
+
     _init_flat_color_pipeline();
     // _init_flat_texture_pipeline();
     // _init_skybox_pipeline();
@@ -146,15 +165,26 @@ void Renderer::create_pipelines() {
 
 // =============================================================================
 void Renderer::_init_framebuffers() {
-    for(uint32_t frame = 0; frame < _framebuffers.size(); ++frame) {
-        _framebuffers[frame].create(
+    _framebuffers.reserve(RenderConfig::swapchain_image_count);
+
+    for(auto const &swapchain_image : Swapchain::images()) {
+        _framebuffers.push_back({ });
+        _framebuffers.back().create(
             {
                 _render_pass.color_buffer_view(),
                 _render_pass.depth_buffer_view(),
-                Swapchain::image(frame).view
+                swapchain_image.view
             },
             _render_pass.native()
         );
+    }
+}
+
+// =============================================================================
+void Renderer::_init_frame_data() {
+    _frame_data.resize(RenderConfig::swapchain_image_count);
+    for(auto &frame : _frame_data) {
+        frame.init();
     }
 }
 
@@ -175,15 +205,16 @@ void Renderer::_init_descriptor_pool() {
 
 // =============================================================================
 void Renderer::_init_descriptor_sets() {
-    _camera_set_layout
+    _global_buffer_layout
         .add_binding(
             vk::DescriptorType::eUniformBuffer,
             vk::ShaderStageFlagBits::eAll
         )
         .create();
 
-    for(auto &set : _camera_uniform_sets) {
-        set.create(_desc_pool, _camera_set_layout);
+    _global_buffer_sets.resize(RenderConfig::swapchain_image_count);
+    for(auto &set : _global_buffer_sets) {
+        set.create(_desc_pool, _global_buffer_layout);
     }
 
     // _flat_texture_set_layout.add_binding(
@@ -217,33 +248,59 @@ void Renderer::_init_descriptor_sets() {
 }
 
 // =============================================================================
+void Renderer::_init_shader_resources() {
+    _global_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _global_buffers) {
+        buffer.size = sizeof(GlobalBuffer);
+        vkl::BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    for(uint32_t frame = 0u;
+        frame < RenderConfig::swapchain_image_count;
+        ++frame)
+    {
+        _global_buffer_sets[frame]
+            .add_buffer(_global_buffers[frame])
+            .write_set();
+    }
+}
+
+// =============================================================================
+void Renderer::_shutdown_shader_resources() {
+    for(auto &buffer : _global_buffers) {
+        BufferTools::destroy(buffer);
+    }
+}
+
+// =============================================================================
 void Renderer::_init_flat_color_pipeline() {
-    _flat_color_pipeline.vert_from_spirv("shaders/01color.vert");
-    _flat_color_pipeline.frag_from_spirv("shaders/01color.frag");
-
-    _flat_color_pipeline.describe_vertex_input(
-        VertexFlatColor::bindings,
-        VertexFlatColor::attributes
-    );
-
-    _flat_color_pipeline.add_descriptor_set(
-        _camera_set_layout.native()
-    );
-
-    _flat_color_pipeline.add_push_constant(
-        vk::ShaderStageFlagBits::eAll,
-        sizeof(Mat4)
-    );
-
-    _flat_color_pipeline.create(
-        _render_pass,
-        Pipeline::Config {
-            .polygon_mode = vk::PolygonMode::eFill,
-            .cull_mode    = vk::CullModeFlagBits::eBack,
-            .front_face   = vk::FrontFace::eClockwise,
-            .msaa_samples = vulkan_max_msaa_samples(),
-        }
-    );
+    _flat_color_pipeline
+        .vert_from_spirv("shaders/01color.vert")
+        .frag_from_spirv("shaders/01color.frag")
+        .describe_vertex_input(
+            VertexFlatColor::bindings,
+            VertexFlatColor::attributes
+        )
+        .add_descriptor_set(_global_buffer_layout.native())
+        .add_push_constant(
+            vk::ShaderStageFlagBits::eAll,
+            sizeof(Mat4)
+        )
+        .create(
+            _render_pass,
+            Pipeline::Config {
+                .polygon_mode  = vk::PolygonMode::eFill,
+                .cull_mode     = vk::CullModeFlagBits::eBack,
+                .front_face    = vk::FrontFace::eClockwise,
+                .max_msaa_samples  = max_msaa_flag(),
+                .subpass_index = 0u,
+            }
+        );
 }
 
 // // =============================================================================
@@ -275,7 +332,7 @@ void Renderer::_init_flat_color_pipeline() {
 //             .polygon_mode = vk::PolygonMode::eFill,
 //             .cull_mode    = vk::CullModeFlagBits::eBack,
 //             .front_face   = vk::FrontFace::eClockwise,
-//             .msaa_samples = vulkan_max_msaa_samples(),
+//             .max_msaa_samples = max_msaa_flag(),
 //         }
 //     );
 // }
@@ -298,7 +355,7 @@ void Renderer::_init_flat_color_pipeline() {
 //             .polygon_mode = vk::PolygonMode::eFill,
 //             .cull_mode    = vk::CullModeFlagBits::eBack,
 //             .front_face   = vk::FrontFace::eClockwise,
-//             .msaa_samples = vulkan_max_msaa_samples(),
+//             .max_msaa_samples = max_msaa_flag(),
 //         }
 //     );
 // }
@@ -332,17 +389,23 @@ void Renderer::_init_flat_color_pipeline() {
 //             .polygon_mode = vk::PolygonMode::eFill,
 //             .cull_mode    = vk::CullModeFlagBits::eBack,
 //             .front_face   = vk::FrontFace::eClockwise,
-//             .msaa_samples = vulkan_max_msaa_samples(),
+//             .max_msaa_samples = max_msaa_flag(),
 //         }
 //     );
 // }
 
 // =============================================================================
-void Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer)
-{
+void
+Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
+    _flat_color_pipeline.bind(cmd_buffer);
 
-
-    _bind_camera_uniforms(_flat_color_pipeline, cmd_buffer);
+    cmd_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        _flat_color_pipeline.layout(),
+        0u,
+        { _global_buffer_sets[_frame_index].native() },
+        nullptr
+    );
 
     for(auto const &draw : _flat_color_draws) {
         _send_push_constants(_flat_color_pipeline, draw, cmd_buffer);
@@ -382,7 +445,7 @@ void Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer)
 //         vk::PipelineBindPoint::eGraphics,
 //         _lit_color_pipeline.layout(),
 //         DescBindSlot::PER_TEXTURE,
-//         { _lit_color_sets[Swapchain::image_index()].back().native() },
+//         { _lit_color_sets[Engine::frame_index()].back().native() },
 //         nullptr
 //     );
 
@@ -490,18 +553,5 @@ void Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer)
 //         1u, 0u, 0u, 0u
 //     );
 // }
-
-// =============================================================================
-void Renderer::_bind_camera_uniforms(Pipeline const &pipeline,
-                                     vk::CommandBuffer const &cmd_buffer)
-{
-    cmd_buffer.bindDescriptorSets(
-        vk::PipelineBindPoint::eGraphics,
-        pipeline.layout(),
-        DescBindSlot::CAMERA_DATA,
-        { _camera_uniform_sets[Swapchain::image_index()].native() },
-        nullptr
-    );
-}
 
 } // namespace vkl

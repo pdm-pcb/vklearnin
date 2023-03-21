@@ -160,8 +160,8 @@ void TargetWindow::spawn_window(uint32_t const width, uint32_t const height,
         ::SDL_WINDOW_SHOWN
         | ::SDL_WINDOW_VULKAN
         | ::SDL_WINDOW_BORDERLESS
-        | ::SDL_WINDOW_INPUT_FOCUS
-        | ::SDL_WINDOW_INPUT_GRABBED
+        // | ::SDL_WINDOW_INPUT_FOCUS
+        // | ::SDL_WINDOW_INPUT_GRABBED
     );
 
     if(_window == nullptr) {
@@ -224,26 +224,26 @@ void TargetWindow::_size_and_place() {
 void TargetWindow::_focus_gained() {
     _handle_mouse_move = &_handle_mouse_in_focus;
 
-    auto const result = ::SDL_SetRelativeMouseMode(::SDL_TRUE);
-    if(result != 0) {
-        CONSOLE_ERROR(
-            "SDL2 could not enable relative mouse mode: '{}'",
-            ::SDL_GetError()
-        );
-    }
+    // auto const result = ::SDL_SetRelativeMouseMode(::SDL_TRUE);
+    // if(result != 0) {
+    //     CONSOLE_ERROR(
+    //         "SDL2 could not enable relative mouse mode: '{}'",
+    //         ::SDL_GetError()
+    //     );
+    // }
 }
 
 // =============================================================================
 void TargetWindow::_focus_lost() {
     _handle_mouse_move = &_handle_mouse_out_of_focus;
 
-    auto const result = ::SDL_SetRelativeMouseMode(::SDL_FALSE);
-    if(result != 0) {
-        CONSOLE_ERROR(
-            "SDL2 could not disable relative mouse mode: '{}'",
-            ::SDL_GetError()
-        );
-    }
+    // auto const result = ::SDL_SetRelativeMouseMode(::SDL_FALSE);
+    // if(result != 0) {
+    //     CONSOLE_ERROR(
+    //         "SDL2 could not disable relative mouse mode: '{}'",
+    //         ::SDL_GetError()
+    //     );
+    // }
 }
 
 } // namespace vkl

@@ -5,8 +5,6 @@
 
 namespace vkl {
 
-class Engine;
-class Renderer;
 struct WindowCloseEvent;
 
 class Application {
@@ -17,6 +15,7 @@ public:
     virtual void shutdown()     = 0;
 
     void run();
+
     void on_window_close(const WindowCloseEvent &event);
 
     Application();
@@ -29,8 +28,7 @@ public:
     Application& operator=(const Application &) = delete;
 
 private:
-    bool    _running;
-    Engine *_engine;
+    bool _running;
 };
 
 } // namespace vkl

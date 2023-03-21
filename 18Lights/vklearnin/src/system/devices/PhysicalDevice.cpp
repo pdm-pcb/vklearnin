@@ -130,7 +130,7 @@ void PhysicalDevice::select_device() {
               std::make_pair(false, std::numeric_limits<uint32_t>::max()));
 
     // Loop through all available hardware
-    for(uint32_t device_index = 1u;
+    for(uint32_t device_index = 0u;
         device_index < _available_devices.size();
         ++device_index)
     {
@@ -188,7 +188,7 @@ void PhysicalDevice::select_device() {
             auto const& dev_store      = _available_devices[device_index];
             _physical_device           = dev_store.device;
             _memory_properties         = dev_store.memory;
-            RenderConfig::msaa_samples = dev_store.max_samples;
+            RenderConfig::max_msaa_samples = dev_store.max_samples;
             RenderConfig::anisotropy   = dev_store.max_aniso;
             CONSOLE_INFO("Selected {}", dev_store.name);
 

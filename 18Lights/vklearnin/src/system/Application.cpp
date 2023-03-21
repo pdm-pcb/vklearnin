@@ -2,7 +2,6 @@
 #include "vklearnin/system/Application.hpp"
 
 #include "vklearnin/system/GraphicsAPI.hpp"
-#include "vklearnin/system/Engine.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
@@ -12,36 +11,38 @@ namespace vkl {
 
 // =============================================================================
 void Application::run() {
-    _engine->init();
     this->init();
     Renderer::create_pipelines();
 
-    // float cummulative_frametime = 0.0f;
-    // uint32_t cummulative_frame_count = 0u;
+    float cummulative_frametime = 0.0f;
+    uint32_t cummulative_frame_count = 0u;
 
     while(_running) {
         TargetWindow::message_loop();
-        update();
-        _engine->render_loop();
+        this->update();
+        this->submit_draws();
 
-        // cummulative_frametime   += Timekeeper::frametime();
-        // cummulative_frame_count += 1;
-        // if(cummulative_frametime >= 0.5f) {
-        //     CONSOLE_TRACE(
-        //         "{:.02f} avg fps",
-        //         cummulative_frame_count / cummulative_frametime
-        //     );
-        //     cummulative_frametime = 0.0f;
-        //     cummulative_frame_count = 0u;
-        // }
+        Timekeeper::frame_start();
+            Renderer::render_pass();
+        Timekeeper::frame_end();
+
+        cummulative_frametime   += Timekeeper::frame_time();
+        cummulative_frame_count += 1;
+        if(cummulative_frametime >= 0.5f) {
+            CONSOLE_TRACE(
+                "{:.02f} avg fps",
+                cummulative_frame_count / cummulative_frametime
+            );
+            cummulative_frametime = 0.0f;
+            cummulative_frame_count = 0u;
+        }
 
         Timekeeper::update();
     }
 
     LogicalDevice::native().waitIdle();
 
-    shutdown();
-    _engine->shutdown();
+    this->shutdown();
 }
 
 // =============================================================================
@@ -52,8 +53,7 @@ void Application::on_window_close([[maybe_unused]] const WindowCloseEvent &) {
 
 // =============================================================================
 Application::Application() :
-    _running { true },
-    _engine  { new Engine(*this) }
+    _running { true }
 {
     EventBroker::init();
     EventBroker::subscribe<WindowCloseEvent>(
@@ -97,8 +97,6 @@ Application::~Application() {
     TargetWindow::destroy_surface();
     TargetWindow::shutdown();
     GraphicsAPI::shutdown();
-
-    delete _engine;
 
     EventBroker::shutdown();
 }

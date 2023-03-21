@@ -6,9 +6,10 @@
 namespace vkl {
 
 // =============================================================================
-auto & DescriptorSetLayout::add_binding(vk::DescriptorType const type,
-                                        vk::ShaderStageFlags const stages,
-                                        uint32_t const descriptor_count)
+DescriptorSetLayout &
+DescriptorSetLayout::add_binding(vk::DescriptorType const type,
+                                 vk::ShaderStageFlags const stages,
+                                 uint32_t const descriptor_count)
 {
     _bindings.push_back({
         .binding         = static_cast<uint32_t>(_bindings.size()),

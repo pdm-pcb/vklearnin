@@ -17,19 +17,18 @@ struct RenderConfig final {
     static int32_t  window_pos_y;
     static float    window_aspect;
 
-    static uint32_t concurrent_frames;
     static uint32_t swapchain_image_count;
     static bool vsync_on;
 
-    static uint32_t msaa_samples;
+    static uint32_t max_msaa_samples;
     static float anisotropy;
 
     static constexpr std::array<float, 4>
         CLEAR_COLOR { 0.08f, 0.08f, 0.16f, 1.0f };
 };
 
-inline auto vulkan_max_msaa_samples() {
-    switch(RenderConfig::msaa_samples) {
+inline auto max_msaa_flag() {
+    switch(RenderConfig::max_msaa_samples) {
         case 64u: return vk::SampleCountFlagBits::e64; break;
         case 32u: return vk::SampleCountFlagBits::e32; break;
         case 16u: return vk::SampleCountFlagBits::e16; break;
@@ -41,7 +40,7 @@ inline auto vulkan_max_msaa_samples() {
 
     CONSOLE_CRITICAL(
         "Unsupported MSAA sample count {}.",
-        RenderConfig::msaa_samples
+        RenderConfig::max_msaa_samples
     );
 
     return vk::SampleCountFlagBits::e1;

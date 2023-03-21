@@ -27,7 +27,7 @@ void Demo::update() {
     );
     _cam_data.up = vkl::math::cross(_cam_data.side, _cam_data.forward);
 
-    auto kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frametime();
+    auto kb_speed = _cam_data.kb_speed * vkl::Timekeeper::frame_time();
     if(_kb.lshift) {
         kb_speed *= 2.0f;
     }
@@ -46,67 +46,64 @@ void Demo::update() {
         _cam_data.up
     );
 
-    _vp_matrices.view = _persp_camera.view_matrix();
-    _vp_matrices.proj = _persp_camera.proj_matrix();
+    vkl::Renderer::update_global_buffer({
+        .view_matrix = _persp_camera.view_matrix(),
+        .proj_matrix = _persp_camera.proj_matrix()
+    });
 
-    vkl::BufferTools::update_buffer(
-        _vp_ubos[vkl::Swapchain::image_index()],
-        &_vp_matrices
-    );
+    // _light_props.dir.toward = vkl::math::normalize(DIR_POS);
+    // _light_props.dir.color  = DIR_COLOR;
 
-    _light_props.dir.toward = vkl::math::normalize(DIR_POS);
-    _light_props.dir.color  = DIR_COLOR;
+    // _light_props.point.position = POINT_POS;
+    // _light_props.point.color    = POINT_COLOR;
 
-    _light_props.point.position = POINT_POS;
-    _light_props.point.color    = POINT_COLOR;
-
-    vkl::BufferTools::update_buffer(
-        _light_props_ubos[vkl::Swapchain::image_index()],
-        &_light_props
-    );
+    // vkl::BufferTools::update_buffer(
+    //     _light_props_ubos[vkl::Swapchain::image_index()],
+    //     &_light_props
+    // );
 }
 
 // =============================================================================
 void Demo::submit_draws() {
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatColor> {
-            .mesh = &_lamp_mesh,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_lamp_matrix,
-                }}
-        }
-    );
+    // vkl::Renderer::submit(
+    //     vkl::DrawSubmission<vkl::VertexFlatColor> {
+    //         .mesh = &_lamp_mesh,
+    //         .push_constants = {{
+    //                 .stage_flags = vk::ShaderStageFlagBits::eAll,
+    //                 .size        = sizeof(vkl::Mat4),
+    //                 .data        = &_lamp_matrix,
+    //             }}
+    //     }
+    // );
 
-    _cube_matrix = vkl::math::rotate(
-        vkl::Mat4::identity,
-        vkl::Timekeeper::runtime() * 20.0f,
-        { 0.0f, 20.0f, 0.0f, 0.0f }
-    );
+    // _cube_matrix = vkl::math::rotate(
+    //     vkl::Mat4::identity,
+    //     vkl::Timekeeper::run_time() * 20.0f,
+    //     { 0.0f, 20.0f, 0.0f, 0.0f }
+    // );
 
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexLitColor> {
-            .mesh = &_cube_mesh,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_cube_matrix,
-                }}
-        }
-    );
+    // vkl::Renderer::submit(
+    //     vkl::DrawSubmission<vkl::VertexLitColor> {
+    //         .mesh = &_cube_mesh,
+    //         .push_constants = {{
+    //                 .stage_flags = vk::ShaderStageFlagBits::eAll,
+    //                 .size        = sizeof(vkl::Mat4),
+    //                 .data        = &_cube_matrix,
+    //             }}
+    //     }
+    // );
 
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatTexture> {
-            .mesh     = &_floor_mesh,
-            .material = &_floor_texture,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_floor_matrix,
-                }}
-        }
-    );
+    // vkl::Renderer::submit(
+    //     vkl::DrawSubmission<vkl::VertexFlatTexture> {
+    //         .mesh     = &_floor_mesh,
+    //         .material = &_floor_texture,
+    //         .push_constants = {{
+    //                 .stage_flags = vk::ShaderStageFlagBits::eAll,
+    //                 .size        = sizeof(vkl::Mat4),
+    //                 .data        = &_floor_matrix,
+    //             }}
+    //     }
+    // );
 }
 
 // =============================================================================
@@ -127,14 +124,6 @@ void Demo::shutdown() {
 
     _cube_texture.shutdown();
     _floor_texture.shutdown();
-
-    for(auto &ubo : _vp_ubos) {
-        vkl::BufferTools::destroy(ubo);
-    }
-
-    for(auto &ubo : _light_props_ubos) {
-        vkl::BufferTools::destroy(ubo);
-    }
 }
 
 // =============================================================================
@@ -265,20 +254,6 @@ void Demo::_init_camera() {
 
     _cam_data.pos     =  8.0f * vkl::Vec4::unit_z;
     _cam_data.forward = -1.0f * vkl::Vec4::unit_z;
-
-    _vp_ubos.resize(vkl::RenderConfig::concurrent_frames);
-    CONSOLE_TRACE("Allocating VP UBOs");
-    for(auto &ubo : _vp_ubos) {
-        ubo.size = sizeof(VPMatrices);
-        vkl::BufferTools::create(
-            ubo,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            (vk::MemoryPropertyFlagBits::eHostVisible |
-             vk::MemoryPropertyFlagBits::eHostCoherent)
-        );
-    }
-
-    vkl::Renderer::set_camera_ubos(_vp_ubos);
 }
 
 // =============================================================================
@@ -334,7 +309,7 @@ void Demo::_init_textures() {
 
 // =============================================================================
 void Demo::_init_lights() {
-    // _light_props_ubos.resize(vkl::RenderConfig::concurrent_frames);
+    // _light_props_ubos.resize(vkl::RenderConfig::swapchain_image_count);
     // CONSOLE_TRACE("Allocating light UBOs");
     // for(auto &ubo : _light_props_ubos) {
     //     ubo.size = sizeof(vkl::LightProps);
@@ -355,11 +330,6 @@ Demo::Demo() :
 
     _persp_camera { },
     _cam_data     { },
-    _vp_matrices  { },
-    _vp_ubos      { },
-
-    _light_props      { },
-    _light_props_ubos { },
 
     _lamp_mesh { },
     _cube_mesh   { },

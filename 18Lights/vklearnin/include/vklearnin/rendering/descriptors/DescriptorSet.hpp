@@ -16,8 +16,8 @@ public:
                 DescriptorSetLayout const &set_layout);
     void destroy();
 
-    auto & add_buffer(BufferObject const &buffer);
-    auto & add_image(ImageObject const &image);
+    DescriptorSet & add_buffer(BufferObject const &buffer);
+    DescriptorSet & add_image(ImageObject const &image);
     void write_set();
 
     inline auto const & native() const { return _set; }
