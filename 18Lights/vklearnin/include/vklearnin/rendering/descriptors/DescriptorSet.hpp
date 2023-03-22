@@ -14,7 +14,6 @@ class DescriptorSet {
 public:
     void create(DescriptorPool const &descriptor_pool,
                 DescriptorSetLayout const &set_layout);
-    void destroy();
 
     DescriptorSet & add_buffer(BufferObject const &buffer);
     DescriptorSet & add_image(ImageObject const &image);

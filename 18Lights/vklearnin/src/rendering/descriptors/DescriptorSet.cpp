@@ -103,16 +103,6 @@ void DescriptorSet::create(DescriptorPool const &descriptor_pool,
 }
 
 // =============================================================================
-void DescriptorSet::destroy() {
-    for(auto &buffer : _buffers) {
-        BufferTools::destroy(buffer);
-    }
-    for(auto &image : _images) {
-        ImageTools::destroy(image);
-    }
-}
-
-// =============================================================================
 DescriptorSet::DescriptorSet() :
     _buffers { },
     _images  { },

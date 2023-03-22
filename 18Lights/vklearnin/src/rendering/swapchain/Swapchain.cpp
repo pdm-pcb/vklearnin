@@ -176,6 +176,12 @@ void Swapchain::_query_surface_capabilities() {
 
         RenderConfig::swapchain_image_count = capabilities.minImageCount;
     }
+
+    if(RenderConfig::swapchain_image_count == 2 && RenderConfig::vsync_on) {
+        if(capabilities.maxImageCount >= 3) {
+            RenderConfig::swapchain_image_count = 3;
+        }
+    }
 }
 
 // =============================================================================
@@ -247,7 +253,7 @@ void Swapchain::_query_surface_present_modes() {
         _present_mode = vk::PresentModeKHR::eImmediate;
     }
     else {
-        CONSOLE_CRITICAL("Neither immediate nor FIFO presentation modes "
+        CONSOLE_CRITICAL("Neither immediate nor FIFO presentation modes are "
                          "supported.");
     }
 }

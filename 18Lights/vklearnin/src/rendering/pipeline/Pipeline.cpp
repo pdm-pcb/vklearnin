@@ -3,9 +3,35 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
+#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/renderpass/RenderPass.hpp"
+#include "vklearnin/system/devices/CmdBuffer.hpp"
 
 namespace vkl {
+
+// =============================================================================
+void Pipeline::bind(CmdBuffer const &cmd_buffer) {
+    cmd_buffer.native().bindPipeline(
+        vk::PipelineBindPoint::eGraphics,
+        _pipeline
+    );
+    cmd_buffer.native().setViewport(0u, _viewport);
+    cmd_buffer.native().setScissor(0u, _scissor);
+}
+
+// =============================================================================
+void Pipeline::bind_descriptor_set(CmdBuffer const &cmd_buffer,
+                                   uint32_t const set_number,
+                                   DescriptorSet const &set)
+{
+    cmd_buffer.native().bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        _layout,
+        set_number,
+        { set.native() },
+        nullptr
+    );
+}
 
 // =============================================================================
 Pipeline & Pipeline::vert_from_spirv(std::string_view filepath,
@@ -35,8 +61,8 @@ Pipeline & Pipeline::frag_from_spirv(std::string_view filepath,
 }
 
 // =============================================================================
-Pipeline & Pipeline::describe_vertex_input(const VertexBindings &bindings,
-                                           const VertexAttribs &attributes)
+Pipeline & Pipeline::describe_vertex_input(VertexBindings const &bindings,
+                                           VertexAttribs const &attributes)
 {
     auto const binding_count = static_cast<uint32_t>(bindings.size());
     auto const attrib_count  = static_cast<uint32_t>(attributes.size());
@@ -53,15 +79,14 @@ Pipeline & Pipeline::describe_vertex_input(const VertexBindings &bindings,
 }
 
 // =============================================================================
-Pipeline &
-Pipeline::add_descriptor_set(const vk::DescriptorSetLayout &set_layout) {
-    _desc_set_layouts.push_back(set_layout);
+Pipeline & Pipeline::add_descriptor_set(DescriptorSetLayout const &set_layout) {
+    _desc_set_layouts.push_back(set_layout.native());
     return *this;
 }
 
 // =============================================================================
-Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags stage_flags,
-                                       size_t size)
+Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags const stage_flags,
+                                       size_t const size)
 {
     _push_constants.push_back({
         .stageFlags = stage_flags,
@@ -179,16 +204,6 @@ void Pipeline::update_dimensions() {
         _viewport.x,
         _viewport.y
     );
-}
-
-// =============================================================================
-void Pipeline::bind(vk::CommandBuffer const &cmd_buffer) {
-    cmd_buffer.bindPipeline(
-        vk::PipelineBindPoint::eGraphics,
-        _pipeline
-    );
-    cmd_buffer.setViewport(0u, _viewport);
-    cmd_buffer.setScissor(0u, _scissor);
 }
 
 // =============================================================================

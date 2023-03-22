@@ -3,7 +3,6 @@
 
 #include "vklearnin/system/GraphicsAPI.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
-#include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
@@ -19,9 +18,9 @@ void Application::run() {
 
     while(_running) {
         Timekeeper::update();
+        TargetWindow::message_loop();
 
         Timekeeper::frame_start();
-            TargetWindow::message_loop();
             this->update();
             this->submit_draws();
             Renderer::record_commands();
@@ -84,13 +83,11 @@ Application::Application() {
         #endif // VKL_DEBUG
     });
 
-    Swapchain::create();
     Renderer::init();
 }
 
 Application::~Application() {
     Renderer::shutdown();
-    Swapchain::destroy();
     LogicalDevice::destroy();
     TargetWindow::destroy_surface();
     TargetWindow::shutdown();

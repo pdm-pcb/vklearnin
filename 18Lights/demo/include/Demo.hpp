@@ -29,7 +29,7 @@ private:
     FPSCamera _camera;
 
     vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
-    vkl::Cube<vkl::VertexFlatColor>      _cube_mesh;
+    vkl::Cube<vkl::VertexFlatTexture>    _cube_mesh;
     vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
 
     vkl::Mat4 _lamp_matrix;

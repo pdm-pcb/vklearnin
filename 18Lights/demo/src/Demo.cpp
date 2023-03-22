@@ -51,8 +51,9 @@ void Demo::submit_draws() {
     );
 
     vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatColor> {
+        vkl::DrawSubmission<vkl::VertexFlatTexture> {
             .mesh = &_cube_mesh,
+            .material = &_cube_texture,
             .push_constants = {{
                     .stage_flags = vk::ShaderStageFlagBits::eAll,
                     .size        = sizeof(vkl::Mat4),
@@ -61,17 +62,17 @@ void Demo::submit_draws() {
         }
     );
 
-    // vkl::Renderer::submit(
-    //     vkl::DrawSubmission<vkl::VertexFlatTexture> {
-    //         .mesh     = &_floor_mesh,
-    //         .material = &_floor_texture,
-    //         .push_constants = {{
-    //                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-    //                 .size        = sizeof(vkl::Mat4),
-    //                 .data        = &_floor_matrix,
-    //             }}
-    //     }
-    // );
+    vkl::Renderer::submit(
+        vkl::DrawSubmission<vkl::VertexFlatTexture> {
+            .mesh     = &_floor_mesh,
+            .material = &_floor_texture,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eAll,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_floor_matrix,
+                }}
+        }
+    );
 }
 
 // =============================================================================
@@ -95,8 +96,9 @@ void Demo::shutdown() {
 
 // =============================================================================
 void Demo::_init_camera() {
-    _camera.init(8.0f * vkl::Vec4::unit_z,
-                 -1.0f * vkl::Vec4::unit_z);
+    auto const position = 8.0f * vkl::Vec4::unit_z;
+    auto const forward  = -1.0f * vkl::Vec4::unit_z;
+    _camera.init(position, forward);
     _camera.set_perspective(0.1f, 1000.0f, 45.0f);
 }
 
@@ -104,20 +106,22 @@ void Demo::_init_camera() {
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
 
-    _cube_mesh.init(
-        1.0f,
-        {{
-            { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
-            { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
-            { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
-            { 1.0f, 1.0f, 1.0f, 1.0f }, // White
+    // _cube_mesh.init(
+    //     1.0f,
+    //     {{
+    //         { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
+    //         { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
+    //         { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
+    //         { 1.0f, 1.0f, 1.0f, 1.0f }, // White
 
-            { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
-            { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
-            { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
-            { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
-        }}
-    );
+    //         { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
+    //         { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
+    //         { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
+    //         { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
+    //     }}
+    // );
+
+    _cube_mesh.init(1.0f, 1.0f);
 
     _floor_mesh.init(100.0f, 100.0f);
 }
@@ -139,25 +143,28 @@ void Demo::_init_model_matrices() {
 
 // =============================================================================
 void Demo::_init_textures() {
-    // _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
-    // _cube_texture.init_sampler(
-    //     vk::Filter::eLinear,
-    //     vk::Filter::eLinear,
-    //     vk::SamplerMipmapMode::eLinear,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     vk::SamplerAddressMode::eRepeat
-    // );
-    // vkl::Renderer::add_flat_texture(_cube_texture);
+    _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
+    _cube_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
 
-    // _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
-    // _floor_texture.init_sampler(
-    //     vk::Filter::eLinear,
-    //     vk::Filter::eLinear,
-    //     vk::SamplerMipmapMode::eLinear,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     vk::SamplerAddressMode::eRepeat
-    // );
-    // vkl::Renderer::add_flat_texture(_floor_texture);
+    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
+    _floor_texture.init_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat
+    );
+
+    vkl::Renderer::set_flat_textures({
+        _cube_texture,
+        _floor_texture
+    });
 }
 
 // =============================================================================

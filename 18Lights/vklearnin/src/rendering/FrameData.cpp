@@ -99,7 +99,7 @@ void FrameData::_destroy_cmd_structures() {
 // =============================================================================
 void FrameData::_destroy_sync_primitives() {
     CONSOLE_TRACE(
-        "Destroying sync primitives:"
+        "\nDestroying sync primitives:"
         "\n\tacquire complete semaphore  {:#x}"
         "\n\tcommands complete semaphore {:#x}"
         "\n\tqueue complete fence        {:#x}",
@@ -124,7 +124,7 @@ void FrameData::_create_sync_primitives() {
     _queue_complete    = LogicalDevice::native().createFence(fence_info);
 
     CONSOLE_TRACE(
-        "Created sync primitives:"
+        "\nCreated sync primitives:"
         "\n\tacquire complete semaphore  {:#x}"
         "\n\tcommands complete semaphore {:#x}"
         "\n\tqueue complete fence        {:#x}",

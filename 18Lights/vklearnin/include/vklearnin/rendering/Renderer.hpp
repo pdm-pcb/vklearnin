@@ -2,6 +2,7 @@
 #define VKLEARNIN_RENDERING_RENDERER_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/rendering/FrameData.hpp"
 #include "vklearnin/rendering/DrawSubmission.hpp"
 #include "vklearnin/rendering/renderpass/RenderPass.hpp"
 #include "vklearnin/rendering/renderpass/Framebuffer.hpp"
@@ -10,12 +11,9 @@
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/VertexTypes.hpp"
-#include "vklearnin/lighting/LightProps.hpp"
-#include "vklearnin/lighting/MaterialProps.hpp"
 
 namespace vkl {
 
-class FrameData;
 struct BufferObject;
 struct ImageObject;
 
@@ -37,8 +35,7 @@ public:
     static void init();
     static void shutdown();
 
-    // ...??
-    // static void set_flat_textures(std::vector<ImageObject> const &images);
+    static void set_flat_textures(std::vector<Texture2D> const &textures);
 
     static void create_pipelines();
 
@@ -52,44 +49,61 @@ private:
     static uint64_t                 _frame_count;
 
     // Convenience using delcarations ------------------------------------------
-    using PerFrameSets    = std::vector<DescriptorSet>;
-    using PerFrameBuffers = std::vector<BufferObject>;
-    using FlatColorDraw   = DrawSubmission<VertexFlatColor>;
-    using FlatColorDraws  = std::vector<FlatColorDraw>;
+    using DescSetList = std::vector<DescriptorSet>;
+    using BufferList  = std::vector<BufferObject>;
+    using ImageList   = std::vector<ImageObject>;
+
+    using FlatColorDraw      = DrawSubmission<VertexFlatColor>;
+    using FlatColorDrawQueue = std::vector<FlatColorDraw>;
+
+    using FlatTextureDraw  = DrawSubmission<VertexFlatTexture>;
+    using FlatTextureDraws = std::vector<FlatTextureDraw>;
+
+    struct PerFlatTextureDraws {
+        size_t set_index;
+        FlatTextureDraws queue;
+    };
+
+    using FlatTextureDrawQueue =
+        std::unordered_map<uint64_t, PerFlatTextureDraws>;
 
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
 
     static DescriptorSetLayout _global_buffer_layout;
-    static PerFrameSets        _global_buffer_sets;
+    static DescSetList         _global_buffer_sets;
+    static DescriptorSetLayout _flat_texture_layout;
+    static DescSetList         _flat_texture_sets;
 
     // Shader Resources --------------------------------------------------------
-    static PerFrameBuffers _global_buffers;
+    static BufferList _global_buffers;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
+    static Pipeline _flat_texture_pipeline;
 
     // Draw Queues -------------------------------------------------------------
-    static FlatColorDraws _flat_color_draws;
+    static FlatColorDrawQueue   _flat_color_draws;
+    static FlatTextureDrawQueue _flat_texture_draws;
 
     static void _init_framebuffers();
     static void _init_frame_data();
 
     static void _init_descriptor_pool();
-    static void _init_descriptor_sets();
 
-    static void _init_shader_resources();
-    static void _shutdown_shader_resources();
+    static void _init_global_buffers();
+    static void _init_flat_textures();
 
     static void _init_flat_color_pipeline();
+    static void _init_flat_texture_pipeline();
 
-    static void
-    _execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer);
+    static void _execute_flat_color_pipeline(const FrameData &frame_data);
+    static void _execute_flat_texture_pipeline(const FrameData &frame_data);
 
     template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,
                                      DrawSubmission<VertexType> const &draw,
-                                     vk::CommandBuffer const &cmd_buffer);
+                                     FrameData const &frame_data);
 };
 
 // =============================================================================
@@ -98,17 +112,17 @@ inline void Renderer::submit(DrawSubmission<VertexType> const &draw) {
     if constexpr(std::is_same_v<VertexType, VertexFlatColor>) {
         _flat_color_draws.push_back(draw);
     }
-    // else if constexpr(std::is_same_v<VertexType, VertexLitColor>) {
-    //     _lit_color_draws.push_back(draw);
-    // }
-    // else if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
-    //     auto mat_index = reinterpret_cast<uint64_t>(
-    //         VkImage(draw.material->image().handle)
-    //     );
-    //     _flat_texture_draws.at(mat_index).queue.push_back(draw);
-    // }
+    else if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
+        auto texture_id = reinterpret_cast<uint64_t>(
+            VkImage(draw.material->image().handle)
+        );
+        _flat_texture_draws[texture_id].queue.push_back(draw);
+    }
     // else if constexpr(std::is_same_v<VertexType, VertexSkybox>) {
     //     _skybox_draw = draw;
+    // }
+    // else if constexpr(std::is_same_v<VertexType, VertexLitColor>) {
+    //     _lit_color_draws.push_back(draw);
     // }
 }
 
@@ -117,11 +131,11 @@ template <typename VertexType>
 inline void
 Renderer::_send_push_constants(Pipeline const &pipeline,
                                DrawSubmission<VertexType> const &draw,
-                               vk::CommandBuffer const &cmd_buffer)
+                               FrameData const &frame_data)
 {
     size_t offset = 0u;
     for(auto const& push_constant : draw.push_constants) {
-        cmd_buffer.pushConstants(
+        frame_data.cmd_buffer().native().pushConstants(
             pipeline.layout(),
             push_constant.stage_flags,
             static_cast<uint32_t>(offset),

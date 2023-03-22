@@ -1,9 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/rendering/Renderer.hpp"
 
-#include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
-#include "vklearnin/rendering/FrameData.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/meshes/Mesh.hpp"
@@ -29,15 +27,21 @@ uint64_t                 Renderer::_frame_count = 0u;
 // Descriptors -----------------------------------------------------------------
 DescriptorPool Renderer::_desc_pool;
 
-DescriptorSetLayout Renderer::_global_buffer_layout;
-Renderer::PerFrameSets Renderer::_global_buffer_sets;
+DescriptorSetLayout   Renderer::_global_buffer_layout;
+Renderer::DescSetList Renderer::_global_buffer_sets;
+DescriptorSetLayout   Renderer::_flat_texture_layout;
+Renderer::DescSetList Renderer::_flat_texture_sets;
 
 // Shader Resources ------------------------------------------------------------
-Renderer::PerFrameBuffers Renderer::_global_buffers;
+Renderer::BufferList Renderer::_global_buffers;
 
+// Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
+Pipeline Renderer::_flat_texture_pipeline;
 
-Renderer::FlatColorDraws Renderer::_flat_color_draws;
+// Draw Queues -----------------------------------------------------------------
+Renderer::FlatColorDrawQueue Renderer::_flat_color_draws;
+Renderer::FlatTextureDrawQueue Renderer::_flat_texture_draws;
 
 // =============================================================================
 void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
@@ -61,10 +65,8 @@ void Renderer::record_commands() {
     frame_data.cmd_buffer().begin_one_time_submit();
     frame_data.cmd_buffer().begin_render_pass(render_pass_info);
 
-        _execute_flat_color_pipeline(frame_data.cmd_buffer().native());
-        // _execute_flat_texture_pipeline(cmd_buffer);
-        // _execute_skybox_pipeline(cmd_buffer);
-        // _execute_lit_color_pipeline(cmd_buffer);
+        _execute_flat_color_pipeline(frame_data);
+        _execute_flat_texture_pipeline(frame_data);
 
     frame_data.cmd_buffer().end_render_pass();
     frame_data.cmd_buffer().end();
@@ -92,6 +94,8 @@ void Renderer::submit_and_present() {
 
 // =============================================================================
 void Renderer::init() {
+    Swapchain::create();
+
     _render_pass.create();
     _init_framebuffers();
     _init_frame_data();
@@ -101,18 +105,16 @@ void Renderer::init() {
 // =============================================================================
 void Renderer::shutdown() {
     _flat_color_pipeline.destroy();
-    // _lit_color_pipeline.destroy();
-    // _flat_texture_pipeline.destroy();
-    // _skybox_pipeline.destroy();
+    _flat_texture_pipeline.destroy();
 
     _global_buffer_layout.destroy();
-    // _lit_color_set_layout.destroy();
-    // _flat_texture_set_layout.destroy();
-    // _skybox_set_layout.destroy();
+    _flat_texture_layout.destroy();
 
     _desc_pool.destroy();
 
-    _shutdown_shader_resources();
+    for(auto &buffer : _global_buffers) {
+        BufferTools::destroy(buffer);
+    }
 
     for(auto &framebuffer : _framebuffers) {
         framebuffer.destroy();
@@ -123,52 +125,45 @@ void Renderer::shutdown() {
     }
 
     _render_pass.destroy();
+
+    Swapchain::destroy();
 }
 
-// // =============================================================================
-// void Renderer::add_flat_texture(Texture2D const &texture) {
-//     _flat_texture_sets.resize(_flat_texture_sets.size() + 1);
-//     _flat_texture_sets.back().add_texture2D(texture.image());
+// =============================================================================
+void Renderer::set_flat_textures(std::vector<Texture2D> const &textures) {
+    for(auto const &texture : textures) {
+        auto const set_index = _flat_texture_sets.size();
 
-//     _flat_texture_draws.insert({
-//         reinterpret_cast<uint64_t>(VkImage(texture.image().handle)),
-//         FlatTextureDrawQueue {
-//             .set_index = _flat_texture_sets.size() - 1,
-//             .queue = { }
-//         }
-//     });
-// }
+        _flat_texture_sets.emplace_back();
+        _flat_texture_sets.back().add_image(texture.image());
 
-// // =============================================================================
-// void Renderer::set_skybox_texture(Texture2D const &texture) {
-//     _skybox_set.add_texture2D(texture.image());
-// }
+        // WANRING: Vulkan handles can be and are reused by the driver, so this
+        //          is a terrible way to key an unordered map if you don't keep
+        //          every resource loaded into VRAM all the time
+        auto const texture_id = reinterpret_cast<uint64_t>(
+            VkImage(texture.image().handle)
+        );
 
-// // =============================================================================
-// void Renderer::set_light_ubos(std::vector<BufferObject> const &ubos) {
-//     if(ubos.size() != RenderConfig::swapchain_image_count) {
-//         CONSOLE_CRITICAL(
-//             "UBO vector must match concurrent frame count {}",
-//             ubos.size(),
-//             RenderConfig::swapchain_image_count
-//         );
-//     }
+        _flat_texture_draws.insert({
+            texture_id,
+            PerFlatTextureDraws {
+                .set_index = set_index,
+                .queue = { }
+            }
+        });
 
-//     for(uint32_t frame = 0u; frame < RenderConfig::swapchain_image_count; ++frame) {
-//         _lit_color_sets[frame].resize(_lit_color_sets[frame].size() + 1);
-//         _lit_color_sets[frame].back().add_ubo(ubos[frame]);
-//     }
-// }
+        // TODO: these magic numbers are nonsense and you know it
+        _flat_texture_draws[texture_id].queue.reserve(100);
+    }
+}
 
 // =============================================================================
 void Renderer::create_pipelines() {
-    _init_descriptor_sets();
-    _init_shader_resources();
+    _init_global_buffers();
+    _init_flat_textures();
 
     _init_flat_color_pipeline();
-    // _init_flat_texture_pipeline();
-    // _init_skybox_pipeline();
-    // _init_lit_color_pipeline();
+    _init_flat_texture_pipeline();
 }
 
 // =============================================================================
@@ -198,21 +193,22 @@ void Renderer::_init_frame_data() {
 
 // =============================================================================
 void Renderer::_init_descriptor_pool() {
+    // TODO: these magic numbers are nonsense and you know it
     _desc_pool.create(
         100u,
         {{
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = 10u,
+            .descriptorCount = 100u,
         },
         {
             .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = 10u,
+            .descriptorCount = 100u,
         }}
     );
 }
 
 // =============================================================================
-void Renderer::_init_descriptor_sets() {
+void Renderer::_init_global_buffers() {
     _global_buffer_layout
         .add_binding(
             vk::DescriptorType::eUniformBuffer,
@@ -221,43 +217,17 @@ void Renderer::_init_descriptor_sets() {
         .create();
 
     _global_buffer_sets.resize(RenderConfig::swapchain_image_count);
+
     for(auto &set : _global_buffer_sets) {
         set.create(_desc_pool, _global_buffer_layout);
     }
 
-    // _flat_texture_set_layout.add_binding(
-    //     vk::DescriptorType::eCombinedImageSampler,
-    //     vk::ShaderStageFlagBits::eFragment
-    // );
-    // _flat_texture_set_layout.create();
+    CONSOLE_INFO(
+        "Renderer will use {} global buffer descriptor sets",
+        _global_buffer_sets.size()
+    );
 
-    // for(auto &set : _flat_texture_sets) {
-    //     set.create(_desc_pool, _flat_texture_set_layout);
-    // }
-
-    // _skybox_set_layout.add_binding(
-    //     vk::DescriptorType::eCombinedImageSampler,
-    //     vk::ShaderStageFlagBits::eFragment
-    // );
-    // _skybox_set_layout.create();
-    // _skybox_set.create(_desc_pool, _skybox_set_layout);
-
-    // _lit_color_set_layout.add_binding(
-    //     vk::DescriptorType::eUniformBuffer,
-    //     vk::ShaderStageFlagBits::eFragment
-    // );
-    // _lit_color_set_layout.create();
-
-    // for(auto &frame : _lit_color_sets) {
-    //     for(auto &set : frame) {
-    //         set.create(_desc_pool, _lit_color_set_layout);
-    //     }
-    // }
-}
-
-// =============================================================================
-void Renderer::_init_shader_resources() {
-    _global_buffers.resize(RenderConfig::swapchain_image_count);
+    _global_buffers.resize(_global_buffer_sets.size());
     for(auto &buffer : _global_buffers) {
         buffer.size = sizeof(GlobalBuffer);
         vkl::BufferTools::create(
@@ -279,9 +249,26 @@ void Renderer::_init_shader_resources() {
 }
 
 // =============================================================================
-void Renderer::_shutdown_shader_resources() {
-    for(auto &buffer : _global_buffers) {
-        BufferTools::destroy(buffer);
+void Renderer::_init_flat_textures() {
+    _flat_texture_layout.add_binding(
+        vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
+    );
+    _flat_texture_layout.create();
+
+    assert(_flat_texture_sets.size() != 0);
+
+    for(auto &set : _flat_texture_sets) {
+        set.create(_desc_pool, _flat_texture_layout);
+    }
+
+    CONSOLE_INFO(
+        "Renderer will use {} flat texture descriptor sets",
+        _flat_texture_sets.size()
+    );
+
+    for(auto &set : _flat_texture_sets) {
+        set.write_set();
     }
 }
 
@@ -294,7 +281,7 @@ void Renderer::_init_flat_color_pipeline() {
             VertexFlatColor::bindings,
             VertexFlatColor::attributes
         )
-        .add_descriptor_set(_global_buffer_layout.native())
+        .add_descriptor_set(_global_buffer_layout)
         .add_push_constant(
             vk::ShaderStageFlagBits::eAll,
             sizeof(Mat4)
@@ -302,121 +289,55 @@ void Renderer::_init_flat_color_pipeline() {
         .create(
             _render_pass,
             Pipeline::Config {
-                .polygon_mode  = vk::PolygonMode::eFill,
-                .cull_mode     = vk::CullModeFlagBits::eBack,
-                .front_face    = vk::FrontFace::eClockwise,
-                .max_msaa_samples  = max_msaa_flag(),
-                .subpass_index = 0u,
+                .polygon_mode     = vk::PolygonMode::eFill,
+                .cull_mode        = vk::CullModeFlagBits::eBack,
+                .front_face       = vk::FrontFace::eClockwise,
+                .max_msaa_samples = max_msaa_flag(),
+                .subpass_index    = 0u,
             }
         );
 }
 
-// // =============================================================================
-// void Renderer::_init_flat_texture_pipeline() {
-//     _flat_texture_pipeline.vert_from_spirv("shaders/02texture.vert");
-//     _flat_texture_pipeline.frag_from_spirv("shaders/02texture.frag");
-
-//     _flat_texture_pipeline.describe_vertex_input(
-//         VertexFlatTexture::bindings,
-//         VertexFlatTexture::attributes
-//     );
-
-//     _flat_texture_pipeline.add_descriptor_set(
-//         _camera_set_layout.native()
-//     );
-
-//     _flat_texture_pipeline.add_push_constant(
-//         vk::ShaderStageFlagBits::eAll,
-//         sizeof(Mat4)
-//     );
-
-//     _flat_texture_pipeline.add_descriptor_set(
-//         _flat_texture_set_layout.native()
-//     );
-
-//     _flat_texture_pipeline.create(
-//         _render_pass,
-//         Pipeline::Config {
-//             .polygon_mode = vk::PolygonMode::eFill,
-//             .cull_mode    = vk::CullModeFlagBits::eBack,
-//             .front_face   = vk::FrontFace::eClockwise,
-//             .max_msaa_samples = max_msaa_flag(),
-//         }
-//     );
-// }
-
-// // =============================================================================
-// void Renderer::_init_skybox_pipeline() {
-//     _skybox_pipeline.vert_from_spirv("shaders/03skybox.vert");
-//     _skybox_pipeline.frag_from_spirv("shaders/03skybox.frag");
-
-//     _skybox_pipeline.describe_vertex_input(
-//         VertexSkybox::bindings,
-//         VertexSkybox::attributes
-//     );
-
-//     _skybox_pipeline.add_descriptor_set(_camera_set_layout.native());
-//     _skybox_pipeline.add_descriptor_set(_skybox_set_layout.native());
-//     _skybox_pipeline.create(
-//         _render_pass,
-//         Pipeline::Config {
-//             .polygon_mode = vk::PolygonMode::eFill,
-//             .cull_mode    = vk::CullModeFlagBits::eBack,
-//             .front_face   = vk::FrontFace::eClockwise,
-//             .max_msaa_samples = max_msaa_flag(),
-//         }
-//     );
-// }
-
-// // =============================================================================
-// void Renderer::_init_lit_color_pipeline() {
-//     _lit_color_pipeline.vert_from_spirv("shaders/04litcolor.vert");
-//     _lit_color_pipeline.frag_from_spirv("shaders/04litcolor.frag");
-
-//     _lit_color_pipeline.describe_vertex_input(
-//         VertexLitColor::bindings,
-//         VertexLitColor::attributes
-//     );
-
-//     _lit_color_pipeline.add_descriptor_set(
-//         _camera_set_layout.native()
-//     );
-
-//     _lit_color_pipeline.add_descriptor_set(
-//         _lit_color_set_layout.native()
-//     );
-
-//     _lit_color_pipeline.add_push_constant(
-//         vk::ShaderStageFlagBits::eAll,
-//         sizeof(Mat4)
-//     );
-
-//     _lit_color_pipeline.create(
-//         _render_pass,
-//         Pipeline::Config {
-//             .polygon_mode = vk::PolygonMode::eFill,
-//             .cull_mode    = vk::CullModeFlagBits::eBack,
-//             .front_face   = vk::FrontFace::eClockwise,
-//             .max_msaa_samples = max_msaa_flag(),
-//         }
-//     );
-// }
+// =============================================================================
+void Renderer::_init_flat_texture_pipeline() {
+    _flat_texture_pipeline
+        .vert_from_spirv("shaders/02texture.vert")
+        .frag_from_spirv("shaders/02texture.frag")
+        .describe_vertex_input(
+            VertexFlatTexture::bindings,
+            VertexFlatTexture::attributes
+        )
+        .add_descriptor_set(_global_buffer_layout)
+        .add_descriptor_set(_flat_texture_layout)
+        .add_push_constant(
+            vk::ShaderStageFlagBits::eAll,
+            sizeof(Mat4)
+        )
+        .create(
+            _render_pass,
+            Pipeline::Config {
+                .polygon_mode     = vk::PolygonMode::eFill,
+                .cull_mode        = vk::CullModeFlagBits::eBack,
+                .front_face       = vk::FrontFace::eClockwise,
+                .max_msaa_samples = max_msaa_flag(),
+                .subpass_index    = 0u,
+            }
+        );
+}
 
 // =============================================================================
-void
-Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
-    _flat_color_pipeline.bind(cmd_buffer);
+void Renderer::_execute_flat_color_pipeline(FrameData const &frame_data) {
+    _flat_color_pipeline.bind(frame_data.cmd_buffer());
 
-    cmd_buffer.bindDescriptorSets(
-        vk::PipelineBindPoint::eGraphics,
-        _flat_color_pipeline.layout(),
+    _flat_color_pipeline.bind_descriptor_set(
+        frame_data.cmd_buffer(),
         0u,
-        { _global_buffer_sets[_frame_index].native() },
-        nullptr
+        _global_buffer_sets[_frame_index]
     );
 
+    auto const &cmd_buffer = frame_data.cmd_buffer().native();
     for(auto const &draw : _flat_color_draws) {
-        _send_push_constants(_flat_color_pipeline, draw, cmd_buffer);
+        _send_push_constants(_flat_color_pipeline, draw, frame_data);
 
         cmd_buffer.bindVertexBuffers(
             0u,
@@ -437,129 +358,45 @@ Renderer::_execute_flat_color_pipeline(vk::CommandBuffer const &cmd_buffer) {
     _flat_color_draws.clear();
 }
 
-// // =============================================================================
-// void Renderer::_execute_lit_color_pipeline(vk::CommandBuffer const &cmd_buffer)
-// {
-//     cmd_buffer.bindPipeline(
-//         vk::PipelineBindPoint::eGraphics,
-//         _lit_color_pipeline.native()
-//     );
-//     cmd_buffer.setViewport(0u, _lit_color_pipeline.viewport());
-//     cmd_buffer.setScissor(0u,  _lit_color_pipeline.scissor());
+// =============================================================================
+void Renderer::_execute_flat_texture_pipeline(FrameData const &frame_data) {
+    _flat_texture_pipeline.bind(frame_data.cmd_buffer());
 
-//     _bind_camera_uniforms(_lit_color_pipeline, cmd_buffer);
+    _flat_texture_pipeline.bind_descriptor_set(
+        frame_data.cmd_buffer(),
+        0u,
+        _global_buffer_sets[_frame_index]
+    );
 
-//     cmd_buffer.bindDescriptorSets(
-//         vk::PipelineBindPoint::eGraphics,
-//         _lit_color_pipeline.layout(),
-//         DescBindSlot::PER_TEXTURE,
-//         { _lit_color_sets[Engine::frame_index()].back().native() },
-//         nullptr
-//     );
+    auto const &cmd_buffer = frame_data.cmd_buffer().native();
+    for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
+        _flat_texture_pipeline.bind_descriptor_set(
+            frame_data.cmd_buffer(),
+            1u,
+            _flat_texture_sets[draw_queue.set_index]
+        );
 
-//     for(auto const &draw : _lit_color_draws) {
-//         _send_push_constants(_lit_color_pipeline, draw, cmd_buffer);
+        for(auto const &draw : draw_queue.queue) {
+            _send_push_constants(_flat_texture_pipeline, draw, frame_data);
 
-//         cmd_buffer.bindVertexBuffers(
-//             0u,
-//             { draw.mesh->vertex_buffer().buffer().handle },
-//             { 0u }
-//         );
-//         cmd_buffer.bindIndexBuffer(
-//             draw.mesh->index_buffer().buffer().handle,
-//             0u,
-//             INDEX_TYPE
-//         );
-//         cmd_buffer.drawIndexed(
-//             static_cast<uint32_t>(draw.mesh->index_count()),
-//             1u, 0u, 0u, 0u
-//         );
-//     }
+            cmd_buffer.bindVertexBuffers(
+                0u,
+                { draw.mesh->vertex_buffer().buffer().handle },
+                { 0u }
+            );
+            cmd_buffer.bindIndexBuffer(
+                draw.mesh->index_buffer().buffer().handle,
+                0u,
+                INDEX_TYPE
+            );
+            cmd_buffer.drawIndexed(
+                static_cast<uint32_t>(draw.mesh->index_count()),
+                1u, 0u, 0u, 0u
+            );
+        }
 
-//     _lit_color_draws.clear();
-// }
-
-// // =============================================================================
-// void
-// Renderer::_execute_flat_texture_pipeline(vk::CommandBuffer const &cmd_buffer) {
-//     cmd_buffer.bindPipeline(
-//         vk::PipelineBindPoint::eGraphics,
-//         _flat_texture_pipeline.native()
-//     );
-//     cmd_buffer.setViewport(0u, _flat_texture_pipeline.viewport());
-//     cmd_buffer.setScissor(0u,  _flat_texture_pipeline.scissor());
-
-//     _bind_camera_uniforms(_flat_texture_pipeline, cmd_buffer);
-
-//     for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
-//         cmd_buffer.bindDescriptorSets(
-//             vk::PipelineBindPoint::eGraphics,
-//             _flat_texture_pipeline.layout(),
-//             DescBindSlot::PER_TEXTURE,
-//             { _flat_texture_sets[draw_queue.set_index].native() },
-//             nullptr
-//         );
-
-//         for(auto const &draw : draw_queue.queue) {
-//             _send_push_constants(_flat_texture_pipeline, draw, cmd_buffer);
-
-//             cmd_buffer.bindVertexBuffers(
-//                 0u,
-//                 { draw.mesh->vertex_buffer().buffer().handle },
-//                 { 0u }
-//             );
-//             cmd_buffer.bindIndexBuffer(
-//                 draw.mesh->index_buffer().buffer().handle,
-//                 0u,
-//                 INDEX_TYPE
-//             );
-//             cmd_buffer.drawIndexed(
-//                 static_cast<uint32_t>(draw.mesh->index_count()),
-//                 1u, 0u, 0u, 0u
-//             );
-//         }
-
-//         draw_queue.queue.clear();
-//     }
-// }
-
-// // =============================================================================
-// void Renderer::_execute_skybox_pipeline(vk::CommandBuffer const &cmd_buffer) {
-//     if(_skybox_draw.mesh == nullptr || _skybox_draw.material == nullptr) {
-//         return;
-//     }
-
-//     cmd_buffer.bindPipeline(
-//         vk::PipelineBindPoint::eGraphics,
-//         _skybox_pipeline.native()
-//     );
-//     cmd_buffer.setViewport(0u, _skybox_pipeline.viewport());
-//     cmd_buffer.setScissor(0u,  _skybox_pipeline.scissor());
-
-//     _bind_camera_uniforms(_skybox_pipeline, cmd_buffer);
-
-//     cmd_buffer.bindDescriptorSets(
-//         vk::PipelineBindPoint::eGraphics,
-//         _skybox_pipeline.layout(),
-//         DescBindSlot::PER_TEXTURE,
-//         { _skybox_set.native() },
-//         nullptr
-//     );
-
-//     cmd_buffer.bindVertexBuffers(
-//         0u,
-//         { _skybox_draw.mesh->vertex_buffer().buffer().handle },
-//         { 0u }
-//     );
-//     cmd_buffer.bindIndexBuffer(
-//         _skybox_draw.mesh->index_buffer().buffer().handle,
-//         0u,
-//         INDEX_TYPE
-//     );
-//     cmd_buffer.drawIndexed(
-//         static_cast<uint32_t>(_skybox_draw.mesh->index_count()),
-//         1u, 0u, 0u, 0u
-//     );
-// }
+        draw_queue.queue.clear();
+    }
+}
 
 } // namespace vkl
