@@ -46,7 +46,6 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 
 // =============================================================================
 void Renderer::render_pass() {
-    CONSOLE_TRACE("{}", _frame_index);
     auto &frame_data = _frame_data[_frame_index];
     frame_data.wait_on_queue_fence();
 
