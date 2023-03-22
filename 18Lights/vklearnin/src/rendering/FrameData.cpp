@@ -28,6 +28,53 @@ void FrameData::wait_on_queue_fence() {
 }
 
 // =============================================================================
+void FrameData::submit_to_device() {
+    // Once LogicalDevice has acquired an image for us, it'll signal this
+    // semaphore
+    vk::Semaphore const acquire_complete_sems[] {
+        _acquire_complete
+    };
+
+    // We want the image to be fully acquired before beginning to write to it,
+    // so if the color attachemnt output stage is reached but the above
+    // semaphore  hasn't signaled, wait on it.
+    vk::PipelineStageFlags const acquire_before_stage =
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+    // The command buffer we're getting ready to submit
+    vk::CommandBuffer const command_buffers[] {
+        _cmd_buffer.native()
+    };
+
+    // When it comes time for the presentation engine to take this image back
+    // and show it on the display, we'll need a semaphore for it to wait on
+    // in case the command buffer hasn't been completely executed.
+    vk::Semaphore const commands_complete_sems[] {
+        _commands_complete
+    };
+
+    // Bring it all together in one struct
+    vk::SubmitInfo const submit_info {
+        .waitSemaphoreCount = static_cast<uint32_t>(
+            std::size(acquire_complete_sems)
+        ),
+        .pWaitSemaphores   = acquire_complete_sems,
+        .pWaitDstStageMask = &acquire_before_stage,
+        .commandBufferCount = static_cast<uint32_t>(
+            std::size(command_buffers)
+        ),
+        .pCommandBuffers   = command_buffers,
+        .signalSemaphoreCount = static_cast<uint32_t>(
+            std::size(commands_complete_sems)
+        ),
+        .pSignalSemaphores = commands_complete_sems,
+    };
+
+    // Submit this work to the queue
+    LogicalDevice::cmd_queue().native().submit(submit_info, _queue_complete);
+}
+
+// =============================================================================
 void FrameData::init() {
     _create_cmd_structures();
     _create_sync_primitives();
@@ -54,7 +101,7 @@ void FrameData::_destroy_cmd_structures() {
 // =============================================================================
 void FrameData::_destroy_sync_primitives() {
     CONSOLE_TRACE(
-        "Destroying swapchain sync primitives:"
+        "Destroying sync primitives:"
         "\n\tacquire complete semaphore  {:#x}"
         "\n\tcommands complete semaphore {:#x}"
         "\n\tqueue complete fence        {:#x}",
@@ -79,7 +126,7 @@ void FrameData::_create_sync_primitives() {
     _queue_complete    = LogicalDevice::native().createFence(fence_info);
 
     CONSOLE_TRACE(
-        "Created swapchain sync primitives:"
+        "Created sync primitives:"
         "\n\tacquire complete semaphore  {:#x}"
         "\n\tcommands complete semaphore {:#x}"
         "\n\tqueue complete fence        {:#x}",
@@ -95,7 +142,8 @@ FrameData::FrameData() :
     _cmd_buffer        { },
     _acquire_complete  { },
     _commands_complete { },
-    _queue_complete    { }
+    _queue_complete    { },
+    _image_index       { std::numeric_limits<uint32_t>::max() }
 { }
 
 FrameData::FrameData(FrameData &&other) noexcept :

@@ -10,6 +10,7 @@ namespace vkl {
 class FrameData {
 public:
     void wait_on_queue_fence();
+    void submit_to_device();
 
     void init();
     void shutdown();
@@ -29,6 +30,9 @@ public:
         return _queue_complete;
     }
 
+    inline void set_image_index(uint32_t const index) { _image_index = index; }
+    inline auto image_index() const { return _image_index; }
+
     FrameData();
     ~FrameData() = default;
 
@@ -45,6 +49,8 @@ private:
     vk::Semaphore _acquire_complete;
     vk::Semaphore _commands_complete;
     vk::Fence     _queue_complete;
+
+    uint32_t _image_index;
 
     void _create_cmd_structures();
     void _destroy_cmd_structures();

@@ -21,60 +21,41 @@ vk::SwapchainKHR Swapchain::_swapchain;
 std::vector<ImageObject> Swapchain::_images;
 
 // =============================================================================
-void Swapchain::submit_and_present(FrameData const &frame) {
-    // The first task is to query the presentation engine for which swapchain
-    // image it wants us to write to next
-    auto const next_image_index = _get_next_image_index(frame);
+void Swapchain::acquire_next_image_index(FrameData &frame) {
+    uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
 
-    // Once LogicalDevice has acquired an image for us, it'll signal this
-    // semaphore
-    vk::Semaphore const acquire_complete_sems[] {
-        frame.acquire_complete_sem()
-    };
+    auto const result =
+        LogicalDevice::native().acquireNextImageKHR(
+            _swapchain,
+            std::numeric_limits<uint64_t>::max(),
+            frame.acquire_complete_sem(),
+            VK_NULL_HANDLE,
+            &next_image_index
+        );
 
-    // We want the image to be fully acquired before beginning to write to it,
-    // so if the color attachemnt output stage is reached but the above
-    // semaphore  hasn't signaled, wait on it.
-    vk::PipelineStageFlags const acquire_before_stage =
-        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to acquire next swapchain image: '{}'",
+            to_string(result)
+        );
+    }
 
-    // The command buffer we're getting ready to submit
-    vk::CommandBuffer const command_buffers[] {
-        frame.command_buffer().native()
-    };
+    frame.set_image_index(next_image_index);
+}
 
-    // When it comes time for the presentation engine to take this image back
-    // and show it on the display, we'll need a semaphore for it to wait on
-    // in case the command buffer hasn't been completely executed.
+// =============================================================================
+void Swapchain::present(FrameData const &frame) {
+    // This array must be a duplicate of the one we used when submitting this
+    // frame's command buffer to the GPU
     vk::Semaphore const commands_complete_sems[] {
         frame.commands_complete_sem()
     };
 
-    // Bring it all together in one struct
-    vk::SubmitInfo const submit_info {
-        .waitSemaphoreCount = static_cast<uint32_t>(
-            std::size(acquire_complete_sems)
-        ),
-        .pWaitSemaphores   = acquire_complete_sems,
-        .pWaitDstStageMask = &acquire_before_stage,
-        .commandBufferCount = static_cast<uint32_t>(
-            std::size(command_buffers)
-        ),
-        .pCommandBuffers   = command_buffers,
-        .signalSemaphoreCount = static_cast<uint32_t>(
-            std::size(commands_complete_sems)
-        ),
-        .pSignalSemaphores = commands_complete_sems,
-    };
-
-    // Submit this work to the queue
-    LogicalDevice::cmd_queue().native().submit(
-        submit_info,
-        frame.queue_complete_fence()
-    );
-
     // There's one swapchain to present from
     vk::SwapchainKHR const swapchains[] { _swapchain };
+
+    // The swapchain image index associated with this frame's command buffer
+    auto const image_index = frame.image_index();
 
     // Build the submit info struct
     vk::PresentInfoKHR const present_info {
@@ -84,14 +65,20 @@ void Swapchain::submit_and_present(FrameData const &frame) {
         .pWaitSemaphores = commands_complete_sems,
         .swapchainCount  = static_cast<uint32_t>(std::size(swapchains)),
         .pSwapchains     = swapchains,
-        .pImageIndices   = &next_image_index,
+        .pImageIndices   = &image_index,
     };
 
     auto const result =
         LogicalDevice::cmd_queue().native().presentKHR(present_info);
 
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_WARN("Doooo something.");
+    if(result == vk::Result::eSuboptimalKHR ||
+       result == vk::Result::eErrorOutOfDateKHR)
+    {
+        // TODO: this.
+        CONSOLE_WARN("Recreate swapchain.");
+    }
+    else if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Swapchain image failed: '{}", to_string(result));
     }
 }
 
@@ -355,29 +342,6 @@ void Swapchain::_get_images() {
             vk::ImageAspectFlagBits::eColor
         );
     }
-}
-
-// =============================================================================
-uint32_t Swapchain::_get_next_image_index(FrameData const &frame) {
-    uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
-
-    auto const result =
-        LogicalDevice::native().acquireNextImageKHR(
-            _swapchain,
-            std::numeric_limits<uint64_t>::max(),
-            frame.acquire_complete_sem(),
-            VK_NULL_HANDLE,
-            &next_image_index
-        );
-
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to acquire next swapchain image: '{}'",
-            to_string(result)
-        );
-    }
-
-    return next_image_index;
 }
 
 } // namespace vkl
