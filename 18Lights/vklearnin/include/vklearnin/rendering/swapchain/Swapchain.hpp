@@ -40,6 +40,8 @@ private:
     static void _query_surface_present_modes();
     static void _populate_create_info(vk::SwapchainCreateInfoKHR &create_info);
     static void _get_images();
+
+    static uint32_t _get_next_image_index(FrameData const &frame);
 };
 
 } // namespace vkl

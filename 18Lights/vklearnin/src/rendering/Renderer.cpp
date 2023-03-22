@@ -48,32 +48,24 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 void Renderer::render_pass() {
     _frame_data[_frame_index].wait_on_queue_fence();
 
-    auto &cmd_buffer = _frame_data[_frame_index].command_buffer().native();
-    vk::CommandBufferBeginInfo const begin_info;
-    auto const begin_result = cmd_buffer.begin(&begin_info);
-    if(begin_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to begin recording to command buffer: '{}'",
-            to_string(begin_result)
-        );
-        return;
-    }
-
-    vk::RenderPassBeginInfo const pass_info {
+    vk::RenderPassBeginInfo const begin_info {
         .renderPass      = _render_pass.native(),
         .framebuffer     = _framebuffers[_frame_index].native(),
         .renderArea      = vkl::Swapchain::render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
-        .pClearValues    = clear_values,
+        .pClearValues    = clear_values
     };
-    cmd_buffer.beginRenderPass(pass_info, vk::SubpassContents::eInline);
 
-        _execute_flat_color_pipeline(cmd_buffer);
+    auto &cmd_buffer = _frame_data[_frame_index].command_buffer();
+    cmd_buffer.begin_one_time_submit();
+    cmd_buffer.begin_render_pass(begin_info);
+
+        _execute_flat_color_pipeline(cmd_buffer.native());
         // _execute_flat_texture_pipeline(cmd_buffer);
         // _execute_skybox_pipeline(cmd_buffer);
         // _execute_lit_color_pipeline(cmd_buffer);
 
-    cmd_buffer.endRenderPass();
+    cmd_buffer.end_render_pass();
     cmd_buffer.end();
 
     Swapchain::submit_and_present(_frame_data[_frame_index]);

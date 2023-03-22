@@ -42,52 +42,41 @@ void CmdBuffer::allocate(const vk::CommandPool pool, const bool primary) {
 
 // =============================================================================
 void CmdBuffer::free() {
-    LogicalDevice::native().freeCommandBuffers(
-        _pool,
-        { _buffer }
-    );
+    LogicalDevice::native().freeCommandBuffers(_pool, { _buffer });
 }
 
 // =============================================================================
-CmdBuffer CmdBuffer::begin_one_time_submit() {
+void CmdBuffer::begin_one_time_submit() const {
     vk::CommandBufferBeginInfo const begin_info {
         .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
     };
 
-    CmdBuffer cmd_buffer;
-    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
-    auto const result = cmd_buffer.native().begin(&begin_info);
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Could not begin recording for one time submit command buffer."
-        );
-    }
-
-    return cmd_buffer;
+    _buffer.begin(begin_info);
 }
 
 // =============================================================================
-void CmdBuffer::end_one_time_submit(CmdBuffer &cmd_buffer) {
-    cmd_buffer.native().end();
+void CmdBuffer::end() const {
+    _buffer.end();
+}
 
-    const vk::SubmitInfo submit_info{
-        .waitSemaphoreCount   = 0u,
-        .pWaitSemaphores      = nullptr,
-        .pWaitDstStageMask    = { },
-        .commandBufferCount   = 1u,
-        .pCommandBuffers      = &(cmd_buffer.native()),
-        .signalSemaphoreCount = 0u,
-        .pSignalSemaphores    = nullptr,
+// =============================================================================
+void CmdBuffer::submit_and_wait_device() const {
+    vk::SubmitInfo const submit_info {
+        .commandBufferCount = 1u,
+        .pCommandBuffers = &_buffer
     };
-
-    LogicalDevice::cmd_queue().native().submit(
-        submit_info,
-        nullptr
-    );
-
+    LogicalDevice::cmd_queue().native().submit(submit_info);
     LogicalDevice::native().waitIdle();
+}
 
-    cmd_buffer.free();
+// =============================================================================
+void CmdBuffer::begin_render_pass(vk::RenderPassBeginInfo const &info) const {
+    _buffer.beginRenderPass(info, vk::SubpassContents::eInline);
+}
+
+// =============================================================================
+void CmdBuffer::end_render_pass() const {
+    _buffer.endRenderPass();
 }
 
 // =============================================================================

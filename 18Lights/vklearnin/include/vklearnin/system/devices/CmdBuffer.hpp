@@ -10,10 +10,14 @@ public:
     void allocate(const vk::CommandPool pool, const bool primary = true);
     void free();
 
-    inline auto const& native() const { return _buffer; }
+    void begin_one_time_submit() const;
+    void end() const;
+    void submit_and_wait_device() const;
 
-    static CmdBuffer begin_one_time_submit();
-    static void end_one_time_submit(CmdBuffer &cmd_buffer);
+    void begin_render_pass(vk::RenderPassBeginInfo const &info) const;
+    void end_render_pass() const;
+
+    inline auto const& native() const { return _buffer; }
 
     CmdBuffer();
     ~CmdBuffer() = default;

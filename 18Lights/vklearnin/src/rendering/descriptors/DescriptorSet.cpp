@@ -47,14 +47,18 @@ void DescriptorSet::write_set() {
 
     _images.clear();
 
-    std::vector<vk::WriteDescriptorSet> set_writes;
+    auto const buffer_count = static_cast<uint32_t>(buffer_info.size());
+    auto const image_count = static_cast<uint32_t>(image_info.size());
 
-    if(!buffer_info.empty()) {
+    std::vector<vk::WriteDescriptorSet> set_writes;
+    set_writes.reserve(2);
+
+    if(buffer_count > 0) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 0u,
             .dstArrayElement = 0u,
-            .descriptorCount = static_cast<uint32_t>(buffer_info.size()),
+            .descriptorCount = buffer_count,
             .descriptorType = vk::DescriptorType::eUniformBuffer,
             .pImageInfo = nullptr,
             .pBufferInfo = buffer_info.data(),
@@ -62,12 +66,12 @@ void DescriptorSet::write_set() {
         });
     }
 
-    if(!image_info.empty()) {
+    if(image_count > 0) {
         set_writes.push_back({
             .dstSet = _set,
             .dstBinding = 0u,
             .dstArrayElement = 0u,
-            .descriptorCount = static_cast<uint32_t>(image_info.size()),
+            .descriptorCount = image_count,
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
             .pImageInfo = image_info.data(),
             .pBufferInfo = nullptr,

@@ -22,24 +22,9 @@ std::vector<ImageObject> Swapchain::_images;
 
 // =============================================================================
 void Swapchain::submit_and_present(FrameData const &frame) {
-    static uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
-
-    auto const acquire_result =
-        LogicalDevice::native().acquireNextImageKHR(
-            _swapchain,
-            std::numeric_limits<uint64_t>::max(),
-            frame.acquire_complete_sem(),
-            VK_NULL_HANDLE,
-            &next_image_index
-        );
-
-    if(acquire_result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL(
-            "Unable to acquire next swapchain image: '{}'",
-            to_string(acquire_result)
-        );
-        return;
-    }
+    // The first task is to query the presentation engine for which swapchain
+    // image it wants us to write to next
+    auto const next_image_index = _get_next_image_index(frame);
 
     // Once LogicalDevice has acquired an image for us, it'll signal this
     // semaphore
@@ -65,12 +50,21 @@ void Swapchain::submit_and_present(FrameData const &frame) {
         frame.commands_complete_sem()
     };
 
-    vk::SubmitInfo const submit_info[] {
-        vk::SubmitInfo { }
-            .setWaitSemaphores(acquire_complete_sems)
-            .setWaitDstStageMask(acquire_before_stage)
-            .setCommandBuffers(command_buffers)
-            .setSignalSemaphores(commands_complete_sems)
+    // Bring it all together in one struct
+    vk::SubmitInfo const submit_info {
+        .waitSemaphoreCount = static_cast<uint32_t>(
+            std::size(acquire_complete_sems)
+        ),
+        .pWaitSemaphores   = acquire_complete_sems,
+        .pWaitDstStageMask = &acquire_before_stage,
+        .commandBufferCount = static_cast<uint32_t>(
+            std::size(command_buffers)
+        ),
+        .pCommandBuffers   = command_buffers,
+        .signalSemaphoreCount = static_cast<uint32_t>(
+            std::size(commands_complete_sems)
+        ),
+        .pSignalSemaphores = commands_complete_sems,
     };
 
     // Submit this work to the queue
@@ -79,23 +73,24 @@ void Swapchain::submit_and_present(FrameData const &frame) {
         frame.queue_complete_fence()
     );
 
-    vk::SwapchainKHR const swapchains[] {
-        _swapchain
+    // There's one swapchain to present from
+    vk::SwapchainKHR const swapchains[] { _swapchain };
+
+    // Build the submit info struct
+    vk::PresentInfoKHR const present_info {
+        .waitSemaphoreCount = static_cast<uint32_t>(
+            std::size(commands_complete_sems)
+        ),
+        .pWaitSemaphores = commands_complete_sems,
+        .swapchainCount  = static_cast<uint32_t>(std::size(swapchains)),
+        .pSwapchains     = swapchains,
+        .pImageIndices   = &next_image_index,
     };
 
-    uint32_t const image_indices[] {
-        next_image_index
-    };
+    auto const result =
+        LogicalDevice::cmd_queue().native().presentKHR(present_info);
 
-    auto const submit_result =
-        LogicalDevice::cmd_queue().native().presentKHR(
-            vk::PresentInfoKHR { }
-                .setWaitSemaphores(commands_complete_sems)
-                .setSwapchains(swapchains)
-                .setImageIndices(image_indices)
-        );
-
-    if(submit_result != vk::Result::eSuccess) {
+    if(result != vk::Result::eSuccess) {
         CONSOLE_WARN("Doooo something.");
     }
 }
@@ -360,6 +355,29 @@ void Swapchain::_get_images() {
             vk::ImageAspectFlagBits::eColor
         );
     }
+}
+
+// =============================================================================
+uint32_t Swapchain::_get_next_image_index(FrameData const &frame) {
+    uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
+
+    auto const result =
+        LogicalDevice::native().acquireNextImageKHR(
+            _swapchain,
+            std::numeric_limits<uint64_t>::max(),
+            frame.acquire_complete_sem(),
+            VK_NULL_HANDLE,
+            &next_image_index
+        );
+
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL(
+            "Unable to acquire next swapchain image: '{}'",
+            to_string(result)
+        );
+    }
+
+    return next_image_index;
 }
 
 } // namespace vkl

@@ -65,16 +65,16 @@ void Demo::update() {
 
 // =============================================================================
 void Demo::submit_draws() {
-    // vkl::Renderer::submit(
-    //     vkl::DrawSubmission<vkl::VertexFlatColor> {
-    //         .mesh = &_lamp_mesh,
-    //         .push_constants = {{
-    //                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-    //                 .size        = sizeof(vkl::Mat4),
-    //                 .data        = &_lamp_matrix,
-    //             }}
-    //     }
-    // );
+    vkl::Renderer::submit(
+        vkl::DrawSubmission<vkl::VertexFlatColor> {
+            .mesh = &_lamp_mesh,
+            .push_constants = {{
+                    .stage_flags = vk::ShaderStageFlagBits::eAll,
+                    .size        = sizeof(vkl::Mat4),
+                    .data        = &_lamp_matrix,
+                }}
+        }
+    );
 
     // _cube_matrix = vkl::math::rotate(
     //     vkl::Mat4::identity,

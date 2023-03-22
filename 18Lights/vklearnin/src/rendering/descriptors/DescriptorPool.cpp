@@ -12,21 +12,11 @@ void DescriptorPool::create(uint32_t const max_sets, const PoolSizes &sizes) {
         sizes.end()
     };
 
-    const vk::DescriptorPoolCreateInfo pool_info {
-        .maxSets = max_sets,
-        .poolSizeCount = static_cast<uint32_t>(size_list.size()),
-        .pPoolSizes = size_list.data()
-    };
-
-    auto const result = LogicalDevice::native().createDescriptorPool(
-        &pool_info,
-        nullptr,
-        &_pool
+    _pool = LogicalDevice::native().createDescriptorPool(
+        vk::DescriptorPoolCreateInfo { }
+            .setMaxSets(max_sets)
+            .setPoolSizes(size_list)
     );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Failed to create descriptor pool");
-        return;
-    }
 
     CONSOLE_TRACE(
         "Created descriptor pool {:#x}",

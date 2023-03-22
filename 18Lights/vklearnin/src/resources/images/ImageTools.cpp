@@ -288,7 +288,10 @@ void host_to_device(ImageObject &dst, const void * const data) {
     };
 
     auto staging_buffer = BufferTools::stage_data(dst.size, data);
-    auto cmd_buffer = CmdBuffer::begin_one_time_submit();
+
+    CmdBuffer cmd_buffer;
+    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
+    cmd_buffer.begin_one_time_submit();
 
         transition_layout(
             dst,
@@ -308,7 +311,10 @@ void host_to_device(ImageObject &dst, const void * const data) {
             copy_region
         );
 
-    CmdBuffer::end_one_time_submit(cmd_buffer);
+    cmd_buffer.end();
+    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.free();
+
     BufferTools::destroy(staging_buffer);
 
     CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
@@ -382,7 +388,9 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
         return;
     }
 
-    auto cmd_buffer = CmdBuffer::begin_one_time_submit();
+    CmdBuffer cmd_buffer;
+    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
+    cmd_buffer.begin_one_time_submit();
 
     for(uint32_t layer = 0u; layer < image.array_layers; ++layer) {
         CONSOLE_TRACE("Processing array layer {}", layer);
@@ -466,7 +474,9 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
         );
     }
 
-    CmdBuffer::end_one_time_submit(cmd_buffer);
+    cmd_buffer.end();
+    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.free();
 }
 
 // =============================================================================

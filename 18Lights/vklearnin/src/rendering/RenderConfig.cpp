@@ -15,9 +15,9 @@ int32_t  RenderConfig::window_pos_y  = 0;
 float    RenderConfig::window_aspect = 0.0f;
 
 uint32_t RenderConfig::swapchain_image_count = 2u;
-bool     RenderConfig::vsync_on    = true;
+bool     RenderConfig::vsync_on = true;
 
 uint32_t RenderConfig::max_msaa_samples = 1u;
-float    RenderConfig::anisotropy   = 1.0f;
+float    RenderConfig::anisotropy = 1.0f;
 
 } // namespace vkl

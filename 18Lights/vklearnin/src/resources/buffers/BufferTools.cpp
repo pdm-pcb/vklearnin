@@ -105,7 +105,10 @@ void host_to_device(const BufferObject &dst, const void * const data) {
     };
 
     auto staging_buffer = stage_data(dst.size, data);
-    auto cmd_buffer = CmdBuffer::begin_one_time_submit();
+
+    CmdBuffer cmd_buffer;
+    cmd_buffer.allocate(LogicalDevice::transient_pool().native());
+    cmd_buffer.begin_one_time_submit();
 
         cmd_buffer.native().copyBuffer(
             staging_buffer.handle,
@@ -113,8 +116,11 @@ void host_to_device(const BufferObject &dst, const void * const data) {
             copy_region
         );
 
-    CmdBuffer::end_one_time_submit(cmd_buffer);
-    BufferTools::destroy(staging_buffer);
+    cmd_buffer.end();
+    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.free();
+
+    destroy(staging_buffer);
 
     CONSOLE_TRACE("Copied {} bytes from staging buffer", dst.size);
 }

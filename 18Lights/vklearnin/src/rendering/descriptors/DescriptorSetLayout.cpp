@@ -11,8 +11,9 @@ DescriptorSetLayout::add_binding(vk::DescriptorType const type,
                                  vk::ShaderStageFlags const stages,
                                  uint32_t const descriptor_count)
 {
+    auto const binding = static_cast<uint32_t>(_bindings.size());
     _bindings.push_back({
-        .binding         = static_cast<uint32_t>(_bindings.size()),
+        .binding         = binding,
         .descriptorType  = type,
         .descriptorCount = descriptor_count,
         .stageFlags      = stages,
@@ -31,7 +32,7 @@ DescriptorSetLayout::add_binding(vk::DescriptorType const type,
 void DescriptorSetLayout::create() {
     const vk::DescriptorSetLayoutCreateInfo descriptor_info {
         .bindingCount = static_cast<uint32_t>(_bindings.size()),
-        .pBindings = _bindings.data(),
+        .pBindings    = _bindings.data(),
     };
 
     auto desc_set_result = LogicalDevice::native().createDescriptorSetLayout(
