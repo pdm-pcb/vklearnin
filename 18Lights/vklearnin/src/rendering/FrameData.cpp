@@ -6,7 +6,7 @@
 namespace vkl {
 
 // =============================================================================
-void FrameData::wait_on_queue_fence() {
+void FrameData::wait_on_queue_fence() const {
     vk::Fence const queue_fences[] { _queue_complete };
     auto const wait_result = LogicalDevice::native().waitForFences(
         queue_fences,
@@ -28,7 +28,7 @@ void FrameData::wait_on_queue_fence() {
 }
 
 // =============================================================================
-void FrameData::submit_to_device() {
+void FrameData::submit_to_device() const {
     // Once LogicalDevice has acquired an image for us, it'll signal this
     // semaphore
     vk::Semaphore const acquire_complete_sems[] {

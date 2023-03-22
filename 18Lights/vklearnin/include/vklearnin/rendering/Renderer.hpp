@@ -31,7 +31,8 @@ public:
     template <typename VertexType>
     static void submit(DrawSubmission<VertexType> const &draw);
 
-    static void render_pass();
+    static void record_commands();
+    static void submit_and_present();
 
     static void init();
     static void shutdown();

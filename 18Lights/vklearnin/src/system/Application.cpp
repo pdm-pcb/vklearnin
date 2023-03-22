@@ -14,27 +14,26 @@ void Application::run() {
     this->init();
     Renderer::create_pipelines();
 
-    float cummulative_frametime = 0.0f;
-    uint32_t cummulative_frame_count = 0u;
+    float frame_time = 0.0f;
+    uint32_t frame_count = 0u;
 
     while(_running) {
         TargetWindow::message_loop();
-        this->update();
-        this->submit_draws();
 
         Timekeeper::frame_start();
-            Renderer::render_pass();
+            this->update();
+            this->submit_draws();
+            Renderer::record_commands();
+            Renderer::submit_and_present();
         Timekeeper::frame_end();
 
-        cummulative_frametime   += Timekeeper::frame_time();
-        cummulative_frame_count += 1;
-        if(cummulative_frametime >= 0.5f) {
-            CONSOLE_TRACE(
-                "{:.02f} avg fps",
-                cummulative_frame_count / cummulative_frametime
-            );
-            cummulative_frametime = 0.0f;
-            cummulative_frame_count = 0u;
+        frame_time += Timekeeper::frame_time();
+        frame_count += 1;
+
+        if(frame_time >= 0.5f) {
+            CONSOLE_TRACE("{:.02f} avg fps", frame_count / frame_time);
+            frame_time = 0.0f;
+            frame_count = 0u;
         }
 
         Timekeeper::update();

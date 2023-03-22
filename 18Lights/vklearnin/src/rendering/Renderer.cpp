@@ -45,11 +45,11 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 }
 
 // =============================================================================
-void Renderer::render_pass() {
-    auto &frame_data = _frame_data[_frame_index];
+void Renderer::record_commands() {
+    auto const &frame_data = _frame_data[_frame_index];
     frame_data.wait_on_queue_fence();
 
-    vk::RenderPassBeginInfo const begin_info {
+    vk::RenderPassBeginInfo const render_pass_info {
         .renderPass      = _render_pass.native(),
         .framebuffer     = _framebuffers[_frame_index].native(),
         .renderArea      = vkl::Swapchain::render_area(),
@@ -57,19 +57,23 @@ void Renderer::render_pass() {
         .pClearValues    = clear_values
     };
 
-    auto &cmd_buffer = frame_data.command_buffer();
-    cmd_buffer.begin_one_time_submit();
-    cmd_buffer.begin_render_pass(begin_info);
+    frame_data.cmd_buffer().begin_one_time_submit();
+    frame_data.cmd_buffer().begin_render_pass(render_pass_info);
 
-        _execute_flat_color_pipeline(cmd_buffer.native());
+        _execute_flat_color_pipeline(frame_data.cmd_buffer().native());
         // _execute_flat_texture_pipeline(cmd_buffer);
         // _execute_skybox_pipeline(cmd_buffer);
         // _execute_lit_color_pipeline(cmd_buffer);
 
-    cmd_buffer.end_render_pass();
-    cmd_buffer.end();
+    frame_data.cmd_buffer().end_render_pass();
+    frame_data.cmd_buffer().end();
+}
 
-    // The first task after completing recording to the command queue is to
+// =============================================================================
+void Renderer::submit_and_present() {
+    auto &frame_data = _frame_data[_frame_index];
+
+    // The first task after completing recording to the command buffer is to
     // query the presentation engine for which swapchain image it wants us to
     // write to next
     Swapchain::acquire_next_image_index(frame_data);

@@ -9,14 +9,14 @@ namespace vkl {
 
 class FrameData {
 public:
-    void wait_on_queue_fence();
-    void submit_to_device();
+    void wait_on_queue_fence() const;
+    void submit_to_device() const;
 
     void init();
     void shutdown();
 
-    inline auto const & command_pool()   const { return _cmd_pool; }
-    inline auto const & command_buffer() const { return _cmd_buffer; }
+    inline auto const & cmd_pool()   const { return _cmd_pool; }
+    inline auto const & cmd_buffer() const { return _cmd_buffer; }
 
     inline auto const & acquire_complete_sem() const {
         return _acquire_complete;
