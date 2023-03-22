@@ -26,11 +26,15 @@ public:
 
     static void update_global_buffer(GlobalBuffer const &buffer);
 
-    template <typename VertexType>
-    static void submit(DrawSubmission<VertexType> const &draw);
+    static void submit_draw(Mesh<VertexFlatColor> const &mesh,
+                            Mat4 const &model_matrix);
+
+    static void submit_draw(Mesh<VertexFlatTexture> const &mesh,
+                            Texture2D const &texture,
+                            Mat4 const &model_matrix);
 
     static void record_commands();
-    static void submit_and_present();
+    static void submit_commands_and_present();
 
     static void init();
     static void shutdown();
@@ -60,7 +64,7 @@ private:
     using FlatTextureDraws = std::vector<FlatTextureDraw>;
 
     struct PerFlatTextureDraws {
-        size_t set_index;
+        size_t const set_index = std::numeric_limits<size_t>::max();
         FlatTextureDraws queue;
     };
 
@@ -108,30 +112,9 @@ private:
 
 // =============================================================================
 template <typename VertexType>
-inline void Renderer::submit(DrawSubmission<VertexType> const &draw) {
-    if constexpr(std::is_same_v<VertexType, VertexFlatColor>) {
-        _flat_color_draws.push_back(draw);
-    }
-    else if constexpr(std::is_same_v<VertexType, VertexFlatTexture>) {
-        auto texture_id = reinterpret_cast<uint64_t>(
-            VkImage(draw.material->image().handle)
-        );
-        _flat_texture_draws[texture_id].queue.push_back(draw);
-    }
-    // else if constexpr(std::is_same_v<VertexType, VertexSkybox>) {
-    //     _skybox_draw = draw;
-    // }
-    // else if constexpr(std::is_same_v<VertexType, VertexLitColor>) {
-    //     _lit_color_draws.push_back(draw);
-    // }
-}
-
-// =============================================================================
-template <typename VertexType>
-inline void
-Renderer::_send_push_constants(Pipeline const &pipeline,
-                               DrawSubmission<VertexType> const &draw,
-                               FrameData const &frame_data)
+void Renderer::_send_push_constants(Pipeline const &pipeline,
+                                    DrawSubmission<VertexType> const &draw,
+                                    FrameData const &frame_data)
 {
     size_t offset = 0u;
     for(auto const& push_constant : draw.push_constants) {

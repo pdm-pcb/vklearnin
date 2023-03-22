@@ -49,6 +49,44 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 }
 
 // =============================================================================
+void Renderer::submit_draw(Mesh<VertexFlatColor> const &mesh,
+                           Mat4 const &model_matrix)
+{
+    _flat_color_draws.push_back(
+        DrawSubmission<VertexFlatColor> {
+            .mesh = &mesh,
+            .push_constants = {{
+                .stage_flags = vk::ShaderStageFlagBits::eAll,
+                .size        = sizeof(vkl::Mat4),
+                .data        = &model_matrix,
+            }}
+        }
+    );
+}
+
+// =============================================================================
+void Renderer::submit_draw(Mesh<VertexFlatTexture> const &mesh,
+                           Texture2D const &texture,
+                           Mat4 const &model_matrix)
+{
+    auto texture_id = reinterpret_cast<uint64_t>(
+        VkImage(texture.image().handle)
+    );
+
+    _flat_texture_draws[texture_id].queue.push_back(
+        DrawSubmission<VertexFlatTexture> {
+            .mesh = &mesh,
+            .texture = &texture,
+            .push_constants = {{
+                .stage_flags = vk::ShaderStageFlagBits::eAll,
+                .size        = sizeof(vkl::Mat4),
+                .data        = &model_matrix,
+            }}
+        }
+    );
+}
+
+// =============================================================================
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
 
@@ -79,7 +117,7 @@ void Renderer::record_commands() {
 }
 
 // =============================================================================
-void Renderer::submit_and_present() {
+void Renderer::submit_commands_and_present() {
     auto &frame_data = _frame_data[_frame_index];
 
     // The first task after completing recording to the command buffer is to
@@ -228,11 +266,6 @@ void Renderer::_init_global_buffers() {
         set.create(_desc_pool, _global_buffer_layout);
     }
 
-    CONSOLE_INFO(
-        "Renderer will use {} global buffer descriptor sets",
-        _global_buffer_sets.size()
-    );
-
     _global_buffers.resize(_global_buffer_sets.size());
     for(auto &buffer : _global_buffers) {
         buffer.size = sizeof(GlobalBuffer);
@@ -252,6 +285,11 @@ void Renderer::_init_global_buffers() {
             .add_buffer(_global_buffers[frame])
             .write_set();
     }
+
+    CONSOLE_INFO(
+        "Renderer will use {} global buffer descriptor sets",
+        _global_buffer_sets.size()
+    );
 }
 
 // =============================================================================
@@ -268,14 +306,14 @@ void Renderer::_init_flat_textures() {
         set.create(_desc_pool, _flat_texture_layout);
     }
 
+    for(auto &set : _flat_texture_sets) {
+        set.write_set();
+    }
+
     CONSOLE_INFO(
         "Renderer will use {} flat texture descriptor sets",
         _flat_texture_sets.size()
     );
-
-    for(auto &set : _flat_texture_sets) {
-        set.write_set();
-    }
 }
 
 // =============================================================================

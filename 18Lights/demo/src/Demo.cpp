@@ -29,50 +29,19 @@ void Demo::update() {
     //     _light_props_ubos[vkl::Swapchain::image_index()],
     //     &_light_props
     // );
-}
-
-// =============================================================================
-void Demo::submit_draws() {
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatColor> {
-            .mesh = &_lamp_mesh,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_lamp_matrix,
-                }}
-        }
-    );
 
     _cube_matrix = vkl::math::rotate(
         vkl::Mat4::identity,
         vkl::Timekeeper::run_time() * 20.0f,
         { 0.0f, 20.0f, 0.0f, 0.0f }
     );
+}
 
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatTexture> {
-            .mesh = &_cube_mesh,
-            .material = &_cube_texture,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_cube_matrix,
-                }}
-        }
-    );
-
-    vkl::Renderer::submit(
-        vkl::DrawSubmission<vkl::VertexFlatTexture> {
-            .mesh     = &_floor_mesh,
-            .material = &_floor_texture,
-            .push_constants = {{
-                    .stage_flags = vk::ShaderStageFlagBits::eAll,
-                    .size        = sizeof(vkl::Mat4),
-                    .data        = &_floor_matrix,
-                }}
-        }
-    );
+// =============================================================================
+void Demo::submit_draws() {
+    vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_texture, _cube_matrix);
+    vkl::Renderer::submit_draw(_floor_mesh, _floor_texture, _floor_matrix);
 }
 
 // =============================================================================

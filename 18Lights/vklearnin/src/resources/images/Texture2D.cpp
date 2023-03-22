@@ -6,7 +6,7 @@
 namespace vkl {
 
 // =============================================================================
-void Texture2D::texture_from_file(std::string_view filepath) {
+void Texture2D::texture_from_file(Filepath filepath) {
     void *image_data = ImageTools::image_from_file(_image, filepath);
 
     _calc_mip_levels();
@@ -50,7 +50,7 @@ void Texture2D::texture_from_file(std::string_view filepath) {
 }
 
 // =============================================================================
-void Texture2D::cubemap_from_files(std::array<std::string_view, 6> filepaths) {
+void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
     void *image_data = ImageTools::cubemap_from_files(_image, filepaths);
 
     _calc_mip_levels();

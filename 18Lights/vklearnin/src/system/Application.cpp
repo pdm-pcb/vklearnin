@@ -24,7 +24,7 @@ void Application::run() {
             this->update();
             this->submit_draws();
             Renderer::record_commands();
-            Renderer::submit_and_present();
+            Renderer::submit_commands_and_present();
         Timekeeper::frame_end();
 
         frame_time += Timekeeper::frame_time();

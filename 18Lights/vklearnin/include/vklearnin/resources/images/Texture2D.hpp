@@ -10,14 +10,17 @@ struct BufferObject;
 
 class Texture2D final {
 public:
-    void texture_from_file(std::string_view filepath);
-    void cubemap_from_files(std::array<std::string_view, 6> filepaths);
+    using Filepath = std::string_view;
+    void texture_from_file(Filepath filepath);
 
-    void init_sampler(const vk::Filter min_filter,
-                      const vk::Filter mag_filter,
-                      const vk::SamplerMipmapMode mip_filter,
-                      const vk::SamplerAddressMode mode_u,
-                      const vk::SamplerAddressMode mode_v);
+    using CubeFilepaths = std::array<std::string_view, 6>;
+    void cubemap_from_files(CubeFilepaths const &filepaths);
+
+    void init_sampler(vk::Filter const min_filter,
+                      vk::Filter const mag_filter,
+                      vk::SamplerMipmapMode const mip_filter,
+                      vk::SamplerAddressMode const mode_u,
+                      vk::SamplerAddressMode const mode_v);
     void shutdown();
 
     inline auto const& image() const { return _image; }
