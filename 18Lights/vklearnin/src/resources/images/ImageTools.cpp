@@ -249,7 +249,7 @@ void * cubemap_from_files(ImageObject &image,
         offset += layer_size;
     }
 
-    for(const auto &image_struct : image_data) {
+    for(auto const &image_struct : image_data) {
         ::stbi_image_free(image_struct.data);
     }
 
@@ -311,8 +311,8 @@ void host_to_device(ImageObject &dst, const void * const data) {
             copy_region
         );
 
-    cmd_buffer.end();
-    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.end_recording();
+    cmd_buffer.submit_and_wait_on_device();
     cmd_buffer.free();
 
     BufferTools::destroy(staging_buffer);
@@ -474,8 +474,8 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
         );
     }
 
-    cmd_buffer.end();
-    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.end_recording();
+    cmd_buffer.submit_and_wait_on_device();
     cmd_buffer.free();
 }
 

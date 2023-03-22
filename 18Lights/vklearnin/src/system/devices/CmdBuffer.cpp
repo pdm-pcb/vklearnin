@@ -6,6 +6,40 @@
 namespace vkl {
 
 // =============================================================================
+void CmdBuffer::begin_one_time_submit() const {
+    vk::CommandBufferBeginInfo const begin_info {
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+    };
+
+    _buffer.begin(begin_info);
+}
+
+// =============================================================================
+void CmdBuffer::end_recording() const {
+    _buffer.end();
+}
+
+// =============================================================================
+void CmdBuffer::begin_render_pass(vk::RenderPassBeginInfo const &info) const {
+    _buffer.beginRenderPass(info, vk::SubpassContents::eInline);
+}
+
+// =============================================================================
+void CmdBuffer::end_render_pass() const {
+    _buffer.endRenderPass();
+}
+
+// =============================================================================
+void CmdBuffer::submit_and_wait_on_device() const {
+    vk::SubmitInfo const submit_info {
+        .commandBufferCount = 1u,
+        .pCommandBuffers = &_buffer
+    };
+    LogicalDevice::cmd_queue().native().submit(submit_info);
+    LogicalDevice::native().waitIdle();
+}
+
+// =============================================================================
 void CmdBuffer::allocate(const vk::CommandPool pool, const bool primary) {
     _pool = pool;
 
@@ -43,40 +77,6 @@ void CmdBuffer::allocate(const vk::CommandPool pool, const bool primary) {
 // =============================================================================
 void CmdBuffer::free() {
     LogicalDevice::native().freeCommandBuffers(_pool, { _buffer });
-}
-
-// =============================================================================
-void CmdBuffer::begin_one_time_submit() const {
-    vk::CommandBufferBeginInfo const begin_info {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
-    };
-
-    _buffer.begin(begin_info);
-}
-
-// =============================================================================
-void CmdBuffer::end() const {
-    _buffer.end();
-}
-
-// =============================================================================
-void CmdBuffer::submit_and_wait_device() const {
-    vk::SubmitInfo const submit_info {
-        .commandBufferCount = 1u,
-        .pCommandBuffers = &_buffer
-    };
-    LogicalDevice::cmd_queue().native().submit(submit_info);
-    LogicalDevice::native().waitIdle();
-}
-
-// =============================================================================
-void CmdBuffer::begin_render_pass(vk::RenderPassBeginInfo const &info) const {
-    _buffer.beginRenderPass(info, vk::SubpassContents::eInline);
-}
-
-// =============================================================================
-void CmdBuffer::end_render_pass() const {
-    _buffer.endRenderPass();
 }
 
 // =============================================================================

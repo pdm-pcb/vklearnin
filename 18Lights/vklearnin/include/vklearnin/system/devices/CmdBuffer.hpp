@@ -7,15 +7,16 @@ namespace vkl {
 
 class CmdBuffer final {
 public:
-    void allocate(const vk::CommandPool pool, const bool primary = true);
-    void free();
-
     void begin_one_time_submit() const;
-    void end() const;
-    void submit_and_wait_device() const;
+    void end_recording() const;
 
     void begin_render_pass(vk::RenderPassBeginInfo const &info) const;
     void end_render_pass() const;
+
+    void submit_and_wait_on_device() const;
+
+    void allocate(const vk::CommandPool pool, const bool primary = true);
+    void free();
 
     inline auto const& native() const { return _buffer; }
 

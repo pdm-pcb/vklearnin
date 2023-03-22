@@ -32,7 +32,7 @@ class EventCallbacks final : public EventCallbacksBase {
 
 using CallbackList = std::list<std::function<void(const Event &)>>;
 using CallbackIter = typename CallbackList::iterator;
-using HandleMap    = std::unordered_map<uint32_t, CallbackIter>; 
+using HandleMap    = std::unordered_map<uint32_t, CallbackIter>;
 
 public:
     template<typename Callback>
@@ -46,7 +46,7 @@ public:
     }
 
     void emit(const Event &event) {
-        for(const auto &callback : _callbacks) {
+        for(auto const &callback : _callbacks) {
             callback(event);
         }
     }

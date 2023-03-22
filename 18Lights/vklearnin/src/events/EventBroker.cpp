@@ -18,7 +18,7 @@ void EventBroker::init() {
 
 // =============================================================================
 void EventBroker::shutdown() {
-    for(const auto *callback : _callbacks) {
+    for(auto const *callback : _callbacks) {
         delete callback;
     }
 }

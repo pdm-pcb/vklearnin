@@ -4,22 +4,24 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
+#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 
 namespace vkl {
 
 class DescriptorPool;
-class DescriptorSetLayout;
 
 class DescriptorSet {
 public:
+    DescriptorSet & add_buffer(BufferObject const &buffer);
+    DescriptorSet & add_image(ImageObject const &image);
+
     void create(DescriptorPool const &descriptor_pool,
                 DescriptorSetLayout const &set_layout);
 
-    DescriptorSet & add_buffer(BufferObject const &buffer);
-    DescriptorSet & add_image(ImageObject const &image);
     void write_set();
 
     inline auto const & native() const { return _set; }
+    inline auto const & layout() const { return _layout; }
 
     DescriptorSet();
     ~DescriptorSet() = default;
@@ -33,7 +35,8 @@ public:
 private:
     std::vector<BufferObject> _buffers;
     std::vector<ImageObject>  _images;
-    vk::DescriptorSet _set;
+    vk::DescriptorSetLayout   _layout;
+    vk::DescriptorSet         _set;
 };
 
 } // namespace vkl

@@ -2,7 +2,6 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
-#include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
 namespace vkl {
@@ -17,6 +16,28 @@ DescriptorSet & DescriptorSet::add_buffer(BufferObject const &buffer) {
 DescriptorSet & DescriptorSet::add_image(ImageObject const &image) {
     _images.push_back(image);
     return *this;
+}
+
+// =============================================================================
+void DescriptorSet::create(DescriptorPool const &descriptor_pool,
+                           DescriptorSetLayout const &set_layout)
+{
+    _layout = set_layout.native();
+
+    const vk::DescriptorSetAllocateInfo alloc_info {
+        .descriptorPool = descriptor_pool.native(),
+        .descriptorSetCount = 1u,
+        .pSetLayouts = &set_layout.native()
+    };
+
+    auto const result = LogicalDevice::native().allocateDescriptorSets(
+        &alloc_info,
+        &_set
+    );
+
+    if(result != vk::Result::eSuccess) {
+        CONSOLE_CRITICAL("Could not allocate descriptor sets");
+    }
 }
 
 // =============================================================================
@@ -80,26 +101,6 @@ void DescriptorSet::write_set() {
     }
 
     LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);
-}
-
-// =============================================================================
-void DescriptorSet::create(DescriptorPool const &descriptor_pool,
-                           DescriptorSetLayout const &set_layout)
-{
-    const vk::DescriptorSetAllocateInfo alloc_info {
-        .descriptorPool = descriptor_pool.native(),
-        .descriptorSetCount = 1u,
-        .pSetLayouts = &set_layout.native()
-    };
-
-    auto const result = LogicalDevice::native().allocateDescriptorSets(
-        &alloc_info,
-        &_set
-    );
-    if(result != vk::Result::eSuccess) {
-        CONSOLE_CRITICAL("Could not allocate descriptor sets");
-        return;
-    }
 }
 
 // =============================================================================

@@ -51,7 +51,13 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 // =============================================================================
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
+
+    // Whatever frame index we're on, we need to wait on the fence signaling
+    // completion of this frame's last submission to the device queue
     frame_data.wait_on_queue_fence();
+
+    // Once we're sure the frame's work is done, it's safe to reset the command
+    // pool, which implicitly resets the command buffer/s
     frame_data.cmd_pool().reset();
 
     vk::RenderPassBeginInfo const render_pass_info {
@@ -69,7 +75,7 @@ void Renderer::record_commands() {
         _execute_flat_texture_pipeline(frame_data);
 
     frame_data.cmd_buffer().end_render_pass();
-    frame_data.cmd_buffer().end();
+    frame_data.cmd_buffer().end_recording();
 }
 
 // =============================================================================
@@ -137,8 +143,8 @@ void Renderer::set_flat_textures(std::vector<Texture2D> const &textures) {
         _flat_texture_sets.emplace_back();
         _flat_texture_sets.back().add_image(texture.image());
 
-        // WANRING: Vulkan handles can be and are reused by the driver, so this
-        //          is a terrible way to key an unordered map if you don't keep
+        // WANRING: Vulkan handles are reused by the driver, so this is a
+        //          terrible way to key an unordered map if you don't keep
         //          every resource loaded into VRAM all the time
         auto const texture_id = reinterpret_cast<uint64_t>(
             VkImage(texture.image().handle)
@@ -331,7 +337,6 @@ void Renderer::_execute_flat_color_pipeline(FrameData const &frame_data) {
 
     _flat_color_pipeline.bind_descriptor_set(
         frame_data.cmd_buffer(),
-        0u,
         _global_buffer_sets[_frame_index]
     );
 
@@ -364,7 +369,6 @@ void Renderer::_execute_flat_texture_pipeline(FrameData const &frame_data) {
 
     _flat_texture_pipeline.bind_descriptor_set(
         frame_data.cmd_buffer(),
-        0u,
         _global_buffer_sets[_frame_index]
     );
 
@@ -372,7 +376,6 @@ void Renderer::_execute_flat_texture_pipeline(FrameData const &frame_data) {
     for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
         _flat_texture_pipeline.bind_descriptor_set(
             frame_data.cmd_buffer(),
-            1u,
             _flat_texture_sets[draw_queue.set_index]
         );
 

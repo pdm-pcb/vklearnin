@@ -218,7 +218,7 @@ bool PhysicalDevice::_check_features(
         std::vector<Features> const &required_features
     )
 {
-    for(const auto &feature : required_features) {
+    for(auto const &feature : required_features) {
         if(feature == Features::SAMPLER_ANISOTROPY) {
             if(!supported_features.samplerAnisotropy) {
                 CONSOLE_WARN("No support for sampler anisotropy.");
@@ -252,10 +252,10 @@ bool PhysicalDevice::_check_extensions(
 {
     _enabled_extensions.reserve(required_extensions.size());
 
-    for(const auto &ext_name : required_extensions) {
+    for(auto const &ext_name : required_extensions) {
         bool extension_found = false;
 
-        for(const auto &extension : supported_extensions) {
+        for(auto const &extension : supported_extensions) {
             if(strcmp(ext_name.data(), extension.extensionName) == 0) {
                 _enabled_extensions.push_back(ext_name.data());
                 extension_found = true;

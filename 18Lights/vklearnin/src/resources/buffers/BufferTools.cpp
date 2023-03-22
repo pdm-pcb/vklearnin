@@ -116,8 +116,8 @@ void host_to_device(const BufferObject &dst, const void * const data) {
             copy_region
         );
 
-    cmd_buffer.end();
-    cmd_buffer.submit_and_wait_device();
+    cmd_buffer.end_recording();
+    cmd_buffer.submit_and_wait_on_device();
     cmd_buffer.free();
 
     destroy(staging_buffer);

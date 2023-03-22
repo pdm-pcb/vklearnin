@@ -21,15 +21,18 @@ void Pipeline::bind(CmdBuffer const &cmd_buffer) {
 
 // =============================================================================
 void Pipeline::bind_descriptor_set(CmdBuffer const &cmd_buffer,
-                                   uint32_t const set_number,
                                    DescriptorSet const &set)
 {
+    auto const set_key = reinterpret_cast<uint64_t>(
+        VkDescriptorSetLayout(set.layout())
+    );
+
     cmd_buffer.native().bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         _layout,
-        set_number,
-        { set.native() },
-        nullptr
+        _desc_set_bindings[set_key],
+        1u, &(set.native()),
+        0u, nullptr
     );
 }
 
@@ -149,7 +152,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
 
     if(pipeline_return.result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL(
-            "Unable to create graphics pipelines: '{}'",
+            "Unable to create pipelines: '{}'",
             to_string(pipeline_return.result)
         );
         return;
@@ -157,7 +160,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
 
     _pipeline = pipeline_return.value;
     CONSOLE_TRACE(
-        "Created graphics pipeline {:#x}",
+        "Created pipeline {:#x}",
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline))
     );
 
@@ -169,7 +172,7 @@ void Pipeline::destroy() {
     _frag.destroy();
 
     CONSOLE_TRACE(
-        "Destroying graphics pipeline {:#x}, layout {:#x}",
+        "Destroying pipeline {:#x}, layout {:#x}",
         reinterpret_cast<uint64_t>(VkPipeline(_pipeline)),
         reinterpret_cast<uint64_t>(VkPipelineLayout(_layout))
     );
@@ -348,7 +351,16 @@ void Pipeline::_init_dynamic_states() {
 
 // =============================================================================
 void Pipeline::_init_layout() {
-    // Much like the input state above, the layout of this pipeline is empty.
+    for(auto const &layout : _desc_set_layouts) {
+        auto const layout_key = reinterpret_cast<uint64_t>(
+            VkDescriptorSetLayout(layout)
+        );
+
+        _desc_set_bindings[layout_key] = _next_set_binding;
+
+        ++_next_set_binding;
+    }
+
     const vk::PipelineLayoutCreateInfo layout_info {
         .setLayoutCount = static_cast<uint32_t>(_desc_set_layouts.size()),
         .pSetLayouts    = _desc_set_layouts.data(),
@@ -356,8 +368,6 @@ void Pipeline::_init_layout() {
         .pPushConstantRanges    = _push_constants.data()
     };
 
-    // Unlike the input state above, we do have to explicitly create the
-    // pipeline layout object.
     _layout = LogicalDevice::native().createPipelineLayout(layout_info);
 
     CONSOLE_TRACE(
@@ -377,6 +387,8 @@ Pipeline::Pipeline() :
     _multisample_info     { },
     _dynamic_state_info   { },
     _desc_set_layouts     { },
+    _desc_set_bindings    { },
+    _next_set_binding     { 0u },
     _push_constants       { },
     _push_constant_offset { 0 },
     _layout               { },

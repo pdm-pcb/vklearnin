@@ -24,7 +24,6 @@ public:
 
     void bind(CmdBuffer const &cmd_buffer);
     void bind_descriptor_set(CmdBuffer const &cmd_buffer,
-                             uint32_t const set_number,
                              DescriptorSet const &set);
 
     Pipeline & vert_from_spirv(std::string_view filepath,
@@ -77,8 +76,11 @@ private:
     std::vector<vk::DynamicState>            _dynamic_states;
     vk::PipelineDynamicStateCreateInfo       _dynamic_state_info;
 
-    std::vector<vk::DescriptorSetLayout> _desc_set_layouts;
-    std::vector<vk::PushConstantRange>   _push_constants;
+    std::vector<vk::DescriptorSetLayout>   _desc_set_layouts;
+    std::unordered_map<uint64_t, uint32_t> _desc_set_bindings;
+    uint32_t _next_set_binding;
+
+    std::vector<vk::PushConstantRange> _push_constants;
     size_t _push_constant_offset;
 
     vk::PipelineLayout _layout;
