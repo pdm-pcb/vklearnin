@@ -35,7 +35,6 @@
 #include <fstream>
 #include <list>
 #include <set>
-#include <deque>
 
 #include "vklearnin/math/math.hpp"
 

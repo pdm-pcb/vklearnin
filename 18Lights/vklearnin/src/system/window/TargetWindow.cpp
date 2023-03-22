@@ -7,7 +7,7 @@ namespace vkl {
 
 TargetWindow::ScreenPos TargetWindow::_center { };
 
-vk::SurfaceKHR TargetWindow::_surface { };
+vk::SurfaceKHR TargetWindow::_surface;
 
 ::SDL_Window * TargetWindow::_window { nullptr };
 
@@ -120,38 +120,25 @@ void TargetWindow::shutdown() {
 }
 
 //==============================================================================
-void TargetWindow::spawn_window(uint32_t const width, uint32_t const height,
-                                int32_t  const pos_x, int32_t  const pos_y)
-{
-    // If width and height aren't provided by Application, then just opt for
-    // two-thirds of the available real estate
-    if(width == 0u || height == 0u) {
-        auto width_fraction  = static_cast<float>(RenderConfig::screen_width);
-        auto height_fraction = static_cast<float>(RenderConfig::screen_height);
-        width_fraction  *= 0.75f;
-        height_fraction *= 0.75f;
+void TargetWindow::spawn_window(float const percent_screen_size) {
+    // For simplicity's sake, we'll just opt for three quarters of the available
+    // real estate
+    auto width_fraction  = static_cast<float>(RenderConfig::screen_width);
+    auto height_fraction = static_cast<float>(RenderConfig::screen_height);
+    width_fraction  *= percent_screen_size;
+    height_fraction *= percent_screen_size;
 
-        RenderConfig::window_width  = static_cast<uint32_t>(width_fraction);
-        RenderConfig::window_height = static_cast<uint32_t>(height_fraction);
-    }
-    else {
-        RenderConfig::window_width = width;
-        RenderConfig::window_height = height;
-    }
+    RenderConfig::window_width  = static_cast<uint32_t>(width_fraction);
+    RenderConfig::window_height = static_cast<uint32_t>(height_fraction);
 
     // Determine the window's eventual position on screen
     auto half_width  = static_cast<int32_t>(RenderConfig::window_width)  / 2;
     auto half_height = static_cast<int32_t>(RenderConfig::window_height) / 2;
-    if(pos_x == 0 || pos_y == 0) {
-        RenderConfig::window_pos_x = _center.x - half_width;
-        RenderConfig::window_pos_y = _center.y - half_height;
-    }
-    else {
-        RenderConfig::window_pos_x = pos_x;
-        RenderConfig::window_pos_y = pos_y;
-    }
 
-    _window = SDL_CreateWindow(
+    RenderConfig::window_pos_x = _center.x - half_width;
+    RenderConfig::window_pos_y = _center.y - half_height;
+
+    _window = ::SDL_CreateWindow(
         APP_NAME,
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
@@ -160,8 +147,8 @@ void TargetWindow::spawn_window(uint32_t const width, uint32_t const height,
         ::SDL_WINDOW_SHOWN
         | ::SDL_WINDOW_VULKAN
         | ::SDL_WINDOW_BORDERLESS
-        // | ::SDL_WINDOW_INPUT_FOCUS
-        // | ::SDL_WINDOW_INPUT_GRABBED
+        | ::SDL_WINDOW_INPUT_FOCUS
+        | ::SDL_WINDOW_INPUT_GRABBED
     );
 
     if(_window == nullptr) {

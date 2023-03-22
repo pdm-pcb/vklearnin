@@ -29,6 +29,7 @@ public:
 
 private:
     bool _running;
+
 };
 
 } // namespace vkl

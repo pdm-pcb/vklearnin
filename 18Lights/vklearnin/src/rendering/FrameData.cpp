@@ -23,8 +23,6 @@ void FrameData::wait_on_queue_fence() const {
     }
 
     LogicalDevice::native().resetFences(queue_fences);
-
-    _cmd_pool.reset();
 }
 
 // =============================================================================

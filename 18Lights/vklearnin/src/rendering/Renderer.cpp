@@ -48,6 +48,7 @@ void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
     frame_data.wait_on_queue_fence();
+    frame_data.cmd_pool().reset();
 
     vk::RenderPassBeginInfo const render_pass_info {
         .renderPass      = _render_pass.native(),
@@ -85,7 +86,7 @@ void Renderer::submit_and_present() {
     // And finally, ask the presenatation engine to show the completed image
     Swapchain::present(frame_data);
 
-    _frame_count += 1;
+    ++_frame_count;
     _frame_index = _frame_count % RenderConfig::swapchain_image_count;
 }
 

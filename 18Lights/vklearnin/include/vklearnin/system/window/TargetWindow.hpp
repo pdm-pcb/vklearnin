@@ -1,6 +1,8 @@
 #ifndef VKLEARNIN_SYSTEM_WINDOW_TARGETWINDOW_HPP
 #define VKLEARNIN_SYSTEM_WINDOW_TARGETWINDOW_HPP
 
+#include "vklearnin/system/pch.hpp"
+
 namespace vkl {
 
 class TargetWindow {
@@ -11,11 +13,8 @@ public:
     static void init();
     static void shutdown();
 
-    // Spawn (and size and place?) a native window
-    static void spawn_window(uint32_t const width  = 0u,
-                             uint32_t const height = 0u,
-                             int32_t  const pos_x  = 0u,
-                             int32_t  const pos_y  = 0u);
+    // Spawn a native window at some fraction of the display resolution
+    static void spawn_window(float const percent_screen_size = 0.75f);
 
     // Manage the Vulkan surface
     static void create_surface();
@@ -24,7 +23,6 @@ public:
     inline static auto const& surface() { return _surface; }
 
     // Only one target window at a time
-
     TargetWindow() = delete;
 
 private:

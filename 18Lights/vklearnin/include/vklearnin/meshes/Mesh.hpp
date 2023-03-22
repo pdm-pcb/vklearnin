@@ -29,16 +29,16 @@ public:
     Mesh(const Mesh &) = delete;
 
     Mesh& operator=(Mesh &&) = delete;
-    Mesh& operator=(const Mesh &) = delete;
+    Mesh& operator=(Mesh const &) = delete;
 
 protected:
-    void _set_vertices(const std::vector<VertexType> &vertices) {
+    void _set_vertices(std::vector<VertexType> const &vertices) {
         _vertex_data = vertices;
         _vertex_buffer.init(sizeof(VertexType) * _vertex_data.size());
         _vertex_buffer.populate_buffer(_vertex_data);
     }
 
-    void _set_indices(const std::vector<Index> &indices) {
+    void _set_indices(std::vector<Index> const &indices) {
         _index_data = indices;
         _index_buffer.init(sizeof(Index) * _index_data.size());
         _index_buffer.populate_buffer(_index_data);

@@ -7,19 +7,14 @@
 #include "vklearnin/meshes/XZPlane.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 
+#include "FPSCamera.hpp"
+
 class Demo final : public vkl::Application {
 public:
     void update()       override;
     void submit_draws() override;
     void init()         override;
     void shutdown()     override;
-
-    void on_key_press(const vkl::KeyPressEvent &event);
-    void on_key_release(const vkl::KeyReleaseEvent &event);
-    void on_mouse_move(const vkl::MouseMoveEvent &event);
-    void on_mouse_button_press(const vkl::MouseButtonPressEvent &event);
-    void on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event);
-    void on_mouse_scroll(const vkl::MouseScrollEvent &event);
 
     Demo();
     ~Demo() override = default;
@@ -31,33 +26,10 @@ public:
     Demo& operator=(Demo const&) = delete;
 
 private:
-    struct KeyboardState {
-        bool w = false;
-        bool a = false;
-        bool s = false;
-        bool d = false;
-        bool lctrl  = false;
-        bool space  = false;
-        bool lshift = false;
-    } _kb;
-
-    vkl::Camera _persp_camera;
-
-    struct CamData {
-        vkl::Vec4 pos;
-        vkl::Vec4 forward;
-        vkl::Vec4 side;
-        vkl::Vec4 up;
-
-        float pitch = 0.0f;
-        float yaw   = -90.0f;
-
-        float kb_speed    = 3.0f;
-        float mouse_speed = 0.075f;
-    } _cam_data;
+    FPSCamera _camera;
 
     vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
-    vkl::Cube<vkl::VertexLitColor>       _cube_mesh;
+    vkl::Cube<vkl::VertexFlatColor>      _cube_mesh;
     vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
 
     vkl::Mat4 _lamp_matrix;
@@ -67,10 +39,9 @@ private:
     vkl::Texture2D _cube_texture;
     vkl::Texture2D _floor_texture;
 
-    void _subscribe_to_events();
     void _init_camera();
     void _init_meshes();
-    void _init_trs_matrices();
+    void _init_model_matrices();
     void _init_textures();
     void _init_lights();
 };

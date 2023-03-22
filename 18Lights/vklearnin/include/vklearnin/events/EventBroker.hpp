@@ -11,9 +11,8 @@ namespace vkl {
 
 class EventBroker {
 public:
-    template<typename Event, typename Handler, typename Callback>
-    static EventListenerHandle
-    subscribe(Handler *handler, Callback callback) {
+    template<typename Event, typename Listener, typename Callback>
+    static EventListenerHandle subscribe(Listener *handler, Callback callback) {
         return static_cast<EventCallbacks<Event> *>(
             _callbacks[_event_id<Event>()])->add(
             [handler, callback](const Event &event) {
@@ -45,8 +44,8 @@ public:
     EventBroker & operator=(const EventBroker &other) = delete;
 
 private:
-    using CallbackLists = std::vector<EventCallbacksBase *>;
-    static CallbackLists _callbacks;
+    using CallbackList = std::vector<EventCallbacksBase *>;
+    static CallbackList _callbacks;
     static uint32_t _next_event_id;
 
     template<typename Event>

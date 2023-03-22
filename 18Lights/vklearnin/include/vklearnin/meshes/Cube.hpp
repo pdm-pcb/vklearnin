@@ -26,31 +26,25 @@ public:
             {{ -scale, -scale, -scale, 1.0f }, corner_colors[7]},
         });
 
-        Mesh<VertexType>::_set_indices({
-            // front face
-            0, 1, 2,
-            0, 2, 3,
+        Mesh<VertexType>::_set_indices(_shared_indices);
+    }
 
-            // back face
-            4, 5, 6,
-            4, 6, 7,
+    void init(float const scale, Vec4 const &corner_colors)
+    requires std::is_same_v<VertexType, VertexFlatColor>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale,  scale, 1.0f }, corner_colors},
+            {{ -scale,  scale,  scale, 1.0f }, corner_colors},
+            {{  scale,  scale,  scale, 1.0f }, corner_colors},
+            {{  scale, -scale,  scale, 1.0f }, corner_colors},
 
-            // top face
-            1, 6, 5,
-            1, 5, 2,
-
-            // bottom face
-            7, 0, 3,
-            7, 3, 4,
-
-            // left face
-            7, 6, 1,
-            7, 1, 0,
-
-            // right face
-            3, 2, 5,
-            3, 5, 4,
+            {{  scale, -scale, -scale, 1.0f }, corner_colors},
+            {{  scale,  scale, -scale, 1.0f }, corner_colors},
+            {{ -scale,  scale, -scale, 1.0f }, corner_colors},
+            {{ -scale, -scale, -scale, 1.0f }, corner_colors},
         });
+
+        Mesh<VertexType>::_set_indices(_shared_indices);
     }
 
     void init(float const scale, float const tile)
@@ -94,31 +88,7 @@ public:
             {{  scale, -scale, -scale, 1.0f }, { 0.0f, 0.0f }}, // 23
         });
 
-        Mesh<VertexType>::_set_indices({
-            // front face
-            0, 1, 2,
-            0, 2, 3,
-
-            // back face
-            4, 5, 6,
-            4, 6, 7,
-
-            // top face
-            8,  9, 10,
-            8, 10, 11,
-
-            // bottom face
-            12, 13, 14,
-            12, 14, 15,
-
-            // left face
-            16, 17, 18,
-            16, 18, 19,
-
-            // right face
-            20, 21, 22,
-            20, 22, 23,
-        });
+        Mesh<VertexType>::_set_indices(_separate_indices);
     }
 
     void init(float const scale, Vec4 const &color)
@@ -162,31 +132,7 @@ public:
             {{  scale, -scale, -scale, 1.0f },  Vec4::unit_x, color }, // 23
         });
 
-        Mesh<VertexType>::_set_indices({
-            // front face
-            0, 1, 2,
-            0, 2, 3,
-
-            // back face
-            4, 5, 6,
-            4, 6, 7,
-
-            // top face
-            8,  9, 10,
-            8, 10, 11,
-
-            // bottom face
-            12, 13, 14,
-            12, 14, 15,
-
-            // left face
-            16, 17, 18,
-            16, 18, 19,
-
-            // right face
-            20, 21, 22,
-            20, 22, 23,
-        });
+        Mesh<VertexType>::_set_indices(_separate_indices);
     }
 
     Cube() = default;
@@ -197,6 +143,59 @@ public:
 
     Cube& operator=(Cube &&) = delete;
     Cube& operator=(Cube const&) = delete;
+
+private:
+    std::vector<Index> const _shared_indices {
+        // front face
+        0, 1, 2,
+        0, 2, 3,
+
+        // back face
+        4, 5, 6,
+        4, 6, 7,
+
+        // top face
+        1, 6, 5,
+        1, 5, 2,
+
+        // bottom face
+        7, 0, 3,
+        7, 3, 4,
+
+        // left face
+        7, 6, 1,
+        7, 1, 0,
+
+        // right face
+        3, 2, 5,
+        3, 5, 4,
+    };
+
+    std::vector<Index> const _separate_indices {
+        // front face
+        0, 1, 2,
+        0, 2, 3,
+
+        // back face
+        4, 5, 6,
+        4, 6, 7,
+
+        // top face
+        8,  9, 10,
+        8, 10, 11,
+
+        // bottom face
+        12, 13, 14,
+        12, 14, 15,
+
+        // left face
+        16, 17, 18,
+        16, 18, 19,
+
+        // right face
+        20, 21, 22,
+        20, 22, 23,
+    };
 };
 
 } // namespace vkl

@@ -18,9 +18,10 @@ void Application::run() {
     uint32_t frame_count = 0u;
 
     while(_running) {
-        TargetWindow::message_loop();
+        Timekeeper::update();
 
         Timekeeper::frame_start();
+            TargetWindow::message_loop();
             this->update();
             this->submit_draws();
             Renderer::record_commands();
@@ -28,15 +29,13 @@ void Application::run() {
         Timekeeper::frame_end();
 
         frame_time += Timekeeper::frame_time();
-        frame_count += 1;
+        ++frame_count;
 
         if(frame_time >= 0.5f) {
             CONSOLE_TRACE("{:.02f} avg fps", frame_count / frame_time);
             frame_time = 0.0f;
             frame_count = 0u;
         }
-
-        Timekeeper::update();
     }
 
     LogicalDevice::native().waitIdle();
@@ -51,9 +50,9 @@ void Application::on_window_close([[maybe_unused]] const WindowCloseEvent &) {
 }
 
 // =============================================================================
-Application::Application() :
-    _running { true }
-{
+Application::Application() {
+    _running = true;
+
     EventBroker::init();
     EventBroker::subscribe<WindowCloseEvent>(
         this,
