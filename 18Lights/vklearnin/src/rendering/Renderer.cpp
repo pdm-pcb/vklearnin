@@ -125,6 +125,28 @@ void Renderer::submit_draw(Mesh<VertexLitColor> const &mesh,
 }
 
 // =============================================================================
+void Renderer::submit_draw(Mesh<VertexMaterial> const &mesh,
+                           Material const &material,
+                           Mat4 const &model_matrix)
+{
+    auto material_id = reinterpret_cast<uint64_t>(
+        VkImage(material.diffuse.image().handle)
+    );
+
+    _material_draws[material_id].queue.push_back(
+        DrawSubmission<VertexMaterial> {
+            .mesh = &mesh,
+            .material = &material,
+            .push_constants = {{
+                .stage_flags = vk::ShaderStageFlagBits::eAll,
+                .size        = sizeof(vkl::Mat4),
+                .data        = &model_matrix,
+            }}
+        }
+    );
+}
+
+// =============================================================================
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
 
@@ -267,7 +289,7 @@ void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
 // =============================================================================
 void Renderer::set_materials(std::vector<Material> const &materials) {
     for(auto const &material : materials) {
-        auto const set_index = _texture_sets.size();
+        auto const set_index = _material_sets.size();
 
         _material_sets.emplace_back();
         _material_sets.back().add_image(material.diffuse.image());

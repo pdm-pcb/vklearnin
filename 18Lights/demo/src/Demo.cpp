@@ -38,7 +38,7 @@ void Demo::update() {
 // =============================================================================
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_material, _cube_matrix);
     vkl::Renderer::submit_draw(_floor_mesh, _floor_texture, _floor_matrix);
 }
 
@@ -59,6 +59,7 @@ void Demo::shutdown() {
     _floor_mesh.shutdown();
 
     _cube_texture.shutdown();
+    _cube_material.diffuse.shutdown();
     _floor_texture.shutdown();
 }
 
@@ -73,7 +74,7 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
-    _cube_mesh.init(1.0f, MATERIAL_COLOR);
+    _cube_mesh.init(1.0f);
     _floor_mesh.init(10.0f, 10.0f);
 }
 
@@ -94,8 +95,8 @@ void Demo::_init_model_matrices() {
 
 // =============================================================================
 void Demo::_init_textures() {
-    _cube_texture.texture_from_file("textures/brickwall017_d.jpg");
-    _cube_texture.init_sampler(
+    _cube_material.diffuse.texture_from_file("textures/brickwall017_d.jpg");
+    _cube_material.diffuse.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -113,7 +114,6 @@ void Demo::_init_textures() {
     );
 
     vkl::Renderer::set_textures({
-        _cube_texture,
         _floor_texture
     });
 
@@ -125,6 +125,10 @@ void Demo::_init_textures() {
         "textures/skybox/belfast_sunset/pz.png",
         "textures/skybox/belfast_sunset/nz.png",
     }});
+
+    vkl::Renderer::set_materials({
+        _cube_material
+    });
 }
 
 // =============================================================================

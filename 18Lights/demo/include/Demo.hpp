@@ -27,8 +27,8 @@ public:
 private:
     FPSCamera _camera;
 
-    vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
-    vkl::Cube<vkl::VertexLitColor>       _cube_mesh;
+    vkl::Cube<vkl::VertexFlatColor>  _lamp_mesh;
+    vkl::Cube<vkl::VertexMaterial>   _cube_mesh;
     vkl::XYPlane<vkl::VertexTexture> _wall_mesh;
     vkl::XZPlane<vkl::VertexTexture> _floor_mesh;
 
@@ -40,6 +40,8 @@ private:
     vkl::Texture2D _cube_texture;
     vkl::Texture2D _wall_texture;
     vkl::Texture2D _floor_texture;
+
+    vkl::Material _cube_material;
 
     void _init_camera();
     void _init_meshes();
