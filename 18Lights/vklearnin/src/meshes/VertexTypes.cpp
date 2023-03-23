@@ -108,7 +108,7 @@ VertexLitColor::VertexLitColor(Vec4 const &position, Vec4 const &normal,
 // =============================================================================
 VertexBindings const VertexMaterial::bindings {{
     .binding   = 0u,
-    .stride    = sizeof(VertexLitColor),
+    .stride    = sizeof(VertexMaterial),
     .inputRate = vk::VertexInputRate::eVertex
 }};
 
@@ -128,11 +128,11 @@ VertexAttribs const VertexMaterial::attributes {{
     .location = 2u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, uv)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexMaterial, uv)),
 }};
 
 VertexMaterial::VertexMaterial(Vec4 const &position, Vec4 const &normal,
-                                   std::array<float, 2> const &uv) :
+                               std::array<float, 2> const &uv) :
     position { position },
     normal   { normal },
     uv       { uv }

@@ -66,7 +66,7 @@ struct VertexMaterial final {
     static VertexAttribs  const attributes;
 
     VertexMaterial(Vec4 const &position, Vec4 const &normal,
-                     std::array<float, 2> const &uv);
+                   std::array<float, 2> const &uv);
     VertexMaterial() = delete;
 };
 
