@@ -11,6 +11,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/VertexTypes.hpp"
+#include "vklearnin/meshes/Skybox.hpp"
 
 namespace vkl {
 
@@ -33,6 +34,9 @@ public:
                             Texture2D const &texture,
                             Mat4 const &model_matrix);
 
+    static void enable_skybox();
+    static void disable_skybox();
+
     static void record_commands();
     static void submit_commands_and_present();
 
@@ -40,6 +44,7 @@ public:
     static void shutdown();
 
     static void set_flat_textures(std::vector<Texture2D> const &textures);
+    static void set_skybox_texture(Texture2D::CubeFilepaths const &filepaths);
 
     static void create_pipelines();
 
@@ -76,15 +81,22 @@ private:
 
     static DescriptorSetLayout _global_buffer_layout;
     static DescSetList         _global_buffer_sets;
+
     static DescriptorSetLayout _flat_texture_layout;
     static DescSetList         _flat_texture_sets;
+
+    static DescriptorSet _skybox_texture_set;
 
     // Shader Resources --------------------------------------------------------
     static BufferList _global_buffers;
 
+    static Skybox<VertexSkybox> _skybox_mesh;
+    static Texture2D            _skybox_texture;
+
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
     static Pipeline _flat_texture_pipeline;
+    static Pipeline _skybox_pipeline;
 
     // Draw Queues -------------------------------------------------------------
     static FlatColorDrawQueue   _flat_color_draws;
@@ -97,12 +109,15 @@ private:
 
     static void _init_global_buffers();
     static void _init_flat_textures();
+    static void _init_skybox_resources();
 
     static void _init_flat_color_pipeline();
     static void _init_flat_texture_pipeline();
+    static void _init_skybox_pipeline();
 
-    static void _execute_flat_color_pipeline(const FrameData &frame_data);
-    static void _execute_flat_texture_pipeline(const FrameData &frame_data);
+    static void _execute_flat_color_pipeline();
+    static void _execute_flat_texture_pipeline();
+    static void _execute_skybox_pipeline();
 
     template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,

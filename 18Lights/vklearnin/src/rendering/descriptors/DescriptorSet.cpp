@@ -19,8 +19,8 @@ DescriptorSet & DescriptorSet::add_image(ImageObject const &image) {
 }
 
 // =============================================================================
-void DescriptorSet::create(DescriptorPool const &descriptor_pool,
-                           DescriptorSetLayout const &set_layout)
+DescriptorSet & DescriptorSet::create(DescriptorPool const &descriptor_pool,
+                                      DescriptorSetLayout const &set_layout)
 {
     _layout = set_layout.native();
 
@@ -38,6 +38,8 @@ void DescriptorSet::create(DescriptorPool const &descriptor_pool,
     if(result != vk::Result::eSuccess) {
         CONSOLE_CRITICAL("Could not allocate descriptor sets");
     }
+
+    return *this;
 }
 
 // =============================================================================

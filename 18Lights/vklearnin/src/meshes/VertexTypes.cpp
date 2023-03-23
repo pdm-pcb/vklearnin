@@ -29,39 +29,6 @@ VertexFlatColor::VertexFlatColor(Vec4 const &position, Vec4 const &color) :
 { }
 
 // =============================================================================
-VertexBindings const VertexLitColor::bindings {{
-    .binding   = 0u,
-    .stride    = sizeof(VertexLitColor),
-    .inputRate = vk::VertexInputRate::eVertex
-}};
-
-VertexAttribs const VertexLitColor::attributes {{
-    .location = 0u,
-    .binding  = 0u,
-    .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, position)),
-},
-{
-    .location = 1u,
-    .binding  = 0u,
-    .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, normal)),
-},
-{
-    .location = 2u,
-    .binding  = 0u,
-    .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, color)),
-}};
-
-VertexLitColor::VertexLitColor(Vec4 const &position, Vec4 const &normal,
-                               Vec4 const &color) :
-    position { position },
-    normal   { normal },
-    color    { color }
-{ }
-
-// =============================================================================
 VertexBindings const VertexFlatTexture::bindings {{
     .binding   = 0u,
     .stride    = sizeof(VertexFlatTexture),
@@ -103,6 +70,39 @@ VertexAttribs const VertexSkybox::attributes {{
 
 VertexSkybox::VertexSkybox(Vec4 const &position) :
     position { position }
+{ }
+
+// =============================================================================
+VertexBindings const VertexLitColor::bindings {{
+    .binding   = 0u,
+    .stride    = sizeof(VertexLitColor),
+    .inputRate = vk::VertexInputRate::eVertex
+}};
+
+VertexAttribs const VertexLitColor::attributes {{
+    .location = 0u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, position)),
+},
+{
+    .location = 1u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, normal)),
+},
+{
+    .location = 2u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexLitColor, color)),
+}};
+
+VertexLitColor::VertexLitColor(Vec4 const &position, Vec4 const &normal,
+                               Vec4 const &color) :
+    position { position },
+    normal   { normal },
+    color    { color }
 { }
 
 } // namespace vkl

@@ -5,7 +5,6 @@
 #include "vklearnin/meshes/Cube.hpp"
 #include "vklearnin/meshes/XYPlane.hpp"
 #include "vklearnin/meshes/XZPlane.hpp"
-#include "vklearnin/meshes/Skybox.hpp"
 
 #include "FPSCamera.hpp"
 
@@ -30,13 +29,16 @@ private:
 
     vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
     vkl::Cube<vkl::VertexFlatTexture>    _cube_mesh;
+    vkl::XYPlane<vkl::VertexFlatTexture> _wall_mesh;
     vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
 
     vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix;
+    vkl::Mat4 _wall_matrix;
     vkl::Mat4 _floor_matrix;
 
     vkl::Texture2D _cube_texture;
+    vkl::Texture2D _wall_texture;
     vkl::Texture2D _floor_texture;
 
     void _init_camera();

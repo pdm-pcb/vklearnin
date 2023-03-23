@@ -21,19 +21,6 @@ struct VertexFlatColor final {
 };
 
 // =============================================================================
-struct VertexLitColor final {
-    Vec4 position;
-    Vec4 normal;
-    Vec4 color;
-
-    static VertexBindings const bindings;
-    static VertexAttribs  const attributes;
-
-    VertexLitColor(Vec4 const &position, Vec4 const &normal, Vec4 const &color);
-    VertexLitColor() = delete;
-};
-
-// =============================================================================
 struct VertexFlatTexture final {
     Vec4 position;
     std::array<float, 2> uv;
@@ -54,6 +41,19 @@ struct VertexSkybox final {
 
     VertexSkybox(Vec4 const &position);
     VertexSkybox() = delete;
+};
+
+// =============================================================================
+struct VertexLitColor final {
+    Vec4 position;
+    Vec4 normal;
+    Vec4 color;
+
+    static VertexBindings const bindings;
+    static VertexAttribs  const attributes;
+
+    VertexLitColor(Vec4 const &position, Vec4 const &normal, Vec4 const &color);
+    VertexLitColor() = delete;
 };
 
 } // namespace vkl

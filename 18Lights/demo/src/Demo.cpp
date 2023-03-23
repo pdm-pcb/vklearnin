@@ -57,6 +57,7 @@ void Demo::init() {
 void Demo::shutdown() {
     _lamp_mesh.shutdown();
     _cube_mesh.shutdown();
+    _wall_mesh.shutdown();
     _floor_mesh.shutdown();
 
     _cube_texture.shutdown();
@@ -134,6 +135,15 @@ void Demo::_init_textures() {
         _cube_texture,
         _floor_texture
     });
+
+    vkl::Renderer::set_skybox_texture({{
+        "textures/skybox/belfast_sunset/px.png",
+        "textures/skybox/belfast_sunset/nx.png",
+        "textures/skybox/belfast_sunset/py.png",
+        "textures/skybox/belfast_sunset/ny.png",
+        "textures/skybox/belfast_sunset/pz.png",
+        "textures/skybox/belfast_sunset/nz.png",
+    }});
 }
 
 // =============================================================================
@@ -157,14 +167,17 @@ void Demo::_init_lights() {
 Demo::Demo() :
     _camera { },
 
-    _lamp_mesh { },
+    _lamp_mesh   { },
     _cube_mesh   { },
+    _wall_mesh   { },
     _floor_mesh  { },
 
-    _lamp_matrix { },
-    _cube_matrix   { },
-    _floor_matrix  { },
+    _lamp_matrix  { },
+    _cube_matrix  { },
+    _wall_matrix  { },
+    _floor_matrix { },
 
     _cube_texture   { },
+    _wall_texture   { },
     _floor_texture  { }
 { }

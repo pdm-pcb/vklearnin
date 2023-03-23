@@ -393,13 +393,13 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     cmd_buffer.begin_one_time_submit();
 
     for(uint32_t layer = 0u; layer < image.array_layers; ++layer) {
-        CONSOLE_TRACE("Processing array layer {}", layer);
+        // CONSOLE_TRACE("Processing array layer {}", layer);
 
         int32_t mip_width  = static_cast<int32_t>(image.extent.width);
         int32_t mip_height = static_cast<int32_t>(image.extent.height);
 
         for(uint32_t mip = 1u; mip < image.mip_levels; ++mip) {
-            CONSOLE_TRACE("Generating mip level {}", mip);
+            // CONSOLE_TRACE("Generating mip level {}", mip);
             transition_layout(
                 image,
                 cmd_buffer.native(),
