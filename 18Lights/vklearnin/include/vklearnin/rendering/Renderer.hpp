@@ -18,6 +18,7 @@ namespace vkl {
 
 struct BufferObject;
 struct ImageObject;
+struct Material;
 
 class Renderer {
 public:
@@ -32,11 +33,15 @@ public:
     static void submit_draw(Mesh<VertexFlatColor> const &mesh,
                             Mat4 const &model_matrix);
 
-    static void submit_draw(Mesh<VertexFlatTexture> const &mesh,
+    static void submit_draw(Mesh<VertexTexture> const &mesh,
                             Texture2D const &texture,
                             Mat4 const &model_matrix);
 
     static void submit_draw(Mesh<VertexLitColor> const &mesh,
+                            Mat4 const &model_matrix);
+
+    static void submit_draw(Mesh<VertexMaterial> const &mesh,
+                            Material const &material,
                             Mat4 const &model_matrix);
 
     static void record_commands();
@@ -45,8 +50,9 @@ public:
     static void init();
     static void shutdown();
 
-    static void set_flat_textures(std::vector<Texture2D> const &textures);
+    static void set_textures(std::vector<Texture2D> const &textures);
     static void set_skybox_texture(Texture2D::CubeFilepaths const &filepaths);
+    static void set_materials(std::vector<Material> const &materials);
 
     static void create_pipelines();
 
@@ -67,19 +73,30 @@ private:
     using FlatColorDraw      = DrawSubmission<VertexFlatColor>;
     using FlatColorDrawQueue = std::vector<FlatColorDraw>;
 
-    using FlatTextureDraw  = DrawSubmission<VertexFlatTexture>;
-    using FlatTextureDraws = std::vector<FlatTextureDraw>;
+    using TextureDraw  = DrawSubmission<VertexTexture>;
+    using TextureDraws = std::vector<TextureDraw>;
 
-    struct PerFlatTextureDraws {
+    struct PerTextureDraws {
         size_t const set_index = std::numeric_limits<size_t>::max();
-        FlatTextureDraws queue;
+        TextureDraws queue;
     };
 
-    using FlatTextureDrawQueue =
-        std::unordered_map<uint64_t, PerFlatTextureDraws>;
+    using TextureDrawQueue =
+        std::unordered_map<uint64_t, PerTextureDraws>;
 
     using LitColorDraw = DrawSubmission<VertexLitColor>;
     using LitColorDrawQueue = std::vector<LitColorDraw>;
+
+    using MaterialDraw  = DrawSubmission<VertexMaterial>;
+    using MaterialDraws = std::vector<MaterialDraw>;
+
+    struct PerMaterialDraws {
+        size_t const set_index = std::numeric_limits<size_t>::max();
+        MaterialDraws queue;
+    };
+
+    using MaterialDrawQueue =
+        std::unordered_map<uint64_t, PerMaterialDraws>;
 
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
@@ -87,13 +104,16 @@ private:
     static DescriptorSetLayout _global_buffer_layout;
     static DescSetList         _global_buffer_sets;
 
-    static DescriptorSetLayout _flat_texture_layout;
-    static DescSetList         _flat_texture_sets;
+    static DescriptorSetLayout _texture_layout;
+    static DescSetList         _texture_sets;
 
     static DescriptorSet _skybox_texture_set;
 
     static DescriptorSetLayout _light_props_layout;
     static DescSetList         _light_props_sets;
+
+    static DescriptorSetLayout _material_layout;
+    static DescSetList         _material_sets;
 
     // Shader Resources --------------------------------------------------------
     static BufferList           _global_buffers;
@@ -103,14 +123,16 @@ private:
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
-    static Pipeline _flat_texture_pipeline;
+    static Pipeline _texture_pipeline;
     static Pipeline _skybox_pipeline;
     static Pipeline _lit_color_pipeline;
+    static Pipeline _material_pipeline;
 
     // Draw Queues -------------------------------------------------------------
     static FlatColorDrawQueue   _flat_color_draws;
-    static FlatTextureDrawQueue _flat_texture_draws;
+    static TextureDrawQueue _texture_draws;
     static LitColorDrawQueue    _lit_color_draws;
+    static MaterialDrawQueue    _material_draws;
 
     static void _init_framebuffers();
     static void _init_frame_data();
@@ -118,19 +140,22 @@ private:
     static void _init_descriptor_pool();
 
     static void _init_global_buffers();
-    static void _init_flat_textures();
+    static void _init_texture_sets();
     static void _init_skybox_resources();
     static void _init_light_props_buffers();
+    static void _init_material_sets();
 
     static void _init_flat_color_pipeline();
-    static void _init_flat_texture_pipeline();
+    static void _init_texture_pipeline();
     static void _init_skybox_pipeline();
     static void _init_lit_color_pipeline();
+    static void _init_material_pipeline();
 
     static void _execute_flat_color_pipeline();
-    static void _execute_flat_texture_pipeline();
+    static void _execute_texture_pipeline();
     static void _execute_skybox_pipeline();
     static void _execute_lit_color_pipeline();
+    static void _execute_material_pipeline();
 
     template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,

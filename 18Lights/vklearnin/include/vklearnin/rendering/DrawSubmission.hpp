@@ -4,6 +4,7 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/meshes/Mesh.hpp"
 #include "vklearnin/materials/Texture2D.hpp"
+#include "vklearnin/materials/Material.hpp"
 
 namespace vkl {
 
@@ -15,8 +16,10 @@ struct PushConstant {
 
 template <typename VertexType>
 struct DrawSubmission {
-    vkl::Mesh<VertexType>     const *mesh = nullptr;
-    vkl::Texture2D            const *texture = nullptr;
+    Mesh<VertexType> const *mesh = nullptr;
+    Texture2D        const *texture = nullptr;
+    Material         const *material = nullptr;
+
     std::vector<PushConstant> const push_constants;
 };
 

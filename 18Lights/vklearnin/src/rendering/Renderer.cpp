@@ -30,13 +30,16 @@ DescriptorPool Renderer::_desc_pool;
 DescriptorSetLayout   Renderer::_global_buffer_layout;
 Renderer::DescSetList Renderer::_global_buffer_sets;
 
-DescriptorSetLayout   Renderer::_flat_texture_layout;
-Renderer::DescSetList Renderer::_flat_texture_sets;
+DescriptorSetLayout   Renderer::_texture_layout;
+Renderer::DescSetList Renderer::_texture_sets;
 
 DescriptorSet Renderer::_skybox_texture_set;
 
 DescriptorSetLayout   Renderer::_light_props_layout;
 Renderer::DescSetList Renderer::_light_props_sets;
+
+DescriptorSetLayout   Renderer::_material_layout;
+Renderer::DescSetList Renderer::_material_sets;
 
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_global_buffers;
@@ -46,14 +49,16 @@ Renderer::BufferList Renderer::_light_props_buffers;
 
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
-Pipeline Renderer::_flat_texture_pipeline;
+Pipeline Renderer::_texture_pipeline;
 Pipeline Renderer::_skybox_pipeline;
 Pipeline Renderer::_lit_color_pipeline;
+Pipeline Renderer::_material_pipeline;
 
 // Draw Queues -----------------------------------------------------------------
-Renderer::FlatColorDrawQueue   Renderer::_flat_color_draws;
-Renderer::FlatTextureDrawQueue Renderer::_flat_texture_draws;
-Renderer::LitColorDrawQueue    Renderer::_lit_color_draws;
+Renderer::FlatColorDrawQueue Renderer::_flat_color_draws;
+Renderer::TextureDrawQueue   Renderer::_texture_draws;
+Renderer::LitColorDrawQueue  Renderer::_lit_color_draws;
+Renderer::MaterialDrawQueue  Renderer::_material_draws;
 
 // =============================================================================
 void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
@@ -82,7 +87,7 @@ void Renderer::submit_draw(Mesh<VertexFlatColor> const &mesh,
 }
 
 // =============================================================================
-void Renderer::submit_draw(Mesh<VertexFlatTexture> const &mesh,
+void Renderer::submit_draw(Mesh<VertexTexture> const &mesh,
                            Texture2D const &texture,
                            Mat4 const &model_matrix)
 {
@@ -90,8 +95,8 @@ void Renderer::submit_draw(Mesh<VertexFlatTexture> const &mesh,
         VkImage(texture.image().handle)
     );
 
-    _flat_texture_draws[texture_id].queue.push_back(
-        DrawSubmission<VertexFlatTexture> {
+    _texture_draws[texture_id].queue.push_back(
+        DrawSubmission<VertexTexture> {
             .mesh = &mesh,
             .texture = &texture,
             .push_constants = {{
@@ -143,9 +148,10 @@ void Renderer::record_commands() {
     frame_data.cmd_buffer().begin_render_pass(render_pass_info);
 
         _execute_flat_color_pipeline();
-        // _execute_flat_texture_pipeline();
-        // _execute_skybox_pipeline();
+        _execute_texture_pipeline();
+        _execute_skybox_pipeline();
         _execute_lit_color_pipeline();
+        _execute_material_pipeline();
 
     frame_data.cmd_buffer().end_render_pass();
     frame_data.cmd_buffer().end_recording();
@@ -185,13 +191,15 @@ void Renderer::init() {
 // =============================================================================
 void Renderer::shutdown() {
     _flat_color_pipeline.destroy();
-    _flat_texture_pipeline.destroy();
+    _texture_pipeline.destroy();
     _skybox_pipeline.destroy();
     _lit_color_pipeline.destroy();
+    _material_pipeline.destroy();
 
     _global_buffer_layout.destroy();
-    _flat_texture_layout.destroy();
+    _texture_layout.destroy();
     _light_props_layout.destroy();
+    _material_layout.destroy();
 
     _desc_pool.destroy();
 
@@ -220,12 +228,12 @@ void Renderer::shutdown() {
 }
 
 // =============================================================================
-void Renderer::set_flat_textures(std::vector<Texture2D> const &textures) {
+void Renderer::set_textures(std::vector<Texture2D> const &textures) {
     for(auto const &texture : textures) {
-        auto const set_index = _flat_texture_sets.size();
+        auto const set_index = _texture_sets.size();
 
-        _flat_texture_sets.emplace_back();
-        _flat_texture_sets.back().add_image(texture.image());
+        _texture_sets.emplace_back();
+        _texture_sets.back().add_image(texture.image());
 
         // WANRING: Vulkan handles are reused by the driver, so this is a
         //          terrible way to key an unordered map if you don't keep
@@ -234,16 +242,13 @@ void Renderer::set_flat_textures(std::vector<Texture2D> const &textures) {
             VkImage(texture.image().handle)
         );
 
-        _flat_texture_draws.insert({
+        _texture_draws.insert({
             texture_id,
-            PerFlatTextureDraws {
+            PerTextureDraws {
                 .set_index = set_index,
                 .queue = { }
             }
         });
-
-        // TODO: these magic numbers are nonsense and you know it
-        _flat_texture_draws[texture_id].queue.reserve(100);
     }
 }
 
@@ -260,16 +265,55 @@ void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
 }
 
 // =============================================================================
+void Renderer::set_materials(std::vector<Material> const &materials) {
+    for(auto const &material : materials) {
+        auto const set_index = _texture_sets.size();
+
+        _material_sets.emplace_back();
+        _material_sets.back().add_image(material.diffuse.image());
+
+        // WANRING: Vulkan handles are reused by the driver, so this is a
+        //          terrible way to key an unordered map if you don't keep
+        //          every resource loaded into VRAM all the time
+        auto const material_id = reinterpret_cast<uint64_t>(
+            VkImage(material.diffuse.image().handle)
+        );
+
+        _material_draws.insert({
+            material_id,
+            PerMaterialDraws {
+                .set_index = set_index,
+                .queue = { }
+            }
+        });
+    }
+}
+
+// =============================================================================
 void Renderer::create_pipelines() {
     _init_global_buffers();
-    _init_flat_textures();
+    _init_texture_sets();
     _init_skybox_resources();
     _init_light_props_buffers();
+    _init_material_sets();
+
+    // TODO: nonsense magic numbers
+    _flat_color_draws.reserve(100);
+    _lit_color_draws.reserve(100);
+
+    for(auto &[texture_id, per_texture] : _texture_draws) {
+        per_texture.queue.reserve(100);
+    }
+
+    for(auto &[material_id, per_material] : _material_draws) {
+        per_material.queue.reserve(100);
+    }
 
     _init_flat_color_pipeline();
-    _init_flat_texture_pipeline();
+    _init_texture_pipeline();
     _init_skybox_pipeline();
     _init_lit_color_pipeline();
+    _init_material_pipeline();
 }
 
 // =============================================================================
@@ -355,22 +399,23 @@ void Renderer::_init_global_buffers() {
 }
 
 // =============================================================================
-void Renderer::_init_flat_textures() {
-    _flat_texture_layout.add_binding(
-        vk::DescriptorType::eCombinedImageSampler,
-        vk::ShaderStageFlagBits::eFragment
-    );
-    _flat_texture_layout.create();
+void Renderer::_init_texture_sets() {
+    _texture_layout
+        .add_binding(
+            vk::DescriptorType::eCombinedImageSampler,
+            vk::ShaderStageFlagBits::eFragment
+        )
+        .create();
 
-    for(auto &descriptor_set : _flat_texture_sets) {
+    for(auto &descriptor_set : _texture_sets) {
         descriptor_set
-            .allocate(_desc_pool, _flat_texture_layout)
+            .allocate(_desc_pool, _texture_layout)
             .write_set();
     }
 
     CONSOLE_INFO(
         "Renderer will use {} flat texture descriptor sets",
-        _flat_texture_sets.size()
+        _texture_sets.size()
     );
 }
 
@@ -380,8 +425,29 @@ void Renderer::_init_skybox_resources() {
 
     _skybox_texture_set
         .add_image(_skybox_texture.image())
-        .allocate(_desc_pool, _flat_texture_layout)
+        .allocate(_desc_pool, _texture_layout)
         .write_set();
+}
+
+// =============================================================================
+void Renderer::_init_material_sets() {
+    _material_layout
+        .add_binding(
+            vk::DescriptorType::eCombinedImageSampler,
+            vk::ShaderStageFlagBits::eFragment
+        )
+        .create();
+
+    for(auto &descriptor_set : _material_sets) {
+        descriptor_set
+            .allocate(_desc_pool, _material_layout)
+            .write_set();
+    }
+
+    CONSOLE_INFO(
+        "Renderer will use {} material descriptor sets",
+        _material_sets.size()
+    );
 }
 
 // =============================================================================
@@ -452,16 +518,16 @@ void Renderer::_init_flat_color_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_init_flat_texture_pipeline() {
-    _flat_texture_pipeline
-        .vert_from_spirv("shaders/02flat_texture.vert")
-        .frag_from_spirv("shaders/02flat_texture.frag")
+void Renderer::_init_texture_pipeline() {
+    _texture_pipeline
+        .vert_from_spirv("shaders/02texture.vert")
+        .frag_from_spirv("shaders/02texture.frag")
         .describe_vertex_input(
-            VertexFlatTexture::bindings,
-            VertexFlatTexture::attributes
+            VertexTexture::bindings,
+            VertexTexture::attributes
         )
         .add_descriptor_set(_global_buffer_layout)
-        .add_descriptor_set(_flat_texture_layout)
+        .add_descriptor_set(_texture_layout)
         .add_push_constant(
             vk::ShaderStageFlagBits::eAll,
             sizeof(Mat4)
@@ -488,7 +554,7 @@ void Renderer::_init_skybox_pipeline() {
             VertexSkybox::attributes
         )
         .add_descriptor_set(_global_buffer_layout)
-        .add_descriptor_set(_flat_texture_layout)
+        .add_descriptor_set(_texture_layout)
         .add_push_constant(
             vk::ShaderStageFlagBits::eAll,
             sizeof(Mat4)
@@ -533,6 +599,34 @@ void Renderer::_init_lit_color_pipeline() {
 }
 
 // =============================================================================
+void Renderer::_init_material_pipeline() {
+    _material_pipeline
+        .vert_from_spirv("shaders/05material.vert")
+        .frag_from_spirv("shaders/05material.frag")
+        .describe_vertex_input(
+            VertexMaterial::bindings,
+            VertexMaterial::attributes
+        )
+        .add_descriptor_set(_global_buffer_layout)
+        .add_descriptor_set(_light_props_layout)
+        .add_descriptor_set(_material_layout)
+        .add_push_constant(
+            vk::ShaderStageFlagBits::eAll,
+            sizeof(Mat4)
+        )
+        .create(
+            _render_pass,
+            Pipeline::Config {
+                .polygon_mode     = vk::PolygonMode::eFill,
+                .cull_mode        = vk::CullModeFlagBits::eBack,
+                .front_face       = vk::FrontFace::eClockwise,
+                .max_msaa_samples = max_msaa_flag(),
+                .subpass_index    = 0u,
+            }
+        );
+}
+
+// =============================================================================
 void Renderer::_execute_flat_color_pipeline() {
     auto const &frame_data        = _frame_data[_frame_index];
     auto const &cmd_buffer        = frame_data.cmd_buffer();
@@ -550,26 +644,26 @@ void Renderer::_execute_flat_color_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_execute_flat_texture_pipeline() {
+void Renderer::_execute_texture_pipeline() {
     auto const &frame_data        = _frame_data[_frame_index];
     auto const &cmd_buffer        = frame_data.cmd_buffer();
     auto const &global_buffer_set = _global_buffer_sets[_frame_index];
 
-    _flat_texture_pipeline.bind(cmd_buffer);
-    _flat_texture_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
+    _texture_pipeline.bind(cmd_buffer);
+    _texture_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
 
-    for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
-        _flat_texture_pipeline.bind_descriptor_set(
+    for(auto &[texture_id, per_texture] : _texture_draws) {
+        _texture_pipeline.bind_descriptor_set(
             cmd_buffer,
-            _flat_texture_sets[draw_queue.set_index]
+            _texture_sets[per_texture.set_index]
         );
 
-        for(auto const &draw : draw_queue.queue) {
-            _send_push_constants(_flat_texture_pipeline, draw, frame_data);
+        for(auto const &draw : per_texture.queue) {
+            _send_push_constants(_texture_pipeline, draw, frame_data);
             draw.mesh->draw_indexed(cmd_buffer);
         }
 
-        draw_queue.queue.clear();
+        per_texture.queue.clear();
     }
 }
 
@@ -603,6 +697,32 @@ void Renderer::_execute_lit_color_pipeline() {
     }
 
     _lit_color_draws.clear();
+}
+
+// =============================================================================
+void Renderer::_execute_material_pipeline() {
+    auto const &frame_data        = _frame_data[_frame_index];
+    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &global_buffer_set = _global_buffer_sets[_frame_index];
+    auto const &light_props_set   = _light_props_sets[_frame_index];
+
+    _material_pipeline.bind(cmd_buffer);
+    _material_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
+    _material_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
+
+    for(auto &[material_id, per_material] : _material_draws) {
+        _material_pipeline.bind_descriptor_set(
+            cmd_buffer,
+            _material_sets[per_material.set_index]
+        );
+
+        for(auto const &draw : per_material.queue) {
+            _send_push_constants(_material_pipeline, draw, frame_data);
+            draw.mesh->draw_indexed(cmd_buffer);
+        }
+
+        per_material.queue.clear();
+    }
 }
 
 } // namespace vkl

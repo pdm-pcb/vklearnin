@@ -48,7 +48,7 @@ public:
     }
 
     void init(float const scale, float const tile)
-    requires std::is_same_v<VertexType, VertexFlatTexture>
+    requires std::is_same_v<VertexType, VertexTexture>
     {
         Mesh<VertexType>::_set_vertices({
             // front face

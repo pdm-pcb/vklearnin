@@ -112,7 +112,7 @@ void Demo::_init_textures() {
         vk::SamplerAddressMode::eRepeat
     );
 
-    vkl::Renderer::set_flat_textures({
+    vkl::Renderer::set_textures({
         _cube_texture,
         _floor_texture
     });

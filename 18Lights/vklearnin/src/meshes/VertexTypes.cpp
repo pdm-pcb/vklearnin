@@ -29,26 +29,26 @@ VertexFlatColor::VertexFlatColor(Vec4 const &position, Vec4 const &color) :
 { }
 
 // =============================================================================
-VertexBindings const VertexFlatTexture::bindings {{
+VertexBindings const VertexTexture::bindings {{
     .binding   = 0u,
-    .stride    = sizeof(VertexFlatTexture),
+    .stride    = sizeof(VertexTexture),
     .inputRate = vk::VertexInputRate::eVertex
 }};
 
-VertexAttribs const VertexFlatTexture::attributes {{
+VertexAttribs const VertexTexture::attributes {{
     .location = 0u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32B32A32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexFlatTexture, position)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, position)),
 },
 {
     .location = 1u,
     .binding  = 0u,
     .format   = vk::Format::eR32G32Sfloat,
-    .offset   = static_cast<uint32_t>(offsetof(VertexFlatTexture, uv)),
+    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, uv)),
 }};
 
-VertexFlatTexture::VertexFlatTexture(Vec4 const &position,
+VertexTexture::VertexTexture(Vec4 const &position,
                                      std::array<float, 2> const &uv) :
     position { position },
     uv       { uv }
@@ -103,6 +103,39 @@ VertexLitColor::VertexLitColor(Vec4 const &position, Vec4 const &normal,
     position { position },
     normal   { normal },
     color    { color }
+{ }
+
+// =============================================================================
+VertexBindings const VertexMaterial::bindings {{
+    .binding   = 0u,
+    .stride    = sizeof(VertexLitColor),
+    .inputRate = vk::VertexInputRate::eVertex
+}};
+
+VertexAttribs const VertexMaterial::attributes {{
+    .location = 0u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexMaterial, position)),
+},
+{
+    .location = 1u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexMaterial, normal)),
+},
+{
+    .location = 2u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexTexture, uv)),
+}};
+
+VertexMaterial::VertexMaterial(Vec4 const &position, Vec4 const &normal,
+                                   std::array<float, 2> const &uv) :
+    position { position },
+    normal   { normal },
+    uv       { uv }
 { }
 
 } // namespace vkl

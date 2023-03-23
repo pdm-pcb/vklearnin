@@ -29,8 +29,8 @@ private:
 
     vkl::Cube<vkl::VertexFlatColor>      _lamp_mesh;
     vkl::Cube<vkl::VertexLitColor>       _cube_mesh;
-    vkl::XYPlane<vkl::VertexFlatTexture> _wall_mesh;
-    vkl::XZPlane<vkl::VertexFlatTexture> _floor_mesh;
+    vkl::XYPlane<vkl::VertexTexture> _wall_mesh;
+    vkl::XZPlane<vkl::VertexTexture> _floor_mesh;
 
     vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix;

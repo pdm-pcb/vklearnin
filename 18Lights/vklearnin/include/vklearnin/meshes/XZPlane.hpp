@@ -28,7 +28,7 @@ public:
     }
 
     void init(float const scale, float const tile)
-    requires std::is_same_v<VertexType, VertexFlatTexture>
+    requires std::is_same_v<VertexType, VertexTexture>
     {
         Mesh<VertexType>::_set_vertices({
             {{ -scale, 0.0f,  scale, 1.0f }, { 0.0f, tile }},

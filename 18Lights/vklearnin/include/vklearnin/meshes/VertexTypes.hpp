@@ -21,15 +21,15 @@ struct VertexFlatColor final {
 };
 
 // =============================================================================
-struct VertexFlatTexture final {
+struct VertexTexture final {
     Vec4 position;
     std::array<float, 2> uv;
 
     static VertexBindings const bindings;
     static VertexAttribs  const attributes;
 
-    VertexFlatTexture(Vec4 const &position, std::array<float, 2> const &uv);
-    VertexFlatTexture() = delete;
+    VertexTexture(Vec4 const &position, std::array<float, 2> const &uv);
+    VertexTexture() = delete;
 };
 
 // =============================================================================
@@ -54,6 +54,20 @@ struct VertexLitColor final {
 
     VertexLitColor(Vec4 const &position, Vec4 const &normal, Vec4 const &color);
     VertexLitColor() = delete;
+};
+
+// =============================================================================
+struct VertexMaterial final {
+    Vec4 position;
+    Vec4 normal;
+    std::array<float, 2> uv;
+
+    static VertexBindings const bindings;
+    static VertexAttribs  const attributes;
+
+    VertexMaterial(Vec4 const &position, Vec4 const &normal,
+                     std::array<float, 2> const &uv);
+    VertexMaterial() = delete;
 };
 
 } // namespace vkl
