@@ -117,7 +117,7 @@ void Renderer::record_commands() {
 
         _execute_flat_color_pipeline();
         _execute_flat_texture_pipeline();
-        // _execute_skybox_pipeline();
+        _execute_skybox_pipeline();
 
     frame_data.cmd_buffer().end_render_pass();
     frame_data.cmd_buffer().end_recording();
@@ -215,7 +215,6 @@ void Renderer::set_flat_textures(std::vector<Texture2D> const &textures) {
 // =============================================================================
 void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
     _skybox_texture.cubemap_from_files(filepaths);
-
     _skybox_texture.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -289,7 +288,7 @@ void Renderer::_init_global_buffers() {
     _global_buffer_sets.resize(RenderConfig::swapchain_image_count);
 
     for(auto &set : _global_buffer_sets) {
-        set.create(_desc_pool, _global_buffer_layout);
+        set.allocate(_desc_pool, _global_buffer_layout);
     }
 
     _global_buffers.resize(_global_buffer_sets.size());
@@ -328,7 +327,7 @@ void Renderer::_init_flat_textures() {
 
     for(auto &descriptor_set : _flat_texture_sets) {
         descriptor_set
-            .create(_desc_pool, _flat_texture_layout)
+            .allocate(_desc_pool, _flat_texture_layout)
             .write_set();
     }
 
@@ -340,10 +339,11 @@ void Renderer::_init_flat_textures() {
 
 // =============================================================================
 void Renderer::_init_skybox_resources() {
-    _skybox_mesh.init(100.0f);
+    _skybox_mesh.init(500.0f);
 
     _skybox_texture_set
-        .create(_desc_pool, _flat_texture_layout)
+        .add_image(_skybox_texture.image())
+        .allocate(_desc_pool, _flat_texture_layout)
         .write_set();
 }
 
@@ -434,29 +434,11 @@ void Renderer::_execute_flat_color_pipeline() {
     auto const &global_buffer_set = _global_buffer_sets[_frame_index];
 
     _flat_color_pipeline.bind(cmd_buffer);
-
-    _flat_color_pipeline.bind_descriptor_set(
-        cmd_buffer,
-        global_buffer_set
-    );
+    _flat_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
 
     for(auto const &draw : _flat_color_draws) {
         _send_push_constants(_flat_color_pipeline, draw, frame_data);
-
-        cmd_buffer.native().bindVertexBuffers(
-            0u,
-            { draw.mesh->vertex_buffer().buffer().handle },
-            { 0u }
-        );
-        cmd_buffer.native().bindIndexBuffer(
-            draw.mesh->index_buffer().buffer().handle,
-            0u,
-            INDEX_TYPE
-        );
-        cmd_buffer.native().drawIndexed(
-            static_cast<uint32_t>(draw.mesh->index_count()),
-            1u, 0u, 0u, 0u
-        );
+        draw.mesh->draw_indexed(cmd_buffer);
     }
 
     _flat_color_draws.clear();
@@ -469,11 +451,7 @@ void Renderer::_execute_flat_texture_pipeline() {
     auto const &global_buffer_set = _global_buffer_sets[_frame_index];
 
     _flat_texture_pipeline.bind(cmd_buffer);
-
-    _flat_texture_pipeline.bind_descriptor_set(
-        cmd_buffer,
-        global_buffer_set
-    );
+    _flat_texture_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
 
     for(auto &[texture_id, draw_queue] : _flat_texture_draws) {
         _flat_texture_pipeline.bind_descriptor_set(
@@ -483,21 +461,7 @@ void Renderer::_execute_flat_texture_pipeline() {
 
         for(auto const &draw : draw_queue.queue) {
             _send_push_constants(_flat_texture_pipeline, draw, frame_data);
-
-            cmd_buffer.native().bindVertexBuffers(
-                0u,
-                { draw.mesh->vertex_buffer().buffer().handle },
-                { 0u }
-            );
-            cmd_buffer.native().bindIndexBuffer(
-                draw.mesh->index_buffer().buffer().handle,
-                0u,
-                INDEX_TYPE
-            );
-            cmd_buffer.native().drawIndexed(
-                static_cast<uint32_t>(draw.mesh->index_count()),
-                1u, 0u, 0u, 0u
-            );
+            draw.mesh->draw_indexed(cmd_buffer);
         }
 
         draw_queue.queue.clear();
@@ -514,21 +478,7 @@ void Renderer::_execute_skybox_pipeline() {
     _skybox_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
     _skybox_pipeline.bind_descriptor_set(cmd_buffer, _skybox_texture_set);
 
-    // TODO: meshes can bind and draw themselves
-    cmd_buffer.native().bindVertexBuffers(
-        0u,
-        { _skybox_mesh.vertex_buffer().buffer().handle },
-        { 0u }
-    );
-    cmd_buffer.native().bindIndexBuffer(
-        _skybox_mesh.index_buffer().buffer().handle,
-        0u,
-        INDEX_TYPE
-    );
-    cmd_buffer.native().drawIndexed(
-        static_cast<uint32_t>(_skybox_mesh.index_count()),
-        1u, 0u, 0u, 0u
-    );
+    _skybox_mesh.draw_indexed(cmd_buffer);
 }
 
 } // namespace vkl

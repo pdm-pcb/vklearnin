@@ -19,8 +19,8 @@ DescriptorSet & DescriptorSet::add_image(ImageObject const &image) {
 }
 
 // =============================================================================
-DescriptorSet & DescriptorSet::create(DescriptorPool const &descriptor_pool,
-                                      DescriptorSetLayout const &set_layout)
+DescriptorSet & DescriptorSet::allocate(DescriptorPool const &descriptor_pool,
+                                        DescriptorSetLayout const &set_layout)
 {
     _layout = set_layout.native();
 
@@ -100,6 +100,11 @@ void DescriptorSet::write_set() {
             .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         });
+    }
+
+    if(set_writes.empty()) {
+        CONSOLE_ERROR("Trying to update descriptor set with no set writes.");
+        return;
     }
 
     LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);

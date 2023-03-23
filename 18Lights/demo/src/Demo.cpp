@@ -75,6 +75,8 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
+    _cube_mesh.init(1.0f, 1.0f);
+    _floor_mesh.init(10.0f, 10.0f);
 
     // _cube_mesh.init(
     //     1.0f,
@@ -90,10 +92,6 @@ void Demo::_init_meshes() {
     //         { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
     //     }}
     // );
-
-    _cube_mesh.init(1.0f, 1.0f);
-
-    _floor_mesh.init(100.0f, 100.0f);
 }
 
 // =============================================================================

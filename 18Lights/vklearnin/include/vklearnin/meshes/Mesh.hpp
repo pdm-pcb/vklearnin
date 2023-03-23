@@ -5,6 +5,7 @@
 #include "vklearnin/meshes/VertexTypes.hpp"
 #include "vklearnin/resources/buffers/VertexBuffer.hpp"
 #include "vklearnin/resources/buffers/IndexBuffer.hpp"
+#include "vklearnin/system/devices/CmdBuffer.hpp"
 
 namespace vkl {
 
@@ -16,11 +17,7 @@ public:
         _vertex_buffer.shutdown();
     }
 
-    inline auto const& vertex_buffer() const { return _vertex_buffer; }
-    inline auto vertex_count()         const { return _vertex_data.size(); }
-
-    inline auto const& index_buffer() const { return _index_buffer; }
-    inline auto index_count()         const { return _index_data.size(); }
+    void draw_indexed(CmdBuffer const &cmd_buffer) const;
 
     Mesh() = default;
     ~Mesh() = default;
@@ -45,12 +42,31 @@ protected:
     }
 
 private:
-    VertexBuffer<VertexType> _vertex_buffer;
-    std::vector<VertexType>  _vertex_data;
+    VertexBuffer<VertexType>    _vertex_buffer;
+    std::vector<VertexType>     _vertex_data;
 
     IndexBuffer        _index_buffer;
     std::vector<Index> _index_data;
 };
+
+template <typename VertexType>
+void Mesh<VertexType>::draw_indexed(CmdBuffer const &cmd_buffer) const {
+    cmd_buffer.native().bindVertexBuffers(
+        0u,
+        1u,
+        &_vertex_buffer.buffer().handle,
+        _vertex_buffer.offsets().data()
+    );
+    cmd_buffer.native().bindIndexBuffer(
+        _index_buffer.buffer().handle,
+        0u,
+        INDEX_TYPE
+    );
+    cmd_buffer.native().drawIndexed(
+        static_cast<uint32_t>(_index_data.size()),
+        1u, 0u, 0u, 0u
+    );
+}
 
 } // namespace vkl
 

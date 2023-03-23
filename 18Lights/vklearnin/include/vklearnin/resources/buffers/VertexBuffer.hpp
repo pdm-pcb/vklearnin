@@ -18,6 +18,8 @@ public:
             vk::BufferUsageFlagBits::eTransferDst),
             vk::MemoryPropertyFlagBits::eDeviceLocal
         );
+
+        _offsets.emplace_back(0u);
     }
 
     void shutdown() {
@@ -28,7 +30,8 @@ public:
         BufferTools::host_to_device(_buffer, vertices.data());
     }
 
-    inline auto const & buffer() const { return _buffer; }
+    inline auto const & buffer()  const { return _buffer;  }
+    inline auto const & offsets() const { return _offsets; }
 
     VertexBuffer() = default;
     ~VertexBuffer() = default;
@@ -41,6 +44,7 @@ public:
 
 private:
     BufferObject _buffer;
+    std::vector<vk::DeviceSize> _offsets;
 };
 
 } // namespace vkl
