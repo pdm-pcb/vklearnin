@@ -39,7 +39,7 @@ void Demo::update() {
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
     vkl::Renderer::submit_draw(_cube_mesh, _cube_material, _cube_matrix);
-    vkl::Renderer::submit_draw(_floor_mesh, _floor_material, _floor_matrix);
+    vkl::Renderer::submit_draw(_floor_mesh, _floor_matrix);
 }
 
 // =============================================================================
@@ -48,7 +48,6 @@ void Demo::init() {
     _init_meshes();
     _init_model_matrices();
     _init_textures();
-    _init_lights();
 }
 
 // =============================================================================
@@ -73,8 +72,8 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
-    _cube_mesh.init(1.0f, 1.0f);
-    _floor_mesh.init(10.0f, 10.0f);
+    _cube_mesh.init(1.0f, 2.0f);
+    _floor_mesh.init(10.0f, MATERIAL_COLOR);
 }
 
 // =============================================================================
@@ -125,23 +124,6 @@ void Demo::_init_textures() {
         _cube_material,
         _floor_material,
     });
-}
-
-// =============================================================================
-void Demo::_init_lights() {
-    // _light_props_ubos.resize(vkl::RenderConfig::swapchain_image_count);
-    // CONSOLE_TRACE("Allocating light UBOs");
-    // for(auto &ubo : _light_props_ubos) {
-    //     ubo.size = sizeof(vkl::LightProps);
-    //     vkl::BufferTools::create(
-    //         ubo,
-    //         vk::BufferUsageFlagBits::eUniformBuffer,
-    //         (vk::MemoryPropertyFlagBits::eHostVisible |
-    //          vk::MemoryPropertyFlagBits::eHostCoherent)
-    //     );
-    // }
-
-    // vkl::Renderer::set_light_ubos(_light_props_ubos);
 }
 
 // =============================================================================

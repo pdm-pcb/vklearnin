@@ -8,6 +8,7 @@ namespace vkl {
 
 struct Material final {
     Texture2D diffuse;
+    float specular_exponent;
 };
 
 } // namespace vkl

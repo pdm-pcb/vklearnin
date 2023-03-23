@@ -29,7 +29,7 @@ private:
 
     vkl::Cube<vkl::VertexFlatColor>   _lamp_mesh;
     vkl::Cube<vkl::VertexMaterial>    _cube_mesh;
-    vkl::XZPlane<vkl::VertexMaterial> _floor_mesh;
+    vkl::XZPlane<vkl::VertexLitColor> _floor_mesh;
 
     vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix;
@@ -42,7 +42,6 @@ private:
     void _init_meshes();
     void _init_model_matrices();
     void _init_textures();
-    void _init_lights();
 };
 
 #endif // DEMO_HPP

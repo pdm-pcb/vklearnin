@@ -29,19 +29,19 @@ public:
         Mesh<VertexType>::_set_indices(_shared_indices);
     }
 
-    void init(float const scale, Vec4 const &corner_colors)
+    void init(float const scale, Vec4 const &corner_color)
     requires std::is_same_v<VertexType, VertexFlatColor>
     {
         Mesh<VertexType>::_set_vertices({
-            {{ -scale, -scale,  scale, 1.0f }, corner_colors},
-            {{ -scale,  scale,  scale, 1.0f }, corner_colors},
-            {{  scale,  scale,  scale, 1.0f }, corner_colors},
-            {{  scale, -scale,  scale, 1.0f }, corner_colors},
+            {{ -scale, -scale,  scale, 1.0f }, corner_color},
+            {{ -scale,  scale,  scale, 1.0f }, corner_color},
+            {{  scale,  scale,  scale, 1.0f }, corner_color},
+            {{  scale, -scale,  scale, 1.0f }, corner_color},
 
-            {{  scale, -scale, -scale, 1.0f }, corner_colors},
-            {{  scale,  scale, -scale, 1.0f }, corner_colors},
-            {{ -scale,  scale, -scale, 1.0f }, corner_colors},
-            {{ -scale, -scale, -scale, 1.0f }, corner_colors},
+            {{  scale, -scale, -scale, 1.0f }, corner_color},
+            {{  scale,  scale, -scale, 1.0f }, corner_color},
+            {{ -scale,  scale, -scale, 1.0f }, corner_color},
+            {{ -scale, -scale, -scale, 1.0f }, corner_color},
         });
 
         Mesh<VertexType>::_set_indices(_shared_indices);
