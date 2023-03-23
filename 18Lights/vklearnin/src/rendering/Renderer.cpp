@@ -241,7 +241,7 @@ void Renderer::_init_framebuffers() {
     _framebuffers.reserve(RenderConfig::swapchain_image_count);
 
     for(auto const &swapchain_image : Swapchain::images()) {
-        _framebuffers.push_back({ });
+        _framebuffers.emplace_back(Framebuffer { });
         _framebuffers.back().create(
             {
                 _render_pass.color_buffer_view(),

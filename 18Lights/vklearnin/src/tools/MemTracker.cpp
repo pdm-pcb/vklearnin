@@ -12,6 +12,7 @@ char const *success_string =
     "                         Mission accomplished"
     "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
+// =============================================================================
 void * operator new(size_t bytes) {
     MemTracker::total_bytes += bytes;
 #ifdef MEMLOG
@@ -30,6 +31,7 @@ void * operator new(size_t bytes) {
     return &(static_cast<size_t *>(new_alloc)[1]);
 }
 
+// =============================================================================
 void * operator new[](size_t bytes) {
     MemTracker::total_bytes += bytes;
 #ifdef MEMLOG
@@ -44,7 +46,10 @@ void * operator new[](size_t bytes) {
     return &(static_cast<size_t *>(new_alloc)[1]);
 }
 
-void * operator new(size_t bytes, const std::nothrow_t&) noexcept {
+// =============================================================================
+void * operator new(size_t bytes,
+                    [[maybe_unused]] const std::nothrow_t &nothrow) noexcept
+{
     MemTracker::total_bytes += bytes;
 #ifdef MEMLOG
     printf(
@@ -59,6 +64,7 @@ void * operator new(size_t bytes, const std::nothrow_t&) noexcept {
     return &(static_cast<size_t *>(new_alloc)[1]);
 }
 
+// =============================================================================
 void operator delete(void *memory) noexcept {
     if(memory == nullptr) {
         return;
@@ -85,6 +91,7 @@ void operator delete(void *memory) noexcept {
     }
 }
 
+// =============================================================================
 void operator delete[](void *memory) noexcept {
     if(memory == nullptr) {
         return;
@@ -106,7 +113,7 @@ void operator delete[](void *memory) noexcept {
     }
 }
 
-
+// =============================================================================
 void operator delete(void *memory, size_t bytes) noexcept {
     if(memory == nullptr) {
         return;
@@ -130,6 +137,7 @@ void operator delete(void *memory, size_t bytes) noexcept {
     }
 }
 
+// =============================================================================
 void operator delete[](void *memory, size_t bytes) noexcept {
     if(memory == nullptr) {
         return;
@@ -153,7 +161,10 @@ void operator delete[](void *memory, size_t bytes) noexcept {
 }
 
 
-void operator delete(void *memory, const std::nothrow_t&) noexcept {
+// =============================================================================
+void operator delete(void *memory,
+                     [[maybe_unused]] const std::nothrow_t &nothrow) noexcept
+{
     if(memory == nullptr) {
         return;
     }

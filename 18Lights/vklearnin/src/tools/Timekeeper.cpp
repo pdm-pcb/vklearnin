@@ -3,24 +3,19 @@
 
 namespace vkl {
 
-Timekeeper::HRC::time_point Timekeeper::_app_start = Timekeeper::HRC::now();
-
-Timekeeper::HRC::time_point Timekeeper::_frame_start   = Timekeeper::_app_start;
+Timekeeper::HRC::time_point Timekeeper::_tick_start = Timekeeper::HRC::now();
 
 uint64_t Timekeeper::_run_time     = 0u;
-uint64_t Timekeeper::_frame_time   = 0u;
+uint64_t Timekeeper::_tick_delta   = 0u;
+
 void Timekeeper::update() {
-    auto interval = HRC::now() - _app_start;
-    _run_time = std::chrono::duration_cast<Microseconds>(interval).count();
-}
+    auto const now = HRC::now();
+    auto const delta = now - _tick_start;
 
-void Timekeeper::frame_start() {
-    _frame_start = HRC::now();
-}
+    _tick_start = now;
+    _tick_delta = std::chrono::duration_cast<Microseconds>(delta).count();
 
-void Timekeeper::frame_end() {
-    auto interval = HRC::now() - _frame_start;
-    _frame_time = std::chrono::duration_cast<Microseconds>(interval).count();
+    _run_time += _tick_delta;
 }
 
 } // namespace vkl

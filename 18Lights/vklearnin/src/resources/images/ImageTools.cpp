@@ -411,7 +411,7 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
                 1u
             );
 
-            vk::ImageBlit blit {
+            vk::ImageBlit const blit {
                 .srcSubresource {
                     .aspectMask     = vk::ImageAspectFlagBits::eColor,
                     .mipLevel       = mip - 1,

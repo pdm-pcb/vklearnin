@@ -1,5 +1,5 @@
-#ifndef  VKLEARNIN_SYSTEM_INPUT_SDLTOVLK_HPP
-#define  VKLEARNIN_SYSTEM_INPUT_SDLTOVLK_HPP
+#ifndef  VKLEARNIN_SYSTEM_INPUT_SDL_TO_VLK_HPP
+#define  VKLEARNIN_SYSTEM_INPUT_SDL_TO_VLK_HPP
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
@@ -120,4 +120,4 @@ inline Keycode sdl_to_vkl(int const button) {
 
 } // namespace vkl
 
-#endif //  VKLEARNIN_SYSTEM_INPUT_SDLTOVLK_HPP
+#endif //  VKLEARNIN_SYSTEM_INPUT_SDL_TO_VLK_HPP

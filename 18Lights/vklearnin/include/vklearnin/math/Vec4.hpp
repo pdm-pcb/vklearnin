@@ -23,7 +23,7 @@ struct Vec4 {
 
 // =============================================================================
     [[nodiscard]] bool operator==(Vec4 const& other) const;
-    friend std::ostream& operator<<(std::ostream& out, Vec4 const& a);
+    friend std::ostream& operator<<(std::ostream& out, Vec4 const& v);
 
 // =============================================================================
     float x = 0.0f;

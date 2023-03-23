@@ -39,7 +39,7 @@ public:
     FrameData(FrameData &&other) noexcept;
     FrameData(FrameData const &) = delete;
 
-    FrameData & operator=(FrameData &&) = default;
+    FrameData & operator=(FrameData &&) = delete;
     FrameData & operator=(FrameData const &) = delete;
 
 private:

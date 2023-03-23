@@ -171,7 +171,7 @@ void GraphicsAPI::_init_extensions() {
 
 // =============================================================================
 bool GraphicsAPI::_check_extensions(Extensions const &supported_extensions) {
-    for(auto const ext_name : _enabled_extensions) {
+    for(auto const * const ext_name : _enabled_extensions) {
         bool extension_found = false;
 
         for(auto const& extension : supported_extensions) {

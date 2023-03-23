@@ -220,7 +220,7 @@ bool PhysicalDevice::_check_features(
 {
     for(auto const &feature : required_features) {
         if(feature == Features::SAMPLER_ANISOTROPY) {
-            if(!supported_features.samplerAnisotropy) {
+            if(supported_features.samplerAnisotropy == VK_FALSE) {
                 CONSOLE_WARN("No support for sampler anisotropy.");
                 return false;
             }
@@ -228,7 +228,7 @@ bool PhysicalDevice::_check_features(
             _enabled_features.samplerAnisotropy = VK_TRUE;
         }
         else if(feature == Features::FILL_MODE_NONSOLID) {
-            if(!supported_features.fillModeNonSolid) {
+            if(supported_features.fillModeNonSolid == VK_FALSE) {
                 CONSOLE_WARN("No support for non-solid fill modes.");
                 return false;
             }

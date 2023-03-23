@@ -34,7 +34,7 @@ Vec4 normalize(Vec4 const &v) {
     }
 
     auto result = v;
-    float length_inv = 1.0f / std::sqrt(length);
+    float const length_inv = 1.0f / std::sqrt(length);
 
     result.x *= length_inv;
     result.y *= length_inv;

@@ -30,6 +30,7 @@
     #include <vulkan/vulkan_win32.h>
 #endif
 
+#include <csignal>
 #include <unordered_map>
 #include <filesystem>
 #include <fstream>

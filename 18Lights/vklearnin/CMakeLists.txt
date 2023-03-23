@@ -14,6 +14,9 @@ FetchContent_MakeAvailable(spdlog)
 message(NOTICE "Fetch SDL2")
 FetchContent_MakeAvailable(SDL2)
 
+# Useful when trying to run clang-tidy by hand
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 file(
     GLOB_RECURSE PROJECT_SOURCE
     "src/*.cpp"

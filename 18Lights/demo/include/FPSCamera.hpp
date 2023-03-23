@@ -16,9 +16,6 @@ public:
     void on_key_press(const vkl::KeyPressEvent &event);
     void on_key_release(const vkl::KeyReleaseEvent &event);
     void on_mouse_move(const vkl::MouseMoveEvent &event);
-    void on_mouse_button_press(const vkl::MouseButtonPressEvent &event);
-    void on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event);
-    void on_mouse_scroll(const vkl::MouseScrollEvent &event);
 
     inline auto const& view_matrix() const { return _view_mat; }
     inline auto const& proj_matrix() const { return _proj_mat; }

@@ -18,7 +18,7 @@ void FPSCamera::update() {
     );
     _state.up = vkl::math::cross(_state.side, _state.forward);
 
-    auto move_speed = _config.move_speed * vkl::Timekeeper::frame_time();
+    auto move_speed = _config.move_speed * vkl::Timekeeper::tick_delta();
     if(_kb.lshift) {
         move_speed *= 2.0f;
     }
@@ -59,10 +59,10 @@ void FPSCamera::set_orthographic(float const top, float const bottom) {
 
 // =============================================================================
 void FPSCamera::set_perspective(float const near, float const far,
-                                float const vfov)
+                                float const vertical_fov_degrees)
 {
     auto const aspect = vkl::RenderConfig::window_aspect;
-    auto const a = std::tan(vkl::math::radians(vfov) * 0.5f);
+    auto const a = std::tan(vkl::math::radians(vertical_fov_degrees) * 0.5f);
 
     _proj_mat = vkl::Mat4::zero;
 
@@ -102,8 +102,11 @@ void FPSCamera::on_key_release(const vkl::KeyReleaseEvent &event) {
 
 // =============================================================================
 void FPSCamera::on_mouse_move(const vkl::MouseMoveEvent &event) {
-    float new_pitch = _state.pitch + -event.y_offset * _config.look_speed;
-    float new_yaw   = _state.yaw + event.x_offset * _config.look_speed;
+    float new_pitch = static_cast<float>(-event.y_offset) * _config.look_speed;
+    float new_yaw   = static_cast<float>(event.x_offset) * _config.look_speed;
+
+    new_pitch += _state.pitch;
+    new_yaw += _state.yaw;
 
     if(new_pitch > 89.9f)       { new_pitch = 89.9f;  }
     else if(new_pitch < -89.9f) { new_pitch = -89.9f; }
@@ -113,38 +116,6 @@ void FPSCamera::on_mouse_move(const vkl::MouseMoveEvent &event) {
 
     _state.pitch = new_pitch;
     _state.yaw = new_yaw;
-}
-
-// =============================================================================
-void FPSCamera::on_mouse_button_press(const vkl::MouseButtonPressEvent &event) {
-    switch(event.code) {
-        case vkl::MOUSE_BUTTON_LEFT    : CONSOLE_INFO("LMB down");      break;
-        case vkl::MOUSE_BUTTON_RIGHT   : CONSOLE_INFO("RMB down");      break;
-        case vkl::MOUSE_BUTTON_MIDDLE  : CONSOLE_INFO("MMB down");      break;
-        case vkl::MOUSE_BUTTON_BACK    : CONSOLE_INFO("MBack down");    break;
-        case vkl::MOUSE_BUTTON_FORWARD : CONSOLE_INFO("MForward down"); break;
-    }
-}
-
-// =============================================================================
-void
-FPSCamera::on_mouse_button_release(const vkl::MouseButtonReleaseEvent &event) {
-    switch(event.code) {
-        case vkl::MOUSE_BUTTON_LEFT    : CONSOLE_INFO("LMB up");      break;
-        case vkl::MOUSE_BUTTON_RIGHT   : CONSOLE_INFO("RMB up");      break;
-        case vkl::MOUSE_BUTTON_MIDDLE  : CONSOLE_INFO("MMB up");      break;
-        case vkl::MOUSE_BUTTON_BACK    : CONSOLE_INFO("MBack up");    break;
-        case vkl::MOUSE_BUTTON_FORWARD : CONSOLE_INFO("MForward up"); break;
-    }
-}
-
-// =============================================================================
-void FPSCamera::on_mouse_scroll(const vkl::MouseScrollEvent &event) {
-    CONSOLE_INFO(
-        "Mouse scroll vert: {}, horiz: {}",
-        event.vert_offset,
-        event.horiz_offset
-    );
 }
 
 // =============================================================================
@@ -162,21 +133,6 @@ void FPSCamera::_subscribe_to_events() {
     vkl::EventBroker::subscribe<vkl::MouseMoveEvent>(
         this,
         &FPSCamera::on_mouse_move
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseButtonPressEvent>(
-        this,
-        &FPSCamera::on_mouse_button_press
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseButtonReleaseEvent>(
-        this,
-        &FPSCamera::on_mouse_button_release
-    );
-
-    vkl::EventBroker::subscribe<vkl::MouseScrollEvent>(
-        this,
-        &FPSCamera::on_mouse_scroll
     );
 }
 

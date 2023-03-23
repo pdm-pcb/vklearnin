@@ -1,7 +1,7 @@
-#ifndef  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
-#define  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
+#ifndef VKLEARNIN_SYSTEM_INPUT_WIN32_TO_VKLKEYS_HPP
+#define VKLEARNIN_SYSTEM_INPUT_WIN32_TO_VKLKEYS_HPP
 
-#ifdef VKL_WINDOWS
+#ifdef VKL_UNUSED
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
@@ -96,6 +96,6 @@ inline Keycode win32_to_vkl(::WPARAM vkey) {
 
 } // namespace vkl
 
-#endif // VKL_WINDOWS
+#endif // VKL_UNUSED
 
-#endif //  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP
+#endif // VKLEARNIN_SYSTEM_INPUT_WIN32_TO_VKLKEYS_HPP

@@ -2,7 +2,7 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "base-debug",
+            "name": "debug-base",
             "generator": "Ninja",
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
@@ -11,7 +11,7 @@
             }
         },
         {
-            "name": "base-release",
+            "name": "release-base",
             "generator": "Ninja",
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
@@ -20,23 +20,32 @@
             }
         },
         {
-            "name": "linux-debug",
-            "inherits": "base-debug",
+            "name": "linux-base",
+            "hidden": true,
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
             },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "linux-debug",
+            "inherits": [
+                "debug-base",
+                "linux-base"
+            ],
             "displayName": "Linux Debug"
         },
         {
             "name": "linux-release",
-            "inherits": "base-release",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Linux"
-            },
+            "inherits": [
+                "release-base",
+                "linux-base"
+            ],
             "displayName": "Linux Release"
         },
         {
@@ -90,7 +99,7 @@
         {
             "name": "windows-debug-msvc",
             "inherits": [
-                "base-debug",
+                "debug-base",
                 "windows-base-msvc"
             ],
             "displayName": "Windows Debug MSVC"
@@ -98,7 +107,7 @@
         {
             "name": "windows-release-msvc",
             "inherits": [
-                "base-release",
+                "release-base",
                 "windows-base-msvc"
             ],
             "displayName": "Windows Release MSVC"
@@ -106,7 +115,7 @@
         {
             "name": "windows-debug-llvm",
             "inherits": [
-                "base-debug",
+                "debug-base",
                 "windows-base-llvm"
             ],
             "displayName": "Windows Debug LLVM"
@@ -114,7 +123,7 @@
         {
             "name": "windows-release-llvm",
             "inherits": [
-                "base-release",
+                "release-base",
                 "windows-base-llvm"
             ],
             "displayName": "Windows Release LLVM"

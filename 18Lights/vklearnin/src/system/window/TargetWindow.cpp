@@ -17,7 +17,7 @@ void (*TargetWindow::_handle_mouse_move)(int x, int y) =
 //==============================================================================
 void TargetWindow::message_loop() {
     ::SDL_Event event;
-    while(::SDL_PollEvent(&event)) {
+    while(::SDL_PollEvent(&event) > 0) {
         switch(event.type) {
             case ::SDL_KEYDOWN:
                 if(event.key.keysym.sym == ::SDLK_ESCAPE) {
@@ -108,8 +108,8 @@ void TargetWindow::init() {
     RenderConfig::screen_width  = display_mode.w;
     RenderConfig::screen_height = display_mode.h;
 
-    _center.x = RenderConfig::screen_width / 2;
-    _center.y = RenderConfig::screen_width / 2;
+    _center.x = static_cast<int32_t>(RenderConfig::screen_width) / 2;
+    _center.y = static_cast<int32_t>(RenderConfig::screen_width) / 2;
 }
 
 //==============================================================================
@@ -142,8 +142,8 @@ void TargetWindow::spawn_window(float const percent_screen_size) {
         APP_NAME,
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        RenderConfig::window_width,
-        RenderConfig::window_height,
+        static_cast<int>(RenderConfig::window_width),
+        static_cast<int>(RenderConfig::window_height),
         ::SDL_WINDOW_SHOWN
         | ::SDL_WINDOW_VULKAN
         | ::SDL_WINDOW_BORDERLESS

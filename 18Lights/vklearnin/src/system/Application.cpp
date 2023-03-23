@@ -13,27 +13,27 @@ void Application::run() {
     this->init();
     Renderer::create_pipelines();
 
-    float frame_time = 0.0f;
-    uint32_t frame_count = 0u;
+    float tick_time = 0.0f;
+    uint32_t tick_count = 0u;
 
     while(_running) {
         Timekeeper::update();
+
         TargetWindow::message_loop();
 
-        Timekeeper::frame_start();
-            this->update();
-            this->submit_draws();
-            Renderer::record_commands();
-            Renderer::submit_commands_and_present();
-        Timekeeper::frame_end();
+        this->update();
+        this->submit_draws();
 
-        frame_time += Timekeeper::frame_time();
-        ++frame_count;
+        Renderer::record_commands();
+        Renderer::submit_commands_and_present();
 
-        if(frame_time >= 0.5f) {
-            CONSOLE_TRACE("{:.02f} avg fps", frame_count / frame_time);
-            frame_time = 0.0f;
-            frame_count = 0u;
+        tick_time += Timekeeper::tick_delta();
+        ++tick_count;
+
+        if(tick_time >= 0.5f) {
+            CONSOLE_TRACE("{:.02f} avg fps", tick_count / tick_time);
+            tick_time = 0.0f;
+            tick_count = 0u;
         }
     }
 
@@ -43,15 +43,16 @@ void Application::run() {
 }
 
 // =============================================================================
-void Application::on_window_close([[maybe_unused]] const WindowCloseEvent &) {
+void
+Application::on_window_close([[maybe_unused]] const WindowCloseEvent &event) {
     CONSOLE_TRACE("Application received WindowClosed");
     _running = false;
 }
 
 // =============================================================================
-Application::Application() {
-    _running = true;
-
+Application::Application() :
+    _running { true }
+{
     EventBroker::init();
     EventBroker::subscribe<WindowCloseEvent>(
         this,

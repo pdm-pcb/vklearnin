@@ -118,7 +118,7 @@ void FrameData::_create_sync_primitives() {
     _acquire_complete  = LogicalDevice::native().createSemaphore({ });
     _commands_complete = LogicalDevice::native().createSemaphore({ });
 
-    vk::FenceCreateInfo fence_info {
+    vk::FenceCreateInfo const fence_info {
         .flags = vk::FenceCreateFlagBits::eSignaled
     };
     _queue_complete    = LogicalDevice::native().createFence(fence_info);
@@ -149,7 +149,8 @@ FrameData::FrameData(FrameData &&other) noexcept :
     _cmd_buffer        { std::move(other._cmd_buffer) },
     _acquire_complete  { other._acquire_complete },
     _commands_complete { other._commands_complete },
-    _queue_complete    { other._queue_complete }
+    _queue_complete    { other._queue_complete },
+    _image_index       { other._image_index }
 {
     other._acquire_complete  = vk::Semaphore { };
     other._commands_complete = vk::Semaphore { };

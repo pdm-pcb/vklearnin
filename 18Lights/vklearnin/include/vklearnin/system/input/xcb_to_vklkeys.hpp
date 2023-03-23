@@ -1,7 +1,7 @@
-#ifndef  VKLEARNIN_SYSTEM_INPUT_XCBTOVKLKEYS_HPP
-#define  VKLEARNIN_SYSTEM_INPUT_XCBTOVKLKEYS_HPP
+#ifndef  VKLEARNIN_SYSTEM_INPUT_XCB_TO_VKL_KEYS_HPP
+#define  VKLEARNIN_SYSTEM_INPUT_XCB_TO_VKL_KEYS_HPP
 
-#ifdef VKL_LINUX
+#ifdef VKL_UNUSED
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/input/Keycodes.hpp"
@@ -155,6 +155,6 @@ inline Keycode xcb_to_vkl(xcb_button_t const button) {
 
 } // namespace vkl
 
-#endif // VKL_LINUX
+#endif // VKL_UNUSED
 
 #endif //  VKLEARNIN_SYSTEM_INPUT_WIN32TOVKLKEYS_HPP

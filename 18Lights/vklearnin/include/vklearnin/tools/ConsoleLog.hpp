@@ -30,8 +30,7 @@ public:
 #define CONSOLE_INFO(...)     SPDLOG_INFO(__VA_ARGS__)
 #define CONSOLE_WARN(...)     SPDLOG_WARN(__VA_ARGS__)
 #define CONSOLE_ERROR(...)    SPDLOG_ERROR(__VA_ARGS__)
-// Anything marked as critical will immediately halt (debug) execution
-#define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); assert(false)
+#define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); std::raise(SIGABRT);
 
 } // namespace vkl
 

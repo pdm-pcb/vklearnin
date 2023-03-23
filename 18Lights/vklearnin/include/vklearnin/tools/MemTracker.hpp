@@ -14,13 +14,13 @@ struct MemTracker final {
 #ifdef VKL_DEBUG
     void * operator new(size_t bytes);
     void * operator new[](size_t bytes);
-    void * operator new(size_t size, const std::nothrow_t&) noexcept;
+    void * operator new(size_t bytes, const std::nothrow_t &nothrow) noexcept;
 
     void operator delete(void *memory)  noexcept;
     void operator delete[](void *memory) noexcept;
     void operator delete(void *memory, size_t)  noexcept;
     void operator delete[](void *memory, size_t) noexcept;
-    void operator delete(void *memory, const std::nothrow_t&) noexcept;
+    void operator delete(void *memory, const std::nothrow_t &nothrow) noexcept;
 #endif // VKL_DEBUG
 
 #endif // VKLEARNIN_TOOLS_MEMTRACKER_HPP

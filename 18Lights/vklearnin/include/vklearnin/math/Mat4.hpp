@@ -17,7 +17,7 @@ struct Mat4 {
 
 // =============================================================================
     [[nodiscard]] bool operator==(Mat4 const &other) const;
-    friend std::ostream& operator<<(std::ostream& out, Mat4 const& a);
+    friend std::ostream& operator<<(std::ostream& out, Mat4 const& m);
 
 // =============================================================================
     Vec4 x = Vec4::unit_x;
