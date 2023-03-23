@@ -43,6 +43,38 @@ public:
         });
     }
 
+    void init(float const scale, Vec4 const &corner_color)
+    requires std::is_same_v<VertexType, VertexLitColor>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale, 0.0f, 1.0f }, Vec4::unit_z, corner_color},
+            {{ -scale,  scale, 0.0f, 1.0f }, Vec4::unit_z, corner_color},
+            {{  scale,  scale, 0.0f, 1.0f }, Vec4::unit_z, corner_color},
+            {{  scale, -scale, 0.0f, 1.0f }, Vec4::unit_z, corner_color},
+        });
+
+        Mesh<VertexType>::_set_indices({
+            0, 1, 2,
+            0, 2, 3
+        });
+    }
+
+    void init(float const scale, float const tile)
+    requires std::is_same_v<VertexType, VertexMaterial>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, -scale, 0.0f, 1.0f }, Vec4::unit_z, { 0.0f, tile }},
+            {{ -scale,  scale, 0.0f, 1.0f }, Vec4::unit_z, { tile, tile }},
+            {{  scale,  scale, 0.0f, 1.0f }, Vec4::unit_z, { tile, 0.0f }},
+            {{  scale, -scale, 0.0f, 1.0f }, Vec4::unit_z, { 0.0f, 0.0f }},
+        });
+
+        Mesh<VertexType>::_set_indices({
+            0, 1, 2,
+            0, 2, 3
+        });
+    }
+
     XYPlane() = default;
     ~XYPlane() = default;
 

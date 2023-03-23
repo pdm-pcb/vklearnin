@@ -2,7 +2,9 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-vkl::Vec4 MATERIAL_COLOR { 0.15f, 0.65f, 0.25f, 256.0f };
+vkl::Vec4 CUBE_COLOR  { 0.15f, 0.65f, 0.25f, 256.0f };
+vkl::Vec4 FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
+vkl::Vec4 WALL_COLOR  { 0.65f, 0.25f, 0.15f, 256.0f };
 
 vkl::Vec4 DIR_COLOR { 1.0f, 1.0f, 1.0f, 0.25f };
 vkl::Vec4 DIR_POS   { 1.0f, 2.0f, 1.0f, 1.0f  };
@@ -31,15 +33,17 @@ void Demo::update() {
     _cube_matrix = vkl::math::rotate(
         vkl::Mat4::identity,
         vkl::Timekeeper::run_time() * 20.0f,
-        { 0.0f, 20.0f, 0.0f, 0.0f }
+        vkl::Vec4::unit_y
     );
 }
 
 // =============================================================================
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_material, _cube_matrix);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix);
     vkl::Renderer::submit_draw(_floor_mesh, _floor_matrix);
+    vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_a);
+    vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_b);
 }
 
 // =============================================================================
@@ -55,10 +59,12 @@ void Demo::shutdown() {
     _lamp_mesh.shutdown();
     _cube_mesh.shutdown();
     _floor_mesh.shutdown();
+    _wall_mesh.shutdown();
 
     // TODO: material can be as smart as Texture2D
     _cube_material.diffuse.shutdown();
     _floor_material.diffuse.shutdown();
+    _wall_material.diffuse.shutdown();
 }
 
 // =============================================================================
@@ -72,8 +78,9 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
-    _cube_mesh.init(1.0f, 2.0f);
-    _floor_mesh.init(10.0f, MATERIAL_COLOR);
+    _cube_mesh.init(1.0f, CUBE_COLOR);
+    _floor_mesh.init(10.0f, FLOOR_COLOR);
+    _wall_mesh.init(10.0f, WALL_COLOR);
 }
 
 // =============================================================================
@@ -88,6 +95,20 @@ void Demo::_init_model_matrices() {
     _floor_matrix = vkl::math::translate(
         vkl::Mat4::identity,
         { 0.0f, -3.0f, 0.0f, 1.0f }
+    );
+
+    _wall_matrix_a = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 0.0f, -3.0f, -10.0f, 1.0f }
+    );
+
+    _wall_matrix_b = vkl::math::translate(
+        vkl::Mat4::identity,
+        { 10.0f, -3.0f, 0.0f, 1.0f }
+    ) * vkl::math::rotate(
+        vkl::Mat4::identity,
+        -90.0f,
+        vkl::Vec4::unit_y
     );
 }
 
@@ -127,17 +148,5 @@ void Demo::_init_textures() {
 }
 
 // =============================================================================
-Demo::Demo() :
-    _camera { },
-
-    _lamp_mesh   { },
-    _cube_mesh   { },
-    _floor_mesh  { },
-
-    _lamp_matrix  { },
-    _cube_matrix  { },
-    _floor_matrix { },
-
-    _cube_material  { },
-    _floor_material { }
+Demo::Demo()
 { }

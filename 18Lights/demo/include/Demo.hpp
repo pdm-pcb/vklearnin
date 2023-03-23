@@ -21,22 +21,26 @@ public:
     Demo(Demo &&) = delete;
     Demo(Demo const&) = delete;
 
-    Demo& operator=(Demo &&) = delete;
-    Demo& operator=(Demo const&) = delete;
+    Demo & operator=(Demo &&) = delete;
+    Demo & operator=(Demo const&) = delete;
 
 private:
     FPSCamera _camera;
 
     vkl::Cube<vkl::VertexFlatColor>   _lamp_mesh;
-    vkl::Cube<vkl::VertexMaterial>    _cube_mesh;
+    vkl::Cube<vkl::VertexLitColor>    _cube_mesh;
     vkl::XZPlane<vkl::VertexLitColor> _floor_mesh;
+    vkl::XYPlane<vkl::VertexLitColor> _wall_mesh;
 
     vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix;
     vkl::Mat4 _floor_matrix;
+    vkl::Mat4 _wall_matrix_a;
+    vkl::Mat4 _wall_matrix_b;
 
     vkl::Material _cube_material;
     vkl::Material _floor_material;
+    vkl::Material _wall_material;
 
     void _init_camera();
     void _init_meshes();
