@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/resources/images/Texture2D.hpp"
+#include "vklearnin/materials/Texture2D.hpp"
 
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 

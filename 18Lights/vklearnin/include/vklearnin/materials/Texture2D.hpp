@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP
-#define VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP
+#ifndef VKLEARNIN_MATERIALS_TEXTURE2D_HPP
+#define VKLEARNIN_MATERIALS_TEXTURE2D_HPP
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
@@ -42,4 +42,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP
+#endif // VKLEARNIN_MATERIALS_TEXTURE2D_HPP

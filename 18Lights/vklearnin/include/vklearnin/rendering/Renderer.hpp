@@ -12,6 +12,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/VertexTypes.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
+#include "vklearnin/lighting/LightProps.hpp"
 
 namespace vkl {
 
@@ -26,6 +27,7 @@ public:
     };
 
     static void update_global_buffer(GlobalBuffer const &buffer);
+    static void update_light_props(LightProps const &buffer);
 
     static void submit_draw(Mesh<VertexFlatColor> const &mesh,
                             Mat4 const &model_matrix);
@@ -34,8 +36,8 @@ public:
                             Texture2D const &texture,
                             Mat4 const &model_matrix);
 
-    static void enable_skybox();
-    static void disable_skybox();
+    static void submit_draw(Mesh<VertexLitColor> const &mesh,
+                            Mat4 const &model_matrix);
 
     static void record_commands();
     static void submit_commands_and_present();
@@ -76,6 +78,9 @@ private:
     using FlatTextureDrawQueue =
         std::unordered_map<uint64_t, PerFlatTextureDraws>;
 
+    using LitColorDraw = DrawSubmission<VertexLitColor>;
+    using LitColorDrawQueue = std::vector<LitColorDraw>;
+
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
 
@@ -87,20 +92,25 @@ private:
 
     static DescriptorSet _skybox_texture_set;
 
-    // Shader Resources --------------------------------------------------------
-    static BufferList _global_buffers;
+    static DescriptorSetLayout _light_props_layout;
+    static DescSetList         _light_props_sets;
 
+    // Shader Resources --------------------------------------------------------
+    static BufferList           _global_buffers;
     static Skybox<VertexSkybox> _skybox_mesh;
     static Texture2D            _skybox_texture;
+    static BufferList           _light_props_buffers;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
     static Pipeline _flat_texture_pipeline;
     static Pipeline _skybox_pipeline;
+    static Pipeline _lit_color_pipeline;
 
     // Draw Queues -------------------------------------------------------------
     static FlatColorDrawQueue   _flat_color_draws;
     static FlatTextureDrawQueue _flat_texture_draws;
+    static LitColorDrawQueue    _lit_color_draws;
 
     static void _init_framebuffers();
     static void _init_frame_data();
@@ -110,14 +120,17 @@ private:
     static void _init_global_buffers();
     static void _init_flat_textures();
     static void _init_skybox_resources();
+    static void _init_light_props_buffers();
 
     static void _init_flat_color_pipeline();
     static void _init_flat_texture_pipeline();
     static void _init_skybox_pipeline();
+    static void _init_lit_color_pipeline();
 
     static void _execute_flat_color_pipeline();
     static void _execute_flat_texture_pipeline();
     static void _execute_skybox_pipeline();
+    static void _execute_lit_color_pipeline();
 
     template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,

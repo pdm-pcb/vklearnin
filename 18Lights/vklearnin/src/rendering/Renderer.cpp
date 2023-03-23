@@ -35,23 +35,34 @@ Renderer::DescSetList Renderer::_flat_texture_sets;
 
 DescriptorSet Renderer::_skybox_texture_set;
 
+DescriptorSetLayout   Renderer::_light_props_layout;
+Renderer::DescSetList Renderer::_light_props_sets;
+
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_global_buffers;
 Skybox<VertexSkybox> Renderer::_skybox_mesh;
 Texture2D            Renderer::_skybox_texture;
+Renderer::BufferList Renderer::_light_props_buffers;
 
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
 Pipeline Renderer::_flat_texture_pipeline;
 Pipeline Renderer::_skybox_pipeline;
+Pipeline Renderer::_lit_color_pipeline;
 
 // Draw Queues -----------------------------------------------------------------
-Renderer::FlatColorDrawQueue Renderer::_flat_color_draws;
+Renderer::FlatColorDrawQueue   Renderer::_flat_color_draws;
 Renderer::FlatTextureDrawQueue Renderer::_flat_texture_draws;
+Renderer::LitColorDrawQueue    Renderer::_lit_color_draws;
 
 // =============================================================================
 void Renderer::update_global_buffer(GlobalBuffer const &buffer) {
     BufferTools::update_buffer(_global_buffers[_frame_index], &buffer);
+}
+
+// =============================================================================
+void Renderer::update_light_props(LightProps const &buffer) {
+    BufferTools::update_buffer(_light_props_buffers[_frame_index], &buffer);
 }
 
 // =============================================================================
@@ -93,6 +104,22 @@ void Renderer::submit_draw(Mesh<VertexFlatTexture> const &mesh,
 }
 
 // =============================================================================
+void Renderer::submit_draw(Mesh<VertexLitColor> const &mesh,
+                           Mat4 const &model_matrix)
+{
+    _lit_color_draws.push_back(
+        DrawSubmission<VertexLitColor> {
+            .mesh = &mesh,
+            .push_constants = {{
+                .stage_flags = vk::ShaderStageFlagBits::eAll,
+                .size        = sizeof(vkl::Mat4),
+                .data        = &model_matrix,
+            }}
+        }
+    );
+}
+
+// =============================================================================
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
 
@@ -116,8 +143,9 @@ void Renderer::record_commands() {
     frame_data.cmd_buffer().begin_render_pass(render_pass_info);
 
         _execute_flat_color_pipeline();
-        _execute_flat_texture_pipeline();
-        _execute_skybox_pipeline();
+        // _execute_flat_texture_pipeline();
+        // _execute_skybox_pipeline();
+        _execute_lit_color_pipeline();
 
     frame_data.cmd_buffer().end_render_pass();
     frame_data.cmd_buffer().end_recording();
@@ -148,6 +176,7 @@ void Renderer::init() {
     Swapchain::create();
 
     _render_pass.create();
+
     _init_framebuffers();
     _init_frame_data();
     _init_descriptor_pool();
@@ -158,9 +187,11 @@ void Renderer::shutdown() {
     _flat_color_pipeline.destroy();
     _flat_texture_pipeline.destroy();
     _skybox_pipeline.destroy();
+    _lit_color_pipeline.destroy();
 
     _global_buffer_layout.destroy();
     _flat_texture_layout.destroy();
+    _light_props_layout.destroy();
 
     _desc_pool.destroy();
 
@@ -170,6 +201,10 @@ void Renderer::shutdown() {
 
     _skybox_mesh.shutdown();
     _skybox_texture.shutdown();
+
+    for(auto &buffer : _light_props_buffers) {
+        BufferTools::destroy(buffer);
+    }
 
     for(auto &framebuffer : _framebuffers) {
         framebuffer.destroy();
@@ -229,10 +264,12 @@ void Renderer::create_pipelines() {
     _init_global_buffers();
     _init_flat_textures();
     _init_skybox_resources();
+    _init_light_props_buffers();
 
     _init_flat_color_pipeline();
     _init_flat_texture_pipeline();
     _init_skybox_pipeline();
+    _init_lit_color_pipeline();
 }
 
 // =============================================================================
@@ -348,6 +385,47 @@ void Renderer::_init_skybox_resources() {
 }
 
 // =============================================================================
+void Renderer::_init_light_props_buffers() {
+    _light_props_layout
+        .add_binding(
+            vk::DescriptorType::eUniformBuffer,
+            vk::ShaderStageFlagBits::eFragment
+        )
+        .create();
+
+    _light_props_sets.resize(RenderConfig::swapchain_image_count);
+
+    for(auto &set : _light_props_sets) {
+        set.allocate(_desc_pool, _light_props_layout);
+    }
+
+    _light_props_buffers.resize(_light_props_sets.size());
+    for(auto &buffer : _light_props_buffers) {
+        buffer.size = sizeof(LightProps);
+        vkl::BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    for(uint32_t frame = 0u;
+        frame < RenderConfig::swapchain_image_count;
+        ++frame)
+    {
+        _light_props_sets[frame]
+            .add_buffer(_light_props_buffers[frame])
+            .write_set();
+    }
+
+    CONSOLE_INFO(
+        "Renderer will use {} light properties descriptor sets",
+        _light_props_sets.size()
+    );
+}
+
+// =============================================================================
 void Renderer::_init_flat_color_pipeline() {
     _flat_color_pipeline
         .vert_from_spirv("shaders/01flat_color.vert")
@@ -428,6 +506,33 @@ void Renderer::_init_skybox_pipeline() {
 }
 
 // =============================================================================
+void Renderer::_init_lit_color_pipeline() {
+    _lit_color_pipeline
+        .vert_from_spirv("shaders/04lit_color.vert")
+        .frag_from_spirv("shaders/04lit_color.frag")
+        .describe_vertex_input(
+            VertexLitColor::bindings,
+            VertexLitColor::attributes
+        )
+        .add_descriptor_set(_global_buffer_layout)
+        .add_descriptor_set(_light_props_layout)
+        .add_push_constant(
+            vk::ShaderStageFlagBits::eAll,
+            sizeof(Mat4)
+        )
+        .create(
+            _render_pass,
+            Pipeline::Config {
+                .polygon_mode     = vk::PolygonMode::eFill,
+                .cull_mode        = vk::CullModeFlagBits::eBack,
+                .front_face       = vk::FrontFace::eClockwise,
+                .max_msaa_samples = max_msaa_flag(),
+                .subpass_index    = 0u,
+            }
+        );
+}
+
+// =============================================================================
 void Renderer::_execute_flat_color_pipeline() {
     auto const &frame_data        = _frame_data[_frame_index];
     auto const &cmd_buffer        = frame_data.cmd_buffer();
@@ -479,6 +584,25 @@ void Renderer::_execute_skybox_pipeline() {
     _skybox_pipeline.bind_descriptor_set(cmd_buffer, _skybox_texture_set);
 
     _skybox_mesh.draw_indexed(cmd_buffer);
+}
+
+// =============================================================================
+void Renderer::_execute_lit_color_pipeline() {
+    auto const &frame_data        = _frame_data[_frame_index];
+    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &global_buffer_set = _global_buffer_sets[_frame_index];
+    auto const &light_props_set   = _light_props_sets[_frame_index];
+
+    _lit_color_pipeline.bind(cmd_buffer);
+    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
+    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
+
+    for(auto const &draw : _lit_color_draws) {
+        _send_push_constants(_lit_color_pipeline, draw, frame_data);
+        draw.mesh->draw_indexed(cmd_buffer);
+    }
+
+    _lit_color_draws.clear();
 }
 
 } // namespace vkl

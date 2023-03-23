@@ -14,21 +14,19 @@ vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 void Demo::update() {
     _camera.update();
 
-    vkl::Renderer::update_global_buffer({
-        .view_matrix = _camera.view_matrix(),
-        .proj_matrix = _camera.proj_matrix()
-    });
+    static vkl::Renderer::GlobalBuffer global_buffer;
+    global_buffer.view_matrix = _camera.view_matrix();
+    global_buffer.proj_matrix = _camera.proj_matrix();
 
-    // _light_props.dir.toward = vkl::math::normalize(DIR_POS);
-    // _light_props.dir.color  = DIR_COLOR;
+    vkl::Renderer::update_global_buffer(global_buffer);
 
-    // _light_props.point.position = POINT_POS;
-    // _light_props.point.color    = POINT_COLOR;
+    static vkl::LightProps light_props;
+    light_props.dir.toward     = vkl::math::normalize(DIR_POS);
+    light_props.dir.color      = DIR_COLOR;
+    light_props.point.position = POINT_POS;
+    light_props.point.color    = POINT_COLOR;
 
-    // vkl::BufferTools::update_buffer(
-    //     _light_props_ubos[vkl::Swapchain::image_index()],
-    //     &_light_props
-    // );
+    vkl::Renderer::update_light_props(light_props);
 
     _cube_matrix = vkl::math::rotate(
         vkl::Mat4::identity,
@@ -40,7 +38,7 @@ void Demo::update() {
 // =============================================================================
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_texture, _cube_matrix);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix);
     vkl::Renderer::submit_draw(_floor_mesh, _floor_texture, _floor_matrix);
 }
 
@@ -75,23 +73,8 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
-    _cube_mesh.init(1.0f, 1.0f);
+    _cube_mesh.init(1.0f, MATERIAL_COLOR);
     _floor_mesh.init(10.0f, 10.0f);
-
-    // _cube_mesh.init(
-    //     1.0f,
-    //     {{
-    //         { 1.0f, 0.0f, 0.0f, 1.0f }, // Red
-    //         { 0.0f, 1.0f, 0.0f, 1.0f }, // Green
-    //         { 0.0f, 0.0f, 1.0f, 1.0f }, // Blue
-    //         { 1.0f, 1.0f, 1.0f, 1.0f }, // White
-
-    //         { 1.0f, 1.0f, 0.0f, 1.0f }, // Yellow
-    //         { 0.0f, 1.0f, 1.0f, 1.0f }, // Cyan
-    //         { 1.0f, 0.0f, 1.0f, 1.0f }, // Fuchsia
-    //         { 0.0f, 0.0f, 0.0f, 1.0f }, // Black
-    //     }}
-    // );
 }
 
 // =============================================================================

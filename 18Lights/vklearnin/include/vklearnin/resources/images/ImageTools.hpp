@@ -3,7 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
-#include "vklearnin/resources/images/Texture2D.hpp"
+#include "vklearnin/materials/Texture2D.hpp"
 
 namespace vkl::ImageTools {
 
