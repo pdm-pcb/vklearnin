@@ -43,6 +43,22 @@ public:
         });
     }
 
+    void init(float const scale, float const tile)
+    requires std::is_same_v<VertexType, VertexMaterial>
+    {
+        Mesh<VertexType>::_set_vertices({
+            {{ -scale, 0.0f,  scale, 1.0f }, Vec4::unit_y, { 0.0f, tile }},
+            {{ -scale, 0.0f, -scale, 1.0f }, Vec4::unit_y, { tile, tile }},
+            {{  scale, 0.0f, -scale, 1.0f }, Vec4::unit_y, { tile, 0.0f }},
+            {{  scale, 0.0f,  scale, 1.0f }, Vec4::unit_y, { 0.0f, 0.0f }},
+        });
+
+        Mesh<VertexType>::_set_indices({
+            0, 1, 2,
+            0, 2, 3
+        });
+    }
+
     XZPlane() = default;
     ~XZPlane() = default;
 

@@ -7,7 +7,7 @@ vkl::Vec4 MATERIAL_COLOR { 0.15f, 0.65f, 0.25f, 256.0f };
 vkl::Vec4 DIR_COLOR { 1.0f, 1.0f, 1.0f, 0.25f };
 vkl::Vec4 DIR_POS   { 1.0f, 2.0f, 1.0f, 1.0f  };
 
-vkl::Vec4 POINT_COLOR { 1.0f, 1.0f, 1.0f, 0.5f };
+vkl::Vec4 POINT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
 vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 
 // =============================================================================
@@ -39,7 +39,7 @@ void Demo::update() {
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
     vkl::Renderer::submit_draw(_cube_mesh, _cube_material, _cube_matrix);
-    vkl::Renderer::submit_draw(_floor_mesh, _floor_texture, _floor_matrix);
+    vkl::Renderer::submit_draw(_floor_mesh, _floor_material, _floor_matrix);
 }
 
 // =============================================================================
@@ -55,12 +55,11 @@ void Demo::init() {
 void Demo::shutdown() {
     _lamp_mesh.shutdown();
     _cube_mesh.shutdown();
-    _wall_mesh.shutdown();
     _floor_mesh.shutdown();
 
-    _cube_texture.shutdown();
+    // TODO: material can be as smart as Texture2D
     _cube_material.diffuse.shutdown();
-    _floor_texture.shutdown();
+    _floor_material.diffuse.shutdown();
 }
 
 // =============================================================================
@@ -74,7 +73,7 @@ void Demo::_init_camera() {
 // =============================================================================
 void Demo::_init_meshes() {
     _lamp_mesh.init(0.025f, POINT_COLOR);
-    _cube_mesh.init(1.0f);
+    _cube_mesh.init(1.0f, 1.0f);
     _floor_mesh.init(10.0f, 10.0f);
 }
 
@@ -104,18 +103,14 @@ void Demo::_init_textures() {
         vk::SamplerAddressMode::eRepeat
     );
 
-    _floor_texture.texture_from_file("textures/woodfloor_051_d.jpg");
-    _floor_texture.init_sampler(
+    _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
+    _floor_material.diffuse.init_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
-
-    vkl::Renderer::set_textures({
-        _floor_texture
-    });
 
     vkl::Renderer::set_skybox_texture({{
         "textures/skybox/belfast_sunset/px.png",
@@ -127,7 +122,8 @@ void Demo::_init_textures() {
     }});
 
     vkl::Renderer::set_materials({
-        _cube_material
+        _cube_material,
+        _floor_material,
     });
 }
 
@@ -154,15 +150,12 @@ Demo::Demo() :
 
     _lamp_mesh   { },
     _cube_mesh   { },
-    _wall_mesh   { },
     _floor_mesh  { },
 
     _lamp_matrix  { },
     _cube_matrix  { },
-    _wall_matrix  { },
     _floor_matrix { },
 
-    _cube_texture   { },
-    _wall_texture   { },
-    _floor_texture  { }
+    _cube_material  { },
+    _floor_material { }
 { }
