@@ -93,7 +93,10 @@ void Swapchain::create() {
 
     _swapchain = LogicalDevice::native().createSwapchainKHR(create_info);
 
-    CONSOLE_TRACE("Created swapchain for logical device");
+    CONSOLE_TRACE(
+        "Created swapchain {:#x}",
+        reinterpret_cast<uint64_t>(VkSwapchainKHR(_swapchain))
+    );
 
     _get_images();
 }
@@ -103,6 +106,12 @@ void Swapchain::destroy() {
     for(auto &image : _images) {
         ImageTools::destroy_view(image);
     }
+
+
+    CONSOLE_TRACE(
+        "Destroying swapchain {:#x}",
+        reinterpret_cast<uint64_t>(VkSwapchainKHR(_swapchain))
+    );
 
     LogicalDevice::native().destroy(_swapchain);
 }
@@ -192,23 +201,37 @@ void Swapchain::_query_surface_format() {
 
     CONSOLE_TRACE("Found {} surface formats.", formats.size());
 
-    // First, default to the image format details of the first listed - these
-    // are only used if we can't find the desired combo in the for loop below.
-    _image_format = formats[0].format;
-    _color_space  = formats[0].colorSpace;
+    bool found_desired = false;
+    auto const desired_format = vk::Format::eB8G8R8A8Unorm;
+    auto const deisred_space = vk::ColorSpaceKHR::eSrgbNonlinear;
 
     for(auto const& format : formats) {
-        if(format.format == vk::Format::eR8G8B8A8Unorm &&
-           format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+        if(format.format == desired_format &&
+           format.colorSpace == deisred_space)
         {
             _image_format = format.format;
             _color_space  = format.colorSpace;
+            found_desired = true;
         }
 
         CONSOLE_TRACE(
             "    {} / {}",
             to_string(format.format),
             to_string(format.colorSpace)
+        );
+    }
+
+    if(!found_desired) {
+        _image_format = formats[0].format;
+        _color_space  = formats[0].colorSpace;
+
+        CONSOLE_WARN(
+            "Could not find desired swapchain surface format/color space of "
+            "{} / {}. Defaulting instead to {} / {}.",
+            to_string(desired_format),
+            to_string(deisred_space),
+            to_string(_image_format),
+            to_string(_color_space)
         );
     }
 }
@@ -302,7 +325,7 @@ void Swapchain::_populate_create_info(vk::SwapchainCreateInfoKHR &create_info) {
         .oldSwapchain = nullptr,
     };
 
-    CONSOLE_TRACE(
+    CONSOLE_INFO(
         "\nSwapchain Create Info:"
         "\n    Extent:       {}x{}"
         "\n    Image Count:  {}"

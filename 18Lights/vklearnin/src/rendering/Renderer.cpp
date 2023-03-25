@@ -436,7 +436,7 @@ void Renderer::_init_texture_sets() {
     }
 
     CONSOLE_INFO(
-        "Renderer will use {} flat texture descriptor sets",
+        "Renderer will use {} texture descriptor sets",
         _texture_sets.size()
     );
 }
