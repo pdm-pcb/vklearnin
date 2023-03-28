@@ -123,7 +123,7 @@ Mat4 scale(Mat4 const &m, Vec4 const &v) {
 
 // =============================================================================
 // Camera math
-Mat4 orthographic_projection(float const left, float const right,
+Mat4 orthographic_projection(float const right, float const left,
                              float const top, float const bottom)
 {
     auto result = Mat4::identity;
