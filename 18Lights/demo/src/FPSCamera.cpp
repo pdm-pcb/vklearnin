@@ -35,9 +35,8 @@ void FPSCamera::update() {
 
 // =============================================================================
 void FPSCamera::init(vkl::Vec4 const &position, vkl::Vec4 const &forward) {
-    _state.pos = position;
+    _state.pos     = position;
     _state.forward = forward;
-
     _subscribe_to_events();
 }
 

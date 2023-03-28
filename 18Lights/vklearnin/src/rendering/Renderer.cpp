@@ -93,9 +93,20 @@ void Renderer::update_camera_data(CameraData const &data) {
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
-    auto const dir_proj_mat = math::orthographic_projection();
+    auto const dir_proj_mat = math::orthographic_projection(
+        -1.0f,
+        1.0f,
+        -1.0f,
+        1.0f
+    );
+    // auto const dir_proj_mat = math::perspective_projection(
+    //     0.1f,
+    //     1000.0f,
+    //     45.0f,
+    //     1.0f
+    // );
     auto const dir_view_mat = math::look_at(
-        data.dir.toward,
+        data.dir.toward * 25.0f,
         Vec4::origin,
         Vec4::unit_y
     );

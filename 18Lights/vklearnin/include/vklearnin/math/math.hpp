@@ -52,10 +52,8 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
 
 // =============================================================================
 // Camera math
-[[nodiscard]] Mat4 orthographic_projection(float const right  = 1.0f,
-                                           float const left   = -1.0f,
-                                           float const top    = 1.0f,
-                                           float const bottom = -1.0f);
+[[nodiscard]] Mat4 orthographic_projection(float const left, float const right,
+                                           float const bottom, float const top);
 
 [[nodiscard]] Mat4 perspective_projection(float const near, float const far,
                                           float const vertical_fov_degrees,
