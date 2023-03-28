@@ -4,6 +4,24 @@
 namespace vkl {
 
 // =============================================================================
+VertexBindings const VertexPos::bindings {{
+    .binding   = 0u,
+    .stride    = sizeof(VertexPos),
+    .inputRate = vk::VertexInputRate::eVertex
+}};
+
+VertexAttribs const VertexPos::attributes {{
+    .location = 0u,
+    .binding  = 0u,
+    .format   = vk::Format::eR32G32B32A32Sfloat,
+    .offset   = static_cast<uint32_t>(offsetof(VertexPos, position)),
+}};
+
+VertexPos::VertexPos(Vec4 const &position) :
+    position { position }
+{ }
+
+// =============================================================================
 VertexBindings const VertexFlatColor::bindings {{
     .binding   = 0u,
     .stride    = sizeof(VertexFlatColor),

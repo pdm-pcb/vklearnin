@@ -91,6 +91,27 @@ void FrameData::_create_cmd_structures() {
 }
 
 // =============================================================================
+void FrameData::_create_sync_primitives() {
+    _acquire_complete  = LogicalDevice::native().createSemaphore({ });
+    _commands_complete = LogicalDevice::native().createSemaphore({ });
+
+    vk::FenceCreateInfo const fence_info {
+        .flags = vk::FenceCreateFlagBits::eSignaled
+    };
+    _queue_complete    = LogicalDevice::native().createFence(fence_info);
+
+    CONSOLE_TRACE(
+        "\nCreated sync primitives:"
+        "\n\tacquire complete semaphore  {:#x}"
+        "\n\tcommands complete semaphore {:#x}"
+        "\n\tqueue complete fence        {:#x}",
+        reinterpret_cast<uint64_t>(VkSemaphore(_acquire_complete)),
+        reinterpret_cast<uint64_t>(VkSemaphore(_commands_complete)),
+        reinterpret_cast<uint64_t>(VkFence(_queue_complete))
+    );
+}
+
+// =============================================================================
 void FrameData::_destroy_cmd_structures() {
     _cmd_buffer.free();
     _cmd_pool.destroy();
@@ -111,27 +132,6 @@ void FrameData::_destroy_sync_primitives() {
     LogicalDevice::native().destroySemaphore(_acquire_complete);
     LogicalDevice::native().destroySemaphore(_commands_complete);
     LogicalDevice::native().destroyFence(_queue_complete);
-}
-
-// =============================================================================
-void FrameData::_create_sync_primitives() {
-    _acquire_complete  = LogicalDevice::native().createSemaphore({ });
-    _commands_complete = LogicalDevice::native().createSemaphore({ });
-
-    vk::FenceCreateInfo const fence_info {
-        .flags = vk::FenceCreateFlagBits::eSignaled
-    };
-    _queue_complete    = LogicalDevice::native().createFence(fence_info);
-
-    CONSOLE_TRACE(
-        "\nCreated sync primitives:"
-        "\n\tacquire complete semaphore  {:#x}"
-        "\n\tcommands complete semaphore {:#x}"
-        "\n\tqueue complete fence        {:#x}",
-        reinterpret_cast<uint64_t>(VkSemaphore(_acquire_complete)),
-        reinterpret_cast<uint64_t>(VkSemaphore(_commands_complete)),
-        reinterpret_cast<uint64_t>(VkFence(_queue_complete))
-    );
 }
 
 // =============================================================================

@@ -6,7 +6,7 @@
 namespace vkl {
 
 // =============================================================================
-void IndexBuffer::init(const size_t size) {
+void IndexBuffer::create(size_t const size) {
     _buffer.size = size;
     BufferTools::create(
         _buffer,
@@ -17,12 +17,12 @@ void IndexBuffer::init(const size_t size) {
 }
 
 // =============================================================================
-void IndexBuffer::shutdown() {
+void IndexBuffer::destroy() {
     BufferTools::destroy(_buffer);
 }
 
 // =============================================================================
-void IndexBuffer::populate_buffer(const std::vector<Index> &indices) {
+void IndexBuffer::populate_buffer(std::vector<Index> const &indices) {
     BufferTools::host_to_device(_buffer, indices.data());
 }
 

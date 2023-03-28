@@ -15,11 +15,14 @@ class CmdBuffer;
 class Pipeline {
 public:
     struct Config {
-        vk::PolygonMode         polygon_mode;
-        vk::CullModeFlags       cull_mode;
-        vk::FrontFace           front_face;
-        vk::SampleCountFlagBits max_msaa_samples;
-        uint32_t                subpass_index;
+        vk::Extent2D            viewport_extent { 0u, 0u };
+        vk::Offset2D            viewport_offset { 0, 0 };
+        vk::PolygonMode         polygon_mode  = vk::PolygonMode::eFill;
+        vk::CullModeFlags       cull_mode     = vk::CullModeFlagBits::eBack;
+        vk::FrontFace           front_face    = vk::FrontFace::eClockwise;
+        vk::SampleCountFlagBits msaa_samples  = vk::SampleCountFlagBits::e1;
+        vk::CompareOp           depth_compare = vk::CompareOp::eLess;
+        uint32_t                subpass_index = 0u;
     };
 
     void bind(CmdBuffer const &cmd_buffer);
@@ -40,7 +43,8 @@ public:
 
     void create(RenderPass const &render_pass, Config const &config);
     void destroy();
-    void update_dimensions();
+    void update_dimensions(vk::Extent2D const &extent,
+                           vk::Offset2D const &offset);
 
     inline auto const& native()   const { return _pipeline; }
     inline auto const& layout()   const { return _layout; }
@@ -87,10 +91,10 @@ private:
     vk::Pipeline       _pipeline;
 
     void _init_assembly();
-    void _init_viewport();
+    void _init_viewport(Config const &config);
     void _init_raster(Config const &config);
     void _init_multisample(Config const &config);
-    void _init_depth_stencil();
+    void _init_depth_stencil(Config const &config);
     void _init_blend();
     void _init_dynamic_states();
     void _init_layout();

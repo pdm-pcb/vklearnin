@@ -9,10 +9,10 @@ namespace vkl {
 
 class IndexBuffer {
 public:
-    void init(const size_t size);
-    void shutdown();
+    void create(size_t const size);
+    void destroy();
 
-    void populate_buffer(const std::vector<Index> &indices);
+    void populate_buffer(std::vector<Index> const &indices);
 
     inline auto const & buffer() const { return _buffer; }
 

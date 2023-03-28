@@ -16,11 +16,11 @@ vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 void Demo::update() {
     _camera.update();
 
-    static vkl::Renderer::GlobalBuffer global_buffer;
-    global_buffer.view_matrix = _camera.view_matrix();
-    global_buffer.proj_matrix = _camera.proj_matrix();
+    static vkl::Renderer::CameraData camera_data;
+    camera_data.view_matrix = _camera.view_matrix();
+    camera_data.proj_matrix = _camera.proj_matrix();
 
-    vkl::Renderer::update_global_buffer(global_buffer);
+    vkl::Renderer::update_camera_data(camera_data);
 
     static vkl::LightProps light_props;
     light_props.dir.toward     = vkl::math::normalize(DIR_POS);
@@ -56,15 +56,15 @@ void Demo::init() {
 
 // =============================================================================
 void Demo::shutdown() {
-    _lamp_mesh.shutdown();
-    _cube_mesh.shutdown();
-    _floor_mesh.shutdown();
-    _wall_mesh.shutdown();
+    _lamp_mesh.destroy();
+    _cube_mesh.destroy();
+    _floor_mesh.destroy();
+    _wall_mesh.destroy();
 
     // TODO: material can be as smart as Texture2D
-    _cube_material.diffuse.shutdown();
-    _floor_material.diffuse.shutdown();
-    _wall_material.diffuse.shutdown();
+    _cube_material.diffuse.destroy();
+    _floor_material.diffuse.destroy();
+    _wall_material.diffuse.destroy();
 }
 
 // =============================================================================
@@ -115,7 +115,7 @@ void Demo::_init_model_matrices() {
 // =============================================================================
 void Demo::_init_textures() {
     _cube_material.diffuse.texture_from_file("textures/brickwall017_d.jpg");
-    _cube_material.diffuse.init_sampler(
+    _cube_material.diffuse.create_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -124,7 +124,7 @@ void Demo::_init_textures() {
     );
 
     _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
-    _floor_material.diffuse.init_sampler(
+    _floor_material.diffuse.create_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,

@@ -9,11 +9,13 @@ class RenderPass;
 
 class Framebuffer final {
 public:
-    void create(const std::vector<vk::ImageView> &attachments,
-                const vk::RenderPass &render_pass);
+    void create(vk::Rect2D const &render_area,
+                std::vector<vk::ImageView> const &attachments,
+                vk::RenderPass const &render_pass);
     void destroy();
 
-    inline auto const& native() const { return _framebuffer; }
+    inline auto const & native()      const { return _framebuffer; }
+    inline auto const & render_area() const { return _render_area; }
 
     Framebuffer();
     ~Framebuffer() = default;
@@ -26,6 +28,7 @@ public:
 
 private:
     vk::Framebuffer _framebuffer;
+    vk::Rect2D _render_area;
 };
 
 } // namespace vkl

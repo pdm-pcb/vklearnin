@@ -14,15 +14,15 @@ layout(set = 0, binding = 0) uniform CameraData {
 };
 
 layout(push_constant) uniform ModelPush {
-	mat4 model_mat;
+    mat4 model_mat;
 };
 
 void main() {
-	vec4 world_pos = model_mat * in_pos;
+    vec4 world_pos = model_mat * in_pos;
 
-	out_pos    = world_pos.xyz;
-	out_normal = normalize(mat3(model_mat) * in_normal.xyz);
+    out_pos    = world_pos.xyz;
+    out_normal = normalize(mat3(model_mat) * in_normal.xyz);
     out_uv     = in_uv;
 
-	gl_Position = proj_mat * view_mat * world_pos;
+    gl_Position = proj_mat * view_mat * world_pos;
 }

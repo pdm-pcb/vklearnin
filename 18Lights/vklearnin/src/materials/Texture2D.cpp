@@ -95,11 +95,39 @@ void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
 }
 
 // =============================================================================
-void Texture2D::init_sampler(const vk::Filter min_filter,
-                             const vk::Filter mag_filter,
-                             const vk::SamplerMipmapMode mip_filter,
-                             const vk::SamplerAddressMode mode_u,
-                             const vk::SamplerAddressMode mode_v)
+void Texture2D::create_shadow_map(uint32_t const width, uint32_t const height,
+                                  vk::Format const depth_format)
+{
+    _image.format = depth_format;
+
+    _image.extent = vk::Extent3D {
+        .width  = width,
+        .height = height,
+        .depth  = 1u
+    };
+
+    ImageTools::create(
+        _image,
+        vk::ImageType::e2D,
+        // No multisampling for shadow maps in favor of PCF/soft shadows
+        vk::SampleCountFlagBits::e1,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        vk::MemoryPropertyFlagBits::eDeviceLocal
+    );
+
+    ImageTools::create_view(
+        _image,
+        vk::ImageViewType::e2D,
+        vk::ImageAspectFlagBits::eDepth
+    );
+}
+
+// =============================================================================
+void Texture2D::create_sampler(const vk::Filter min_filter,
+                               const vk::Filter mag_filter,
+                               const vk::SamplerMipmapMode mip_filter,
+                               const vk::SamplerAddressMode mode_u,
+                               const vk::SamplerAddressMode mode_v)
 {
     ImageTools::create_sampler(
         _image,
@@ -114,7 +142,7 @@ void Texture2D::init_sampler(const vk::Filter min_filter,
 }
 
 // =============================================================================
-void Texture2D::shutdown() {
+void Texture2D::destroy() {
     ImageTools::destroy(_image);
 }
 

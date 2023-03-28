@@ -22,13 +22,13 @@ struct Material;
 
 class Renderer {
 public:
-    struct GlobalBuffer {
+    struct CameraData {
         Mat4 view_matrix;
         Mat4 proj_matrix;
     };
 
-    static void update_global_buffer(GlobalBuffer const &buffer);
-    static void update_light_props(LightProps const &buffer);
+    static void update_camera_data(CameraData const &data);
+    static void update_light_props(LightProps const &data);
 
     static void submit_draw(Mesh<VertexFlatColor> const &mesh,
                             Mat4 const &model_matrix);
@@ -59,11 +59,17 @@ public:
     Renderer() = delete;
 
 private:
-    static RenderPass               _render_pass;
-    static std::vector<Framebuffer> _framebuffers;
-    static std::vector<FrameData>   _frame_data;
-    static uint32_t                 _frame_index;
-    static uint64_t                 _frame_count;
+    static RenderPass _color_pass;
+    static RenderPass _shadow_map_pass;
+
+    static std::vector<Framebuffer> _color_framebuffers;
+    static std::vector<Framebuffer> _shadow_map_framebuffers;
+
+    static uint32_t _shadow_map_resolution;
+
+    static std::vector<FrameData> _frame_data;
+    static uint32_t               _frame_index;
+    static uint64_t               _frame_count;
 
     // Convenience using delcarations ------------------------------------------
     using DescSetList = std::vector<DescriptorSet>;
@@ -101,8 +107,8 @@ private:
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
 
-    static DescriptorSetLayout _global_buffer_layout;
-    static DescSetList         _global_buffer_sets;
+    static DescriptorSetLayout _global_data_layout;
+    static DescSetList         _global_data_sets;
 
     static DescriptorSetLayout _texture_layout;
     static DescSetList         _texture_sets;
@@ -116,7 +122,7 @@ private:
     static DescSetList         _material_sets;
 
     // Shader Resources --------------------------------------------------------
-    static BufferList           _global_buffers;
+    static BufferList           _camera_buffers;
     static Skybox<VertexSkybox> _skybox_mesh;
     static Texture2D            _skybox_texture;
     static BufferList           _light_props_buffers;
@@ -127,19 +133,26 @@ private:
     static Pipeline _skybox_pipeline;
     static Pipeline _lit_color_pipeline;
     static Pipeline _material_pipeline;
+    static Pipeline _shadow_map_pipeline;
 
     // Draw Queues -------------------------------------------------------------
-    static FlatColorDrawQueue   _flat_color_draws;
-    static TextureDrawQueue _texture_draws;
-    static LitColorDrawQueue    _lit_color_draws;
-    static MaterialDrawQueue    _material_draws;
+    static FlatColorDrawQueue _flat_color_draws;
+    static TextureDrawQueue   _texture_draws;
+    static LitColorDrawQueue  _lit_color_draws;
+    static MaterialDrawQueue  _material_draws;
 
-    static void _init_framebuffers();
+    static void _init_color_pass();
+    static void _init_color_framebuffers();
+
+    static void _init_shadow_map_pass();
+    static void _init_shadow_map_framebuffers();
+
     static void _init_frame_data();
 
     static void _init_descriptor_pool();
 
-    static void _init_global_buffers();
+    static void _init_camera_buffers();
+    static void _init_global_data_sets();
     static void _init_texture_sets();
     static void _init_skybox_resources();
     static void _init_light_props_buffers();
@@ -150,12 +163,14 @@ private:
     static void _init_skybox_pipeline();
     static void _init_lit_color_pipeline();
     static void _init_material_pipeline();
+    static void _init_shadow_map_pipeline();
 
     static void _execute_flat_color_pipeline();
     static void _execute_texture_pipeline();
     static void _execute_skybox_pipeline();
     static void _execute_lit_color_pipeline();
     static void _execute_material_pipeline();
+    static void _execute_shadow_map_pipeline();
 
     template <typename VertexType>
     static void _send_push_constants(Pipeline const &pipeline,

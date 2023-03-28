@@ -40,6 +40,11 @@ void Pipeline::bind_descriptor_set(CmdBuffer const &cmd_buffer,
 Pipeline & Pipeline::vert_from_spirv(std::string_view filepath,
                                      std::string_view entry_point)
 {
+    if(_pipeline) {
+        CONSOLE_CRITICAL("Adding a vertex stage to a pipeline that's already "
+                         "been created.");
+    }
+
     _vert.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -52,7 +57,13 @@ Pipeline & Pipeline::vert_from_spirv(std::string_view filepath,
 
 // =============================================================================
 Pipeline & Pipeline::frag_from_spirv(std::string_view filepath,
-                                     std::string_view entry_point) {
+                                     std::string_view entry_point)
+{
+    if(_pipeline) {
+        CONSOLE_CRITICAL("Adding a fragment stage to a pipeline that's already "
+                         "been created.");
+    }
+
     _frag.create(filepath);
     _shader_stages.emplace_back(vk::PipelineShaderStageCreateInfo {
         .stage = vk::ShaderStageFlagBits::eFragment,
@@ -83,6 +94,11 @@ Pipeline & Pipeline::describe_vertex_input(VertexBindings const &bindings,
 
 // =============================================================================
 Pipeline & Pipeline::add_descriptor_set(DescriptorSetLayout const &set_layout) {
+    if(_pipeline) {
+        CONSOLE_CRITICAL("Adding a descriptor set to a pipeline that's already "
+                         "been created.");
+    }
+
     _desc_set_layouts.push_back(set_layout.native());
     return *this;
 }
@@ -91,6 +107,11 @@ Pipeline & Pipeline::add_descriptor_set(DescriptorSetLayout const &set_layout) {
 Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags const stage_flags,
                                        size_t const size)
 {
+    if(_pipeline) {
+        CONSOLE_CRITICAL("Adding a push constant to a pipeline that's already "
+                         "been created.");
+    }
+
     _push_constants.push_back({
         .stageFlags = stage_flags,
         .offset = static_cast<uint32_t>(_push_constant_offset),
@@ -104,11 +125,16 @@ Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags const stage_flags,
 
 // =============================================================================
 void Pipeline::create(RenderPass const &render_pass, Config const &config) {
+    if(_pipeline) {
+        CONSOLE_CRITICAL("Attempting to recreate a pipeline.");
+        return;
+    }
+
     _init_assembly();
-    _init_viewport();
+    _init_viewport(config);
     _init_raster(config);
     _init_multisample(config);
-    _init_depth_stencil();
+    _init_depth_stencil(config);
     _init_blend();
     _init_dynamic_states();
     _init_layout();
@@ -182,22 +208,21 @@ void Pipeline::destroy() {
 }
 
 // =============================================================================
-void Pipeline::update_dimensions() {
-    auto [width, height] = Swapchain::extent();
-    auto [x, y]          = Swapchain::offset();
-
+void Pipeline::update_dimensions(vk::Extent2D const &extent,
+                                 vk::Offset2D const &offset)
+{
     _viewport = vk::Viewport {
-        .x         = static_cast<float>(x),
-        .y         = static_cast<float>(height),
-        .width     = static_cast<float>(width),
-        .height    = -static_cast<float>(height),
+        .x         = static_cast<float>(offset.x),
+        .y         = static_cast<float>(extent.height),
+        .width     = static_cast<float>(extent.width),
+        .height    = -static_cast<float>(extent.height),
         .minDepth  = 0.0f,
         .maxDepth  = 1.0f,
     };
 
     _scissor = vk::Rect2D {
-        .offset = { x, y },
-        .extent = { width, height },
+        .offset = { offset.x, offset.y },
+        .extent = { extent.width, extent.height },
     };
 
     CONSOLE_TRACE(
@@ -226,7 +251,7 @@ void Pipeline::_init_assembly() {
 }
 
 // =============================================================================
-void Pipeline::_init_viewport() {
+void Pipeline::_init_viewport(Config const &config) {
     // We need to tell Vulkan how many viewports and scissors we're providing,
     // but since we're going to mark these as dynamic states, the actual
     // pointers should be null.
@@ -237,7 +262,7 @@ void Pipeline::_init_viewport() {
         .pScissors     = nullptr,
     };
 
-    update_dimensions();
+    update_dimensions(config.viewport_extent, config.viewport_offset);
 }
 
 // =============================================================================
@@ -287,7 +312,7 @@ void Pipeline::_init_raster(Config const &config) {
 // =============================================================================
 void Pipeline::_init_multisample(Config const &config) {
     _multisample_info = {
-        .rasterizationSamples  = config.max_msaa_samples,
+        .rasterizationSamples  = config.msaa_samples,
         .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
@@ -297,11 +322,11 @@ void Pipeline::_init_multisample(Config const &config) {
 }
 
 // =============================================================================
-void Pipeline::_init_depth_stencil() {
+void Pipeline::_init_depth_stencil(Config const &config) {
     _depth_stencil_info = {
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = vk::CompareOp::eLess,
+        .depthCompareOp = config.depth_compare,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
         .front = { },

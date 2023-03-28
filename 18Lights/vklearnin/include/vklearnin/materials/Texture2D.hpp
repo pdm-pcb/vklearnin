@@ -16,12 +16,15 @@ public:
     using CubeFilepaths = std::array<std::string_view, 6>;
     void cubemap_from_files(CubeFilepaths const &filepaths);
 
-    void init_sampler(vk::Filter const min_filter,
-                      vk::Filter const mag_filter,
-                      vk::SamplerMipmapMode const mip_filter,
-                      vk::SamplerAddressMode const mode_u,
-                      vk::SamplerAddressMode const mode_v);
-    void shutdown();
+    void create_shadow_map(uint32_t const width, uint32_t const height,
+                           vk::Format const depth_format);
+
+    void create_sampler(vk::Filter const min_filter,
+                        vk::Filter const mag_filter,
+                        vk::SamplerMipmapMode const mip_filter,
+                        vk::SamplerAddressMode const mode_u,
+                        vk::SamplerAddressMode const mode_v);
+    void destroy();
 
     inline auto const& image() const { return _image; }
 

@@ -12,9 +12,9 @@ namespace vkl {
 template <typename VertexType>
 class Mesh {
 public:
-    void shutdown() {
-        _index_buffer.shutdown();
-        _vertex_buffer.shutdown();
+    void destroy() {
+        _index_buffer.destroy();
+        _vertex_buffer.destroy();
     }
 
     void draw_indexed(CmdBuffer const &cmd_buffer) const;
@@ -31,13 +31,13 @@ public:
 protected:
     void _set_vertices(std::vector<VertexType> const &vertices) {
         _vertex_data = vertices;
-        _vertex_buffer.init(sizeof(VertexType) * _vertex_data.size());
+        _vertex_buffer.create(sizeof(VertexType) * _vertex_data.size());
         _vertex_buffer.populate_buffer(_vertex_data);
     }
 
     void _set_indices(std::vector<Index> const &indices) {
         _index_data = indices;
-        _index_buffer.init(sizeof(Index) * _index_data.size());
+        _index_buffer.create(sizeof(Index) * _index_data.size());
         _index_buffer.populate_buffer(_index_data);
     }
 

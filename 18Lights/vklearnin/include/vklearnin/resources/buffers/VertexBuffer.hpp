@@ -10,7 +10,7 @@ namespace vkl {
 template <typename VertexType>
 class VertexBuffer {
 public:
-    void init(const size_t size) {
+    void create(size_t const size) {
         _buffer.size = size;
         BufferTools::create(
             _buffer,
@@ -22,11 +22,11 @@ public:
         _offsets.emplace_back(0u);
     }
 
-    void shutdown() {
+    void destroy() {
         BufferTools::destroy(_buffer);
     }
 
-    void populate_buffer(const std::vector<VertexType> &vertices) {
+    void populate_buffer(std::vector<VertexType> const &vertices) {
         BufferTools::host_to_device(_buffer, vertices.data());
     }
 

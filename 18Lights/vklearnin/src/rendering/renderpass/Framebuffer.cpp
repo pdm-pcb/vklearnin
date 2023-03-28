@@ -8,15 +8,18 @@
 namespace vkl {
 
 // =============================================================================
-void Framebuffer::create(const std::vector<vk::ImageView> &attachments,
-                         const vk::RenderPass &render_pass)
+void Framebuffer::create(vk::Rect2D const &render_area,
+                         std::vector<vk::ImageView> const &attachments,
+                         vk::RenderPass const &render_pass)
 {
+    _render_area = render_area;
+
     const vk::FramebufferCreateInfo buffer_info {
         .renderPass      = render_pass,
         .attachmentCount = static_cast<uint32_t>(attachments.size()),
         .pAttachments    = attachments.data(),
-        .width           = Swapchain::extent().width,
-        .height          = Swapchain::extent().height,
+        .width           = _render_area.extent.width,
+        .height          = _render_area.extent.height,
         .layers          = 1u,
     };
 
