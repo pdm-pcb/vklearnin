@@ -13,6 +13,7 @@
 #include "vklearnin/meshes/VertexTypes.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 #include "vklearnin/lighting/LightProps.hpp"
+#include "vklearnin/lighting/ShadowMapTransforms.hpp"
 
 namespace vkl {
 
@@ -121,11 +122,15 @@ private:
     static DescriptorSetLayout _material_layout;
     static DescSetList         _material_sets;
 
+    static DescriptorSetLayout _shadow_map_transform_layout;
+    static DescSetList         _shadow_map_transform_sets;
+
     // Shader Resources --------------------------------------------------------
     static BufferList           _camera_buffers;
     static Skybox<VertexSkybox> _skybox_mesh;
     static Texture2D            _skybox_texture;
     static BufferList           _light_props_buffers;
+    static BufferList           _shadow_map_transform_buffers;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
@@ -156,7 +161,10 @@ private:
     static void _init_texture_sets();
     static void _init_skybox_resources();
     static void _init_light_props_buffers();
+    static void _init_light_props_sets();
     static void _init_material_sets();
+    static void _init_shadow_map_transform_buffers();
+    static void _init_shadow_map_transform_sets();
 
     static void _init_flat_color_pipeline();
     static void _init_texture_pipeline();

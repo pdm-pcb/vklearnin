@@ -9,17 +9,6 @@ using VertexBindings = std::vector<vk::VertexInputBindingDescription>;
 using VertexAttribs  = std::vector<vk::VertexInputAttributeDescription>;
 
 // =============================================================================
-struct VertexPos final {
-    Vec4 position;
-
-    static VertexBindings const bindings;
-    static VertexAttribs  const attributes;
-
-    VertexPos(Vec4 const &position);
-    VertexPos() = delete;
-};
-
-// =============================================================================
 struct VertexFlatColor final {
     Vec4 position;
     Vec4 color;

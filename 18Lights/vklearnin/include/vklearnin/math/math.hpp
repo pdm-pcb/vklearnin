@@ -50,6 +50,22 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
 [[nodiscard]] Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis);
 [[nodiscard]] Mat4 scale(Mat4 const &m, Vec4 const &v);
 
+// =============================================================================
+// Camera math
+[[nodiscard]] Mat4 orthographic_projection(float const left, float const right,
+                                           float const top = 1.0f,
+                                           float const bottom = -1.0f);
+
+[[nodiscard]] Mat4 perspective_projection(float const near, float const far,
+                                          float const vertical_fov_degrees,
+                                          float const aspect_ratio);
+
+[[nodiscard]] Mat4 orient_view_matrix(Vec4 const &position, Vec4 const &forward,
+                                      Vec4 const &side, Vec4 const &up);
+
+[[nodiscard]] Mat4 look_at(Vec4 const &position, Vec4 const &target,
+                           Vec4 const &up);
+
 } // namespace vkl::math
 
 #endif // VKLEARNIN_MATH_MATH_HPP

@@ -32,8 +32,14 @@ void create(ImageObject &image,
             const vk::MemoryPropertyFlags memory_properties,
             const vk::ImageCreateFlags flags)
 {
+    if(image.handle) {
+        CONSOLE_CRITICAL("Attempting to recreate an image object");
+        return;
+    }
+
     if(image.format == vk::Format::eUndefined) {
         CONSOLE_CRITICAL("Cannot create image with undefined format.");
+        return;
     }
 
     const vk::ImageCreateInfo image_info {

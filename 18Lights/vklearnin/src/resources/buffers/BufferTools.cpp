@@ -17,6 +17,11 @@ void create(BufferObject &buffer,
             const vk::BufferUsageFlags usage_flags,
             const vk::MemoryPropertyFlags memory_properties)
 {
+    if(buffer.handle) {
+        CONSOLE_CRITICAL("Attempting to recreate a buffer object");
+        return;
+    }
+
     const vk::BufferCreateInfo buffer_info {
         .size        = buffer.size,
         .usage       = usage_flags,

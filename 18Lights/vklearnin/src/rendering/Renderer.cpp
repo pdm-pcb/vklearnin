@@ -58,11 +58,15 @@ Renderer::DescSetList Renderer::_light_props_sets;
 DescriptorSetLayout   Renderer::_material_layout;
 Renderer::DescSetList Renderer::_material_sets;
 
+DescriptorSetLayout   Renderer::_shadow_map_transform_layout;
+Renderer::DescSetList Renderer::_shadow_map_transform_sets;
+
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_camera_buffers;
 Skybox<VertexSkybox> Renderer::_skybox_mesh;
 Texture2D            Renderer::_skybox_texture;
 Renderer::BufferList Renderer::_light_props_buffers;
+Renderer::BufferList Renderer::_shadow_map_transform_buffers;
 
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
@@ -88,6 +92,20 @@ void Renderer::update_camera_data(CameraData const &data) {
 // =============================================================================
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
+
+    auto const dir_proj_mat = math::orthographic_projection(-1.0f, 1.0f);
+    auto const dir_view_mat = math::look_at(
+        data.dir.toward,
+        Vec4::origin,
+        Vec4::unit_y
+    );
+
+    ShadowMapTransforms const transforms {
+        .directional_vp_matrix = dir_view_mat * dir_proj_mat,
+    };
+
+    BufferTools::update_buffer(_shadow_map_transform_buffers[_frame_index],
+                               &transforms);
 }
 
 // =============================================================================
@@ -261,6 +279,7 @@ void Renderer::shutdown() {
     _texture_layout.destroy();
     _light_props_layout.destroy();
     _material_layout.destroy();
+    _shadow_map_transform_layout.destroy();
 
     _desc_pool.destroy();
 
@@ -272,6 +291,10 @@ void Renderer::shutdown() {
     _skybox_texture.destroy();
 
     for(auto &buffer : _light_props_buffers) {
+        BufferTools::destroy(buffer);
+    }
+
+    for(auto &buffer : _shadow_map_transform_buffers) {
         BufferTools::destroy(buffer);
     }
 
@@ -362,7 +385,10 @@ void Renderer::create_pipelines() {
     _init_texture_sets();
     _init_skybox_resources();
     _init_light_props_buffers();
+    _init_light_props_sets();
     _init_material_sets();
+    _init_shadow_map_transform_buffers();
+    _init_shadow_map_transform_sets();
 
     _flat_color_draws.reserve(DRAW_QUEUE_MAGIC_NUMBER);
     _lit_color_draws.reserve(DRAW_QUEUE_MAGIC_NUMBER);
@@ -512,7 +538,7 @@ void Renderer::_init_global_data_sets() {
             .write_set();
     }
 
-    CONSOLE_INFO(
+    CONSOLE_TRACE(
         "Renderer will use {} global data descriptor sets",
         _global_data_sets.size()
     );
@@ -533,7 +559,7 @@ void Renderer::_init_texture_sets() {
             .write_set();
     }
 
-    CONSOLE_INFO(
+    CONSOLE_TRACE(
         "Renderer will use {} texture descriptor sets",
         _texture_sets.size()
     );
@@ -564,7 +590,7 @@ void Renderer::_init_material_sets() {
             .write_set();
     }
 
-    CONSOLE_INFO(
+    CONSOLE_TRACE(
         "Renderer will use {} material descriptor sets",
         _material_sets.size()
     );
@@ -572,6 +598,20 @@ void Renderer::_init_material_sets() {
 
 // =============================================================================
 void Renderer::_init_light_props_buffers() {
+    _light_props_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _light_props_buffers) {
+        buffer.size = sizeof(LightProps);
+        vkl::BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+}
+
+// =============================================================================
+void Renderer::_init_light_props_sets() {
     _light_props_layout
         .add_binding(
             vk::DescriptorType::eUniformBuffer,
@@ -585,17 +625,6 @@ void Renderer::_init_light_props_buffers() {
         set.allocate(_desc_pool, _light_props_layout);
     }
 
-    _light_props_buffers.resize(_light_props_sets.size());
-    for(auto &buffer : _light_props_buffers) {
-        buffer.size = sizeof(LightProps);
-        vkl::BufferTools::create(
-            buffer,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            (vk::MemoryPropertyFlagBits::eHostVisible |
-             vk::MemoryPropertyFlagBits::eHostCoherent)
-        );
-    }
-
     for(uint32_t frame = 0u;
         frame < RenderConfig::swapchain_image_count;
         ++frame)
@@ -605,8 +634,52 @@ void Renderer::_init_light_props_buffers() {
             .write_set();
     }
 
-    CONSOLE_INFO(
+    CONSOLE_TRACE(
         "Renderer will use {} light properties descriptor sets",
+        _light_props_sets.size()
+    );
+}
+
+// =============================================================================
+void Renderer::_init_shadow_map_transform_buffers() {
+    _shadow_map_transform_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _shadow_map_transform_buffers) {
+        buffer.size = sizeof(CameraData);
+        vkl::BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+}
+
+// =============================================================================
+void Renderer::_init_shadow_map_transform_sets() {
+    _shadow_map_transform_layout
+        .add_binding(
+            vk::DescriptorType::eUniformBuffer,
+            vk::ShaderStageFlagBits::eAll
+        )
+        .create();
+
+    _shadow_map_transform_sets.resize(RenderConfig::swapchain_image_count);
+
+    for(auto &set : _shadow_map_transform_sets) {
+        set.allocate(_desc_pool, _light_props_layout);
+    }
+
+    for(uint32_t frame = 0u;
+        frame < RenderConfig::swapchain_image_count;
+        ++frame)
+    {
+        _shadow_map_transform_sets[frame]
+            .add_buffer(_shadow_map_transform_buffers[frame])
+            .write_set();
+    }
+
+    CONSOLE_TRACE(
+        "Renderer will use {} shadow map transform descriptor sets",
         _light_props_sets.size()
     );
 }
@@ -739,13 +812,12 @@ void Renderer::_init_material_pipeline() {
 // =============================================================================
 void Renderer::_init_shadow_map_pipeline() {
     _shadow_map_pipeline
-        .vert_from_spirv("shaders/06shadow.vert")
+        .vert_from_spirv("shaders/06shadow_map.vert")
         .describe_vertex_input(
-            VertexPos::bindings,
-            VertexPos::attributes
+            VertexLitColor::bindings,
+            VertexLitColor::attributes
         )
-        .add_descriptor_set(_global_data_layout)
-        .add_descriptor_set(_light_props_layout)
+        .add_descriptor_set(_shadow_map_transform_layout)
         .add_push_constant(
             vk::ShaderStageFlagBits::eAll,
             sizeof(Mat4)
@@ -864,28 +936,23 @@ void Renderer::_execute_material_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_shadow_map_pipeline() {
-    auto const &frame_data        = _frame_data[_frame_index];
-    auto const &cmd_buffer        = frame_data.cmd_buffer();
-    auto const &global_buffer_set = _global_data_sets[_frame_index];
-    auto const &light_props_set   = _light_props_sets[_frame_index];
+    auto const &frame_data = _frame_data[_frame_index];
+    auto const &cmd_buffer = frame_data.cmd_buffer();
+    auto const &shadow_map_transform_set =
+        _shadow_map_transform_sets[_frame_index];
 
     _shadow_map_pipeline.bind(cmd_buffer);
-    _shadow_map_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
-    _shadow_map_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
+    _shadow_map_pipeline.bind_descriptor_set(cmd_buffer,
+                                             shadow_map_transform_set);
 
     for(auto const &draw : _lit_color_draws) {
-        _send_push_constants(_lit_color_pipeline, draw, frame_data);
+        _send_push_constants(_shadow_map_pipeline, draw, frame_data);
         draw.mesh->draw_indexed(cmd_buffer);
     }
 
     for(auto &[material_id, per_material] : _material_draws) {
-        _material_pipeline.bind_descriptor_set(
-            cmd_buffer,
-            _material_sets[per_material.set_index]
-        );
-
         for(auto const &draw : per_material.queue) {
-            _send_push_constants(_material_pipeline, draw, frame_data);
+            _send_push_constants(_shadow_map_pipeline, draw, frame_data);
             draw.mesh->draw_indexed(cmd_buffer);
         }
     }

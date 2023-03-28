@@ -121,5 +121,71 @@ Mat4 scale(Mat4 const &m, Vec4 const &v) {
     return result;
 }
 
+// =============================================================================
+// Camera math
+Mat4 orthographic_projection(float const left, float const right,
+                             float const top, float const bottom)
+{
+    auto result = Mat4::identity;
+
+    auto const a = right - left;
+    auto const b = top - bottom;
+
+    result.x.x = 2.0f / a;
+    result.y.y = 2.0f / b;
+    result.z.z = -1.0f;
+    result.w.x = (right + left) / a;
+    result.w.y = -(top + bottom) / b;
+
+    return result;
+}
+
+Mat4 perspective_projection(float const near, float const far,
+                            float const vertical_fov_degrees,
+                            float const aspect_ratio)
+{
+    auto result = Mat4::zero;
+
+    auto const a = std::tan(math::radians(vertical_fov_degrees) * 0.5f);
+
+    // Right handed, zero-to-one NDC space
+    result.x.x = 1.0f / (aspect_ratio * a);
+    result.y.y = 1.0f / a;
+    result.z.z = far / (near - far);
+    result.z.w = -1.0f;
+    result.w.z = -(far * near) / (far - near);
+
+    return result;
+}
+
+Mat4 orient_view_matrix(Vec4 const &position, Vec4 const &forward,
+                        Vec4 const &side, Vec4 const &up)
+{
+    auto result = Mat4::identity;
+
+    result.x.x = side.x;
+    result.y.x = side.y;
+    result.z.x = side.z;
+    result.x.y = up.x;
+    result.y.y = up.y;
+    result.z.y = up.z;
+    result.x.z = -forward.x;
+    result.y.z = -forward.y;
+    result.z.z = -forward.z;
+    result.w.x = -math::dot(side, position);
+    result.w.y = -math::dot(up, position);
+    result.w.z =  math::dot(forward, position);
+
+    return result;
+}
+
+Mat4 look_at(Vec4 const &position, Vec4 const &target, Vec4 const &up) {
+    auto const forward = normalize(target - position);
+    auto const side    = normalize(cross(up, forward));
+    auto const new_up  = cross(forward, side);
+
+    return orient_view_matrix(position, forward, side, new_up);
+}
+
 } // namespace math
 } // namespace vkl

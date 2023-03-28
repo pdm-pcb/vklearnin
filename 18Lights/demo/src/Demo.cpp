@@ -30,11 +30,11 @@ void Demo::update() {
 
     vkl::Renderer::update_light_props(light_props);
 
-    _cube_matrix = vkl::math::rotate(
-        vkl::Mat4::identity,
-        vkl::Timekeeper::run_time() * 20.0f,
-        vkl::Vec4::unit_y
-    );
+    // _cube_matrix = vkl::math::rotate(
+    //     vkl::Mat4::identity,
+    //     vkl::Timekeeper::run_time() * 20.0f,
+    //     vkl::Vec4::unit_y
+    // );
 }
 
 // =============================================================================

@@ -42,36 +42,15 @@ void FPSCamera::init(vkl::Vec4 const &position, vkl::Vec4 const &forward) {
 }
 
 // =============================================================================
-void FPSCamera::set_orthographic(float const top, float const bottom) {
-    auto const left = -vkl::RenderConfig::window_aspect;
-    auto const right = vkl::RenderConfig::window_aspect;
-    auto const a = right - left;
-    auto const b = top - bottom;
-
-    _proj_mat = vkl::Mat4::identity;
-
-    _proj_mat.x.x = 2.0f / a;
-    _proj_mat.y.y = 2.0f / b;
-    _proj_mat.z.z = -1.0f;
-    _proj_mat.w.x = (right + left) / a;
-    _proj_mat.w.y = -(top + bottom) / b;
-}
-
-// =============================================================================
 void FPSCamera::set_perspective(float const near, float const far,
                                 float const vertical_fov_degrees)
 {
-    auto const aspect = vkl::RenderConfig::window_aspect;
-    auto const a = std::tan(vkl::math::radians(vertical_fov_degrees) * 0.5f);
-
-    _proj_mat = vkl::Mat4::zero;
-
-    // Right handed, zero-to-one NDC space
-    _proj_mat.x.x = 1.0f / (aspect * a);
-    _proj_mat.y.y = 1.0f / a;
-    _proj_mat.z.z = far / (near - far);
-    _proj_mat.z.w = -1.0f;
-    _proj_mat.w.z = -(far * near) / (far - near);
+    _proj_mat = vkl::math::perspective_projection(
+        near,
+        far,
+        vertical_fov_degrees,
+        vkl::RenderConfig::window_aspect
+    );
 }
 
 // =============================================================================
@@ -143,20 +122,12 @@ void FPSCamera::_orient() {
         return;
     }
 
-    _view_mat = vkl::Mat4::identity;
-
-    _view_mat.x.x = _state.side.x;
-    _view_mat.y.x = _state.side.y;
-    _view_mat.z.x = _state.side.z;
-    _view_mat.x.y = _state.up.x;
-    _view_mat.y.y = _state.up.y;
-    _view_mat.z.y = _state.up.z;
-    _view_mat.x.z = -_state.forward.x;
-    _view_mat.y.z = -_state.forward.y;
-    _view_mat.z.z = -_state.forward.z;
-    _view_mat.w.x = -vkl::math::dot(_state.side, _state.pos);
-    _view_mat.w.y = -vkl::math::dot(_state.up, _state.pos);
-    _view_mat.w.z =  vkl::math::dot(_state.forward, _state.pos);
+    _view_mat = vkl::math::orient_view_matrix(
+        _state.pos,
+        _state.forward,
+        _state.side,
+        _state.up
+    );
 }
 
 // =============================================================================
