@@ -122,6 +122,7 @@ void Demo::_init_textures() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
+    _cube_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
     _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
     _floor_material.diffuse.create_sampler(
@@ -131,6 +132,7 @@ void Demo::_init_textures() {
         vk::SamplerAddressMode::eRepeat,
         vk::SamplerAddressMode::eRepeat
     );
+    _floor_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
     vkl::Renderer::set_skybox_texture({{
         "textures/skybox/belfast_sunset/px.png",

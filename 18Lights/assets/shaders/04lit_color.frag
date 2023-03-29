@@ -3,6 +3,7 @@
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
+layout(location = 3) in vec3 in_shadow_map_pos;
 
 layout(location = 0) out vec4 out_color;
 
@@ -26,6 +27,8 @@ layout(set = 1, binding = 0) uniform LightData {
     PointLight point;
     float scene_ambient;
 } lights;
+
+layout(set = 3, binding = 0) uniform sampler2D dir_shadow_map;
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);

@@ -124,6 +124,7 @@ private:
 
     static DescriptorSetLayout _shadow_map_transform_layout;
     static DescSetList         _shadow_map_transform_sets;
+    static DescriptorSet       _shadow_map_set;
 
     // Shader Resources --------------------------------------------------------
     static BufferList           _camera_buffers;
@@ -163,8 +164,8 @@ private:
     static void _init_light_props_buffers();
     static void _init_light_props_sets();
     static void _init_material_sets();
-    static void _init_shadow_map_transform_buffers();
-    static void _init_shadow_map_transform_sets();
+    static void _init_shadow_map_resources();
+    static void _init_shadow_map_sets();
 
     static void _init_flat_color_pipeline();
     static void _init_texture_pipeline();

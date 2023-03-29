@@ -24,6 +24,9 @@ public:
                         vk::SamplerMipmapMode const mip_filter,
                         vk::SamplerAddressMode const mode_u,
                         vk::SamplerAddressMode const mode_v);
+
+    void generate_mipmap(vk::Filter const mip_filter);
+
     void destroy();
 
     inline auto const& image() const { return _image; }

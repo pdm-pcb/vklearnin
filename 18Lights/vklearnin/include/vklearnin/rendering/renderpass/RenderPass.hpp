@@ -9,12 +9,12 @@ namespace vkl {
 
 class RenderPass final {
 public:
-    RenderPass & init_color_buffer(uint32_t const width, uint32_t const height);
-    RenderPass & init_depth_buffer(uint32_t const width, uint32_t const height);
+    RenderPass & create_color_buffer(vk::Extent2D const &extent);
+    RenderPass & create_depth_buffer(vk::Extent2D const &extent);
     RenderPass & default_color_attachments();
     RenderPass & default_color_subpass();
 
-    RenderPass & init_shadow_map(uint32_t const resolution);
+    RenderPass & create_shadow_map(uint32_t const resolution);
     RenderPass & default_shadow_map_attachments();
     RenderPass & default_shadow_map_subpass();
 

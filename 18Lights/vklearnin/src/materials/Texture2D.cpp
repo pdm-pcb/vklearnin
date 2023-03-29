@@ -26,6 +26,7 @@ void Texture2D::texture_from_file(Filepath filepath) {
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
+        vk::ImageAspectFlagBits::eColor,
         vk::SampleCountFlagBits::e1,
         (
             vk::ImageUsageFlagBits::eSampled |
@@ -70,6 +71,7 @@ void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
+        vk::ImageAspectFlagBits::eColor,
         vk::SampleCountFlagBits::e1,
         (
             vk::ImageUsageFlagBits::eSampled |
@@ -109,11 +111,15 @@ void Texture2D::create_shadow_map(uint32_t const width, uint32_t const height,
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
+        vk::ImageAspectFlagBits::eDepth,
         // No multisampling for shadow maps in favor of PCF/soft shadows
         vk::SampleCountFlagBits::e1,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        ( vk::ImageUsageFlagBits::eDepthStencilAttachment |
+          vk::ImageUsageFlagBits::eSampled ),
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );
+
+    _image.layout = vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal;
 
     ImageTools::create_view(
         _image,
@@ -123,11 +129,11 @@ void Texture2D::create_shadow_map(uint32_t const width, uint32_t const height,
 }
 
 // =============================================================================
-void Texture2D::create_sampler(const vk::Filter min_filter,
-                               const vk::Filter mag_filter,
-                               const vk::SamplerMipmapMode mip_filter,
-                               const vk::SamplerAddressMode mode_u,
-                               const vk::SamplerAddressMode mode_v)
+void Texture2D::create_sampler(vk::Filter const min_filter,
+                               vk::Filter const mag_filter,
+                               vk::SamplerMipmapMode const mip_filter,
+                               vk::SamplerAddressMode const mode_u,
+                               vk::SamplerAddressMode const mode_v)
 {
     ImageTools::create_sampler(
         _image,
@@ -137,8 +143,11 @@ void Texture2D::create_sampler(const vk::Filter min_filter,
         mode_u,
         mode_v
     );
+}
 
-    ImageTools::generate_mipmap(_image, min_filter);
+// =============================================================================
+void Texture2D::generate_mipmap(vk::Filter const mip_filter) {
+    ImageTools::generate_mipmap(_image, mip_filter);
 }
 
 // =============================================================================

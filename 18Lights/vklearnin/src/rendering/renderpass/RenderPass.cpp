@@ -8,23 +8,22 @@
 namespace vkl {
 
 // =============================================================================
-RenderPass & RenderPass::init_color_buffer(uint32_t const width,
-                                           uint32_t const height)
-{
+RenderPass & RenderPass::create_color_buffer(vk::Extent2D const &extent) {
     if(_color_buffer.handle) {
         ImageTools::destroy(_color_buffer);
     }
 
     _color_buffer.format = Swapchain::image_format();
     _color_buffer.extent = vk::Extent3D {
-        .width  = width,
-        .height = height,
+        .width  = extent.width,
+        .height = extent.height,
         .depth  = 1u
     };
 
     ImageTools::create(
         _color_buffer,
         vk::ImageType::e2D,
+        vk::ImageAspectFlagBits::eColor,
         RenderConfig::max_msaa_flag(),
         (
             vk::ImageUsageFlagBits::eColorAttachment |
@@ -43,9 +42,7 @@ RenderPass & RenderPass::init_color_buffer(uint32_t const width,
 }
 
 // =============================================================================
-RenderPass & RenderPass::init_depth_buffer(uint32_t const width,
-                                           uint32_t const height)
-{
+RenderPass & RenderPass::create_depth_buffer(vk::Extent2D const &extent) {
     if(_depth_buffer.handle) {
         ImageTools::destroy(_depth_buffer);
     }
@@ -54,14 +51,15 @@ RenderPass & RenderPass::init_depth_buffer(uint32_t const width,
 
     _depth_buffer.format = _depth_format;
     _depth_buffer.extent = vk::Extent3D {
-        .width  = width,
-        .height = height,
+        .width  = extent.width,
+        .height = extent.height,
         .depth  = 1u
     };
 
     ImageTools::create(
         _depth_buffer,
         vk::ImageType::e2D,
+        vk::ImageAspectFlagBits::eDepth,
         RenderConfig::max_msaa_flag(),
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal
@@ -180,11 +178,18 @@ RenderPass & RenderPass::default_color_subpass() {
 }
 
 // =============================================================================
-RenderPass & RenderPass::init_shadow_map(uint32_t const resolution) {
+RenderPass & RenderPass::create_shadow_map(uint32_t const resolution) {
     _shadow_map.destroy();
 
     _find_depth_stencil_format();
     _shadow_map.create_shadow_map(resolution, resolution, _depth_format);
+    _shadow_map.create_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eClampToEdge,
+        vk::SamplerAddressMode::eClampToEdge
+    );
 
     return *this;
 }

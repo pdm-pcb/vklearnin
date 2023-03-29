@@ -10,27 +10,28 @@
 
 namespace vkl::ImageTools {
 
-void allocate(ImageObject &image, const vk::MemoryPropertyFlags flags);
+void allocate(ImageObject &image, vk::MemoryPropertyFlags const flags);
 
-uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
-                          const vk::MemoryRequirements &reqs);
+uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
+                          vk::MemoryRequirements const &reqs);
 
 void transition_layout(ImageObject &image,
-                       const vk::CommandBuffer &command_buffer,
-                       const vk::ImageLayout old_layout,
-                       const vk::ImageLayout new_layout,
-                       const uint32_t base_mip_level,
-                       const uint32_t mip_levels,
-                       const uint32_t base_array_layer,
-                       const uint32_t array_layers);
+                       vk::CommandBuffer const &command_buffer,
+                       vk::ImageLayout const old_layout,
+                       vk::ImageLayout const new_layout,
+                       uint32_t const base_mip_level,
+                       uint32_t const mip_levels,
+                       uint32_t const base_array_layer,
+                       uint32_t const array_layers);
 
 // =============================================================================
 void create(ImageObject &image,
-            const vk::ImageType type,
-            const vk::SampleCountFlagBits samples,
-            const vk::ImageUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties,
-            const vk::ImageCreateFlags flags)
+            vk::ImageType const type,
+            vk::ImageAspectFlags const aspect_flags,
+            vk::SampleCountFlagBits const samples,
+            vk::ImageUsageFlags const usage_flags,
+            vk::MemoryPropertyFlags const memory_properties,
+            vk::ImageCreateFlags const flags)
 {
     if(image.handle) {
         CONSOLE_CRITICAL("Attempting to recreate an image object");
@@ -42,7 +43,7 @@ void create(ImageObject &image,
         return;
     }
 
-    const vk::ImageCreateInfo image_info {
+    vk::ImageCreateInfo const image_info {
         .flags         = flags,
         .imageType     = type,
         .format        = image.format,
@@ -57,6 +58,7 @@ void create(ImageObject &image,
     };
 
     image.handle = LogicalDevice::native().createImage(image_info);
+    image.aspect_flags = aspect_flags;
 
     CONSOLE_TRACE("Created image {:#x}",
                     reinterpret_cast<uint64_t>(::VkImage(image.handle)));
@@ -86,8 +88,8 @@ void destroy(ImageObject &image) {
 
 // =============================================================================
 void create_view(ImageObject &image,
-                 const vk::ImageViewType view_type,
-                 const vk::ImageAspectFlags &aspect_flags) {
+                 vk::ImageViewType const view_type,
+                 vk::ImageAspectFlags const &aspect_flags) {
     if(!image.handle) {
         CONSOLE_CRITICAL("Cannot create view for non-existant image.");
     }
@@ -95,7 +97,7 @@ void create_view(ImageObject &image,
         CONSOLE_CRITICAL("Cannot create view for image with undefined format.");
     }
 
-    const vk::ImageViewCreateInfo view_info {
+    vk::ImageViewCreateInfo const view_info {
         .image    = image.handle,
         .viewType = view_type,
         .format   = image.format,
@@ -132,7 +134,7 @@ void destroy_view(ImageObject &image) {
 // =============================================================================
 void * image_from_file(ImageObject &image, std::string_view filepath) {
     auto const texture_path = ASSET_PATH / filepath.data();
-    const std::string path = texture_path.string();
+    std::string const path = texture_path.string();
 
     int width    = 0;
     int height   = 0;
@@ -172,7 +174,7 @@ void * image_from_file(ImageObject &image, std::string_view filepath) {
 
 // =============================================================================
 void * cubemap_from_files(ImageObject &image,
-                          std::array<std::string_view, 6> filepaths)
+                          std::array<std::string_view, 6> const &filepaths)
 {
     struct ImageData {
         ::stbi_uc *data = nullptr;
@@ -274,8 +276,8 @@ void free_cubemap_data(void *data) {
 }
 
 // =============================================================================
-void host_to_device(ImageObject &dst, const void * const data) {
-    const vk::BufferImageCopy copy_region {
+void host_to_device(ImageObject &dst, void const * const data) {
+    vk::BufferImageCopy const copy_region {
         .bufferOffset = 0u,
         .bufferRowLength = 0u,
         .bufferImageHeight = 0u,
@@ -328,13 +330,13 @@ void host_to_device(ImageObject &dst, const void * const data) {
 
 // =============================================================================
 void create_sampler(ImageObject &image,
-                    const vk::Filter min_filter,
-                    const vk::Filter mag_filter,
-                    const vk::SamplerMipmapMode mip_filter,
-                    const vk::SamplerAddressMode mode_u,
-                    const vk::SamplerAddressMode mode_v)
+                    vk::Filter const min_filter,
+                    vk::Filter const mag_filter,
+                    vk::SamplerMipmapMode const mip_filter,
+                    vk::SamplerAddressMode const mode_u,
+                    vk::SamplerAddressMode const mode_v)
 {
-    const vk::SamplerCreateInfo sampler_info {
+    vk::SamplerCreateInfo const sampler_info {
         .magFilter        = mag_filter,
         .minFilter        = min_filter,
         .mipmapMode       = mip_filter,
@@ -384,6 +386,9 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     auto const format_props =
         PhysicalDevice::native().getFormatProperties(image.format);
 
+    // TODO: Is there any crossover here between vk::Filter and FormatFeature?
+    //       While vk::Filter supports nearest, FormatFeature appears to not.
+    //       Likewise, FormatFeature supports "MinMax" while Filter does not.
     if(!(format_props.optimalTilingFeatures &
          vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
     {
@@ -486,16 +491,16 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
 }
 
 // =============================================================================
-void allocate(ImageObject &image, const vk::MemoryPropertyFlags flags) {
+void allocate(ImageObject &image, vk::MemoryPropertyFlags const flags) {
     vk::MemoryRequirements mem_reqs { };
     LogicalDevice::native().getImageMemoryRequirements(
         image.handle,
         &mem_reqs
     );
 
-    auto type_index = find_memory_type(flags, mem_reqs);
+    auto const type_index = find_memory_type(flags, mem_reqs);
 
-    const vk::MemoryAllocateInfo alloc_info {
+    vk::MemoryAllocateInfo const alloc_info {
         .allocationSize  = mem_reqs.size,
         .memoryTypeIndex = type_index,
     };
@@ -518,8 +523,8 @@ void allocate(ImageObject &image, const vk::MemoryPropertyFlags flags) {
 }
 
 // =============================================================================
-uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
-                          const vk::MemoryRequirements &reqs)
+uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
+                          vk::MemoryRequirements const &reqs)
 {
     auto const& memory_properties = PhysicalDevice::memory_props();
     auto const type_count = memory_properties.memoryTypeCount;
@@ -539,13 +544,13 @@ uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
 
 // =============================================================================
 void transition_layout(ImageObject &image,
-                       const vk::CommandBuffer &command_buffer,
-                       const vk::ImageLayout old_layout,
-                       const vk::ImageLayout new_layout,
-                       const uint32_t base_mip_level,
-                       const uint32_t mip_levels,
-                       const uint32_t base_array_layer,
-                       const uint32_t array_layers)
+                       vk::CommandBuffer const &command_buffer,
+                       vk::ImageLayout const old_layout,
+                       vk::ImageLayout const new_layout,
+                       uint32_t const base_mip_level,
+                       uint32_t const mip_levels,
+                       uint32_t const base_array_layer,
+                       uint32_t const array_layers)
 {
     vk::ImageMemoryBarrier barrier {
         .oldLayout = old_layout,
@@ -554,7 +559,7 @@ void transition_layout(ImageObject &image,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image.handle,
         .subresourceRange {
-            .aspectMask     = vk::ImageAspectFlagBits::eColor,
+            .aspectMask     = image.aspect_flags,
             .baseMipLevel   = base_mip_level,
             .levelCount     = mip_levels,
             .baseArrayLayer = base_array_layer,
