@@ -37,7 +37,9 @@ void create_sampler(ImageObject &image,
                     vk::Filter const mag_filter,
                     vk::SamplerMipmapMode const mip_filter,
                     vk::SamplerAddressMode const mode_u,
-                    vk::SamplerAddressMode const mode_v);
+                    vk::SamplerAddressMode const mode_v,
+                    vk::Bool32 const enable_compare,
+                    vk::CompareOp const compare_op);
 
 void destroy_sampler(ImageObject &image);
 

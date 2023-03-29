@@ -188,7 +188,9 @@ RenderPass & RenderPass::create_shadow_map(uint32_t const resolution) {
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eClampToEdge,
-        vk::SamplerAddressMode::eClampToEdge
+        vk::SamplerAddressMode::eClampToEdge,
+        VK_TRUE,
+        vk::CompareOp::eLessOrEqual
     );
 
     return *this;

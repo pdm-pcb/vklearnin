@@ -133,15 +133,16 @@ void Texture2D::create_sampler(vk::Filter const min_filter,
                                vk::Filter const mag_filter,
                                vk::SamplerMipmapMode const mip_filter,
                                vk::SamplerAddressMode const mode_u,
-                               vk::SamplerAddressMode const mode_v)
+                               vk::SamplerAddressMode const mode_v,
+                               vk::Bool32 const enable_compare,
+                               vk::CompareOp const compare_op)
 {
     ImageTools::create_sampler(
         _image,
-        min_filter,
-        mag_filter,
+        min_filter, mag_filter,
         mip_filter,
-        mode_u,
-        mode_v
+        mode_u, mode_v,
+        enable_compare, compare_op
     );
 }
 

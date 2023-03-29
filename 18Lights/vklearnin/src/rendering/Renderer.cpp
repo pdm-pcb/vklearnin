@@ -359,7 +359,9 @@ void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
+        vk::SamplerAddressMode::eRepeat,
+        VK_FALSE,
+        vk::CompareOp::eAlways
     );
     _skybox_texture.generate_mipmap(vk::Filter::eLinear);
 }

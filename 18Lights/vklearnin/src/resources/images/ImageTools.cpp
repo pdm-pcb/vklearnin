@@ -334,7 +334,9 @@ void create_sampler(ImageObject &image,
                     vk::Filter const mag_filter,
                     vk::SamplerMipmapMode const mip_filter,
                     vk::SamplerAddressMode const mode_u,
-                    vk::SamplerAddressMode const mode_v)
+                    vk::SamplerAddressMode const mode_v,
+                    vk::Bool32 const enable_compare,
+                    vk::CompareOp const compare_op)
 {
     vk::SamplerCreateInfo const sampler_info {
         .magFilter        = mag_filter,
@@ -345,8 +347,8 @@ void create_sampler(ImageObject &image,
         .mipLodBias       = 0.0f,
         .anisotropyEnable = VK_TRUE,
         .maxAnisotropy    = RenderConfig::anisotropy,
-        .compareEnable    = VK_FALSE,
-        .compareOp        = vk::CompareOp::eAlways,
+        .compareEnable    = enable_compare,
+        .compareOp        = compare_op,
         .minLod           = 0.0f,
         .maxLod           = VK_LOD_CLAMP_NONE,
         .borderColor      = vk::BorderColor::eIntOpaqueWhite,

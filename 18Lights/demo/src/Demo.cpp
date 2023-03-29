@@ -120,7 +120,9 @@ void Demo::_init_textures() {
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
+        vk::SamplerAddressMode::eRepeat,
+        VK_FALSE,
+        vk::CompareOp::eAlways
     );
     _cube_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
@@ -130,7 +132,9 @@ void Demo::_init_textures() {
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
         vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat
+        vk::SamplerAddressMode::eRepeat,
+        VK_FALSE,
+        vk::CompareOp::eAlways
     );
     _floor_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
