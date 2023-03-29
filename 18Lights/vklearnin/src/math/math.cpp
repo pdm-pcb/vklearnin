@@ -123,19 +123,22 @@ Mat4 scale(Mat4 const &m, Vec4 const &v) {
 
 // =============================================================================
 // Camera math
-Mat4 orthographic_projection(float const left, float const right,
+Mat4 orthographic_projection(float const near, float const far,
+                             float const left, float const right,
                              float const bottom, float const top)
 {
     auto result = Mat4::identity;
 
     auto const a = right - left;
     auto const b = top - bottom;
+    auto const c = far - near;
 
     result.x.x = 2.0f / a;
     result.y.y = 2.0f / b;
-    result.z.z = -1.0f;
-    result.w.x = (right + left) / a;
+    result.z.z = -1.0f / c;
+    result.w.x = -(right + left) / a;
     result.w.y = -(top + bottom) / b;
+    result.w.z = -near / c;
 
     return result;
 }
@@ -146,11 +149,12 @@ Mat4 perspective_projection(float const near, float const far,
 {
     auto result = Mat4::zero;
 
-    auto const a = std::tan(math::radians(vertical_fov_degrees) * 0.5f);
+    auto const half_angle =
+        std::tan(math::radians(vertical_fov_degrees) * 0.5f);
 
     // Right handed, zero-to-one NDC space
-    result.x.x = 1.0f / (aspect_ratio * a);
-    result.y.y = 1.0f / a;
+    result.x.x = 1.0f / (aspect_ratio * half_angle);
+    result.y.y = 1.0f / half_angle;
     result.z.z = far / (near - far);
     result.z.w = -1.0f;
     result.w.z = -(far * near) / (far - near);

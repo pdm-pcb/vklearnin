@@ -9,6 +9,7 @@ public:
 
     void init(vkl::Vec4 const &position, vkl::Vec4 const &forward);
 
+    void set_orthographic(float const near, float const far);
     void set_perspective(float const near, float const far,
                          float const vertical_fov_degrees);
 

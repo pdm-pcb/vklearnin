@@ -93,15 +93,14 @@ void Renderer::update_camera_data(CameraData const &data) {
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
+    auto const ortho_dimension = 5.0f;
     auto const dir_proj_mat = math::orthographic_projection(
-        -1.0f,
-        1.0f,
-        -1.0f,
-        1.0f
+        0.1f, 1000.0f,
+        -ortho_dimension, ortho_dimension,
+        -ortho_dimension, ortho_dimension
     );
     // auto const dir_proj_mat = math::perspective_projection(
-    //     0.1f,
-    //     1000.0f,
+    //     0.1f, 1000.0f,
     //     45.0f,
     //     1.0f
     // );
@@ -112,7 +111,7 @@ void Renderer::update_light_props(LightProps const &data) {
     );
 
     ShadowMapTransforms const transforms {
-        .directional_vp_matrix = dir_view_mat * dir_proj_mat,
+        .directional_vp_matrix = dir_proj_mat * dir_view_mat,
     };
 
     BufferTools::update_buffer(_shadow_map_transform_buffers[_frame_index],
@@ -655,7 +654,7 @@ void Renderer::_init_light_props_sets() {
 void Renderer::_init_shadow_map_transform_buffers() {
     _shadow_map_transform_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _shadow_map_transform_buffers) {
-        buffer.size = sizeof(CameraData);
+        buffer.size = sizeof(ShadowMapTransforms);
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
