@@ -90,7 +90,7 @@ void main() {
         to_camera
     );
 
-    vec3 light_sum = (directional + point + spot) * shadow_factor();
+    vec3 light_sum = directional + point + spot;
 
     out_color = vec4(in_color.rgb * light_sum, 1.0);
 }
@@ -192,7 +192,7 @@ vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
         // specular = spot_intensity * blinn;
     }
 
-    return ambient + diffuse + specular;
+    return ambient + (diffuse + specular) * shadow_factor();
 }
 
 float blinn_specular(vec3 to_light, vec3 to_camera, vec3 frag_normal) {
