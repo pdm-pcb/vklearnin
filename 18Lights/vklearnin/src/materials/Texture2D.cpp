@@ -119,7 +119,7 @@ void Texture2D::create_shadow_map(uint32_t const width, uint32_t const height,
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 
-    _image.layout = vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal;
+    _image.layout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
 
     ImageTools::create_view(
         _image,

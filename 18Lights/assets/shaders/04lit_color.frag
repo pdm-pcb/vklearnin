@@ -3,7 +3,7 @@
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
-layout(location = 3) in vec3 in_shadow_map_pos;
+layout(location = 3) in vec4 in_shadow_map_coord;
 
 layout(location = 0) out vec4 out_color;
 
@@ -30,6 +30,19 @@ layout(set = 1, binding = 0) uniform LightData {
 
 layout(set = 3, binding = 0) uniform sampler2D dir_shadow_map;
 
+float project_shadow_map(vec4 shadow_map_coord) {
+    float shadow_intensity = 1.0;
+
+    if(shadow_map_coord.z > -1.0 && shadow_map_coord.z < 1.0 ) {
+        float dist = texture(dir_shadow_map, shadow_map_coord.st).r;
+        if(shadow_map_coord.w > 0.0 && dist < shadow_map_coord.z ) {
+            shadow_intensity = lights.scene_ambient;
+        }
+    }
+
+    return shadow_intensity;
+}
+
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);
 
@@ -53,9 +66,10 @@ void main() {
         to_camera
     );
 
-    vec3 phong_sum = directional + point;
+    vec3 light_sum = directional + point;
+    float shadow = project_shadow_map(in_shadow_map_coord);
 
-    out_color = vec4(in_color.rgb * phong_sum, 1.0);
+    out_color = vec4(in_color.rgb * light_sum * shadow, 1.0);
 }
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,

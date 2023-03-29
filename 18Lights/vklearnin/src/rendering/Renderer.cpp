@@ -910,8 +910,8 @@ void Renderer::_execute_lit_color_pipeline() {
     _lit_color_pipeline.bind(cmd_buffer);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
-    _shadow_map_pipeline.bind_descriptor_set(cmd_buffer,
-                                             shadow_map_transform_set);
+    _lit_color_pipeline.bind_descriptor_set(cmd_buffer,
+                                            shadow_map_transform_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, _shadow_map_set);
 
     for(auto const &draw : _lit_color_draws) {

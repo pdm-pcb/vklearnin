@@ -7,7 +7,7 @@ layout(location = 2) in vec4 in_color;
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec3 out_pos;
 layout(location = 2) out vec3 out_normal;
-layout(location = 3) out vec3 out_shadow_map_pos;
+layout(location = 3) out vec4 out_shadow_map_coord;
 
 layout(set = 0, binding = 0) uniform CameraData {
     mat4 view_mat;
@@ -29,7 +29,7 @@ void main() {
 	out_pos    = world_pos.xyz;
 	out_normal = normalize(mat3(model_mat) * in_normal.xyz);
 
-	out_shadow_map_pos = vec3(dir_vp_matrix * vec4(out_pos, 1.0f)).xyz;
+	out_shadow_map_coord = dir_vp_matrix * in_pos;
 
 	gl_Position = proj_mat * view_mat * world_pos;
 }
