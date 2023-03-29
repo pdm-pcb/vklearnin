@@ -11,8 +11,8 @@
 #include <vulkan/vulkan.hpp>
 
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_vulkan.h>
+#include <SDL.h>
+#include <SDL_vulkan.h>
 
 #if defined(VKL_LINUX)
     #include <X11/Xlib.h>
