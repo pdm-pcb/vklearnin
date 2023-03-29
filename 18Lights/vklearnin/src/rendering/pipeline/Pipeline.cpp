@@ -280,29 +280,14 @@ void Pipeline::_init_raster(Config const &config) {
         // reaching the rasterization stage.
         .rasterizerDiscardEnable = VK_FALSE,
 
-        // The rasterizer can take the points of a polygon and fill them in,
-        // only draw their outline, or even just draw the points in space.
         .polygonMode = config.polygon_mode,
+        .cullMode    = config.cull_mode,
+        .frontFace   = config.front_face,
 
-        // Once the vertex shader has placed a triangle in space, either it's
-        // very likely at some oblique angle to the screen. In our case, the
-        // fixed vertex data forms a triangle that is perfectly flat on screen,
-        // but either way one of the sides of the triangle is not visible. To
-        // save on running the fragment shader for every fragment on the side
-        // of the triangle facing away from us, we cull the back-facing data.
-        .cullMode = config.cull_mode,
-
-        // Which order are the now-processed vertices connected in? Who's on
-        // first? This is also called triangle winding, and for us the order
-        // is clockwise.
-        .frontFace = config.front_face,
-
-        // Once more, there is no depth testing being done, so these values are
-        // superfluous.
-        .depthBiasEnable         = VK_FALSE,
-        .depthBiasConstantFactor = 0.0f,
+        .depthBiasEnable         = config.enable_depth_bias,
+        .depthBiasConstantFactor = config.depth_bias_constant,
         .depthBiasClamp          = 0.0f,
-        .depthBiasSlopeFactor    = 0.0f,
+        .depthBiasSlopeFactor    = config.depth_bias_slope,
 
         // If a line segment is to be reasterized, what width should it be?
         .lineWidth = 1.0f,

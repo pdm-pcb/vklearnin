@@ -3,6 +3,7 @@
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
+layout(location = 3) in vec4 in_light_space_pos;
 
 layout(location = 0) out vec4 out_color;
 
@@ -43,18 +44,13 @@ layout(set = 1, binding = 0) uniform LightData {
     int padding2;
 } lights;
 
-layout(set = 2, binding = 0) uniform LightVPMatrix {
-    mat4 light_vp_matrix;
-};
-
 layout(set = 3, binding = 0) uniform sampler2DShadow shadow_map;
 
 float shadow_factor() {
-    vec4 projected_coord = light_vp_matrix * vec4(in_pos.xyz, 1.0);
-    projected_coord /= projected_coord.w;
-    projected_coord.xy = 0.5 * projected_coord.xy + 0.5;
+    vec3 light_space_ndc = in_light_space_pos.xyz / in_light_space_pos.w;
+    light_space_ndc.xy = 0.5 * light_space_ndc.xy + 0.5;
 
-    return texture(shadow_map, vec3(projected_coord.xy, projected_coord.z));
+    return texture(shadow_map, light_space_ndc);
 }
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,

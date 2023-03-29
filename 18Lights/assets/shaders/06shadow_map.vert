@@ -5,7 +5,7 @@ layout(location = 1) in vec4 in_normal;
 layout(location = 2) in vec4 in_color;
 
 layout(set = 0, binding = 0) uniform LightVPMatrix {
-    mat4 dir_vp_matrix;
+    mat4 light_vp_matrix;
 };
 
 layout(push_constant) uniform ModelPush {
@@ -13,5 +13,5 @@ layout(push_constant) uniform ModelPush {
 };
 
 void main() {
-    gl_Position = dir_vp_matrix * model_mat * in_pos;
+    gl_Position = light_vp_matrix * model_mat * in_pos;
 }

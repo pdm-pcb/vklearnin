@@ -840,7 +840,6 @@ void Renderer::_init_shadow_map_pipeline() {
                     .width  = _shadow_map_resolution,
                     .height = _shadow_map_resolution,
                 },
-                .msaa_samples  = vk::SampleCountFlagBits::e1,
                 .depth_compare = vk::CompareOp::eLessOrEqual,
             }
         );

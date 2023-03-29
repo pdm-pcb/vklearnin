@@ -15,14 +15,24 @@ class CmdBuffer;
 class Pipeline {
 public:
     struct Config {
-        vk::Extent2D            viewport_extent { 0u, 0u };
-        vk::Offset2D            viewport_offset { 0, 0 };
-        vk::PolygonMode         polygon_mode  = vk::PolygonMode::eFill;
-        vk::CullModeFlags       cull_mode     = vk::CullModeFlagBits::eBack;
-        vk::FrontFace           front_face    = vk::FrontFace::eClockwise;
-        vk::SampleCountFlagBits msaa_samples  = vk::SampleCountFlagBits::e1;
-        vk::CompareOp           depth_compare = vk::CompareOp::eLess;
-        uint32_t                subpass_index = 0u;
+        // Common options
+        vk::Extent2D      viewport_extent { 0u, 0u };
+        vk::Offset2D      viewport_offset { 0, 0 };
+        vk::PolygonMode   polygon_mode = vk::PolygonMode::eFill;
+        vk::CullModeFlags cull_mode    = vk::CullModeFlagBits::eBack;
+        vk::FrontFace     front_face   = vk::FrontFace::eClockwise;
+
+        // Multisampling configuration
+        vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+
+        // Depth/shadow buffer options
+        vk::CompareOp depth_compare       = vk::CompareOp::eLess;
+        vk::Bool32    enable_depth_bias   = VK_FALSE;
+        float         depth_bias_constant = 0.0f;
+        float         depth_bias_slope    = 0.0f;
+
+        // Universal options
+        uint32_t subpass_index = 0u;
     };
 
     void bind(CmdBuffer const &cmd_buffer);
