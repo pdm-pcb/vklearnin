@@ -94,25 +94,25 @@ void Renderer::update_camera_data(CameraData const &data) {
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
-    auto const ortho_dimension = 5.0f;
-    auto const dir_proj_mat = math::orthographic_projection(
-        0.1f, 1000.0f,
-        -ortho_dimension, ortho_dimension,
-        -ortho_dimension, ortho_dimension
-    );
-    // auto const dir_proj_mat = math::perspective_projection(
-    //     0.1f, 1000.0f,
-    //     45.0f,
-    //     1.0f
+    // auto const ortho_dimension = 5.0f;
+    // auto const light_proj_mat = math::orthographic_projection(
+    //     0.1f, 10.0f,
+    //     -ortho_dimension, ortho_dimension,
+    //     -ortho_dimension, ortho_dimension
     // );
-    auto const dir_view_mat = math::look_at(
-        data.dir.toward,
+    auto const light_proj_mat = math::perspective_projection(
+        0.1f, 25.0f,
+        45.0f,
+        1.0f
+    );
+    auto const light_view_mat = math::look_at(
+        data.spot.position,
         Vec4::origin,
         Vec4::unit_y
     );
 
     ShadowMapTransforms const transforms {
-        .directional_vp_matrix = dir_proj_mat * dir_view_mat,
+        .light_vp_matrix = light_proj_mat * light_view_mat,
     };
 
     BufferTools::update_buffer(_shadow_map_transform_buffers[_frame_index],
@@ -233,7 +233,7 @@ void Renderer::record_commands() {
 
         _execute_flat_color_pipeline();
         _execute_texture_pipeline();
-        _execute_skybox_pipeline();
+        // _execute_skybox_pipeline();
         _execute_lit_color_pipeline();
         _execute_material_pipeline();
 

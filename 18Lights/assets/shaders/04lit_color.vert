@@ -15,7 +15,7 @@ layout(set = 0, binding = 0) uniform CameraData {
 };
 
 layout(set = 2, binding = 0) uniform LightVPMatrix {
-    mat4 dir_vp_matrix;
+    mat4 light_vp_matrix;
 };
 
 layout(push_constant) uniform ModelPush {
@@ -29,7 +29,7 @@ void main() {
 	out_pos    = world_pos.xyz;
 	out_normal = normalize(mat3(model_mat) * in_normal.xyz);
 
-	out_light_space_pos = dir_vp_matrix * in_pos;
+	out_light_space_pos = light_vp_matrix * in_pos;
 
 	gl_Position = proj_mat * view_mat * world_pos;
 }

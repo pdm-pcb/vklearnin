@@ -22,23 +22,39 @@ struct PointLight {
     vec4 color;
 };
 
+struct SpotLight {
+    vec4 position;
+    vec4 forward;
+    vec4 color;
+    float beam_half_angle;
+
+    int padding0;
+    int padding1;
+    int padding2;
+};
+
 layout(set = 1, binding = 0) uniform LightData {
     DirectionalLight dir;
     PointLight point;
+    SpotLight spot;
     float scene_ambient;
+
+    int padding0;
+    int padding1;
+    int padding2;
 } lights;
 
 layout(set = 3, binding = 0) uniform sampler2D dir_shadow_map;
 
 float shadow_factor() {
 	float shadow_factor = 1.0;
-	if(in_light_space_pos.z > -1.0 && in_light_space_pos.z < 1.0 ) {
-		float dist = texture(dir_shadow_map, in_light_space_pos.st).r;
-		if(in_light_space_pos.w > 0.0 && dist < in_light_space_pos.z)
-		{
-			shadow_factor = lights.scene_ambient;
-		}
-	}
+    if(in_light_space_pos.z > -1.0 && in_light_space_pos.z < 1.0 ) {
+        float dist = texture(dir_shadow_map, in_light_space_pos.st).r;
+        if(in_light_space_pos.w > 0.0 && dist < in_light_space_pos.z)
+        {
+            shadow_factor = lights.scene_ambient;
+        }
+    }
 	return shadow_factor;
 }
 
@@ -46,6 +62,8 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);
 
 vec3 calc_point_light(PointLight light, vec3 frag_normal, vec3 to_camera);
+
+vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera);
 
 float blinn_specular(vec3 to_light, vec3 to_camera, vec3 frag_normal);
 
@@ -59,13 +77,21 @@ void main() {
         to_camera
     );
 
-    vec3 point = calc_point_light(
-        lights.point,
+    // vec3 point = calc_point_light(
+    //     lights.point,
+    //     frag_normal,
+    //     to_camera
+    // );
+
+    vec3 point = vec3(0.0, 0.0, 0.0);
+
+    vec3 spot = calc_spot_light(
+        lights.spot,
         frag_normal,
         to_camera
     );
 
-    vec3 light_sum = (directional + point) * shadow_factor();
+    vec3 light_sum = (directional + point + spot) * shadow_factor();
 
     out_color = vec4(in_color.rgb * light_sum, 1.0);
 }
@@ -90,10 +116,10 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
     // The diffuse component can now account for all factors
     diffuse = dir_intensity * cos_theta;
 
-    // Use blinn reflectance in order to support camera-to-reflection angles of
-    // more than 90 degrees
-    float blinn = blinn_specular(light.toward.xyz, to_camera, frag_normal);
-    specular = dir_intensity * blinn;
+    // // Use blinn reflectance in order to support camera-to-reflection angles of
+    // // more than 90 degrees
+    // float blinn = blinn_specular(light.toward.xyz, to_camera, frag_normal);
+    // specular = dir_intensity * blinn;
 
     return ambient + diffuse + specular;
 }
@@ -125,10 +151,47 @@ vec3 calc_point_light(PointLight light, vec3 frag_normal, vec3 to_camera) {
     // The diffuse component can now account for all factors
     diffuse = point_intensity * cos_theta;
 
-    // Use blinn reflectance in order to support camera-to-reflection angles of
-    // more than 90 degrees
-    float blinn = blinn_specular(to_light, to_camera, frag_normal);
-    specular = point_intensity * blinn;
+    // // Use blinn reflectance in order to support camera-to-reflection angles of
+    // // more than 90 degrees
+    // float blinn = blinn_specular(to_light, to_camera, frag_normal);
+    // specular = point_intensity * blinn;
+
+    return ambient + diffuse + specular;
+}
+
+vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
+    // Ambient light is always present, so...
+    vec3 ambient  = light.color.rgb * lights.scene_ambient;
+    vec3 diffuse  = vec3(0.0, 0.0, 0.0);
+    vec3 specular = vec3(0.0, 0.0, 0.0);
+
+    // A vector dotted with itself gives its length squared, so these two lines
+    // give us the inverse square law quickly and cheaply
+    vec3 to_light = light.position.xyz - in_pos.xyz;
+    float attenuation = 1.0 / dot(to_light, to_light);
+
+    vec3 spot_intensity = light.color.rgb * light.color.w * attenuation;
+
+    // Now that we've gotten attenuation, normalize to_light for use with other
+    // normalized vectors
+    to_light = normalize(to_light);
+
+    float theta = dot(to_light, -light.forward.xyz);
+    if(theta > light.beam_half_angle) {
+        // Cosine of the angle of incidence, but don't let it go negative. If
+        // the dot of the two vectors is negative, the light's angle of icidence
+        // is greater than 90 degrees to this fragment's normal, meaning the
+        // light is either perfectly parallel or behind this fragment.
+        float cos_theta = max(dot(to_light, frag_normal), 0.0);
+
+        // The diffuse component can now account for all factors
+        diffuse = spot_intensity * cos_theta;
+
+        // // Use blinn reflectance in order to support camera-to-reflection angles
+        // // of more than 90 degrees
+        // float blinn = blinn_specular(to_light, to_camera, frag_normal);
+        // specular = spot_intensity * blinn;
+    }
 
     return ambient + diffuse + specular;
 }

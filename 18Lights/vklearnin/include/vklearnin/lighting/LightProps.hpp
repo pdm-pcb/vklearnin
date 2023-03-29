@@ -15,11 +15,24 @@ struct PointLight {
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
+struct SpotLight {
+    Vec4 position = Vec4::origin;
+    Vec4 forward = -Vec4::unit_z;
+    Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    float beam_half_angle = std::cos(math::radians(20.0f));
+
+    int32_t padding[3] { 0 };
+};
+
 struct LightProps {
     DirectionalLight dir { };
     PointLight point { };
+    SpotLight spot { };
 
     float ambient = 0.05f;
+
+    int32_t padding[3] { 0 };
 };
 
 } // namespace vkl

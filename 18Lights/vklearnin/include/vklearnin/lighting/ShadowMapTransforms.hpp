@@ -6,7 +6,7 @@
 namespace vkl {
 
 struct ShadowMapTransforms final {
-    Mat4 directional_vp_matrix = Mat4::identity;
+    Mat4 light_vp_matrix = Mat4::identity;
 };
 
 } // namespace vkl
