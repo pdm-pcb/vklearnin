@@ -68,12 +68,11 @@ Application::Application() :
 
     PhysicalDevice::query_devices(
         {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
         },
         {
-            PhysicalDevice::Features::SAMPLER_ANISOTROPY,
             PhysicalDevice::Features::FILL_MODE_NONSOLID,
+            PhysicalDevice::Features::SAMPLER_ANISOTROPY,
         }
     );
     PhysicalDevice::select_device();

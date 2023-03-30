@@ -37,9 +37,16 @@ void PhysicalDevice::query_devices(
     );
 
     for(auto const& device : devices) {
+        // Ask the device about itself
+        auto const &device_props = device.getProperties();
+
         // First, ensure that this device supports the feature set we require
         auto const &features = device.getFeatures();
         if(!_check_features(features, required_features)) {
+            CONSOLE_WARN(
+                "{} does not support all required features; skipping",
+                device_props.deviceName
+            );
             continue;
         }
 
@@ -47,12 +54,20 @@ void PhysicalDevice::query_devices(
         auto const extensions = device.enumerateDeviceExtensionProperties();
         CONSOLE_TRACE("Found {} physical device extensions", extensions.size());
         if(!_check_extensions(extensions, required_extensions)) {
+            CONSOLE_WARN(
+                "{} does not support all required extensions; skipping",
+                device_props.deviceName
+            );
             continue;
         }
 
+        // Double check for the depth format we want
         if(!_check_depth_format(device)) {
-            CONSOLE_WARN("{} does not support 32-bit floating point depth "
-                         "image format.");
+            CONSOLE_WARN(
+                "{} does not support 32-bit signed float for depth image "
+                "format; skipping",
+                device_props.deviceName
+            );
             continue;
         }
 
@@ -61,7 +76,8 @@ void PhysicalDevice::query_devices(
         auto const& memory = device.getMemoryProperties();
 
         // Yet more property gathering - this time so we can get a driver
-        // version string that matches what the hardware vendor publishes
+        // version string that matches what the hardware vendor publishes.
+        // This extentsion was promoted to core in Vulkan 1.2
         vk::PhysicalDeviceDriverProperties driver_props { };
         vk::PhysicalDeviceProperties2KHR physical_props2 {
             .pNext = &driver_props
@@ -72,7 +88,7 @@ void PhysicalDevice::query_devices(
         // Hold onto the info we've gathered
         _store_physical_device(
             device,
-            device.getProperties(),
+            device_props,
             memory,
             driver_props
         );
@@ -225,21 +241,21 @@ bool PhysicalDevice::_check_features(
     )
 {
     for(auto const &feature : required_features) {
-        if(feature == Features::SAMPLER_ANISOTROPY) {
-            if(supported_features.samplerAnisotropy == VK_FALSE) {
-                CONSOLE_WARN("No support for sampler anisotropy.");
-                return false;
-            }
-
-            _enabled_features.samplerAnisotropy = VK_TRUE;
-        }
-        else if(feature == Features::FILL_MODE_NONSOLID) {
+        if(feature == Features::FILL_MODE_NONSOLID) {
             if(supported_features.fillModeNonSolid == VK_FALSE) {
                 CONSOLE_WARN("No support for non-solid fill modes.");
                 return false;
             }
 
             _enabled_features.fillModeNonSolid = VK_TRUE;
+        }
+        else if(feature == Features::SAMPLER_ANISOTROPY) {
+            if(supported_features.samplerAnisotropy == VK_FALSE) {
+                CONSOLE_WARN("No support for sampler anisotropy.");
+                return false;
+            }
+
+            _enabled_features.samplerAnisotropy = VK_TRUE;
         }
         else {
             CONSOLE_CRITICAL("Requesting unknown physical device feature.");

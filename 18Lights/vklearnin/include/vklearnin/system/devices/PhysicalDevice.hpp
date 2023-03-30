@@ -8,8 +8,8 @@ namespace vkl {
 class PhysicalDevice final {
 public:
     enum class Features {
+        FILL_MODE_NONSOLID,
         SAMPLER_ANISOTROPY,
-        FILL_MODE_NONSOLID
     };
 
     static void query_devices(
@@ -41,6 +41,7 @@ private:
         vk::PhysicalDeviceType type = vk::PhysicalDeviceType::eOther;
         vk::PhysicalDeviceMemoryProperties memory { };
     };
+
     using DeviceList = std::vector<DeviceProps>;
     static DeviceList _available_devices;
 
