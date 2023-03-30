@@ -60,7 +60,7 @@ Renderer::DescSetList Renderer::_material_sets;
 
 DescriptorSetLayout   Renderer::_shadow_map_transform_layout;
 Renderer::DescSetList Renderer::_shadow_map_transform_sets;
-DescriptorSet         Renderer::_shadow_map_set;
+Renderer::DescSetList Renderer::_shadow_map_sets;
 
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_camera_buffers;
@@ -417,8 +417,6 @@ void Renderer::create_pipelines() {
 // =============================================================================
 void Renderer::_init_color_pass() {
     _color_pass
-        .create_color_buffer(Swapchain::extent())
-        .create_depth_buffer(Swapchain::extent())
         .default_color_attachments()
         .default_color_subpass()
         .create();
@@ -426,19 +424,18 @@ void Renderer::_init_color_pass() {
 
 // =============================================================================
 void Renderer::_init_color_framebuffers() {
-    _color_framebuffers.reserve(RenderConfig::swapchain_image_count);
+    _color_framebuffers.clear();
 
     for(auto const &swapchain_image : Swapchain::images()) {
-        _color_framebuffers.emplace_back(Framebuffer { });
-        _color_framebuffers.back().create(
-            Swapchain::render_area(),
-            {
-                _color_pass.color_buffer().view,
-                _color_pass.depth_buffer().view,
-                swapchain_image.view
-            },
-            _color_pass.native()
-        );
+        _color_framebuffers.emplace_back();
+        _color_framebuffers.back()
+            .create_color_buffer(Swapchain::extent())
+            .create_depth_buffer(Swapchain::extent())
+            .add_image_view(swapchain_image.view)
+            .create(
+                Swapchain::render_area(),
+                _color_pass.native()
+            );
     }
 }
 
@@ -450,10 +447,6 @@ void Renderer::_init_shadow_map_pass() {
         Swapchain::extent().height;
 
     _shadow_map_pass
-        .create_shadow_map(vk::Extent2D {
-            .width  = _shadow_map_resolution,
-            .height = _shadow_map_resolution,
-        })
         .default_shadow_map_attachments()
         .default_shadow_map_subpass()
         .create();
@@ -464,18 +457,23 @@ void Renderer::_init_shadow_map_framebuffers() {
     _shadow_map_framebuffers.clear();
     _shadow_map_framebuffers.resize(RenderConfig::swapchain_image_count);
 
+    vk::Extent2D const shadow_map_extent {
+        .width  = _shadow_map_resolution,
+        .height = _shadow_map_resolution,
+    };
+
+    vk::Rect2D const shadow_map_render_area {
+        .offset { .x = 0, .y = 0 },
+        .extent = shadow_map_extent
+    };
+
     for(auto &framebuffer : _shadow_map_framebuffers) {
-        framebuffer.create(
-            vk::Rect2D {
-                .offset = { .x = 0, .y = 0 },
-                .extent = vk::Extent2D {
-                    .width  = _shadow_map_resolution,
-                    .height = _shadow_map_resolution,
-                },
-            },
-            { _shadow_map_pass.shadow_map().image().view, },
-            _shadow_map_pass.native()
-        );
+        framebuffer
+            .create_shadow_map(shadow_map_extent)
+            .create(
+                shadow_map_render_area,
+                _shadow_map_pass.native()
+            );
     }
 }
 
@@ -629,11 +627,6 @@ void Renderer::_init_light_props_sets() {
             .add_buffer(_light_props_buffers[frame])
             .write_set();
     }
-
-    CONSOLE_TRACE(
-        "Renderer will use {} light properties descriptor sets",
-        _light_props_sets.size()
-    );
 }
 
 // =============================================================================
@@ -660,28 +653,26 @@ void Renderer::_init_shadow_map_sets() {
         .create();
 
     _shadow_map_transform_sets.resize(RenderConfig::swapchain_image_count);
-    for(auto &set : _shadow_map_transform_sets) {
-        set.allocate(_desc_pool, _shadow_map_transform_layout);
-    }
-
     for(uint32_t frame = 0u;
         frame < RenderConfig::swapchain_image_count;
         ++frame)
     {
         _shadow_map_transform_sets[frame]
+            .allocate(_desc_pool, _shadow_map_transform_layout)
             .add_buffer(_shadow_map_transform_buffers[frame])
             .write_set();
     }
 
-    CONSOLE_TRACE(
-        "Renderer will use {} shadow map transform descriptor sets",
-        _light_props_sets.size()
-    );
-
-    _shadow_map_set
-        .allocate(_desc_pool, _texture_layout)
-        .add_image(_shadow_map_pass.shadow_map().image())
-        .write_set();
+    _shadow_map_sets.resize(RenderConfig::swapchain_image_count);
+    for(uint32_t frame = 0u;
+        frame < RenderConfig::swapchain_image_count;
+        ++frame)
+    {
+        _shadow_map_sets[frame]
+            .allocate(_desc_pool, _texture_layout)
+            .add_image(_shadow_map_framebuffers[frame].shadow_map().image())
+            .write_set();
+    }
 }
 
 // =============================================================================
@@ -912,13 +903,14 @@ void Renderer::_execute_lit_color_pipeline() {
     auto const &light_props_set   = _light_props_sets[_frame_index];
     auto const &shadow_map_transform_set =
         _shadow_map_transform_sets[_frame_index];
+    auto const &shadow_map_set    = _shadow_map_sets[_frame_index];
 
     _lit_color_pipeline.bind(cmd_buffer);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer,
                                             shadow_map_transform_set);
-    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, _shadow_map_set);
+    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, shadow_map_set);
 
     for(auto const &draw : _lit_color_draws) {
         _send_push_constants(_lit_color_pipeline, draw, frame_data);

@@ -9,13 +9,23 @@ class RenderPass;
 
 class Framebuffer final {
 public:
+    Framebuffer & create_color_buffer(vk::Extent2D const &extent);
+    Framebuffer & create_depth_buffer(vk::Extent2D const &extent);
+    Framebuffer & add_image_view(vk::ImageView const &view);
+    Framebuffer & create_shadow_map(vk::Extent2D const &extent);
+
     void create(vk::Rect2D const &render_area,
-                std::vector<vk::ImageView> const &attachments,
                 vk::RenderPass const &render_pass);
+
     void destroy();
 
     inline auto const & native()      const { return _framebuffer; }
     inline auto const & render_area() const { return _render_area; }
+
+    inline auto const& color_buffer() const { return _color_buffer; }
+    inline auto const& depth_buffer() const { return _depth_buffer; }
+
+    inline auto const& shadow_map() const { return _shadow_map;}
 
     Framebuffer();
     ~Framebuffer() = default;
@@ -27,8 +37,14 @@ public:
     Framebuffer& operator=(const Framebuffer &) = delete;
 
 private:
-    vk::Framebuffer _framebuffer;
+    std::vector<vk::ImageView> _attachments;
+
+    ImageObject _color_buffer;
+    ImageObject _depth_buffer;
+    Texture2D   _shadow_map;
+
     vk::Rect2D _render_area;
+    vk::Framebuffer _framebuffer;
 };
 
 } // namespace vkl

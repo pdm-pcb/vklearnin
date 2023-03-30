@@ -44,13 +44,6 @@ void Demo::update() {
         SPOT_POS
     );
 
-    // _cube_matrix_a =
-    //     vkl::math::rotate(
-    //         vkl::Mat4::identity,
-    //         vkl::Timekeeper::run_time() * 20.0f,
-    //         vkl::Vec4::unit_x
-    //     );
-
     _cube_matrix_a =
         vkl::math::rotate(
             vkl::math::translate(

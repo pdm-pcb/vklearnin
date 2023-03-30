@@ -173,4 +173,17 @@ Texture2D::Texture2D() :
     _image { }
 { }
 
+Texture2D::Texture2D(Texture2D &&other) noexcept :
+    _image { std::move(other._image) }
+{
+    other._image = ImageObject { };
+}
+
+Texture2D& Texture2D::operator=(Texture2D &&other) noexcept {
+    _image = std::move(other._image);
+    other._image = ImageObject { };
+
+    return *this;
+}
+
 } // namespace vkl

@@ -124,7 +124,7 @@ private:
 
     static DescriptorSetLayout _shadow_map_transform_layout;
     static DescSetList         _shadow_map_transform_sets;
-    static DescriptorSet       _shadow_map_set;
+    static DescSetList         _shadow_map_sets;
 
     // Shader Resources --------------------------------------------------------
     static BufferList           _camera_buffers;
