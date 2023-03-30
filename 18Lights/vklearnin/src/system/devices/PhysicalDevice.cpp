@@ -16,6 +16,8 @@ vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties { };
 vk::PhysicalDeviceFeatures         PhysicalDevice::_enabled_features { };
 std::vector<char const *>          PhysicalDevice::_enabled_extensions;
 
+vk::Format PhysicalDevice::_depth_format = vk::Format::eD32Sfloat;
+
 // =============================================================================
 void PhysicalDevice::query_devices(
         std::vector<std::string_view> const &required_extensions,
@@ -44,8 +46,13 @@ void PhysicalDevice::query_devices(
         // We'll want to know what extensions the devices support
         auto const extensions = device.enumerateDeviceExtensionProperties();
         CONSOLE_TRACE("Found {} physical device extensions", extensions.size());
-
         if(!_check_extensions(extensions, required_extensions)) {
+            continue;
+        }
+
+        if(!_check_depth_format(device)) {
+            CONSOLE_WARN("{} does not support 32-bit floating point depth "
+                         "image format.");
             continue;
         }
 
@@ -179,8 +186,7 @@ void PhysicalDevice::select_device() {
         _available_devices[device_index].device.getFeatures(&features);
 
         if(gfx && present && gfx_fam != std::numeric_limits<uint32_t>::max() &&
-           present_fam != std::numeric_limits<uint32_t>::max() &&
-           features.samplerAnisotropy != 0)
+           present_fam != std::numeric_limits<uint32_t>::max())
         {
             gfx_queue_index            = graphics_support[device_index].second;
             present_queue_index        = present_support[device_index].second;
@@ -270,6 +276,23 @@ bool PhysicalDevice::_check_extensions(
             );
             return false;
         }
+    }
+
+    return true;
+}
+
+// =============================================================================
+bool PhysicalDevice::_check_depth_format(vk::PhysicalDevice const &device) {
+    auto const &props = device.getFormatProperties(_depth_format);
+
+    auto const depth_format_supported =
+        ( props.optimalTilingFeatures &
+          vk::FormatFeatureFlagBits::eDepthStencilAttachment );
+
+    if(!depth_format_supported) {
+        CONSOLE_CRITICAL("Selected physical device does not support 32-bit "
+                         "floating point depth image format.");
+        return false;
     }
 
     return true;

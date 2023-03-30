@@ -45,8 +45,6 @@ private:
     std::vector<vk::SubpassDependency>     _subpass_deps;
     std::vector<vk::SubpassDescription>    _subpasses;
 
-    vk::Format _depth_format;
-
     vk::RenderPass _render_pass;
 
     ImageObject _color_buffer;
@@ -54,8 +52,6 @@ private:
 
     Texture2D _shadow_map;
     vk::AttachmentReference _shadow_map_attachment;
-
-    void _find_depth_stencil_format();
 };
 
 } // namespace vkl

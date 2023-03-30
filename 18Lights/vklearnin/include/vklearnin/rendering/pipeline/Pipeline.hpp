@@ -29,7 +29,7 @@ public:
         vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
         // Depth/shadow buffer options
-        vk::CompareOp depth_compare       = vk::CompareOp::eLess;
+        vk::CompareOp depth_compare       = vk::CompareOp::eLessOrEqual;
         vk::Bool32    enable_depth_bias   = VK_FALSE;
         float         depth_bias_constant = 0.0f;
         float         depth_bias_slope    = 0.0f;

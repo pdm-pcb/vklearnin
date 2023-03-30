@@ -24,7 +24,7 @@ static char     constexpr ENGINE_NAME[] { "vklearnin" };
 static uint32_t constexpr APP_VERSION    = VK_MAKE_API_VERSION(0, 0, 1, 0);
 static uint32_t constexpr ENGINE_VERSION = VK_MAKE_API_VERSION(0, 0, 1, 0);
 
-static uint32_t constexpr VK_API_VER = VK_API_VERSION_1_1;
+static uint32_t constexpr VK_API_VER = VK_API_VERSION_1_2;
 
 #if VKL_DEBUG
 static std::filesystem::path const ASSET_PATH("../../assets");

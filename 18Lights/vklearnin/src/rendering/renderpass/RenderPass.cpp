@@ -47,9 +47,7 @@ RenderPass & RenderPass::create_depth_buffer(vk::Extent2D const &extent) {
         ImageTools::destroy(_depth_buffer);
     }
 
-    _find_depth_stencil_format();
-
-    _depth_buffer.format = _depth_format;
+    _depth_buffer.format = PhysicalDevice::depth_format();
     _depth_buffer.extent = vk::Extent3D {
         .width  = extent.width,
         .height = extent.height,
@@ -181,8 +179,7 @@ RenderPass & RenderPass::default_color_subpass() {
 RenderPass & RenderPass::create_shadow_map(vk::Extent2D const &extent) {
     _shadow_map.destroy();
 
-    _find_depth_stencil_format();
-    _shadow_map.create_shadow_map(extent, _depth_format);
+    _shadow_map.create_shadow_map(extent, PhysicalDevice::depth_format());
     _shadow_map.create_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,
@@ -199,7 +196,7 @@ RenderPass & RenderPass::create_shadow_map(vk::Extent2D const &extent) {
 // =============================================================================
 RenderPass & RenderPass::default_shadow_map_attachments() {
     _attach_descs = {{
-        .format         = _depth_format,
+        .format         = PhysicalDevice::depth_format(),
         .samples        = vk::SampleCountFlagBits::e1,
         .loadOp         = vk::AttachmentLoadOp::eClear,
         .storeOp        = vk::AttachmentStoreOp::eStore,
@@ -286,31 +283,6 @@ void RenderPass::destroy() {
 }
 
 // =============================================================================
-void RenderPass::_find_depth_stencil_format() {
-    const std::vector<vk::Format> depth_options {
-        vk::Format::eD32Sfloat,
-        vk::Format::eD32SfloatS8Uint,
-        vk::Format::eD24UnormS8Uint
-    };
-
-    for(auto const& option : depth_options) {
-        auto props = PhysicalDevice::native().getFormatProperties(option);
-        if(props.optimalTilingFeatures &
-           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
-        {
-            CONSOLE_TRACE(
-                "Using depth stencil format {}",
-                to_string(option)
-            );
-            _depth_format = option;
-            return;
-        }
-    }
-
-    CONSOLE_CRITICAL("Unable to find suitable depth stencil format");
-}
-
-// =============================================================================
 RenderPass::RenderPass() :
     _attach_descs        { },
     _color_attachments   { },
@@ -318,7 +290,6 @@ RenderPass::RenderPass() :
     _resolve_attachments { },
     _subpass_deps        { },
     _subpasses           { },
-    _depth_format        { },
     _render_pass         { },
     _color_buffer        { },
     _depth_buffer        { },
