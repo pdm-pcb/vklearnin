@@ -111,11 +111,11 @@ Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
     return result;
 }
 
-Mat4 scale(Mat4 const &m, Vec4 const &v) {
+Mat4 scale(Mat4 const &m, float const &pct) {
     Mat4 result;
-    result.x = m.x * v.x;
-    result.y = m.y * v.y;
-    result.z = m.z * v.z;
+    result.x = m.x * pct;
+    result.y = m.y * pct;
+    result.z = m.z * pct;
     result.w = m.w;
 
     return result;

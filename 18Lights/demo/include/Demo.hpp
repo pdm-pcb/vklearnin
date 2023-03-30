@@ -33,7 +33,8 @@ private:
     vkl::XYPlane<vkl::VertexLitColor> _wall_mesh;
 
     vkl::Mat4 _lamp_matrix;
-    vkl::Mat4 _cube_matrix;
+    vkl::Mat4 _cube_matrix_a;
+    vkl::Mat4 _cube_matrix_b;
     vkl::Mat4 _floor_matrix;
     vkl::Mat4 _wall_matrix_a;
     vkl::Mat4 _wall_matrix_b;

@@ -13,7 +13,7 @@ vkl::Vec4 POINT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
 vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 
 vkl::Vec4 SPOT_COLOR { 1.0f, 1.0f, 1.0f, 20.0f };
-vkl::Vec4 SPOT_POS   { -5.0f, 2.0f, 5.0f, 1.0f };
+vkl::Vec4 SPOT_POS   { -5.0f, 0.0f, 5.0f, 1.0f };
 vkl::Vec4 SPOT_FWD = -vkl::math::normalize(SPOT_POS);
 
 // =============================================================================
@@ -42,17 +42,42 @@ void Demo::update() {
         SPOT_POS
     );
 
-    _cube_matrix = vkl::math::rotate(
-        vkl::Mat4::identity,
-        vkl::Timekeeper::run_time() * 20.0f,
-        vkl::Vec4::unit_y
-    );
+    // _cube_matrix_a =
+    //     vkl::math::rotate(
+    //         vkl::Mat4::identity,
+    //         vkl::Timekeeper::run_time() * 20.0f,
+    //         vkl::Vec4::unit_x
+    //     );
+
+    _cube_matrix_a =
+        vkl::math::rotate(
+            vkl::math::translate(
+                vkl::Mat4::identity,
+                -vkl::Vec4::unit_z * 2.0f
+            ),
+            vkl::Timekeeper::run_time() * 20.0f,
+            vkl::Vec4::unit_y
+        );
+
+    _cube_matrix_b =
+        vkl::math::scale(
+            vkl::math::rotate(
+                vkl::math::translate(
+                    vkl::Mat4::identity,
+                    vkl::Vec4::unit_z
+                ),
+                vkl::Timekeeper::run_time() * 20.0f,
+                vkl::Vec4::unit_x
+            ),
+            0.25f
+        );
 }
 
 // =============================================================================
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix_a);
+    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix_b);
     vkl::Renderer::submit_draw(_floor_mesh, _floor_matrix);
     vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_a);
     vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_b);

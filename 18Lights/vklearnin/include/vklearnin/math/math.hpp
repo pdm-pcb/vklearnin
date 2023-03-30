@@ -48,7 +48,7 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
 [[nodiscard]] Mat4 transpose(Mat4 const &m);
 [[nodiscard]] Mat4 translate(Mat4 const &m, Vec4 const &v);
 [[nodiscard]] Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis);
-[[nodiscard]] Mat4 scale(Mat4 const &m, Vec4 const &v);
+[[nodiscard]] Mat4 scale(Mat4 const &m, float const &pct);
 
 // =============================================================================
 // Camera math
