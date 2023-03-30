@@ -15,9 +15,12 @@ class CmdBuffer;
 class Pipeline {
 public:
     struct Config {
-        // Common options
+        // Viewport settings
         vk::Extent2D      viewport_extent { 0u, 0u };
         vk::Offset2D      viewport_offset { 0, 0 };
+        vk::Bool32        invert_viewport_y = VK_TRUE;
+
+        // Drawing options
         vk::PolygonMode   polygon_mode = vk::PolygonMode::eFill;
         vk::CullModeFlags cull_mode    = vk::CullModeFlagBits::eBack;
         vk::FrontFace     front_face   = vk::FrontFace::eClockwise;
@@ -55,6 +58,8 @@ public:
     void destroy();
     void update_dimensions(vk::Extent2D const &extent,
                            vk::Offset2D const &offset);
+    void update_dimensions_invert_y(vk::Extent2D const &extent,
+                                    vk::Offset2D const &offset);
 
     inline auto const& native()   const { return _pipeline; }
     inline auto const& layout()   const { return _layout; }

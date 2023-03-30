@@ -97,14 +97,13 @@ void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
 }
 
 // =============================================================================
-void Texture2D::create_shadow_map(uint32_t const width, uint32_t const height,
+void Texture2D::create_shadow_map(vk::Extent2D const &extent,
                                   vk::Format const depth_format)
 {
     _image.format = depth_format;
-
     _image.extent = vk::Extent3D {
-        .width  = width,
-        .height = height,
+        .width  = extent.width,
+        .height = extent.height,
         .depth  = 1u
     };
 

@@ -16,7 +16,7 @@ public:
     using CubeFilepaths = std::array<std::string_view, 6>;
     void cubemap_from_files(CubeFilepaths const &filepaths);
 
-    void create_shadow_map(uint32_t const width, uint32_t const height,
+    void create_shadow_map(vk::Extent2D const &extent,
                            vk::Format const depth_format);
 
     void create_sampler(vk::Filter const min_filter,

@@ -2,19 +2,21 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-vkl::Vec4 CUBE_COLOR  { 0.15f, 0.65f, 0.25f, 256.0f };
-vkl::Vec4 FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
-vkl::Vec4 WALL_COLOR  { 0.85f, 0.45f, 0.35f, 256.0f };
+vkl::Vec4 constexpr CUBE_COLOR  { 0.15f, 0.65f, 0.25f, 256.0f };
+vkl::Vec4 constexpr FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
+vkl::Vec4 constexpr WALL_COLOR  { 0.85f, 0.45f, 0.35f, 256.0f };
 
-vkl::Vec4 DIR_COLOR { 1.0f, 1.0f, 1.0f, 0.25f };
-vkl::Vec4 DIR_POS   { 1.0f, 2.0f, 1.0f, 1.0f  };
+vkl::Vec4 constexpr DIR_COLOR { 1.0f, 1.0f, 1.0f, 0.25f };
+vkl::Vec4 constexpr DIR_POS   { 1.0f, 2.0f, 1.0f, 1.0f  };
 
-vkl::Vec4 POINT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
-vkl::Vec4 POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
+vkl::Vec4 constexpr POINT_COLOR { 1.0f, 1.0f, 1.0f, 1.0f };
+vkl::Vec4 constexpr POINT_POS   { -2.0f, 0.0f, 2.0f, 1.0f };
 
-vkl::Vec4 SPOT_COLOR { 1.0f, 1.0f, 1.0f, 20.0f };
-vkl::Vec4 SPOT_POS   { -5.0f, 0.0f, 5.0f, 1.0f };
-vkl::Vec4 SPOT_FWD = -vkl::math::normalize(SPOT_POS);
+vkl::Vec4 constexpr SPOT_COLOR { 1.0f, 1.0f, 1.0f, 20.0f };
+vkl::Vec4 constexpr SPOT_POS   { -5.0f, 1.0f, 5.0f, 1.0f };
+vkl::Vec4 SPOT_FWD = vkl::math::normalize(-SPOT_POS);
+
+float constexpr ROT_FACT = 20.0f;
 
 // =============================================================================
 void Demo::update() {
@@ -55,7 +57,7 @@ void Demo::update() {
                 vkl::Mat4::identity,
                 -vkl::Vec4::unit_z * 2.0f
             ),
-            vkl::Timekeeper::run_time() * 20.0f,
+            vkl::Timekeeper::run_time() * ROT_FACT,
             vkl::Vec4::unit_y
         );
 
@@ -66,7 +68,7 @@ void Demo::update() {
                     vkl::Mat4::identity,
                     vkl::Vec4::unit_z
                 ),
-                vkl::Timekeeper::run_time() * 20.0f,
+                vkl::Timekeeper::run_time() * ROT_FACT,
                 vkl::Vec4::unit_x
             ),
             0.25f
@@ -124,17 +126,17 @@ void Demo::_init_meshes() {
 void Demo::_init_model_matrices() {
     _floor_matrix = vkl::math::translate(
         vkl::Mat4::identity,
-        { 0.0f, -3.0f, 0.0f, 1.0f }
+        { 0.0f, -1.0f, 0.0f, 1.0f }
     );
 
     _wall_matrix_a = vkl::math::translate(
         vkl::Mat4::identity,
-        { 0.0f, -3.0f, -10.0f, 1.0f }
+        { 0.0f, -1.0f, -10.0f, 1.0f }
     );
 
     _wall_matrix_b = vkl::math::translate(
         vkl::Mat4::identity,
-        { 10.0f, -3.0f, 0.0f, 1.0f }
+        { 10.0f, -1.0f, 0.0f, 1.0f }
     ) * vkl::math::rotate(
         vkl::Mat4::identity,
         -90.0f,

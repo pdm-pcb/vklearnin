@@ -178,11 +178,11 @@ RenderPass & RenderPass::default_color_subpass() {
 }
 
 // =============================================================================
-RenderPass & RenderPass::create_shadow_map(uint32_t const resolution) {
+RenderPass & RenderPass::create_shadow_map(vk::Extent2D const &extent) {
     _shadow_map.destroy();
 
     _find_depth_stencil_format();
-    _shadow_map.create_shadow_map(resolution, resolution, _depth_format);
+    _shadow_map.create_shadow_map(extent, _depth_format);
     _shadow_map.create_sampler(
         vk::Filter::eLinear,
         vk::Filter::eLinear,

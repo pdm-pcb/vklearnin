@@ -233,7 +233,7 @@ void Renderer::record_commands() {
 
         _execute_flat_color_pipeline();
         _execute_texture_pipeline();
-        // _execute_skybox_pipeline();
+        _execute_skybox_pipeline();
         _execute_lit_color_pipeline();
         _execute_material_pipeline();
 
@@ -458,7 +458,10 @@ void Renderer::_init_shadow_map_pass() {
         Swapchain::extent().height;
 
     _shadow_map_pass
-        .create_shadow_map(_shadow_map_resolution)
+        .create_shadow_map(vk::Extent2D {
+            .width  = _shadow_map_resolution,
+            .height = _shadow_map_resolution,
+        })
         .default_shadow_map_attachments()
         .default_shadow_map_subpass()
         .create();
@@ -469,20 +472,16 @@ void Renderer::_init_shadow_map_framebuffers() {
     _shadow_map_framebuffers.clear();
     _shadow_map_framebuffers.resize(RenderConfig::swapchain_image_count);
 
-    auto const shadow_map_render_area = vk::Rect2D {
-        .offset = { .x = 0, .y = 0 },
-        .extent = {
-            .width  = _shadow_map_resolution,
-            .height = _shadow_map_resolution,
-        },
-    };
-
     for(auto &framebuffer : _shadow_map_framebuffers) {
         framebuffer.create(
-            shadow_map_render_area,
-            {
-                _shadow_map_pass.shadow_map().image().view,
+            vk::Rect2D {
+                .offset = { .x = 0, .y = 0 },
+                .extent = vk::Extent2D {
+                    .width  = _shadow_map_resolution,
+                    .height = _shadow_map_resolution,
+                },
             },
+            { _shadow_map_pass.shadow_map().image().view, },
             _shadow_map_pass.native()
         );
     }
@@ -836,11 +835,14 @@ void Renderer::_init_shadow_map_pipeline() {
         .create(
             _shadow_map_pass,
             Pipeline::Config {
-                .viewport_extent = {
+                .viewport_extent = vk::Extent2D {
                     .width  = _shadow_map_resolution,
                     .height = _shadow_map_resolution,
                 },
-                .depth_compare = vk::CompareOp::eLessOrEqual,
+                .invert_viewport_y   = VK_FALSE,
+                .enable_depth_bias   = VK_TRUE,
+                .depth_bias_constant = 4.0f,
+                .depth_bias_slope    = 3.0f,
             }
         );
 }

@@ -22,13 +22,20 @@ layout(push_constant) uniform ModelPush {
 	mat4 model_mat;
 };
 
+const mat4 vulkan_ndc_bias = mat4(
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0
+);
+
 void main() {
 	vec4 world_pos = model_mat * in_pos;
 
 	out_color  = in_color;
 	out_pos    = world_pos.xyz;
 	out_normal = normalize(mat3(model_mat) * in_normal.xyz);
-	out_light_space_pos = light_vp_matrix * world_pos;
+	out_light_space_pos = vulkan_ndc_bias * light_vp_matrix * world_pos;
 
 	gl_Position = proj_mat * view_mat * world_pos;
 }

@@ -14,7 +14,7 @@ public:
     RenderPass & default_color_attachments();
     RenderPass & default_color_subpass();
 
-    RenderPass & create_shadow_map(uint32_t const resolution);
+    RenderPass & create_shadow_map(vk::Extent2D const &extent);
     RenderPass & default_shadow_map_attachments();
     RenderPass & default_shadow_map_subpass();
 

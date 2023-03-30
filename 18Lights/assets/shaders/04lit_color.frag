@@ -46,13 +46,6 @@ layout(set = 1, binding = 0) uniform LightData {
 
 layout(set = 3, binding = 0) uniform sampler2DShadow shadow_map;
 
-float shadow_factor() {
-    vec3 light_space_ndc = in_light_space_pos.xyz / in_light_space_pos.w;
-    light_space_ndc.xy = 0.5 * light_space_ndc.xy + 0.5;
-
-    return texture(shadow_map, light_space_ndc);
-}
-
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);
 
@@ -89,6 +82,11 @@ void main() {
     vec3 light_sum = directional + point + spot;
 
     out_color = vec4(in_color.rgb * light_sum, 1.0);
+}
+
+float shadow_factor() {
+    vec3 light_space_ndc = in_light_space_pos.xyz / in_light_space_pos.w;
+    return texture(shadow_map, light_space_ndc);
 }
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,

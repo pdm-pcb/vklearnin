@@ -213,6 +213,33 @@ void Pipeline::update_dimensions(vk::Extent2D const &extent,
 {
     _viewport = vk::Viewport {
         .x         = static_cast<float>(offset.x),
+        .y         = static_cast<float>(offset.y),
+        .width     = static_cast<float>(extent.width),
+        .height    = static_cast<float>(extent.height),
+        .minDepth  = 0.0f,
+        .maxDepth  = 1.0f,
+    };
+
+    _scissor = vk::Rect2D {
+        .offset = { offset.x, offset.y },
+        .extent = { extent.width, extent.height },
+    };
+
+    CONSOLE_TRACE(
+        "Pipeline viewport updated: {:.02f}x{:.02f} ({:.02f}, {:.02f}) ",
+        _viewport.width,
+        _viewport.height,
+        _viewport.x,
+        _viewport.y
+    );
+}
+
+// =============================================================================
+void Pipeline::update_dimensions_invert_y(vk::Extent2D const &extent,
+                                          vk::Offset2D const &offset)
+{
+    _viewport = vk::Viewport {
+        .x         = static_cast<float>(offset.x),
         .y         = static_cast<float>(extent.height),
         .width     = static_cast<float>(extent.width),
         .height    = -static_cast<float>(extent.height),
@@ -262,7 +289,13 @@ void Pipeline::_init_viewport(Config const &config) {
         .pScissors     = nullptr,
     };
 
-    update_dimensions(config.viewport_extent, config.viewport_offset);
+    if(config.invert_viewport_y) {
+        update_dimensions_invert_y(config.viewport_extent,
+                                   config.viewport_offset);
+    }
+    else {
+        update_dimensions(config.viewport_extent, config.viewport_offset);
+    }
 }
 
 // =============================================================================
