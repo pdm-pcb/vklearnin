@@ -11,6 +11,9 @@ FetchContent_MakeAvailable(fmt)
 message(NOTICE "Fetch spdlog")
 FetchContent_MakeAvailable(spdlog)
 
+# message(NOTICE "Fetch glm")
+# FetchContent_MakeAvailable(glm)
+
 message(NOTICE "Fetch SDL2")
 FetchContent_MakeAvailable(SDL2)
 
@@ -42,6 +45,7 @@ target_include_directories(
     vklearnin SYSTEM PUBLIC
     "${fmt_SOURCE_DIR}/include"
     "${spdlog_SOURCE_DIR}"
+    # "${glm_SOURCE_DIR}"
     "${SDL2_BINARY_DIR}/include"
 )
 
@@ -55,6 +59,7 @@ target_link_libraries(
 	Vulkan::Vulkan
     fmt
     spdlog
+    # glm
     SDL2-static
     third_party
 )

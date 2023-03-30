@@ -111,7 +111,8 @@ void Demo::_init_camera() {
     auto const position = 8.0f * vkl::Vec4::unit_z;
     auto const forward  = -1.0f * vkl::Vec4::unit_z;
     _camera.init(position, forward);
-    _camera.set_perspective(0.1f, 1000.0f, 45.0f);
+    // _camera.set_orthographic(0.1f, 1000.0f);
+    _camera.set_perspective(0.1f, 45.0f);
 }
 
 // =============================================================================

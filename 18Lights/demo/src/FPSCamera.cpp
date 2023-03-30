@@ -42,7 +42,7 @@ void FPSCamera::init(vkl::Vec4 const &position, vkl::Vec4 const &forward) {
 
 // =============================================================================
 void FPSCamera::set_orthographic(float const near, float const far) {
-    _proj_mat = vkl::math::orthographic_projection(
+    _proj_mat = vkl::math::ortho_proj_rh_zo(
         near, far,
         -vkl::RenderConfig::window_aspect, vkl::RenderConfig::window_aspect,
         -1.0f, 1.0f
@@ -50,12 +50,10 @@ void FPSCamera::set_orthographic(float const near, float const far) {
 }
 
 // =============================================================================
-void FPSCamera::set_perspective(float const near, float const far,
-                                float const vertical_fov_degrees)
-{
-    _proj_mat = vkl::math::perspective_projection(
-        near, far,
-        vertical_fov_degrees,
+void FPSCamera::set_perspective(float const near, float const vfov_degrees) {
+    _proj_mat = vkl::math::persp_proj_rh_zo_inf(
+        near,
+        vfov_degrees,
         vkl::RenderConfig::window_aspect
     );
 }

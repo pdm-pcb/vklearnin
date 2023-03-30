@@ -123,9 +123,14 @@ Mat4 scale(Mat4 const &m, float const &pct) {
 
 // =============================================================================
 // Camera math
-Mat4 orthographic_projection(float const near, float const far,
-                             float const left, float const right,
-                             float const bottom, float const top)
+// Credit to:
+// https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
+// https://www.danielecarbone.com/reverse-depth-buffer-in-opengl/
+// https://discourse.nphysics.org/t/reversed-z-and-infinite-zfar-in-projections/341
+
+Mat4 ortho_proj_rh_zo(float const near, float const far,
+                      float const left, float const right,
+                      float const bottom, float const top)
 {
     auto result = Mat4::identity;
 
@@ -134,7 +139,7 @@ Mat4 orthographic_projection(float const near, float const far,
     auto const c = far - near;
 
     result.x.x = 2.0f / a;
-    result.y.y = 2.0f / b;
+    result.y.y = -2.0f / b;
     result.z.z = -1.0f / c;
     result.w.x = -(right + left) / a;
     result.w.y = -(top + bottom) / b;
@@ -143,21 +148,37 @@ Mat4 orthographic_projection(float const near, float const far,
     return result;
 }
 
-Mat4 perspective_projection(float const near, float const far,
-                            float const vertical_fov_degrees,
-                            float const aspect_ratio)
+Mat4 persp_proj_rh_zo_inf(float const near, float const vfov_degrees,
+                          float const aspect_ratio)
 {
     auto result = Mat4::zero;
 
-    auto const half_angle =
-        std::tan(math::radians(vertical_fov_degrees) * 0.5f);
+    auto const fov_rad = math::radians(vfov_degrees);
+    auto const half_angle = std::tan(fov_rad * 0.5f);
+    auto const half_angle_recip = 1.0f / half_angle;
 
-    // Right handed, zero-to-one NDC space
-    result.x.x = 1.0f / (aspect_ratio * half_angle);
-    result.y.y = 1.0f / half_angle;
-    result.z.z = far / (near - far);
+    result.x.x = half_angle_recip / aspect_ratio;
+    result.y.y = -half_angle_recip;
+    result.z.z = -1.0f;
     result.z.w = -1.0f;
-    result.w.z = -(far * near) / (far - near);
+    result.w.z = -near;
+
+    return result;
+}
+
+Mat4 persp_proj_rh_oz_inf(float const near, float const vfov_degrees,
+                          float const aspect_ratio)
+{
+    auto result = Mat4::zero;
+
+    auto const fov_rad = math::radians(vfov_degrees);
+    auto const half_angle = std::tan(fov_rad * 0.5f);
+    auto const half_angle_recip = 1.0f / half_angle;
+
+    result.x.x = half_angle_recip / aspect_ratio;
+    result.y.y = -half_angle_recip;
+    result.z.w = -1.0f;
+    result.w.z = near;
 
     return result;
 }

@@ -235,33 +235,6 @@ void Pipeline::update_dimensions(vk::Extent2D const &extent,
 }
 
 // =============================================================================
-void Pipeline::update_dimensions_invert_y(vk::Extent2D const &extent,
-                                          vk::Offset2D const &offset)
-{
-    _viewport = vk::Viewport {
-        .x         = static_cast<float>(offset.x),
-        .y         = static_cast<float>(extent.height),
-        .width     = static_cast<float>(extent.width),
-        .height    = -static_cast<float>(extent.height),
-        .minDepth  = 0.0f,
-        .maxDepth  = 1.0f,
-    };
-
-    _scissor = vk::Rect2D {
-        .offset = { offset.x, offset.y },
-        .extent = { extent.width, extent.height },
-    };
-
-    CONSOLE_TRACE(
-        "Pipeline viewport updated: {:.02f}x{:.02f} ({:.02f}, {:.02f}) ",
-        _viewport.width,
-        _viewport.height,
-        _viewport.x,
-        _viewport.y
-    );
-}
-
-// =============================================================================
 void Pipeline::_init_assembly() {
     // The primitive assembly stage requires knowing how to interpret the
     // vertices you've asked it to draw. Again, we're not feeding anything
@@ -289,13 +262,7 @@ void Pipeline::_init_viewport(Config const &config) {
         .pScissors     = nullptr,
     };
 
-    if(config.invert_viewport_y) {
-        update_dimensions_invert_y(config.viewport_extent,
-                                   config.viewport_offset);
-    }
-    else {
-        update_dimensions(config.viewport_extent, config.viewport_offset);
-    }
+    update_dimensions(config.viewport_extent, config.viewport_offset);
 }
 
 // =============================================================================
@@ -342,15 +309,15 @@ void Pipeline::_init_multisample(Config const &config) {
 // =============================================================================
 void Pipeline::_init_depth_stencil(Config const &config) {
     _depth_stencil_info = {
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = config.depth_compare,
+        .depthTestEnable       = config.enable_depth_test,
+        .depthWriteEnable      = VK_TRUE,
+        .depthCompareOp        = config.depth_compare,
         .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE,
-        .front = { },
-        .back = { },
-        .minDepthBounds = 0.0f,
-        .maxDepthBounds = 1.0f
+        .stencilTestEnable     = VK_FALSE,
+        .front                 = { },
+        .back                  = { },
+        .minDepthBounds        = 0.0f,
+        .maxDepthBounds        = 1.0f
     };
 }
 

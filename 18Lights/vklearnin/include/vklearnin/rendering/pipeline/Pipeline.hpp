@@ -18,7 +18,6 @@ public:
         // Viewport settings
         vk::Extent2D      viewport_extent { 0u, 0u };
         vk::Offset2D      viewport_offset { 0, 0 };
-        vk::Bool32        invert_viewport_y = VK_TRUE;
 
         // Drawing options
         vk::PolygonMode   polygon_mode = vk::PolygonMode::eFill;
@@ -29,7 +28,8 @@ public:
         vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
         // Depth/shadow buffer options
-        vk::CompareOp depth_compare       = vk::CompareOp::eLessOrEqual;
+        vk::Bool32    enable_depth_test   = VK_FALSE;
+        vk::CompareOp depth_compare       = vk::CompareOp::eNever;
         vk::Bool32    enable_depth_bias   = VK_FALSE;
         float         depth_bias_constant = 0.0f;
         float         depth_bias_slope    = 0.0f;
@@ -58,8 +58,6 @@ public:
     void destroy();
     void update_dimensions(vk::Extent2D const &extent,
                            vk::Offset2D const &offset);
-    void update_dimensions_invert_y(vk::Extent2D const &extent,
-                                    vk::Offset2D const &offset);
 
     inline auto const& native()   const { return _pipeline; }
     inline auto const& layout()   const { return _layout; }

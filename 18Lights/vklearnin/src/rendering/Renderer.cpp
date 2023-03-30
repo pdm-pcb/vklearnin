@@ -94,16 +94,8 @@ void Renderer::update_camera_data(CameraData const &data) {
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
-    // auto const ortho_dimension = 5.0f;
-    // auto const light_proj_mat = math::orthographic_projection(
-    //     0.1f, 10.0f,
-    //     -ortho_dimension, ortho_dimension,
-    //     -ortho_dimension, ortho_dimension
-    // );
-    auto const light_proj_mat = math::perspective_projection(
-        0.1f, 25.0f,
-        45.0f,
-        1.0f
+    auto const light_proj_mat = math::persp_proj_rh_zo_inf(
+        0.1f, 45.0f, 1.0f
     );
     auto const light_view_mat = math::look_at(
         data.spot.position,
@@ -709,9 +701,11 @@ void Renderer::_init_flat_color_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent = Swapchain::extent(),
-                .viewport_offset = Swapchain::offset(),
-                .msaa_samples    = RenderConfig::max_msaa_flag(),
+                .viewport_extent   = Swapchain::extent(),
+                .viewport_offset   = Swapchain::offset(),
+                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .enable_depth_test = VK_TRUE,
+                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -734,9 +728,11 @@ void Renderer::_init_texture_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent = Swapchain::extent(),
-                .viewport_offset = Swapchain::offset(),
-                .msaa_samples    = RenderConfig::max_msaa_flag(),
+                .viewport_extent   = Swapchain::extent(),
+                .viewport_offset   = Swapchain::offset(),
+                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .enable_depth_test = VK_TRUE,
+                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -759,9 +755,11 @@ void Renderer::_init_skybox_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent = Swapchain::extent(),
-                .viewport_offset = Swapchain::offset(),
-                .msaa_samples    = RenderConfig::max_msaa_flag(),
+                .viewport_extent   = Swapchain::extent(),
+                .viewport_offset   = Swapchain::offset(),
+                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .enable_depth_test = VK_TRUE,
+                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -786,9 +784,11 @@ void Renderer::_init_lit_color_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent = Swapchain::extent(),
-                .viewport_offset = Swapchain::offset(),
-                .msaa_samples    = RenderConfig::max_msaa_flag(),
+                .viewport_extent   = Swapchain::extent(),
+                .viewport_offset   = Swapchain::offset(),
+                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .enable_depth_test = VK_TRUE,
+                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -812,9 +812,11 @@ void Renderer::_init_material_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent = Swapchain::extent(),
-                .viewport_offset = Swapchain::offset(),
-                .msaa_samples    = RenderConfig::max_msaa_flag(),
+                .viewport_extent   = Swapchain::extent(),
+                .viewport_offset   = Swapchain::offset(),
+                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .enable_depth_test = VK_TRUE,
+                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -839,10 +841,11 @@ void Renderer::_init_shadow_map_pipeline() {
                     .width  = _shadow_map_resolution,
                     .height = _shadow_map_resolution,
                 },
-                .invert_viewport_y   = VK_FALSE,
-                .enable_depth_bias   = VK_TRUE,
-                .depth_bias_constant = 4.0f,
-                .depth_bias_slope    = 3.0f,
+                .enable_depth_test   = VK_TRUE,
+                .depth_compare       = vk::CompareOp::eLessOrEqual,
+                .enable_depth_bias   = VK_FALSE,
+                .depth_bias_constant = 0.0f,
+                .depth_bias_slope    = 0.0f,
             }
         );
 }
