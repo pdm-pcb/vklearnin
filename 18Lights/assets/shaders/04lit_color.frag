@@ -26,11 +26,11 @@ struct SpotLight {
     vec4 position;
     vec4 forward;
     vec4 color;
-    float beam_half_angle;
+    float inner_beam_angle;
+    float outer_beam_angle;
 
     int padding0;
     int padding1;
-    int padding2;
 };
 
 layout(set = 1, binding = 0) uniform LightData {
@@ -170,21 +170,17 @@ vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
     to_light = normalize(to_light);
 
     float theta = dot(to_light, -light.forward.xyz);
-    if(theta > light.beam_half_angle) {
-        // Cosine of the angle of incidence, but don't let it go negative. If
-        // the dot of the two vectors is negative, the light's angle of icidence
-        // is greater than 90 degrees to this fragment's normal, meaning the
-        // light is either perfectly parallel or behind this fragment.
-        float cos_theta = max(dot(to_light, frag_normal), 0.0);
+    float cone_epsilon = light.inner_beam_angle - light.outer_beam_angle;
+    float cone_attenuation = (theta - light.outer_beam_angle) / cone_epsilon;
+    cone_attenuation = clamp(cone_attenuation, 0.0, 1.0);
 
-        // The diffuse component can now account for all factors
-        diffuse = spot_intensity * cos_theta;
+    // The diffuse component can now account for all factors
+    diffuse = spot_intensity * cone_attenuation;
 
-        // // Use blinn reflectance in order to support camera-to-reflection angles
-        // // of more than 90 degrees
-        // float blinn = blinn_specular(to_light, to_camera, frag_normal);
-        // specular = spot_intensity * blinn;
-    }
+    // // Use blinn reflectance in order to support camera-to-reflection angles of
+    // // more than 90 degrees
+    // float blinn = blinn_specular(to_light, to_camera, frag_normal);
+    // specular = point_intensity * blinn;
 
     return ambient + (diffuse + specular) * shadow_factor();
 }

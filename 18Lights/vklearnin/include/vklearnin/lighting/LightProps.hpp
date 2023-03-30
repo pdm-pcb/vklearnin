@@ -20,9 +20,10 @@ struct SpotLight {
     Vec4 forward = -Vec4::unit_z;
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    float beam_half_angle = std::cos(math::radians(20.0f));
+    float inner_beam_angle = std::cos(math::radians(12.5f));
+    float outer_beam_angle = std::cos(math::radians(20.0f));
 
-    int32_t padding[3] { 0 };
+    int32_t padding[2] { 0 };
 };
 
 struct LightProps {
