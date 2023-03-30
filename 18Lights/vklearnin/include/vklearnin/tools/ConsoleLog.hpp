@@ -30,7 +30,7 @@ public:
 #define CONSOLE_INFO(...)     SPDLOG_INFO(__VA_ARGS__)
 #define CONSOLE_WARN(...)     SPDLOG_WARN(__VA_ARGS__)
 #define CONSOLE_ERROR(...)    SPDLOG_ERROR(__VA_ARGS__)
-#define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); std::raise(SIGABRT);
+#define CONSOLE_CRITICAL(...) SPDLOG_CRITICAL(__VA_ARGS__); assert(false);
 
 } // namespace vkl
 

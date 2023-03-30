@@ -26,7 +26,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL VKDebugger::messenger(
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
             CONSOLE_ERROR("\n{:s}\n", callback_data->pMessage);
-            std::raise(SIGABRT);
+            assert(false);
             break;
         default:
             CONSOLE_CRITICAL("???: {:s}", callback_data->pMessage);

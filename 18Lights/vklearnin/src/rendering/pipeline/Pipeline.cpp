@@ -75,8 +75,8 @@ Pipeline & Pipeline::frag_from_spirv(std::string_view filepath,
 }
 
 // =============================================================================
-Pipeline & Pipeline::describe_vertex_input(VertexBindings const &bindings,
-                                           VertexAttribs const &attributes)
+Pipeline & Pipeline::describe_vertex_input(Vertex::Bindings const &bindings,
+                                           Vertex::Attribs const &attributes)
 {
     auto const binding_count = static_cast<uint32_t>(bindings.size());
     auto const attrib_count  = static_cast<uint32_t>(attributes.size());

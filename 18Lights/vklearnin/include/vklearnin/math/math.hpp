@@ -4,7 +4,6 @@
 #include "vklearnin/math/Vec4.hpp"
 #include "vklearnin/math/Mat4.hpp"
 
-#include <cstdint>
 #include <cmath>
 #include <numbers>
 #include <limits>

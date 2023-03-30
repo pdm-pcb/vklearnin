@@ -3,7 +3,6 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/rendering/pipeline/Shader.hpp"
-#include "vklearnin/meshes/VertexTypes.hpp"
 
 namespace vkl {
 
@@ -47,8 +46,8 @@ public:
     Pipeline & frag_from_spirv(std::string_view filepath,
                                std::string_view entry_point = "main");
 
-    Pipeline & describe_vertex_input(VertexBindings const &bindings,
-                                     VertexAttribs const &attributes);
+    Pipeline & describe_vertex_input(Vertex::Bindings const &bindings,
+                                     Vertex::Attribs const &attributes);
 
     Pipeline & add_descriptor_set(DescriptorSetLayout const &set_layout);
     Pipeline & add_push_constant(vk::ShaderStageFlags const stage_flags,

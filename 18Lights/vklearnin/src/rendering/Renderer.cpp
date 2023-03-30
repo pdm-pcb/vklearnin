@@ -4,7 +4,7 @@
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
-#include "vklearnin/meshes/Mesh.hpp"
+#include "vklearnin/meshes/GeneratedMesh.hpp"
 
 namespace vkl {
 
@@ -64,7 +64,7 @@ Renderer::DescSetList Renderer::_shadow_map_sets;
 
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_camera_buffers;
-Skybox<VertexSkybox> Renderer::_skybox_mesh;
+Skybox               Renderer::_skybox_mesh;
 Texture2D            Renderer::_skybox_texture;
 Renderer::BufferList Renderer::_light_props_buffers;
 Renderer::BufferList Renderer::_shadow_map_transform_buffers;
@@ -80,10 +80,10 @@ Pipeline Renderer::_shadow_map_pipeline;
 // Draw Queues -----------------------------------------------------------------
 static constexpr uint32_t DRAW_QUEUE_MAGIC_NUMBER = 100u; // TODO: nonsense
 
-Renderer::FlatColorDrawQueue Renderer::_flat_color_draws;
-Renderer::TextureDrawQueue   Renderer::_texture_draws;
-Renderer::LitColorDrawQueue  Renderer::_lit_color_draws;
-Renderer::MaterialDrawQueue  Renderer::_material_draws;
+Renderer::DrawQueue         Renderer::_flat_color_draws;
+Renderer::TextureDrawQueue  Renderer::_texture_draws;
+Renderer::DrawQueue         Renderer::_lit_color_draws;
+Renderer::MaterialDrawQueue Renderer::_material_draws;
 
 // =============================================================================
 void Renderer::update_camera_data(CameraData const &data) {
@@ -112,11 +112,11 @@ void Renderer::update_light_props(LightProps const &data) {
 }
 
 // =============================================================================
-void Renderer::submit_draw(Mesh<VertexFlatColor> const &mesh,
-                           Mat4 const &model_matrix)
+void Renderer::submit_draw_flat(GeneratedMesh const &mesh,
+                                Mat4 const &model_matrix)
 {
     _flat_color_draws.push_back(
-        DrawSubmission<VertexFlatColor> {
+        DrawSubmission {
             .mesh = &mesh,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
@@ -128,7 +128,7 @@ void Renderer::submit_draw(Mesh<VertexFlatColor> const &mesh,
 }
 
 // =============================================================================
-void Renderer::submit_draw(Mesh<VertexTexture> const &mesh,
+void Renderer::submit_draw(GeneratedMesh const &mesh,
                            Texture2D const &texture,
                            Mat4 const &model_matrix)
 {
@@ -137,7 +137,7 @@ void Renderer::submit_draw(Mesh<VertexTexture> const &mesh,
     );
 
     _texture_draws[texture_id].queue.push_back(
-        DrawSubmission<VertexTexture> {
+        DrawSubmission {
             .mesh = &mesh,
             .texture = &texture,
             .push_constants = {{
@@ -150,11 +150,12 @@ void Renderer::submit_draw(Mesh<VertexTexture> const &mesh,
 }
 
 // =============================================================================
-void Renderer::submit_draw(Mesh<VertexLitColor> const &mesh,
-                           Mat4 const &model_matrix)
+void Renderer::submit_draw_lit(GeneratedMesh const &mesh,
+                                Mat4 const &model_matrix)
 {
+
     _lit_color_draws.push_back(
-        DrawSubmission<VertexLitColor> {
+        DrawSubmission {
             .mesh = &mesh,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
@@ -166,7 +167,7 @@ void Renderer::submit_draw(Mesh<VertexLitColor> const &mesh,
 }
 
 // =============================================================================
-void Renderer::submit_draw(Mesh<VertexMaterial> const &mesh,
+void Renderer::submit_draw(GeneratedMesh const &mesh,
                            Material const &material,
                            Mat4 const &model_matrix)
 {
@@ -175,7 +176,7 @@ void Renderer::submit_draw(Mesh<VertexMaterial> const &mesh,
     );
 
     _material_draws[material_id].queue.push_back(
-        DrawSubmission<VertexMaterial> {
+        DrawSubmission {
             .mesh = &mesh,
             .material = &material,
             .push_constants = {{
@@ -681,8 +682,8 @@ void Renderer::_init_flat_color_pipeline() {
         .vert_from_spirv("shaders/01flat_color.vert")
         .frag_from_spirv("shaders/01flat_color.frag")
         .describe_vertex_input(
-            VertexFlatColor::bindings,
-            VertexFlatColor::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_global_data_layout)
         .add_push_constant(
@@ -707,8 +708,8 @@ void Renderer::_init_texture_pipeline() {
         .vert_from_spirv("shaders/02texture.vert")
         .frag_from_spirv("shaders/02texture.frag")
         .describe_vertex_input(
-            VertexTexture::bindings,
-            VertexTexture::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_global_data_layout)
         .add_descriptor_set(_texture_layout)
@@ -734,8 +735,8 @@ void Renderer::_init_skybox_pipeline() {
         .vert_from_spirv("shaders/03skybox.vert")
         .frag_from_spirv("shaders/03skybox.frag")
         .describe_vertex_input(
-            VertexSkybox::bindings,
-            VertexSkybox::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_global_data_layout)
         .add_descriptor_set(_texture_layout)
@@ -761,8 +762,8 @@ void Renderer::_init_lit_color_pipeline() {
         .vert_from_spirv("shaders/04lit_color.vert")
         .frag_from_spirv("shaders/04lit_color.frag")
         .describe_vertex_input(
-            VertexLitColor::bindings,
-            VertexLitColor::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_global_data_layout)
         .add_descriptor_set(_light_props_layout)
@@ -790,8 +791,8 @@ void Renderer::_init_material_pipeline() {
         .vert_from_spirv("shaders/05material.vert")
         .frag_from_spirv("shaders/05material.frag")
         .describe_vertex_input(
-            VertexMaterial::bindings,
-            VertexMaterial::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_global_data_layout)
         .add_descriptor_set(_light_props_layout)
@@ -817,8 +818,8 @@ void Renderer::_init_shadow_map_pipeline() {
     _shadow_map_pipeline
         .vert_from_spirv("shaders/06shadow_map.vert")
         .describe_vertex_input(
-            VertexLitColor::bindings,
-            VertexLitColor::attributes
+            Vertex::bindings,
+            Vertex::attributes
         )
         .add_descriptor_set(_shadow_map_transform_layout)
         .add_push_constant(
@@ -967,6 +968,25 @@ void Renderer::_execute_shadow_map_pipeline() {
             _send_push_constants(_shadow_map_pipeline, draw, frame_data);
             draw.mesh->draw_indexed(cmd_buffer);
         }
+    }
+}
+
+// =============================================================================
+void Renderer::_send_push_constants(Pipeline const &pipeline,
+                                    DrawSubmission const &draw,
+                                    FrameData const &frame_data)
+{
+    size_t offset = 0u;
+    for(auto const& push_constant : draw.push_constants) {
+        frame_data.cmd_buffer().native().pushConstants(
+            pipeline.layout(),
+            push_constant.stage_flags,
+            static_cast<uint32_t>(offset),
+            static_cast<uint32_t>(push_constant.size),
+            push_constant.data
+        );
+
+        offset += push_constant.size;
     }
 }
 

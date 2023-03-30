@@ -3,8 +3,7 @@
 
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/meshes/Cube.hpp"
-#include "vklearnin/meshes/XYPlane.hpp"
-#include "vklearnin/meshes/XZPlane.hpp"
+#include "vklearnin/meshes/Plane.hpp"
 
 #include "FPSCamera.hpp"
 
@@ -27,10 +26,10 @@ public:
 private:
     FPSCamera _camera;
 
-    vkl::Cube<vkl::VertexFlatColor>   _lamp_mesh;
-    vkl::Cube<vkl::VertexLitColor>    _cube_mesh;
-    vkl::XZPlane<vkl::VertexLitColor> _floor_mesh;
-    vkl::XYPlane<vkl::VertexLitColor> _wall_mesh;
+    vkl::Cube  _lamp_mesh;
+    vkl::Cube  _cube_mesh;
+    vkl::Plane _floor_mesh;
+    vkl::Plane _wall_mesh;
 
     vkl::Mat4 _lamp_matrix;
     vkl::Mat4 _cube_matrix_a;

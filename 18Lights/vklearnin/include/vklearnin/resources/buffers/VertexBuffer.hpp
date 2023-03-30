@@ -2,12 +2,12 @@
 #define VKLEARNIN_RESOURCES_BUFFERS_VERTEXBUFFER_HPP
 
 #include "vklearnin/system/pch.hpp"
+#include "vklearnin/meshes/Vertex.hpp"
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/buffers/BufferTools.hpp"
 
 namespace vkl {
 
-template <typename VertexType>
 class VertexBuffer {
 public:
     void create(size_t const size) {
@@ -26,7 +26,7 @@ public:
         BufferTools::destroy(_buffer);
     }
 
-    void populate_buffer(std::vector<VertexType> const &vertices) {
+    void populate_buffer(std::vector<Vertex> const &vertices) {
         BufferTools::host_to_device(_buffer, vertices.data());
     }
 

@@ -70,12 +70,12 @@ void Demo::update() {
 
 // =============================================================================
 void Demo::submit_draws() {
-    vkl::Renderer::submit_draw(_lamp_mesh, _lamp_matrix);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix_a);
-    vkl::Renderer::submit_draw(_cube_mesh, _cube_matrix_b);
-    vkl::Renderer::submit_draw(_floor_mesh, _floor_matrix);
-    vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_a);
-    vkl::Renderer::submit_draw(_wall_mesh, _wall_matrix_b);
+    vkl::Renderer::submit_draw_flat(_lamp_mesh, _lamp_matrix);
+    vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_a);
+    vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_b);
+    vkl::Renderer::submit_draw_lit(_floor_mesh, _floor_matrix);
+    vkl::Renderer::submit_draw_lit(_wall_mesh, _wall_matrix_a);
+    vkl::Renderer::submit_draw_lit(_wall_mesh, _wall_matrix_b);
 }
 
 // =============================================================================
@@ -118,9 +118,13 @@ void Demo::_init_meshes() {
 
 // =============================================================================
 void Demo::_init_model_matrices() {
-    _floor_matrix = vkl::math::translate(
-        vkl::Mat4::identity,
-        { 0.0f, -1.0f, 0.0f, 1.0f }
+    _floor_matrix = vkl::math::rotate(
+        vkl::math::translate(
+            vkl::Mat4::identity,
+            { 0.0f, -1.0f, 0.0f, 1.0f }
+        ),
+        -90.0f,
+        vkl::Vec4::unit_x
     );
 
     _wall_matrix_a = vkl::math::translate(
