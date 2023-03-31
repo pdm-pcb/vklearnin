@@ -5,7 +5,7 @@ layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec4 in_normal;
 layout(location = 3) in vec2 in_uv;
 
-layout(set = 0, binding = 0) uniform LightVPMatrix {
+layout(set = 0, binding = 0) uniform LightVPMatrices {
     mat4 light_vp_matrix;
 };
 

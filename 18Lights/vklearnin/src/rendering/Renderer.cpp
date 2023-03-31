@@ -31,7 +31,8 @@ RenderPass Renderer::_color_pass;
 RenderPass Renderer::_shadow_map_pass;
 
 std::vector<Framebuffer> Renderer::_color_framebuffers;
-std::vector<Framebuffer> Renderer::_shadow_map_framebuffers;
+std::vector<Framebuffer> Renderer::_dir_shadow_framebuffers;
+std::vector<Framebuffer> Renderer::_spot_shadow_framebuffers;
 
 uint32_t Renderer::_shadow_map_resolution = 0u;
 
@@ -94,17 +95,28 @@ void Renderer::update_camera_data(CameraData const &data) {
 void Renderer::update_light_props(LightProps const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
-    auto const light_proj_mat = math::persp_proj_rh_zo_inf(
-        0.1f, 45.0f, 1.0f
+    auto const dir_pos_mag = math::length(data.dir.position);
+    auto const dir_proj = math::ortho_proj_rh_zo(
+        0.1f, 25.0f,
+        -dir_pos_mag, dir_pos_mag,
+        -dir_pos_mag, dir_pos_mag
     );
-    auto const light_view_mat = math::look_at(
+    auto const dir_view = math::look_at(
+        data.dir.position,
+        Vec4::origin,
+        Vec4::unit_y
+    );
+
+    auto const spot_proj = math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
+    auto const spot_view = math::look_at(
         data.spot.position,
         Vec4::origin,
         Vec4::unit_y
     );
 
-    ShadowMapTransforms const transforms {
-        .light_vp_matrix = light_proj_mat * light_view_mat,
+    LightVPMatrices const transforms {
+        .dir_vp_mat = dir_proj * dir_view,
+        .spot_vp_mat = spot_proj * spot_view,
     };
 
     BufferTools::update_buffer(_shadow_map_transform_buffers[_frame_index],
@@ -202,8 +214,8 @@ void Renderer::record_commands() {
 
     vk::RenderPassBeginInfo const shadow_pass_info {
         .renderPass      = _shadow_map_pass.native(),
-        .framebuffer     = _shadow_map_framebuffers[_frame_index].native(),
-        .renderArea      = _shadow_map_framebuffers[_frame_index].render_area(),
+        .framebuffer     = _dir_shadow_framebuffers[_frame_index].native(),
+        .renderArea      = _dir_shadow_framebuffers[_frame_index].render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(shadow_pass_clear)),
         .pClearValues    = shadow_pass_clear
     };
@@ -261,8 +273,8 @@ void Renderer::init() {
     _init_color_pass();
     _init_color_framebuffers();
 
-    _init_shadow_map_pass();
-    _init_shadow_map_framebuffers();
+    _init_shadow_pass();
+    _init_shadow_framebuffers();
 
     _init_frame_data();
 
@@ -301,7 +313,7 @@ void Renderer::shutdown() {
         BufferTools::destroy(buffer);
     }
 
-    for(auto &framebuffer : _shadow_map_framebuffers) {
+    for(auto &framebuffer : _dir_shadow_framebuffers) {
         framebuffer.destroy();
     }
 
@@ -441,7 +453,7 @@ void Renderer::_init_color_framebuffers() {
 }
 
 // =============================================================================
-void Renderer::_init_shadow_map_pass() {
+void Renderer::_init_shadow_pass() {
     _shadow_map_resolution =
         Swapchain::extent().width > Swapchain::extent().height ?
         Swapchain::extent().width :
@@ -454,9 +466,9 @@ void Renderer::_init_shadow_map_pass() {
 }
 
 // =============================================================================
-void Renderer::_init_shadow_map_framebuffers() {
-    _shadow_map_framebuffers.clear();
-    _shadow_map_framebuffers.resize(RenderConfig::swapchain_image_count);
+void Renderer::_init_shadow_framebuffers() {
+    _dir_shadow_framebuffers.clear();
+    _dir_shadow_framebuffers.resize(RenderConfig::swapchain_image_count);
 
     vk::Extent2D const shadow_map_extent {
         .width  = _shadow_map_resolution,
@@ -468,7 +480,7 @@ void Renderer::_init_shadow_map_framebuffers() {
         .extent = shadow_map_extent
     };
 
-    for(auto &framebuffer : _shadow_map_framebuffers) {
+    for(auto &framebuffer : _dir_shadow_framebuffers) {
         framebuffer
             .create_shadow_map(shadow_map_extent)
             .create(
@@ -634,7 +646,7 @@ void Renderer::_init_light_props_sets() {
 void Renderer::_init_shadow_map_resources() {
     _shadow_map_transform_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _shadow_map_transform_buffers) {
-        buffer.size = sizeof(ShadowMapTransforms);
+        buffer.size = sizeof(LightVPMatrices);
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -671,7 +683,7 @@ void Renderer::_init_shadow_map_sets() {
     {
         _shadow_map_sets[frame]
             .allocate(_desc_pool, _texture_layout)
-            .add_image(_shadow_map_framebuffers[frame].shadow_map().image())
+            .add_image(_dir_shadow_framebuffers[frame].shadow_map().image())
             .write_set();
     }
 }
@@ -696,8 +708,6 @@ void Renderer::_init_flat_color_pipeline() {
                 .viewport_extent   = Swapchain::extent(),
                 .viewport_offset   = Swapchain::offset(),
                 .msaa_samples      = RenderConfig::max_msaa_flag(),
-                .enable_depth_test = VK_TRUE,
-                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -723,8 +733,6 @@ void Renderer::_init_texture_pipeline() {
                 .viewport_extent   = Swapchain::extent(),
                 .viewport_offset   = Swapchain::offset(),
                 .msaa_samples      = RenderConfig::max_msaa_flag(),
-                .enable_depth_test = VK_TRUE,
-                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -750,8 +758,6 @@ void Renderer::_init_skybox_pipeline() {
                 .viewport_extent   = Swapchain::extent(),
                 .viewport_offset   = Swapchain::offset(),
                 .msaa_samples      = RenderConfig::max_msaa_flag(),
-                .enable_depth_test = VK_TRUE,
-                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -779,8 +785,6 @@ void Renderer::_init_lit_color_pipeline() {
                 .viewport_extent   = Swapchain::extent(),
                 .viewport_offset   = Swapchain::offset(),
                 .msaa_samples      = RenderConfig::max_msaa_flag(),
-                .enable_depth_test = VK_TRUE,
-                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -807,8 +811,6 @@ void Renderer::_init_material_pipeline() {
                 .viewport_extent   = Swapchain::extent(),
                 .viewport_offset   = Swapchain::offset(),
                 .msaa_samples      = RenderConfig::max_msaa_flag(),
-                .enable_depth_test = VK_TRUE,
-                .depth_compare     = vk::CompareOp::eLess,
             }
         );
 }
@@ -833,8 +835,6 @@ void Renderer::_init_shadow_map_pipeline() {
                     .width  = _shadow_map_resolution,
                     .height = _shadow_map_resolution,
                 },
-                .enable_depth_test   = VK_TRUE,
-                .depth_compare       = vk::CompareOp::eLessOrEqual,
                 .enable_depth_bias   = VK_TRUE,
                 .depth_bias_constant = 0.0f,
                 .depth_bias_slope    = 2.0f,

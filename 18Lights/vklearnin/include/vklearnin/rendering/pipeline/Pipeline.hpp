@@ -15,8 +15,8 @@ class Pipeline {
 public:
     struct Config {
         // Viewport settings
-        vk::Extent2D      viewport_extent { 0u, 0u };
-        vk::Offset2D      viewport_offset { 0, 0 };
+        vk::Extent2D viewport_extent { 0u, 0u };
+        vk::Offset2D viewport_offset { 0, 0 };
 
         // Drawing options
         vk::PolygonMode   polygon_mode = vk::PolygonMode::eFill;
@@ -27,8 +27,8 @@ public:
         vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
         // Depth/shadow buffer options
-        vk::Bool32    enable_depth_test   = VK_FALSE;
-        vk::CompareOp depth_compare       = vk::CompareOp::eNever;
+        vk::Bool32    enable_depth_test   = VK_TRUE;
+        vk::CompareOp depth_compare       = vk::CompareOp::eLess;
         vk::Bool32    enable_depth_bias   = VK_FALSE;
         float         depth_bias_constant = 0.0f;
         float         depth_bias_slope    = 0.0f;

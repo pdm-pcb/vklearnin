@@ -6,7 +6,7 @@
 namespace vkl {
 
 struct DirectionalLight {
-    Vec4 toward = Vec4::unit_y;
+    Vec4 position = Vec4::unit_y;
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 

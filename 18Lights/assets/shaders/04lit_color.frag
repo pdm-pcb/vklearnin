@@ -3,7 +3,8 @@
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
-layout(location = 3) in vec4 in_light_space_pos;
+layout(location = 3) in vec4 in_pos_dir_light_space;
+layout(location = 4) in vec4 in_pos_spot_light_space;
 
 layout(location = 0) out vec4 out_color;
 
@@ -13,7 +14,7 @@ layout(set = 0, binding = 0) uniform CameraData {
 };
 
 struct DirectionalLight {
-    vec4 toward;
+    vec4 position;
     vec4 color;
 };
 
@@ -26,6 +27,7 @@ struct SpotLight {
     vec4 position;
     vec4 forward;
     vec4 color;
+
     float inner_beam_angle;
     float outer_beam_angle;
 
@@ -44,7 +46,8 @@ layout(set = 1, binding = 0) uniform LightData {
     int padding2;
 } lights;
 
-layout(set = 3, binding = 0) uniform sampler2DShadow shadow_map;
+layout(set = 3, binding = 0) uniform sampler2DShadow dir_shadow_map;
+layout(set = 3, binding = 1) uniform sampler2DShadow spot_shadow_map;
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);
@@ -65,28 +68,28 @@ void main() {
         to_camera
     );
 
+    vec3 point = vec3(0.0, 0.0, 0.0);
     // vec3 point = calc_point_light(
     //     lights.point,
     //     frag_normal,
     //     to_camera
     // );
 
-    vec3 point = vec3(0.0, 0.0, 0.0);
-
-    vec3 spot = calc_spot_light(
-        lights.spot,
-        frag_normal,
-        to_camera
-    );
+    vec3 spot = vec3(0.0, 0.0, 0.0);
+    // vec3 spot = calc_spot_light(
+    //     lights.spot,
+    //     frag_normal,
+    //     to_camera
+    // );
 
     vec3 light_sum = directional + point + spot;
 
     out_color = vec4(in_color.rgb * light_sum, 1.0);
 }
 
-float shadow_factor() {
-    vec3 light_space_ndc = in_light_space_pos.xyz / in_light_space_pos.w;
-    return texture(shadow_map, light_space_ndc);
+float shadow_factor(vec4 pos_light_space, sampler2DShadow shadow_map) {
+    vec3 pos_ndc = pos_light_space.xyz / pos_light_space.w;
+    return texture(shadow_map, pos_ndc);
 }
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
@@ -100,21 +103,24 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
     // The directional light's intensity is color and brightness
     vec3 dir_intensity = light.color.rgb * light.color.w;
 
+    vec3 to_light = normalize(light.position.xyz);
+
     // Cosine of the angle of incidence, but don't let it go negative. If the
     // dot of the two vectors is negative, the light's angle of icidence is
     // greater than 90 degrees to this fragment's normal, meaning the light is
     // either perfectly parallel or behind this fragment.
-    float cos_theta = max(dot(light.toward.xyz, frag_normal), 0.0);
+    float cos_theta = max(dot(to_light, frag_normal), 0.0);
 
     // The diffuse component can now account for all factors
     diffuse = dir_intensity * cos_theta;
 
     // // Use blinn reflectance in order to support camera-to-reflection angles of
     // // more than 90 degrees
-    // float blinn = blinn_specular(light.toward.xyz, to_camera, frag_normal);
+    // float blinn = blinn_specular(to_light, to_camera, frag_normal);
     // specular = dir_intensity * blinn;
 
-    return ambient + diffuse + specular;
+    float shadow = shadow_factor(in_pos_dir_light_space, dir_shadow_map);
+    return ambient + (diffuse + specular) * shadow;
 }
 
 vec3 calc_point_light(PointLight light, vec3 frag_normal, vec3 to_camera) {
@@ -182,7 +188,8 @@ vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
     // float blinn = blinn_specular(to_light, to_camera, frag_normal);
     // specular = point_intensity * blinn;
 
-    return ambient + (diffuse + specular) * shadow_factor();
+    float shadow = shadow_factor(in_pos_spot_light_space, spot_shadow_map);
+    return ambient + (diffuse + specular) * shadow;
 }
 
 float blinn_specular(vec3 to_light, vec3 to_camera, vec3 frag_normal) {

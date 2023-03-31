@@ -12,7 +12,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 #include "vklearnin/lighting/LightProps.hpp"
-#include "vklearnin/lighting/ShadowMapTransforms.hpp"
+#include "vklearnin/lighting/LightVPMatrices.hpp"
 
 namespace vkl {
 
@@ -65,7 +65,8 @@ private:
     static RenderPass _shadow_map_pass;
 
     static std::vector<Framebuffer> _color_framebuffers;
-    static std::vector<Framebuffer> _shadow_map_framebuffers;
+    static std::vector<Framebuffer> _dir_shadow_framebuffers;
+    static std::vector<Framebuffer> _spot_shadow_framebuffers;
 
     static uint32_t _shadow_map_resolution;
 
@@ -141,8 +142,8 @@ private:
     static void _init_color_pass();
     static void _init_color_framebuffers();
 
-    static void _init_shadow_map_pass();
-    static void _init_shadow_map_framebuffers();
+    static void _init_shadow_pass();
+    static void _init_shadow_framebuffers();
 
     static void _init_frame_data();
 
