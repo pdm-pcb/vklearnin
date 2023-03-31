@@ -5,6 +5,8 @@
 
 namespace vkl {
 
+struct Vec3;
+
 struct Vec4 {
     static Vec4 const unit_x;
     static Vec4 const unit_y;
@@ -26,10 +28,23 @@ struct Vec4 {
     friend std::ostream& operator<<(std::ostream& out, Vec4 const& v);
 
 // =============================================================================
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
-    float w = 0.0f;
+    float x;
+    float y;
+    float z;
+    float w;
+
+// =============================================================================
+    Vec4();
+    ~Vec4() = default;
+
+    Vec4(float x, float y, float z, float w);
+    Vec4(Vec3 const &v, float w);
+
+    Vec4(Vec4 &&) = default;
+    Vec4(Vec4 const &) = default;
+
+    Vec4 & operator=(Vec4 &&) = default;
+    Vec4 & operator=(Vec4 const &) = default;
 };
 
 [[nodiscard]] Vec4 operator*(Vec4 const &v, float scalar);

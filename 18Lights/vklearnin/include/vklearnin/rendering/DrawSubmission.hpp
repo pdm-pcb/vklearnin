@@ -15,9 +15,10 @@ struct PushConstant {
 };
 
 struct DrawSubmission {
-    GeneratedMesh const *mesh     = nullptr;
-    Texture2D     const *texture  = nullptr;
-    Material      const *material = nullptr;
+    GeneratedMesh const *mesh         = nullptr;
+    Mat4          const *model_matrix = nullptr;
+    Texture2D     const *texture      = nullptr;
+    Material      const *material     = nullptr;
 
     std::vector<PushConstant> const push_constants;
 };

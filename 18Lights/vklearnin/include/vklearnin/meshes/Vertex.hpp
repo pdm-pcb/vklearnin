@@ -7,10 +7,10 @@ namespace vkl {
 
 // =============================================================================
 struct Vertex final {
-    Vec4 position = Vec4::origin;
-    Vec4 color    = Color::white;
-    Vec4 normal   = Vec4::origin;
-    std::array<float, 2> uv { 0.0f, 0.0f };
+    Vec4 position { Vec4::origin };
+    Vec4 color    { Color::white, 1.0f };
+    Vec4 normal   { Vec4::origin };
+    Vec2 uv       { 0.0f, 0.0f };
 
     using Bindings = std::vector<vk::VertexInputBindingDescription>;
     static Bindings const bindings;

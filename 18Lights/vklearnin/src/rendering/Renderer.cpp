@@ -9,7 +9,7 @@
 namespace vkl {
 
 static vk::ClearValue const color_pass_clear[] = {
-    { .color { vkl::RenderConfig::CLEAR_COLOR }},
+    { .color { vkl::RenderConfig::clear_color }},
     { .depthStencil
         {
             .depth = 1.0f,
@@ -61,7 +61,8 @@ Renderer::DescSetList Renderer::_material_sets;
 
 DescriptorSetLayout   Renderer::_shadow_map_transform_layout;
 Renderer::DescSetList Renderer::_shadow_map_transform_sets;
-Renderer::DescSetList Renderer::_shadow_map_sets;
+DescriptorSetLayout   Renderer::_shadow_maps_layout;
+Renderer::DescSetList Renderer::_shadow_maps_sets;
 
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_camera_buffers;
@@ -69,6 +70,8 @@ Skybox               Renderer::_skybox_mesh;
 Texture2D            Renderer::_skybox_texture;
 Renderer::BufferList Renderer::_light_props_buffers;
 Renderer::BufferList Renderer::_shadow_map_transform_buffers;
+
+ShadowMapTransforms Renderer::_shadow_pass_transforms;
 
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
@@ -114,13 +117,12 @@ void Renderer::update_light_props(LightProps const &data) {
         Vec4::unit_y
     );
 
-    LightVPMatrices const transforms {
-        .dir_vp_mat = dir_proj * dir_view,
-        .spot_vp_mat = spot_proj * spot_view,
-    };
+
+    _shadow_pass_transforms.dir_vp_mat = dir_proj * dir_view;
+    _shadow_pass_transforms.spot_vp_mat = spot_proj * spot_view;
 
     BufferTools::update_buffer(_shadow_map_transform_buffers[_frame_index],
-                               &transforms);
+                               &_shadow_pass_transforms);
 }
 
 // =============================================================================
@@ -130,6 +132,7 @@ void Renderer::submit_draw_flat(GeneratedMesh const &mesh,
     _flat_color_draws.push_back(
         DrawSubmission {
             .mesh = &mesh,
+            .model_matrix = &model_matrix,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
                 .size        = sizeof(vkl::Mat4),
@@ -151,6 +154,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
     _texture_draws[texture_id].queue.push_back(
         DrawSubmission {
             .mesh = &mesh,
+            .model_matrix = &model_matrix,
             .texture = &texture,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
@@ -169,6 +173,7 @@ void Renderer::submit_draw_lit(GeneratedMesh const &mesh,
     _lit_color_draws.push_back(
         DrawSubmission {
             .mesh = &mesh,
+            .model_matrix = &model_matrix,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
                 .size        = sizeof(vkl::Mat4),
@@ -190,6 +195,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
     _material_draws[material_id].queue.push_back(
         DrawSubmission {
             .mesh = &mesh,
+            .model_matrix = &model_matrix,
             .material = &material,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
@@ -212,7 +218,7 @@ void Renderer::record_commands() {
     // pool, which implicitly resets the command buffer/s
     frame_data.cmd_pool().reset();
 
-    vk::RenderPassBeginInfo const shadow_pass_info {
+    vk::RenderPassBeginInfo shadow_pass_info {
         .renderPass      = _shadow_map_pass.native(),
         .framebuffer     = _dir_shadow_framebuffers[_frame_index].native(),
         .renderArea      = _dir_shadow_framebuffers[_frame_index].render_area(),
@@ -231,9 +237,19 @@ void Renderer::record_commands() {
     frame_data.cmd_buffer().begin_one_time_submit();
     frame_data.cmd_buffer().begin_render_pass(shadow_pass_info);
 
-        _execute_shadow_map_pipeline();
+        _execute_shadow_map_pipeline(_shadow_pass_transforms.dir_vp_mat);
 
     frame_data.cmd_buffer().end_render_pass();
+
+    shadow_pass_info.framebuffer = _spot_shadow_framebuffers[_frame_index].native();
+    shadow_pass_info.renderArea  = _spot_shadow_framebuffers[_frame_index].render_area();
+
+    frame_data.cmd_buffer().begin_render_pass(shadow_pass_info);
+
+        _execute_shadow_map_pipeline(_shadow_pass_transforms.spot_vp_mat);
+
+    frame_data.cmd_buffer().end_render_pass();
+
     frame_data.cmd_buffer().begin_render_pass(color_pass_info);
 
         _execute_flat_color_pipeline();
@@ -294,6 +310,7 @@ void Renderer::shutdown() {
     _texture_layout.destroy();
     _light_props_layout.destroy();
     _material_layout.destroy();
+    _shadow_maps_layout.destroy();
     _shadow_map_transform_layout.destroy();
 
     _desc_pool.destroy();
@@ -314,6 +331,10 @@ void Renderer::shutdown() {
     }
 
     for(auto &framebuffer : _dir_shadow_framebuffers) {
+        framebuffer.destroy();
+    }
+
+    for(auto &framebuffer : _spot_shadow_framebuffers) {
         framebuffer.destroy();
     }
 
@@ -467,9 +488,6 @@ void Renderer::_init_shadow_pass() {
 
 // =============================================================================
 void Renderer::_init_shadow_framebuffers() {
-    _dir_shadow_framebuffers.clear();
-    _dir_shadow_framebuffers.resize(RenderConfig::swapchain_image_count);
-
     vk::Extent2D const shadow_map_extent {
         .width  = _shadow_map_resolution,
         .height = _shadow_map_resolution,
@@ -480,7 +498,18 @@ void Renderer::_init_shadow_framebuffers() {
         .extent = shadow_map_extent
     };
 
+    _dir_shadow_framebuffers.resize(RenderConfig::swapchain_image_count);
     for(auto &framebuffer : _dir_shadow_framebuffers) {
+        framebuffer
+            .create_shadow_map(shadow_map_extent)
+            .create(
+                shadow_map_render_area,
+                _shadow_map_pass.native()
+            );
+    }
+
+    _spot_shadow_framebuffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &framebuffer : _spot_shadow_framebuffers) {
         framebuffer
             .create_shadow_map(shadow_map_extent)
             .create(
@@ -646,7 +675,7 @@ void Renderer::_init_light_props_sets() {
 void Renderer::_init_shadow_map_resources() {
     _shadow_map_transform_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _shadow_map_transform_buffers) {
-        buffer.size = sizeof(LightVPMatrices);
+        buffer.size = sizeof(ShadowMapTransforms);
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -676,14 +705,26 @@ void Renderer::_init_shadow_map_sets() {
             .write_set();
     }
 
-    _shadow_map_sets.resize(RenderConfig::swapchain_image_count);
+    _shadow_maps_layout
+        .add_binding(
+            vk::DescriptorType::eCombinedImageSampler,
+            vk::ShaderStageFlagBits::eFragment
+        )
+        .add_binding(
+            vk::DescriptorType::eCombinedImageSampler,
+            vk::ShaderStageFlagBits::eFragment
+        )
+        .create();
+
+    _shadow_maps_sets.resize(RenderConfig::swapchain_image_count);
     for(uint32_t frame = 0u;
         frame < RenderConfig::swapchain_image_count;
         ++frame)
     {
-        _shadow_map_sets[frame]
-            .allocate(_desc_pool, _texture_layout)
+        _shadow_maps_sets[frame]
+            .allocate(_desc_pool, _shadow_maps_layout)
             .add_image(_dir_shadow_framebuffers[frame].shadow_map().image())
+            .add_image(_spot_shadow_framebuffers[frame].shadow_map().image())
             .write_set();
     }
 }
@@ -774,7 +815,7 @@ void Renderer::_init_lit_color_pipeline() {
         .add_descriptor_set(_global_data_layout)
         .add_descriptor_set(_light_props_layout)
         .add_descriptor_set(_shadow_map_transform_layout)
-        .add_descriptor_set(_texture_layout)
+        .add_descriptor_set(_shadow_maps_layout)
         .add_push_constant(
             vk::ShaderStageFlagBits::eAll,
             sizeof(Mat4)
@@ -823,10 +864,9 @@ void Renderer::_init_shadow_map_pipeline() {
             Vertex::bindings,
             Vertex::attributes
         )
-        .add_descriptor_set(_shadow_map_transform_layout)
         .add_push_constant(
-            vk::ShaderStageFlagBits::eAll,
-            sizeof(Mat4)
+            vk::ShaderStageFlagBits::eVertex,
+            sizeof(ShadowPassMVP)
         )
         .create(
             _shadow_map_pass,
@@ -852,7 +892,7 @@ void Renderer::_execute_flat_color_pipeline() {
     _flat_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
 
     for(auto const &draw : _flat_color_draws) {
-        _send_push_constants(_flat_color_pipeline, draw, frame_data);
+        _send_push_constants(_flat_color_pipeline, draw.push_constants);
         draw.mesh->draw_indexed(cmd_buffer);
     }
 
@@ -875,7 +915,7 @@ void Renderer::_execute_texture_pipeline() {
         );
 
         for(auto const &draw : per_texture.queue) {
-            _send_push_constants(_texture_pipeline, draw, frame_data);
+            _send_push_constants(_texture_pipeline, draw.push_constants);
             draw.mesh->draw_indexed(cmd_buffer);
         }
 
@@ -904,17 +944,17 @@ void Renderer::_execute_lit_color_pipeline() {
     auto const &light_props_set   = _light_props_sets[_frame_index];
     auto const &shadow_map_transform_set =
         _shadow_map_transform_sets[_frame_index];
-    auto const &shadow_map_set    = _shadow_map_sets[_frame_index];
+    auto const &shadow_maps_set    = _shadow_maps_sets[_frame_index];
 
     _lit_color_pipeline.bind(cmd_buffer);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, global_buffer_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer, light_props_set);
     _lit_color_pipeline.bind_descriptor_set(cmd_buffer,
                                             shadow_map_transform_set);
-    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, shadow_map_set);
+    _lit_color_pipeline.bind_descriptor_set(cmd_buffer, shadow_maps_set);
 
     for(auto const &draw : _lit_color_draws) {
-        _send_push_constants(_lit_color_pipeline, draw, frame_data);
+        _send_push_constants(_lit_color_pipeline, draw.push_constants);
         draw.mesh->draw_indexed(cmd_buffer);
     }
 
@@ -939,7 +979,7 @@ void Renderer::_execute_material_pipeline() {
         );
 
         for(auto const &draw : per_material.queue) {
-            _send_push_constants(_material_pipeline, draw, frame_data);
+            _send_push_constants(_material_pipeline, draw.push_constants);
             draw.mesh->draw_indexed(cmd_buffer);
         }
 
@@ -948,24 +988,30 @@ void Renderer::_execute_material_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_execute_shadow_map_pipeline() {
+void Renderer::_execute_shadow_map_pipeline(Mat4 const &light_vp) {
     auto const &frame_data = _frame_data[_frame_index];
     auto const &cmd_buffer = frame_data.cmd_buffer();
-    auto const &shadow_map_transform_set =
-        _shadow_map_transform_sets[_frame_index];
+
+    static ShadowPassMVP shadow_mvp;
+    static const PushList push ={{
+        .stage_flags = vk::ShaderStageFlagBits::eVertex,
+        .size        = sizeof(ShadowPassMVP),
+        .data        = &shadow_mvp,
+    }};
+    shadow_mvp.light_vp_matrix = light_vp;
 
     _shadow_map_pipeline.bind(cmd_buffer);
-    _shadow_map_pipeline.bind_descriptor_set(cmd_buffer,
-                                             shadow_map_transform_set);
 
     for(auto const &draw : _lit_color_draws) {
-        _send_push_constants(_shadow_map_pipeline, draw, frame_data);
+        shadow_mvp.model_matrix = *draw.model_matrix;
+        _send_push_constants(_shadow_map_pipeline, push);
         draw.mesh->draw_indexed(cmd_buffer);
     }
 
     for(auto &[material_id, per_material] : _material_draws) {
         for(auto const &draw : per_material.queue) {
-            _send_push_constants(_shadow_map_pipeline, draw, frame_data);
+            shadow_mvp.model_matrix = *draw.model_matrix;
+            _send_push_constants(_shadow_map_pipeline, push);
             draw.mesh->draw_indexed(cmd_buffer);
         }
     }
@@ -973,11 +1019,12 @@ void Renderer::_execute_shadow_map_pipeline() {
 
 // =============================================================================
 void Renderer::_send_push_constants(Pipeline const &pipeline,
-                                    DrawSubmission const &draw,
-                                    FrameData const &frame_data)
+                                    PushList const &push_constants)
 {
+    auto const &frame_data = _frame_data[_frame_index];
+
     size_t offset = 0u;
-    for(auto const& push_constant : draw.push_constants) {
+    for(auto const& push_constant : push_constants) {
         frame_data.cmd_buffer().native().pushConstants(
             pipeline.layout(),
             push_constant.stage_flags,

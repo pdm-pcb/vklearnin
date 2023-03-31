@@ -16,7 +16,7 @@ layout(set = 0, binding = 0) uniform CameraData {
     mat4 proj_mat;
 };
 
-layout(set = 2, binding = 0) uniform LightVPMatrices {
+layout(set = 2, binding = 0) uniform ShadowMapTransforms {
 	mat4 dir_vp_mat;
     mat4 spot_vp_mat;
 };

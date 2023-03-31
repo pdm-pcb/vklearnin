@@ -12,7 +12,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 #include "vklearnin/lighting/LightProps.hpp"
-#include "vklearnin/lighting/LightVPMatrices.hpp"
+#include "vklearnin/lighting/LightMatrices.hpp"
 
 namespace vkl {
 
@@ -75,6 +75,8 @@ private:
     static uint64_t               _frame_count;
 
     // Convenience using delcarations ------------------------------------------
+    using PushList = std::vector<PushConstant>;
+
     using DescSetList = std::vector<DescriptorSet>;
     using BufferList  = std::vector<BufferObject>;
     using ImageList   = std::vector<ImageObject>;
@@ -116,7 +118,8 @@ private:
 
     static DescriptorSetLayout _shadow_map_transform_layout;
     static DescSetList         _shadow_map_transform_sets;
-    static DescSetList         _shadow_map_sets;
+    static DescriptorSetLayout _shadow_maps_layout;
+    static DescSetList         _shadow_maps_sets;
 
     // Shader Resources --------------------------------------------------------
     static BufferList _camera_buffers;
@@ -124,6 +127,8 @@ private:
     static Texture2D  _skybox_texture;
     static BufferList _light_props_buffers;
     static BufferList _shadow_map_transform_buffers;
+
+    static ShadowMapTransforms _shadow_pass_transforms;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
@@ -171,11 +176,10 @@ private:
     static void _execute_skybox_pipeline();
     static void _execute_lit_color_pipeline();
     static void _execute_material_pipeline();
-    static void _execute_shadow_map_pipeline();
+    static void _execute_shadow_map_pipeline(Mat4 const &light_vp);
 
     static void _send_push_constants(Pipeline const &pipeline,
-                                     DrawSubmission const &draw,
-                                     FrameData const &frame_data);
+                                     PushList const &push_constants);
 };
 
 } // namespace vkl

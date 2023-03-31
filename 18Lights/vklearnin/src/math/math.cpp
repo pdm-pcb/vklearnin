@@ -4,12 +4,31 @@
 namespace vkl {
 
 // Insist on keeping the math types simple
-static_assert(sizeof(Vec4) ==  sizeof(float) * 4);
-static_assert(sizeof(Mat4) ==  sizeof(Vec4) * 4);
-static_assert(std::is_aggregate<Vec4>());
-static_assert(std::is_aggregate<Mat4>());
+static_assert(sizeof(Vec2) == sizeof(float) * 2);
+static_assert(sizeof(Vec3) == sizeof(float) * 3);
+static_assert(sizeof(Vec4) == sizeof(float) * 4);
+static_assert(sizeof(Mat4) == sizeof(Vec4)  * 4);
+
+static_assert(std::is_trivially_copyable_v<Vec2>);
+static_assert(std::is_trivially_copyable_v<Vec3>);
+static_assert(std::is_trivially_copyable_v<Vec4>);
+static_assert(std::is_trivially_copyable_v<Mat4>);
+
+static_assert(std::is_trivially_copy_constructible_v<Vec2>);
+static_assert(std::is_trivially_copy_constructible_v<Vec3>);
+static_assert(std::is_trivially_copy_constructible_v<Vec4>);
+static_assert(std::is_trivially_copy_constructible_v<Mat4>);
 
 // Order-dependent static variables
+Vec2 const Vec2::unit_x { 1.0f, 0.0f };
+Vec2 const Vec2::unit_y { 0.0f, 1.0f };
+Vec2 const Vec2::origin { 0.0f, 0.0f };
+
+Vec3 const Vec3::unit_x { 1.0f, 0.0f, 0.0f };
+Vec3 const Vec3::unit_y { 0.0f, 1.0f, 0.0f };
+Vec3 const Vec3::unit_z { 0.0f, 0.0f, 1.0f };
+Vec3 const Vec3::origin { 0.0f, 0.0f, 0.0f };
+
 Vec4 const Vec4::unit_x { 1.0f, 0.0f, 0.0f, 0.0f };
 Vec4 const Vec4::unit_y { 0.0f, 1.0f, 0.0f, 0.0f };
 Vec4 const Vec4::unit_z { 0.0f, 0.0f, 1.0f, 0.0f };
@@ -28,12 +47,13 @@ namespace math {
 // =============================================================================
 // Vector operations
 Vec4 normalize(Vec4 const &v) {
+    Vec4 result = v;
+
     auto length = length2(v);
     if(length <= 0.0f || length == 1.0f) {
-        return v;
+        return result;
     }
 
-    auto result = v;
     float const length_inv = 1.0f / std::sqrt(length);
 
     result.x *= length_inv;
@@ -50,7 +70,7 @@ float dot(Vec4 const &a, Vec4 const &b) {
 }
 
 Vec4 cross(Vec4 const &a, Vec4 const &b) {
-    return {
+    return Vec4 {
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x,
@@ -61,7 +81,8 @@ Vec4 cross(Vec4 const &a, Vec4 const &b) {
 // =============================================================================
 // Matrix operations
 Mat4 transpose(Mat4 const &m) {
-    auto result = m;
+    // Ensure a deep copy
+    Mat4 result { .x = m.x, .y = m.y, .z = m.z, .w = m.w, };
 
     std::swap(result.x.y, result.y.x);
     std::swap(result.x.z, result.z.x);
@@ -76,13 +97,17 @@ Mat4 transpose(Mat4 const &m) {
 }
 
 Mat4 translate(Mat4 const &m, Vec4 const &v) {
-    auto result = m;
+    // Ensure a deep copy
+    Mat4 result { .x = m.x, .y = m.y, .z = m.z, .w = m.w, };
+
     result.w = (m.x * v.x) + (m.y * v.y) + (m.z * v.z) + m.w;
     return result;
 }
 
 Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
-    auto result = m;
+    // Ensure a deep copy
+    Mat4 result { .x = m.x, .y = m.y, .z = m.z, .w = m.w, };
+
     float const theta = radians(angle);
     float const cos_theta = std::cos(theta);
     float const sin_theta = std::sin(theta);
@@ -112,13 +137,12 @@ Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
 }
 
 Mat4 scale(Mat4 const &m, float const &pct) {
-    Mat4 result;
-    result.x = m.x * pct;
-    result.y = m.y * pct;
-    result.z = m.z * pct;
-    result.w = m.w;
-
-    return result;
+    return Mat4 {
+        .x = m.x * pct,
+        .y = m.y * pct,
+        .z = m.z * pct,
+        .w = m.w,
+    };
 }
 
 // =============================================================================

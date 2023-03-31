@@ -23,8 +23,7 @@ struct RenderConfig final {
     static uint32_t max_msaa_samples;
     static float anisotropy;
 
-    static constexpr std::array<float, 4>
-        CLEAR_COLOR { 0.04f, 0.04f, 0.08f, 1.0f };
+    static std::array<float, 4> clear_color;
 
     inline static auto max_msaa_flag() {
         switch(max_msaa_samples) {

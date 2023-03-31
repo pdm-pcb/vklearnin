@@ -1,6 +1,8 @@
 #ifndef VKLEARNIN_MATH_MATH_HPP
 #define VKLEARNIN_MATH_MATH_HPP
 
+#include "vklearnin/math/Vec2.hpp"
+#include "vklearnin/math/Vec3.hpp"
 #include "vklearnin/math/Vec4.hpp"
 #include "vklearnin/math/Mat4.hpp"
 

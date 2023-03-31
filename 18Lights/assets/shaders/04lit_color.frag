@@ -75,12 +75,11 @@ void main() {
     //     to_camera
     // );
 
-    vec3 spot = vec3(0.0, 0.0, 0.0);
-    // vec3 spot = calc_spot_light(
-    //     lights.spot,
-    //     frag_normal,
-    //     to_camera
-    // );
+    vec3 spot = calc_spot_light(
+        lights.spot,
+        frag_normal,
+        to_camera
+    );
 
     vec3 light_sum = directional + point + spot;
 
