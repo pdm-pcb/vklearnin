@@ -12,8 +12,8 @@ class DescriptorPool;
 
 class DescriptorSet {
 public:
-    DescriptorSet & add_buffer(BufferObject const &buffer);
-    DescriptorSet & add_image(ImageObject const &image);
+    DescriptorSet & add_ubo(BufferObject const &buffer);
+    DescriptorSet & add_combined_sampler(ImageObject const &image);
 
     DescriptorSet & allocate(DescriptorPool const &descriptor_pool,
                              DescriptorSetLayout const &set_layout);
@@ -33,10 +33,21 @@ public:
     DescriptorSet& operator=(const DescriptorSet &) = delete;
 
 private:
-    std::vector<BufferObject> _buffers;
-    std::vector<ImageObject>  _images;
+    std::vector<BufferObject> _ubos;
+    std::vector<BufferObject> _ssbos;
+    std::vector<ImageObject>  _combined_samplers;
+
     vk::DescriptorSetLayout   _layout;
     vk::DescriptorSet         _set;
+
+    using BufferInfoList = std::vector<vk::DescriptorBufferInfo>;
+    BufferInfoList _get_ubo_info();
+
+    using ImageInfoList = std::vector<vk::DescriptorImageInfo>;
+    ImageInfoList _get_combined_sampler_info();
+
+    using BufferInfoList = std::vector<vk::DescriptorBufferInfo>;
+    BufferInfoList _get_ssbo_info();
 };
 
 } // namespace vkl

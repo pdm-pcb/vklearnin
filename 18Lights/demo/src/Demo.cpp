@@ -55,7 +55,7 @@ void Demo::update() {
             0.25f
         );
 
-    static vkl::LightProps light_props;
+    static vkl::SceneLights light_props;
     light_props.dir.position = DIR_POS;
     light_props.dir.color    = DIR_COLOR;
 

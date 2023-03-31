@@ -95,7 +95,7 @@ void Renderer::update_camera_data(CameraData const &data) {
 }
 
 // =============================================================================
-void Renderer::update_light_props(LightProps const &data) {
+void Renderer::update_light_props(SceneLights const &data) {
     BufferTools::update_buffer(_light_props_buffers[_frame_index], &data);
 
     auto const dir_pos_mag = math::length(data.dir.position);
@@ -116,7 +116,6 @@ void Renderer::update_light_props(LightProps const &data) {
         Vec4::origin,
         Vec4::unit_y
     );
-
 
     _shadow_pass_transforms.dir_vp_mat = dir_proj * dir_view;
     _shadow_pass_transforms.spot_vp_mat = spot_proj * spot_view;
@@ -358,7 +357,7 @@ void Renderer::set_textures(std::vector<Texture2D> const &textures) {
         auto const set_index = _texture_sets.size();
 
         _texture_sets.emplace_back();
-        _texture_sets.back().add_image(texture.image());
+        _texture_sets.back().add_combined_sampler(texture.image());
 
         // WANRING: Vulkan handles are reused by the driver, so this is a
         //          terrible way to key an unordered map if you don't keep
@@ -398,7 +397,7 @@ void Renderer::set_materials(std::vector<Material> const &materials) {
         auto const set_index = _material_sets.size();
 
         _material_sets.emplace_back();
-        _material_sets.back().add_image(material.diffuse.image());
+        _material_sets.back().add_combined_sampler(material.diffuse.image());
 
         // WANRING: Vulkan handles are reused by the driver, so this is a
         //          terrible way to key an unordered map if you don't keep
@@ -573,7 +572,7 @@ void Renderer::_init_global_data_sets() {
     {
         _global_data_sets[frame]
             .allocate(_desc_pool, _global_data_layout)
-            .add_buffer(_camera_buffers[frame])
+            .add_ubo(_camera_buffers[frame])
             .write_set();
     }
 
@@ -610,7 +609,7 @@ void Renderer::_init_skybox_resources() {
 
     _skybox_texture_set
         .allocate(_desc_pool, _texture_layout)
-        .add_image(_skybox_texture.image())
+        .add_combined_sampler(_skybox_texture.image())
         .write_set();
 }
 
@@ -639,7 +638,7 @@ void Renderer::_init_material_sets() {
 void Renderer::_init_light_props_buffers() {
     _light_props_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _light_props_buffers) {
-        buffer.size = sizeof(LightProps);
+        buffer.size = sizeof(SceneLights);
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -666,7 +665,7 @@ void Renderer::_init_light_props_sets() {
     {
         _light_props_sets[frame]
             .allocate(_desc_pool, _light_props_layout)
-            .add_buffer(_light_props_buffers[frame])
+            .add_ubo(_light_props_buffers[frame])
             .write_set();
     }
 }
@@ -701,7 +700,7 @@ void Renderer::_init_shadow_map_sets() {
     {
         _shadow_map_transform_sets[frame]
             .allocate(_desc_pool, _shadow_map_transform_layout)
-            .add_buffer(_shadow_map_transform_buffers[frame])
+            .add_ubo(_shadow_map_transform_buffers[frame])
             .write_set();
     }
 
@@ -723,8 +722,12 @@ void Renderer::_init_shadow_map_sets() {
     {
         _shadow_maps_sets[frame]
             .allocate(_desc_pool, _shadow_maps_layout)
-            .add_image(_dir_shadow_framebuffers[frame].shadow_map().image())
-            .add_image(_spot_shadow_framebuffers[frame].shadow_map().image())
+            .add_combined_sampler(
+                _dir_shadow_framebuffers[frame].shadow_map().image()
+            )
+            .add_combined_sampler(
+                _spot_shadow_framebuffers[frame].shadow_map().image()
+            )
             .write_set();
     }
 }

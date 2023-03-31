@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_LIGHTING_LIGHTPROPS_HPP
-#define VKLEARNIN_LIGHTING_LIGHTPROPS_HPP
+#ifndef VKLEARNIN_LIGHTING_SCENELIGHTS_HPP
+#define VKLEARNIN_LIGHTING_SCENELIGHTS_HPP
 
 #include "vklearnin/system/pch.hpp"
 
@@ -22,20 +22,16 @@ struct SpotLight {
 
     float inner_beam_angle = std::cos(math::radians(12.5f));
     float outer_beam_angle = std::cos(math::radians(20.0f));
-
-    int32_t padding[2] { 0 };
 };
 
-struct LightProps {
-    DirectionalLight dir { };
-    PointLight point { };
-    SpotLight spot { };
+struct SceneLights {
+    alignas(16) DirectionalLight dir { };
+    alignas(16) PointLight point { };
+    alignas(16) SpotLight spot { };
 
-    float ambient = 0.05f;
-
-    int32_t padding[3] { 0 };
+    alignas(16) float ambient = 0.05f;
 };
 
 } // namespace vkl
 
-#endif // VKLEARNIN_LIGHTING_LIGHTPROPS_HPP
+#endif // VKLEARNIN_LIGHTING_SCENELIGHTS_HPP

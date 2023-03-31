@@ -11,7 +11,7 @@
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
-#include "vklearnin/lighting/LightProps.hpp"
+#include "vklearnin/lighting/SceneLights.hpp"
 #include "vklearnin/lighting/LightMatrices.hpp"
 
 namespace vkl {
@@ -30,7 +30,7 @@ public:
     };
 
     static void update_camera_data(CameraData const &data);
-    static void update_light_props(LightProps const &data);
+    static void update_light_props(SceneLights const &data);
 
     static void submit_draw_flat(GeneratedMesh const &mesh,
                                  Mat4 const &model_matrix);

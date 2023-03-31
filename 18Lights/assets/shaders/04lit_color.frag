@@ -30,20 +30,14 @@ struct SpotLight {
 
     float inner_beam_angle;
     float outer_beam_angle;
-
-    int padding0;
-    int padding1;
 };
 
-layout(set = 1, binding = 0) uniform LightData {
+layout(std140, set = 1, binding = 0) uniform SceneLights {
     DirectionalLight dir;
     PointLight point;
     SpotLight spot;
-    float scene_ambient;
 
-    int padding0;
-    int padding1;
-    int padding2;
+    float scene_ambient;
 } lights;
 
 layout(set = 3, binding = 0) uniform sampler2DShadow dir_shadow_map;
