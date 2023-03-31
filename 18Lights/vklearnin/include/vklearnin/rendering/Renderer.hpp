@@ -12,7 +12,6 @@
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 #include "vklearnin/lighting/SceneLights.hpp"
-#include "vklearnin/lighting/LightMatrices.hpp"
 
 namespace vkl {
 
@@ -30,7 +29,7 @@ public:
     };
 
     static void update_camera_data(CameraData const &data);
-    static void update_light_props(SceneLights const &data);
+    static void update_scene_lights(SceneLights &lights);
 
     static void submit_draw_flat(GeneratedMesh const &mesh,
                                  Mat4 const &model_matrix);
@@ -110,14 +109,12 @@ private:
 
     static DescriptorSet _skybox_texture_set;
 
-    static DescriptorSetLayout _light_props_layout;
-    static DescSetList         _light_props_sets;
+    static DescriptorSetLayout _scene_lights_layout;
+    static DescSetList         _scene_lights_sets;
 
     static DescriptorSetLayout _material_layout;
     static DescSetList         _material_sets;
 
-    static DescriptorSetLayout _shadow_map_transform_layout;
-    static DescSetList         _shadow_map_transform_sets;
     static DescriptorSetLayout _shadow_maps_layout;
     static DescSetList         _shadow_maps_sets;
 
@@ -125,10 +122,8 @@ private:
     static BufferList _camera_buffers;
     static Skybox     _skybox_mesh;
     static Texture2D  _skybox_texture;
+    static BufferList _scene_lights_buffers;
     static BufferList _light_props_buffers;
-    static BufferList _shadow_map_transform_buffers;
-
-    static ShadowMapTransforms _shadow_pass_transforms;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
@@ -158,10 +153,9 @@ private:
     static void _init_global_data_sets();
     static void _init_texture_sets();
     static void _init_skybox_resources();
-    static void _init_light_props_buffers();
-    static void _init_light_props_sets();
+    static void _init_lights_buffers();
+    static void _init_lights_sets();
     static void _init_material_sets();
-    static void _init_shadow_map_resources();
     static void _init_shadow_map_sets();
 
     static void _init_flat_color_pipeline();

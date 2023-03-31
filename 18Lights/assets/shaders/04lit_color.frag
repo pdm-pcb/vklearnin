@@ -3,27 +3,30 @@
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
-layout(location = 3) in vec4 in_pos_dir_light_space;
-layout(location = 4) in vec4 in_pos_spot_light_space;
+// layout(location = 3) in vec4 in_pos_dir_light_space;
+// layout(location = 4) in vec4 in_pos_spot_light_space;
 
 layout(location = 0) out vec4 out_color;
 
-layout(set = 0, binding = 0) uniform CameraData {
+layout(set = 0, binding = 0) readonly uniform CameraData {
     mat4 view_mat;
     mat4 proj_mat;
 };
 
 struct DirectionalLight {
+    mat4 vp_mat;
     vec4 position;
     vec4 color;
 };
 
 struct PointLight {
+    mat4 vp_mat;
     vec4 position;
     vec4 color;
 };
 
 struct SpotLight {
+    mat4 vp_mat;
     vec4 position;
     vec4 forward;
     vec4 color;
@@ -32,16 +35,21 @@ struct SpotLight {
     float outer_beam_angle;
 };
 
-layout(std140, set = 1, binding = 0) uniform SceneLights {
-    DirectionalLight dir;
-    PointLight point;
-    SpotLight spot;
-
-    float scene_ambient;
+layout(std140, set = 1, binding = 1) readonly buffer SceneLights {
+    DirectionalLight dir[];
+    PointLight point[];
+    SpotLight spot[];
 } lights;
 
-layout(set = 3, binding = 0) uniform sampler2DShadow dir_shadow_map;
-layout(set = 3, binding = 1) uniform sampler2DShadow spot_shadow_map;
+layout(std140, set = 1, binding = 0) readonly uniform LightProps {
+    float scene_ambient;
+    uint dir_count;
+    uint point_count;
+    uint spot_count;
+};
+
+// layout(set = 3, binding = 0) uniform sampler2DShadow dir_shadow_maps[];
+// layout(set = 3, binding = 1) uniform sampler2DShadow spot_shadow_maps[];
 
 vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera);
@@ -56,26 +64,29 @@ void main() {
     vec3 frag_normal = normalize(in_normal);
     vec3 to_camera = normalize(view_mat[3].xyz - in_pos);
 
-    vec3 directional = calc_directional_light(
-        lights.dir,
+    vec3 directional = vec3(0.0, 0.0, 0.0);
+    vec3 point       = vec3(0.0, 0.0, 0.0);
+    vec3 spot        = vec3(0.0, 0.0, 0.0);
+
+    directional += calc_directional_light(
+        lights.dir[0],
         frag_normal,
         to_camera
     );
 
-    vec3 point = calc_point_light(
-        lights.point,
+    point += calc_point_light(
+        lights.point[0],
         frag_normal,
         to_camera
     );
 
-    vec3 spot = calc_spot_light(
-        lights.spot,
+    spot += calc_spot_light(
+        lights.spot[0],
         frag_normal,
         to_camera
     );
 
     vec3 light_sum = directional + point + spot;
-
     out_color = vec4(in_color.rgb * light_sum, 1.0);
 }
 
@@ -88,7 +99,7 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
                             vec3 to_camera)
 {
     // Ambient light is always present, so...
-    vec3 ambient  = light.color.rgb * lights.scene_ambient;
+    vec3 ambient  = light.color.rgb * scene_ambient;
     vec3 diffuse  = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 
@@ -111,13 +122,13 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
     // float blinn = blinn_specular(to_light, to_camera, frag_normal);
     // specular = dir_intensity * blinn;
 
-    float shadow = shadow_factor(in_pos_dir_light_space, dir_shadow_map);
-    return ambient + (diffuse + specular) * shadow;
+    // float shadow = shadow_factor(in_pos_dir_light_space, dir_shadow_map);
+    return ambient + (diffuse + specular);
 }
 
 vec3 calc_point_light(PointLight light, vec3 frag_normal, vec3 to_camera) {
     // Ambient light is always present, so...
-    vec3 ambient  = light.color.rgb * lights.scene_ambient;
+    vec3 ambient  = light.color.rgb * scene_ambient;
     vec3 diffuse  = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 
@@ -152,7 +163,7 @@ vec3 calc_point_light(PointLight light, vec3 frag_normal, vec3 to_camera) {
 
 vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
     // Ambient light is always present, so...
-    vec3 ambient  = light.color.rgb * lights.scene_ambient;
+    vec3 ambient  = light.color.rgb * scene_ambient;
     vec3 diffuse  = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 
@@ -180,8 +191,8 @@ vec3 calc_spot_light(SpotLight light, vec3 frag_normal, vec3 to_camera) {
     // float blinn = blinn_specular(to_light, to_camera, frag_normal);
     // specular = point_intensity * blinn;
 
-    float shadow = shadow_factor(in_pos_spot_light_space, spot_shadow_map);
-    return ambient + (diffuse + specular) * shadow;
+    // float shadow = shadow_factor(in_pos_spot_light_space, spot_shadow_map);
+    return ambient + (diffuse + specular);
 }
 
 float blinn_specular(vec3 to_light, vec3 to_camera, vec3 frag_normal) {

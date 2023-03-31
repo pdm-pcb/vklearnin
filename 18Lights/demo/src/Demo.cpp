@@ -55,18 +55,18 @@ void Demo::update() {
             0.25f
         );
 
-    static vkl::SceneLights light_props;
-    light_props.dir.position = DIR_POS;
-    light_props.dir.color    = DIR_COLOR;
+    static vkl::SceneLights lights;
+    lights.dir.position = DIR_POS;
+    lights.dir.color    = DIR_COLOR;
 
-    light_props.point.position = POINT_POS;
-    light_props.point.color    = POINT_COLOR;
+    lights.point.position = POINT_POS;
+    lights.point.color    = POINT_COLOR;
 
-    light_props.spot.position = SPOT_POS;
-    light_props.spot.color    = SPOT_COLOR;
-    light_props.spot.forward  = SPOT_FWD;
+    lights.spot.position = SPOT_POS;
+    lights.spot.color    = SPOT_COLOR;
+    lights.spot.forward  = SPOT_FWD;
 
-    vkl::Renderer::update_light_props(light_props);
+    vkl::Renderer::update_scene_lights(lights);
 }
 
 // =============================================================================

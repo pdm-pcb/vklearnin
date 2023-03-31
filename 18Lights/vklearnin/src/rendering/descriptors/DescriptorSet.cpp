@@ -13,6 +13,12 @@ DescriptorSet & DescriptorSet::add_ubo(BufferObject const &buffer) {
 }
 
 // =============================================================================
+DescriptorSet & DescriptorSet::add_ssbo(BufferObject const &buffer) {
+    _ssbos.push_back(buffer);
+    return *this;
+}
+
+// =============================================================================
 DescriptorSet & DescriptorSet::add_combined_sampler(ImageObject const &image) {
     _combined_samplers.push_back(image);
     return *this;
@@ -56,6 +62,8 @@ void DescriptorSet::write_set() {
     std::vector<vk::WriteDescriptorSet> set_writes;
     set_writes.reserve(ubo_count + combined_count + ssbo_count);
 
+    uint32_t binding = 0u;
+
     if(ubo_count > 0) {
         set_writes.push_back({
             .dstSet = _set,
@@ -85,7 +93,7 @@ void DescriptorSet::write_set() {
     if(ssbo_count > 0) {
         set_writes.push_back({
             .dstSet = _set,
-            .dstBinding = 0u,
+            .dstBinding = 1u,
             .dstArrayElement = 0u,
             .descriptorCount = ssbo_count,
             .descriptorType = vk::DescriptorType::eStorageBuffer,

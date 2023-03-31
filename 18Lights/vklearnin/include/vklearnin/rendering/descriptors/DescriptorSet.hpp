@@ -13,6 +13,7 @@ class DescriptorPool;
 class DescriptorSet {
 public:
     DescriptorSet & add_ubo(BufferObject const &buffer);
+    DescriptorSet & add_ssbo(BufferObject const &buffer);
     DescriptorSet & add_combined_sampler(ImageObject const &image);
 
     DescriptorSet & allocate(DescriptorPool const &descriptor_pool,

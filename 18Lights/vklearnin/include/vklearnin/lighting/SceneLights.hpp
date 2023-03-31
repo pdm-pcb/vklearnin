@@ -6,18 +6,21 @@
 namespace vkl {
 
 struct DirectionalLight {
+    Mat4 vp_mat   = Mat4::identity;
     Vec4 position = Vec4::unit_y;
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
 struct PointLight {
+    Mat4 vp_mat   = Mat4::identity;
     Vec4 position = Vec4::origin;
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
-struct SpotLight {
+struct alignas(16) SpotLight {
+    Mat4 vp_mat   = Mat4::identity;
     Vec4 position = Vec4::origin;
-    Vec4 forward = -Vec4::unit_z;
+    Vec4 forward  = -Vec4::unit_z;
     Vec4 color { 1.0f, 1.0f, 1.0f, 1.0f };
 
     float inner_beam_angle = std::cos(math::radians(12.5f));
@@ -25,11 +28,21 @@ struct SpotLight {
 };
 
 struct SceneLights {
-    alignas(16) DirectionalLight dir { };
-    alignas(16) PointLight point { };
-    alignas(16) SpotLight spot { };
+    DirectionalLight dir;
+    PointLight point;
+    SpotLight spot;
+};
 
-    alignas(16) float ambient = 0.05f;
+struct LightProps {
+    float scene_ambient  = 0.05f;
+    uint32_t dir_count   = 0u;
+    uint32_t point_count = 0u;
+    uint32_t spot_count  = 0u;
+};
+
+struct ShadowPassMVP final {
+    Mat4 light_vp_matrix = Mat4::identity;
+    Mat4 model_matrix    = Mat4::identity;
 };
 
 } // namespace vkl
