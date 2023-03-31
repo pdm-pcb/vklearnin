@@ -8,19 +8,70 @@ namespace vkl {
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_ubo(BufferObject const &buffer) {
-    _ubos.push_back(buffer);
+    auto const *buffer_info =
+        &_buffer_info.emplace_back(vk::DescriptorBufferInfo {
+            .buffer = buffer.handle,
+            .offset = 0u,
+            .range = VK_WHOLE_SIZE
+        });
+
+    _set_writes.emplace_back(vk::WriteDescriptorSet {
+        .dstSet = _set,
+        .dstBinding = static_cast<uint32_t>(_set_writes.size()),
+        .dstArrayElement = 0u,
+        .descriptorCount = 1u,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .pImageInfo = nullptr,
+        .pBufferInfo = buffer_info,
+        .pTexelBufferView = nullptr
+    });
+
     return *this;
 }
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_ssbo(BufferObject const &buffer) {
-    _ssbos.push_back(buffer);
+    auto const *buffer_info =
+        &_buffer_info.emplace_back(vk::DescriptorBufferInfo {
+            .buffer = buffer.handle,
+            .offset = 0u,
+            .range = VK_WHOLE_SIZE
+        });
+
+    _set_writes.emplace_back(vk::WriteDescriptorSet {
+        .dstSet = _set,
+        .dstBinding = static_cast<uint32_t>(_set_writes.size()),
+        .dstArrayElement = 0u,
+        .descriptorCount = 1u,
+        .descriptorType = vk::DescriptorType::eStorageBuffer,
+        .pImageInfo = nullptr,
+        .pBufferInfo = buffer_info,
+        .pTexelBufferView = nullptr
+    });
+
     return *this;
 }
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_combined_sampler(ImageObject const &image) {
-    _combined_samplers.push_back(image);
+    auto const *image_info =
+        &_image_info.emplace_back(vk::DescriptorImageInfo {
+            .sampler     = image.sampler,
+            .imageView   = image.view,
+            .imageLayout = image.layout
+        });
+
+    _set_writes.emplace_back(vk::WriteDescriptorSet {
+        .dstSet = _set,
+        .dstBinding = static_cast<uint32_t>(_set_writes.size()),
+        .dstArrayElement = 0u,
+        .descriptorCount = 1u,
+        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+        .pImageInfo = image_info,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    });
+
     return *this;
 }
 
@@ -50,138 +101,34 @@ DescriptorSet & DescriptorSet::allocate(DescriptorPool const &descriptor_pool,
 
 // =============================================================================
 void DescriptorSet::write_set() {
-    auto const ubo_info = _get_ubo_info();
-    auto const combined_sampler_info = _get_combined_sampler_info();
-    auto const ssbo_info = _get_ssbo_info();
-
-    auto const ubo_count = static_cast<uint32_t>(ubo_info.size());
-    auto const combined_count =
-        static_cast<uint32_t>(combined_sampler_info.size());
-    auto const ssbo_count = static_cast<uint32_t>(ssbo_info.size());
-
-    std::vector<vk::WriteDescriptorSet> set_writes;
-    set_writes.reserve(ubo_count + combined_count + ssbo_count);
-
-    uint32_t binding = 0u;
-
-    if(ubo_count > 0) {
-        set_writes.push_back({
-            .dstSet = _set,
-            .dstBinding = 0u,
-            .dstArrayElement = 0u,
-            .descriptorCount = ubo_count,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pImageInfo = nullptr,
-            .pBufferInfo = ubo_info.data(),
-            .pTexelBufferView = nullptr
-        });
-    }
-
-    if(combined_count > 0) {
-        set_writes.push_back({
-            .dstSet = _set,
-            .dstBinding = 0u,
-            .dstArrayElement = 0u,
-            .descriptorCount = combined_count,
-            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = combined_sampler_info.data(),
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        });
-    }
-
-    if(ssbo_count > 0) {
-        set_writes.push_back({
-            .dstSet = _set,
-            .dstBinding = 1u,
-            .dstArrayElement = 0u,
-            .descriptorCount = ssbo_count,
-            .descriptorType = vk::DescriptorType::eStorageBuffer,
-            .pImageInfo = nullptr,
-            .pBufferInfo = ssbo_info.data(),
-            .pTexelBufferView = nullptr
-        });
-    }
-
-    if(set_writes.empty()) {
+    if(_set_writes.empty()) {
         CONSOLE_ERROR("Trying to update descriptor set with no set writes.");
         return;
     }
 
-    LogicalDevice::native().updateDescriptorSets(set_writes, nullptr);
-}
+    LogicalDevice::native().updateDescriptorSets(_set_writes, nullptr);
 
-// =============================================================================
-DescriptorSet::BufferInfoList DescriptorSet::_get_ubo_info() {
-    std::vector<vk::DescriptorBufferInfo> info;
-    info.reserve(_ubos.size());
-
-    for(auto const& buffer : _ubos) {
-        info.push_back({
-            .buffer = buffer.handle,
-            .offset = 0u,
-            .range = VK_WHOLE_SIZE
-        });
-    }
-
-    _ubos.clear();
-
-    return info;
-}
-
-// =============================================================================
-DescriptorSet::ImageInfoList DescriptorSet::_get_combined_sampler_info() {
-    std::vector<vk::DescriptorImageInfo> info;
-    info.reserve(_combined_samplers.size());
-
-    for(auto const& image : _combined_samplers) {
-        info.push_back({
-            .sampler     = image.sampler,
-            .imageView   = image.view,
-            .imageLayout = image.layout
-        });
-    }
-
-    _combined_samplers.clear();
-
-    return info;
-}
-
-// =============================================================================
-DescriptorSet::BufferInfoList DescriptorSet::_get_ssbo_info() {
-    std::vector<vk::DescriptorBufferInfo> info;
-    info.reserve(_ssbos.size());
-
-    for(auto const& buffer : _ssbos) {
-        info.push_back({
-            .buffer = buffer.handle,
-            .offset = 0u,
-            .range = VK_WHOLE_SIZE
-        });
-    }
-
-    _ssbos.clear();
-
-    return info;
+    _buffer_info.clear();
+    _image_info.clear();
+    _set_writes.clear();
 }
 
 // =============================================================================
 DescriptorSet::DescriptorSet() :
-    _ubos              { },
-    _ssbos             { },
-    _combined_samplers { },
-    _set               { }
+    _buffer_info { },
+    _image_info  { },
+    _set_writes  { },
+    _layout      { },
+    _set         { }
 { }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept :
-    _ubos              { std::move(other._ubos) },
-    _ssbos             { std::move(other._ssbos) },
-    _combined_samplers { std::move(other._combined_samplers) },
-    _set               { other._set }
+    _set_writes { std::move(other._set_writes) },
+    _layout     { std::move(other._layout) },
+    _set        { std::move(other._set) }
 {
-    other._ubos.clear();
-    other._ssbos.clear();
-    other._combined_samplers.clear();
+    other._set_writes.clear();
+    other._layout = nullptr;
     other._set = nullptr;
 }
 

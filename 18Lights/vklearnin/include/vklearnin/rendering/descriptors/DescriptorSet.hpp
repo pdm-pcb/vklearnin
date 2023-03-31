@@ -34,21 +34,13 @@ public:
     DescriptorSet& operator=(const DescriptorSet &) = delete;
 
 private:
-    std::vector<BufferObject> _ubos;
-    std::vector<BufferObject> _ssbos;
-    std::vector<ImageObject>  _combined_samplers;
+    std::list<vk::DescriptorBufferInfo> _buffer_info;
+    std::list<vk::DescriptorImageInfo>  _image_info;
 
-    vk::DescriptorSetLayout   _layout;
-    vk::DescriptorSet         _set;
+    std::vector<vk::WriteDescriptorSet>   _set_writes;
 
-    using BufferInfoList = std::vector<vk::DescriptorBufferInfo>;
-    BufferInfoList _get_ubo_info();
-
-    using ImageInfoList = std::vector<vk::DescriptorImageInfo>;
-    ImageInfoList _get_combined_sampler_info();
-
-    using BufferInfoList = std::vector<vk::DescriptorBufferInfo>;
-    BufferInfoList _get_ssbo_info();
+    vk::DescriptorSetLayout _layout;
+    vk::DescriptorSet       _set;
 };
 
 } // namespace vkl

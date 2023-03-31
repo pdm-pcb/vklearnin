@@ -35,14 +35,15 @@ struct SpotLight {
     float outer_beam_angle;
 };
 
-layout(std140, set = 1, binding = 1) readonly buffer SceneLights {
+layout(std140, set = 1, binding = 0) readonly buffer SceneLights {
     DirectionalLight dir[];
     PointLight point[];
     SpotLight spot[];
 } lights;
 
-layout(std140, set = 1, binding = 0) readonly uniform LightProps {
+layout(std140, set = 1, binding = 1) readonly uniform LightProps {
     float scene_ambient;
+
     uint dir_count;
     uint point_count;
     uint spot_count;

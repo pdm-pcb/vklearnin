@@ -187,10 +187,10 @@ void Demo::_init_textures() {
         "textures/skybox/belfast_sunset/nz.png",
     }});
 
-    vkl::Renderer::set_materials({
-        _cube_material,
-        _floor_material,
-    });
+    // vkl::Renderer::set_materials({
+    //     _cube_material,
+    //     _floor_material,
+    // });
 }
 
 // =============================================================================

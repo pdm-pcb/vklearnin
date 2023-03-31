@@ -654,11 +654,11 @@ void Renderer::_init_lights_buffers() {
 void Renderer::_init_lights_sets() {
     _scene_lights_layout
         .add_binding(
-            vk::DescriptorType::eUniformBuffer,
+            vk::DescriptorType::eStorageBuffer,
             vk::ShaderStageFlagBits::eAll
         )
         .add_binding(
-            vk::DescriptorType::eStorageBuffer,
+            vk::DescriptorType::eUniformBuffer,
             vk::ShaderStageFlagBits::eAll
         )
         .create();
@@ -671,8 +671,8 @@ void Renderer::_init_lights_sets() {
     {
         _scene_lights_sets[frame]
             .allocate(_desc_pool, _scene_lights_layout)
-            .add_ubo(_light_props_buffers[frame])
             .add_ssbo(_scene_lights_buffers[frame])
+            .add_ubo(_light_props_buffers[frame])
             .write_set();
     }
 }
