@@ -877,7 +877,7 @@ void Renderer::_init_shadow_map_pipeline() {
                 },
                 .enable_depth_bias   = VK_TRUE,
                 .depth_bias_constant = 0.0f,
-                .depth_bias_slope    = 2.0f,
+                .depth_bias_slope    = 1.0f,
             }
         );
 }

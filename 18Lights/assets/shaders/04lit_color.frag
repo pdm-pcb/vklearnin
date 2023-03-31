@@ -68,12 +68,11 @@ void main() {
         to_camera
     );
 
-    vec3 point = vec3(0.0, 0.0, 0.0);
-    // vec3 point = calc_point_light(
-    //     lights.point,
-    //     frag_normal,
-    //     to_camera
-    // );
+    vec3 point = calc_point_light(
+        lights.point,
+        frag_normal,
+        to_camera
+    );
 
     vec3 spot = calc_spot_light(
         lights.spot,

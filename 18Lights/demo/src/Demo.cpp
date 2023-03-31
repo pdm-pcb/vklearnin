@@ -10,7 +10,7 @@ vkl::Vec4 DIR_POS   { 2.0f, 4.0f, 2.0f, 1.0f  };
 vkl::Vec4 DIR_COLOR { vkl::Color::sunlight, 1.0f };
 
 vkl::Vec4 POINT_POS   { 0.0f, 0.0f, 0.0f, 1.0f };
-vkl::Vec4 POINT_COLOR { vkl::Color::sunlight, 1.0f };
+vkl::Vec4 POINT_COLOR { vkl::Color::sunlight, 2.0f };
 
 vkl::Vec4 SPOT_POS   { -5.0f, 1.0f, 5.0f, 1.0f };
 vkl::Vec4 SPOT_FWD = -vkl::math::normalize(SPOT_POS);
@@ -72,7 +72,7 @@ void Demo::update() {
 // =============================================================================
 void Demo::submit_draws() {
     vkl::Renderer::submit_draw_flat(_dir_lamp_mesh,   _dir_lamp_matrix);
-    // vkl::Renderer::submit_draw_flat(_point_lamp_mesh, _point_lamp_matrix);
+    vkl::Renderer::submit_draw_flat(_point_lamp_mesh, _point_lamp_matrix);
     vkl::Renderer::submit_draw_flat(_spot_lamp_mesh,  _spot_lamp_matrix);
 
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_a);
