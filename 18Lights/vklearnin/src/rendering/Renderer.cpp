@@ -9,7 +9,7 @@
 namespace vkl {
 
 static vk::ClearValue const color_pass_clear[] = {
-    { .color { vkl::RenderConfig::clear_color }},
+    { .color { RenderConfig::clear_color }},
     { .depthStencil
         {
             .depth = 1.0f,
@@ -160,7 +160,7 @@ void Renderer::submit_draw_flat(GeneratedMesh const &mesh,
             .model_matrix = &model_matrix,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-                .size        = sizeof(vkl::Mat4),
+                .size        = sizeof(Mat4),
                 .data        = &model_matrix,
             }}
         }
@@ -183,7 +183,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
             .texture = &texture,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-                .size        = sizeof(vkl::Mat4),
+                .size        = sizeof(Mat4),
                 .data        = &model_matrix,
             }}
         }
@@ -201,7 +201,7 @@ void Renderer::submit_draw_lit(GeneratedMesh const &mesh,
             .model_matrix = &model_matrix,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-                .size        = sizeof(vkl::Mat4),
+                .size        = sizeof(Mat4),
                 .data        = &model_matrix,
             }}
         }
@@ -224,7 +224,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
             .material = &material,
             .push_constants = {{
                 .stage_flags = vk::ShaderStageFlagBits::eAll,
-                .size        = sizeof(vkl::Mat4),
+                .size        = sizeof(Mat4),
                 .data        = &model_matrix,
             }}
         }
@@ -574,7 +574,7 @@ void Renderer::_init_camera_buffers() {
      _camera_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _camera_buffers) {
         buffer.size = sizeof(CameraData);
-        vkl::BufferTools::create(
+        BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
             (vk::MemoryPropertyFlagBits::eHostVisible |
@@ -671,7 +671,7 @@ void Renderer::_init_lights_buffers() {
     _scene_lights_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _scene_lights_buffers) {
         buffer.size = light_ssbo_size;
-        vkl::BufferTools::create(
+        BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eStorageBuffer,
             (vk::MemoryPropertyFlagBits::eHostVisible |
@@ -682,7 +682,7 @@ void Renderer::_init_lights_buffers() {
     _light_props_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _light_props_buffers) {
         buffer.size = sizeof(LightProps);
-        vkl::BufferTools::create(
+        BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,
             (vk::MemoryPropertyFlagBits::eHostVisible |

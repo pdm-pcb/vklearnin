@@ -48,8 +48,8 @@
 // Engine::Engine(Application &app) :
 //     _application { app }
 // {
-//     _cmd_pools.resize(vkl::RenderConfig::concurrent_frames);
-//     _cmd_buffers.resize(vkl::RenderConfig::concurrent_frames);
+//     _cmd_pools.resize(RenderConfig::concurrent_frames);
+//     _cmd_buffers.resize(RenderConfig::concurrent_frames);
 // }
 
 // } // namespace vkl

@@ -38,6 +38,6 @@
 #include <set>
 
 #include "vklearnin/math/math.hpp"
-#include "vklearnin/math/Color.hpp"
+#include "vklearnin/math/color.hpp"
 
 #endif // VKLEARNIN_SYSTEM_PCH_HPP

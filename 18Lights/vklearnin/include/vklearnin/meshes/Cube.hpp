@@ -9,7 +9,7 @@ namespace vkl {
 class Cube final : public GeneratedMesh {
 public:
     void init(float const scale = 1.0f,
-              Vec4 const &color = { Color::white, 1.0f },
+              Vec4 const &color = { color::white, 1.0f },
               float const tile  = 1.0f);
 
     Cube() = default;

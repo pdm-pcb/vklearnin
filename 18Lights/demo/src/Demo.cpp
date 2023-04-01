@@ -7,14 +7,14 @@ vkl::Vec4 FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
 vkl::Vec4 WALL_COLOR  { 0.85f, 0.45f, 0.35f, 256.0f };
 
 vkl::Vec4 DIR_POS   { 2.0f, 4.0f, 2.0f, 1.0f  };
-vkl::Vec4 DIR_COLOR { vkl::Color::sunlight, 1.0f };
+vkl::Vec4 DIR_COLOR { vkl::color::sunlight, 1.0f };
 
 vkl::Vec4 POINT_POS   { 0.0f, 0.0f, 0.0f, 1.0f };
-vkl::Vec4 POINT_COLOR { vkl::Color::sunlight, 2.0f };
+vkl::Vec4 POINT_COLOR { vkl::color::sunlight, 2.0f };
 
 vkl::Vec4 SPOT_POS   { -5.0f, 1.0f, 5.0f, 1.0f };
 vkl::Vec4 SPOT_FWD = -vkl::math::normalize(SPOT_POS);
-vkl::Vec4 SPOT_COLOR { vkl::Color::sunlight, 20.0f };
+vkl::Vec4 SPOT_COLOR { vkl::color::sunlight, 20.0f };
 
 float ROT_FACT = 20.0f;
 
