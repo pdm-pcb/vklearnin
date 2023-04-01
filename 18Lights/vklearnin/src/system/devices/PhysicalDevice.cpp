@@ -8,13 +8,16 @@ namespace vkl {
 
 PhysicalDevice::DeviceList PhysicalDevice::_available_devices;
 
-vk::PhysicalDevice PhysicalDevice::_physical_device { };
+vk::PhysicalDevice PhysicalDevice::_physical_device;
 
 uint32_t PhysicalDevice::_queue_index = std::numeric_limits<uint32_t>::max();
 
-vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties { };
-vk::PhysicalDeviceFeatures         PhysicalDevice::_enabled_features { };
+vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties;
+vk::PhysicalDeviceFeatures         PhysicalDevice::_enabled_features;
 std::vector<char const *>          PhysicalDevice::_enabled_extensions;
+
+vk::PhysicalDeviceDescriptorIndexingFeatures
+        PhysicalDevice::_descriptor_indexing_features;
 
 vk::Format PhysicalDevice::_depth_format = vk::Format::eD32Sfloat;
 
@@ -41,8 +44,15 @@ void PhysicalDevice::query_devices(
         auto const &device_props = device.getProperties();
 
         // First, ensure that this device supports the feature set we require
-        auto const &features = device.getFeatures();
-        if(!_check_features(features, required_features)) {
+        vk::PhysicalDeviceFeatures2 supported_features { };
+        vk::PhysicalDeviceDescriptorIndexingFeatures indexing_features { };
+        supported_features.pNext = &indexing_features;
+
+        device.getFeatures2(&supported_features);
+        if(!_check_features(supported_features.features,
+                            indexing_features,
+                            required_features))
+        {
             CONSOLE_WARN(
                 "{} does not support all required features; skipping",
                 device_props.deviceName
@@ -224,11 +234,13 @@ void PhysicalDevice::select_device() {
     if(!_physical_device) {
         CONSOLE_CRITICAL("Could not find a device with support for a graphics "
                          "and present command queues.");
+        return;
     }
 
     if(gfx_queue_index != present_queue_index) {
         CONSOLE_CRITICAL("Device must support drawing and presenting in a "
                          "single queue.");
+        return;
     }
 
     _queue_index = gfx_queue_index;
@@ -237,12 +249,13 @@ void PhysicalDevice::select_device() {
 // =============================================================================
 bool PhysicalDevice::_check_features(
         vk::PhysicalDeviceFeatures const &supported_features,
+        vk::PhysicalDeviceDescriptorIndexingFeatures const &desc_indexing,
         std::vector<Features> const &required_features
     )
 {
     for(auto const &feature : required_features) {
         if(feature == Features::FILL_MODE_NONSOLID) {
-            if(supported_features.fillModeNonSolid == VK_FALSE) {
+            if(!supported_features.fillModeNonSolid) {
                 CONSOLE_WARN("No support for non-solid fill modes.");
                 return false;
             }
@@ -250,12 +263,38 @@ bool PhysicalDevice::_check_features(
             _enabled_features.fillModeNonSolid = VK_TRUE;
         }
         else if(feature == Features::SAMPLER_ANISOTROPY) {
-            if(supported_features.samplerAnisotropy == VK_FALSE) {
+            if(!supported_features.samplerAnisotropy) {
                 CONSOLE_WARN("No support for sampler anisotropy.");
                 return false;
             }
 
             _enabled_features.samplerAnisotropy = VK_TRUE;
+        }
+        else if(feature == Features::NONUNIFORM_DESCRIPTOR_INDEXING) {
+            if(!desc_indexing.shaderSampledImageArrayNonUniformIndexing) {
+                CONSOLE_WARN("No support for nonuniform sampler indexing.");
+                return false;
+            }
+            if(!desc_indexing.runtimeDescriptorArray) {
+                CONSOLE_WARN("No support for runtime descriptor arrays.");
+                return false;
+            }
+            if(!desc_indexing.descriptorBindingVariableDescriptorCount) {
+                CONSOLE_WARN("No support for binding variable descriptors.");
+                return false;
+            }
+            if(!desc_indexing.descriptorBindingPartiallyBound) {
+                CONSOLE_WARN("No support for partially bound descriptors.");
+                return false;
+            }
+
+            _descriptor_indexing_features =
+                vk::PhysicalDeviceDescriptorIndexingFeatures {
+                    .shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+                    .descriptorBindingPartiallyBound           = VK_TRUE,
+                    .descriptorBindingVariableDescriptorCount  = VK_TRUE,
+                    .runtimeDescriptorArray                    = VK_TRUE,
+                };
         }
         else {
             CONSOLE_CRITICAL("Requesting unknown physical device feature.");

@@ -22,10 +22,12 @@ void LogicalDevice::create(std::vector<char const *> const &layer_names) {
 
     // The logical device wants to know what the physical device has to offer
     auto const &extensions = PhysicalDevice::extensions();
-    auto const * features   = &(PhysicalDevice::features());
+    auto const *features   = &(PhysicalDevice::features());
+    auto const *pNext      = &(PhysicalDevice::descriptor_indexing_features());
 
     // That should be everything we need
     const vk::DeviceCreateInfo device_info {
+        .pNext                   = pNext,
         .queueCreateInfoCount    = static_cast<uint32_t>(std::size(queue_info)),
         .pQueueCreateInfos       = queue_info,
         .enabledLayerCount       = static_cast<uint32_t>(layer_names.size()),

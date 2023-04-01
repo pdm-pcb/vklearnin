@@ -73,6 +73,7 @@ Application::Application() :
         {
             PhysicalDevice::Features::FILL_MODE_NONSOLID,
             PhysicalDevice::Features::SAMPLER_ANISOTROPY,
+            PhysicalDevice::Features::NONUNIFORM_DESCRIPTOR_INDEXING,
         }
     );
     PhysicalDevice::select_device();

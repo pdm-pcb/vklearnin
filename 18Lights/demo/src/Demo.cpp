@@ -78,15 +78,15 @@ void Demo::update() {
     //     .color    = DIR_COLOR_B,
     // });
 
-    _lights.point.clear();
-    _lights.point.emplace_back(vkl::PointLight {
-        .position = POINT_POS_A,
-        .color    = POINT_COLOR_A,
-    });
-    _lights.point.emplace_back(vkl::PointLight {
-        .position = POINT_POS_B,
-        .color    = POINT_COLOR_B,
-    });
+    // _lights.point.clear();
+    // _lights.point.emplace_back(vkl::PointLight {
+    //     .position = POINT_POS_A,
+    //     .color    = POINT_COLOR_A,
+    // });
+    // _lights.point.emplace_back(vkl::PointLight {
+    //     .position = POINT_POS_B,
+    //     .color    = POINT_COLOR_B,
+    // });
 
     _lights.spot.clear();
     _lights.spot.emplace_back(vkl::SpotLight {

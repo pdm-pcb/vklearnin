@@ -1,10 +1,10 @@
 #version 460
+#extension GL_EXT_nonuniform_qualifier : require
 
 layout(location = 0) in vec4 in_color;
 layout(location = 1) in vec3 in_pos;
 layout(location = 2) in vec3 in_normal;
-// layout(location = 3) in vec4 in_pos_dir_light_space;
-// layout(location = 4) in vec4 in_pos_spot_light_space;
+layout(location = 3) in vec4 in_world_pos;
 
 layout(location = 0) out vec4 out_color;
 
@@ -108,7 +108,15 @@ void main() {
     out_color = vec4(in_color.rgb * light_sum, 1.0);
 }
 
-float shadow_factor(vec4 pos_light_space, sampler2DShadow shadow_map) {
+const mat4 vulkan_ndc_bias = mat4(
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0
+);
+
+float shadow_factor(mat4 light_vp_mat, sampler2DShadow shadow_map) {
+    vec4 pos_light_space = vulkan_ndc_bias * light_vp_mat * in_world_pos;
     vec3 pos_ndc = pos_light_space.xyz / pos_light_space.w;
     return texture(shadow_map, pos_ndc);
 }
@@ -140,7 +148,9 @@ vec3 calc_directional_light(DirectionalLight light, vec3 frag_normal,
     // float blinn = blinn_specular(to_light, to_camera, frag_normal);
     // specular = dir_intensity * blinn;
 
-    // float shadow = shadow_factor(in_pos_dir_light_space, dir_shadow_map);
+    // float shadow = shadow_factor(dir_lights[light_index].vp_mat,
+    //                              dir_shadow_maps[light_index]);
+
     return ambient + (diffuse + specular);
 }
 
