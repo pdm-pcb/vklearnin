@@ -3,8 +3,8 @@
 
 namespace vkl {
 
-uint32_t RenderConfig::screen_width    = 0u;
-uint32_t RenderConfig::screen_height   = 0u;
+uint32_t RenderConfig::screen_width  = 0u;
+uint32_t RenderConfig::screen_height = 0u;
 int32_t  RenderConfig::screen_x_offset = 0;
 int32_t  RenderConfig::screen_y_offset = 0;
 
@@ -21,5 +21,9 @@ uint32_t RenderConfig::max_msaa_samples = 1u;
 float    RenderConfig::anisotropy = 1.0f;
 
 std::array<float, 4> RenderConfig::clear_color { 0.04f, 0.04f, 0.08f, 1.0f };
+
+uint32_t RenderConfig::max_directional_lights = 5u;
+uint32_t RenderConfig::max_point_lights       = 10u;
+uint32_t RenderConfig::max_spot_lights        = 10u;
 
 } // namespace vkl

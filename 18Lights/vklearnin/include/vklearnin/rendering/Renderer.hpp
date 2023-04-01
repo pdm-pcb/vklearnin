@@ -123,10 +123,16 @@ private:
     static BufferList _camera_buffers;
     static Skybox     _skybox_mesh;
     static Texture2D  _skybox_texture;
-    static BufferList _scene_lights_buffers;
+
     static BufferList _light_props_buffers;
 
-    static char *_light_ssbo_data;
+    static char *_dir_ssbo_data;
+    static char *_point_ssbo_data;
+    static char *_spot_ssbo_data;
+
+    static BufferList _dir_ssbo_buffers;
+    static BufferList _point_ssbo_buffers;
+    static BufferList _spot_ssbo_buffers;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;

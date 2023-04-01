@@ -2,24 +2,29 @@
 
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 
-vkl::Vec4 CUBE_COLOR  { 0.15f, 0.65f, 0.25f, 256.0f };
-vkl::Vec4 FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
-vkl::Vec4 WALL_COLOR  { 0.85f, 0.45f, 0.35f, 256.0f };
+vkl::Vec4 CUBE_COLOR  { vkl::color::american_green, 256.0f };
+vkl::Vec4 FLOOR_COLOR { vkl::color::denim_blue, 256.0f };
+vkl::Vec4 WALL_COLOR  { vkl::color::terra_cotta, 256.0f };
 
-vkl::Vec4 DIR_POS_A   { 2.0f, 4.0f, 2.0f, 1.0f };
-vkl::Vec4 DIR_POS_B   { -2.0f, 4.0f, -2.0f, 1.0f };
+vkl::Vec4 DIR_POS_A   { 6.0f, 6.0f, 6.0f, 1.0f };
 vkl::Vec4 DIR_COLOR_A { vkl::color::sunlight, 1.0f };
-vkl::Vec4 DIR_COLOR_B { 2.0f * vkl::color::sunlight, 1.0f };
 
-vkl::Vec4 POINT_POS_A { 0.0f, 0.0f, 0.0f, 1.0f };
-vkl::Vec4 POINT_POS_B { 0.0f, 0.0f, 0.0f, 1.0f };
-vkl::Vec4 POINT_COLOR { vkl::color::sunlight, 2.0f };
+vkl::Vec4 DIR_POS_B   { -6.0f, 6.0f, -6.0f, 1.0f };
+vkl::Vec4 DIR_COLOR_B { vkl::color::sunlight, 1.0f };
 
-vkl::Vec4 SPOT_POS_A { -5.0f, 1.0f, 5.0f, 1.0f };
+vkl::Vec4 POINT_POS_A { -5.0f, -0.5f, 0.0f, 5.0f };
+vkl::Vec4 POINT_COLOR_A { vkl::color::red, 2.0f };
+
+vkl::Vec4 POINT_POS_B { 5.0f, -0.5f, 0.0f, 5.0f };
+vkl::Vec4 POINT_COLOR_B { vkl::color::blue, 2.0f };
+
+vkl::Vec4 SPOT_POS_A { -10.0f, 0.0f, 10.0f, 1.0f };
+vkl::Vec4 SPOT_COLOR_A { vkl::color::sunlight, 40.0f };
 vkl::Vec4 SPOT_FWD_A = -vkl::math::normalize(SPOT_POS_A);
-vkl::Vec4 SPOT_POS_B { -5.0f, 1.0f, 5.0f, 1.0f };
+
+vkl::Vec4 SPOT_POS_B { 5.0f, 0.0f, 5.0f, 1.0f };
+vkl::Vec4 SPOT_COLOR_B { vkl::color::sunlight, 10.0f };
 vkl::Vec4 SPOT_FWD_B = -vkl::math::normalize(SPOT_POS_B);
-vkl::Vec4 SPOT_COLOR { vkl::color::sunlight, 20.0f };
 
 float ROT_FACT = 20.0f;
 
@@ -63,31 +68,54 @@ void Demo::update() {
             0.25f
         );
 
-    _lights.dir[0].position = DIR_POS_A;
-    _lights.dir[0].color    = DIR_COLOR_A;
-    _lights.dir[1].position = DIR_POS_B;
-    _lights.dir[1].color    = DIR_COLOR_B;
+    _lights.dir.clear();
+    _lights.dir.emplace_back(vkl::DirectionalLight {
+        .position = DIR_POS_A,
+        .color    = DIR_COLOR_A,
+    });
+    // _lights.dir.emplace_back(vkl::DirectionalLight {
+    //     .position = DIR_POS_B,
+    //     .color    = DIR_COLOR_B,
+    // });
 
-    _lights.point[0].position = POINT_POS_A;
-    _lights.point[0].color    = POINT_COLOR;
+    _lights.point.clear();
+    _lights.point.emplace_back(vkl::PointLight {
+        .position = POINT_POS_A,
+        .color    = POINT_COLOR_A,
+    });
+    _lights.point.emplace_back(vkl::PointLight {
+        .position = POINT_POS_B,
+        .color    = POINT_COLOR_B,
+    });
 
-    _lights.spot[0].position = SPOT_POS_A;
-    _lights.spot[0].color    = SPOT_COLOR;
-    _lights.spot[0].forward  = SPOT_FWD_A;
+    _lights.spot.clear();
+    _lights.spot.emplace_back(vkl::SpotLight {
+        .position = SPOT_POS_A,
+        .color    = SPOT_COLOR_A,
+        .forward  = SPOT_FWD_A,
+    });
+    // _lights.spot.emplace_back(vkl::SpotLight {
+    //     .position = SPOT_POS_B,
+    //     .color    = SPOT_COLOR_B,
+    //     .forward  = SPOT_FWD_B,
+    // });
 
     _light_props.dir_count   = _lights.dir.size();
-    _light_props.point_count = _lights.dir.size();
-    _light_props.spot_count  = _lights.dir.size();
+    _light_props.point_count = _lights.point.size();
+    _light_props.spot_count  = _lights.spot.size();
 
     vkl::Renderer::update_scene_lights(_lights, _light_props);
 }
 
 // =============================================================================
 void Demo::submit_draws() {
-    vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_a,   _dir_lamp_matrix_a);
-    vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_b,   _dir_lamp_matrix_b);
-    vkl::Renderer::submit_draw_flat(_point_lamp_mesh_a, _point_lamp_matrix_a);
-    vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_a,  _spot_lamp_matrix_a);
+    // vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_a, _dir_lamp_matrix_a);
+    // vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_b, _dir_lamp_matrix_b);
+
+    // vkl::Renderer::submit_draw_flat(_point_lamp_mesh_a, _point_lamp_matrix_a);
+
+    // vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_a, _spot_lamp_matrix_a);
+    // vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_b, _spot_lamp_matrix_b);
 
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_a);
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_b);
@@ -103,10 +131,6 @@ void Demo::init() {
     _init_meshes();
     _init_model_matrices();
     _init_textures();
-
-    _lights.dir.resize(2);
-    _lights.point.resize(1);
-    _lights.spot.resize(1);
 }
 
 // =============================================================================
@@ -140,10 +164,10 @@ void Demo::_init_camera() {
 void Demo::_init_meshes() {
     _dir_lamp_mesh_a.init(0.025f, DIR_COLOR_A);
     _dir_lamp_mesh_b.init(0.025f, DIR_COLOR_B);
-    _point_lamp_mesh_a.init(0.025f, POINT_COLOR);
-    _point_lamp_mesh_b.init(0.025f, POINT_COLOR);
-    _spot_lamp_mesh_a.init(0.025f, SPOT_COLOR);
-    _spot_lamp_mesh_b.init(0.025f, SPOT_COLOR);
+    _point_lamp_mesh_a.init(0.025f, POINT_COLOR_A);
+    _point_lamp_mesh_b.init(0.025f, POINT_COLOR_B);
+    _spot_lamp_mesh_a.init(0.025f, SPOT_COLOR_A);
+    _spot_lamp_mesh_b.init(0.025f, SPOT_COLOR_B);
 
     _cube_mesh.init(1.0f, CUBE_COLOR);
     _floor_mesh.init(10.0f, FLOOR_COLOR);

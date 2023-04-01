@@ -66,10 +66,16 @@ Renderer::DescSetList Renderer::_shadow_maps_sets;
 Renderer::BufferList Renderer::_camera_buffers;
 Skybox               Renderer::_skybox_mesh;
 Texture2D            Renderer::_skybox_texture;
-Renderer::BufferList Renderer::_scene_lights_buffers;
+
 Renderer::BufferList Renderer::_light_props_buffers;
 
-char * Renderer::_light_ssbo_data = nullptr;
+char *Renderer::_dir_ssbo_data   = nullptr;
+char *Renderer::_point_ssbo_data = nullptr;
+char *Renderer::_spot_ssbo_data  = nullptr;
+
+Renderer::BufferList Renderer::_dir_ssbo_buffers;
+Renderer::BufferList Renderer::_point_ssbo_buffers;
+Renderer::BufferList Renderer::_spot_ssbo_buffers;
 
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
@@ -98,56 +104,67 @@ void Renderer::update_camera_data(CameraData const &data) {
 
 // =============================================================================
 void Renderer::update_scene_lights(SceneLights &lights,
-                                   LightProps const &props) {
-    auto const dir_pos_mag = math::length(lights.dir.back().position);
-    auto const dir_proj = math::ortho_proj_rh_zo(
-        0.1f, 25.0f,
-        -dir_pos_mag, dir_pos_mag,
-        -dir_pos_mag, dir_pos_mag
-    );
-    auto const dir_view = math::look_at(
-        lights.dir.back().position,
-        Vec4::origin,
-        Vec4::unit_y
-    );
-
-    auto const spot_proj = math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
-    auto const spot_view = math::look_at(
-        lights.spot.back().position,
-        Vec4::origin,
-        Vec4::unit_y
-    );
-
-    lights.dir.back().vp_mat = dir_proj * dir_view;
-    lights.spot.back().vp_mat = spot_proj * spot_view;
-
-    auto const dir_size   = sizeof(DirectionalLight) * lights.dir.size();
-    auto const point_size = sizeof(PointLight) * lights.point.size();
-    auto const spot_size  = sizeof(SpotLight) * lights.spot.size();
-    auto const ssbo_size  = dir_size + point_size + spot_size;
-
-    if(_light_ssbo_data) {
-        delete[] _light_ssbo_data;
-    }
-
-    _light_ssbo_data = new char[ssbo_size];
-    char *dst = _light_ssbo_data;
-
-    memcpy(dst, lights.dir.data(), dir_size);
-    dst += dir_size;
-
-    memcpy(dst, lights.point.data(), point_size);
-    dst += point_size;
-
-    memcpy(dst, lights.spot.data(), spot_size);
-    dst += spot_size;
-
-    BufferTools::update_buffer(_scene_lights_buffers[_frame_index],
-                               _light_ssbo_data,
-                               ssbo_size);
+                                   LightProps const &props)
+{
     BufferTools::update_buffer(_light_props_buffers[_frame_index],
                                &props,
                                sizeof(LightProps));
+
+    // auto const dir_pos_mag = math::length(lights.dir.back().position);
+    // auto const dir_proj = math::ortho_proj_rh_zo(
+    //     0.1f, 25.0f,
+    //     -dir_pos_mag, dir_pos_mag,
+    //     -dir_pos_mag, dir_pos_mag
+    // );
+    // auto const dir_view = math::look_at(
+    //     lights.dir.back().position,
+    //     Vec4::origin,
+    //     Vec4::unit_y
+    // );
+
+    // auto const spot_proj = math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
+    // auto const spot_view = math::look_at(
+    //     lights.spot.back().position,
+    //     Vec4::origin,
+    //     Vec4::unit_y
+    // );
+
+    // lights.dir.back().vp_mat = dir_proj * dir_view;
+    // lights.spot.back().vp_mat = spot_proj * spot_view;
+
+    if(_dir_ssbo_data)   { delete[] _dir_ssbo_data;   }
+    if(_point_ssbo_data) { delete[] _point_ssbo_data; }
+    if(_spot_ssbo_data)  { delete[] _spot_ssbo_data;  }
+
+    if(!lights.dir.empty()) {
+        auto const buffer_size = sizeof(DirectionalLight) * lights.dir.size();
+        _dir_ssbo_data = new char[buffer_size];
+        memcpy(_dir_ssbo_data, lights.dir.data(), buffer_size);
+
+        BufferTools::update_buffer(_dir_ssbo_buffers[_frame_index],
+                                   _dir_ssbo_data,
+                                   buffer_size);
+    }
+
+    if(!lights.point.empty()) {
+        auto const buffer_size = sizeof(PointLight) * lights.point.size();
+        _point_ssbo_data = new char[buffer_size];
+        memcpy(_point_ssbo_data, lights.point.data(), buffer_size);
+
+        BufferTools::update_buffer(_point_ssbo_buffers[_frame_index],
+                                   _point_ssbo_data,
+                                   buffer_size);
+    }
+
+    if(!lights.spot.empty()) {
+        auto const buffer_size = sizeof(SpotLight) * lights.spot.size();
+        _spot_ssbo_data = new char[buffer_size];
+        memcpy(_spot_ssbo_data,  lights.spot.data(),  buffer_size);
+
+        BufferTools::update_buffer(_spot_ssbo_buffers[_frame_index],
+                                   _spot_ssbo_data,
+                                   buffer_size);
+    }
 }
 
 // =============================================================================
@@ -275,7 +292,7 @@ void Renderer::record_commands() {
         frame_data.cmd_buffer().begin_render_pass(color_pass_info);
             _execute_flat_color_pipeline();
             _execute_texture_pipeline();
-            _execute_skybox_pipeline();
+            // _execute_skybox_pipeline();
             _execute_lit_color_pipeline();
             // _execute_material_pipeline();
         frame_data.cmd_buffer().end_render_pass();
@@ -342,11 +359,23 @@ void Renderer::shutdown() {
     _skybox_mesh.destroy();
     _skybox_texture.destroy();
 
-    for(auto &buffer : _scene_lights_buffers) {
+    for(auto &buffer : _light_props_buffers) {
         BufferTools::destroy(buffer);
     }
 
-    for(auto &buffer : _light_props_buffers) {
+    if(_dir_ssbo_data)   { delete[] _dir_ssbo_data;   }
+    if(_point_ssbo_data) { delete[] _point_ssbo_data; }
+    if(_spot_ssbo_data)  { delete[] _spot_ssbo_data;  }
+
+    for(auto &buffer : _dir_ssbo_buffers) {
+        BufferTools::destroy(buffer);
+    }
+
+    for(auto &buffer : _point_ssbo_buffers) {
+        BufferTools::destroy(buffer);
+    }
+
+    for(auto &buffer : _spot_ssbo_buffers) {
         BufferTools::destroy(buffer);
     }
 
@@ -370,10 +399,6 @@ void Renderer::shutdown() {
     _color_pass.destroy();
 
     Swapchain::destroy();
-
-    if(_light_ssbo_data) {
-        delete[] _light_ssbo_data;
-    }
 }
 
 // =============================================================================
@@ -664,13 +689,29 @@ void Renderer::_init_material_sets() {
 
 // =============================================================================
 void Renderer::_init_lights_buffers() {
-    auto const light_ssbo_size = 2 * sizeof(DirectionalLight) +
-                                 2 * sizeof(PointLight) +
-                                 2 * sizeof(SpotLight);
+    _light_props_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _light_props_buffers) {
+        buffer.size = sizeof(LightProps);
+        BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
 
-    _scene_lights_buffers.resize(RenderConfig::swapchain_image_count);
-    for(auto &buffer : _scene_lights_buffers) {
-        buffer.size = light_ssbo_size;
+    auto const dir_ssbo_size =
+        RenderConfig::max_directional_lights * sizeof(DirectionalLight);
+
+    auto const point_ssbo_size =
+        RenderConfig::max_point_lights * sizeof(PointLight);
+
+    auto const spot_ssbo_size =
+        RenderConfig::max_spot_lights * sizeof(SpotLight);
+
+    _dir_ssbo_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _dir_ssbo_buffers) {
+        buffer.size = dir_ssbo_size;
         BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eStorageBuffer,
@@ -679,12 +720,23 @@ void Renderer::_init_lights_buffers() {
         );
     }
 
-    _light_props_buffers.resize(RenderConfig::swapchain_image_count);
-    for(auto &buffer : _light_props_buffers) {
-        buffer.size = sizeof(LightProps);
+    _point_ssbo_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _point_ssbo_buffers) {
+        buffer.size = point_ssbo_size;
         BufferTools::create(
             buffer,
-            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            (vk::MemoryPropertyFlagBits::eHostVisible |
+             vk::MemoryPropertyFlagBits::eHostCoherent)
+        );
+    }
+
+    _spot_ssbo_buffers.resize(RenderConfig::swapchain_image_count);
+    for(auto &buffer : _spot_ssbo_buffers) {
+        buffer.size = spot_ssbo_size;
+        BufferTools::create(
+            buffer,
+            vk::BufferUsageFlagBits::eStorageBuffer,
             (vk::MemoryPropertyFlagBits::eHostVisible |
              vk::MemoryPropertyFlagBits::eHostCoherent)
         );
@@ -702,6 +754,14 @@ void Renderer::_init_lights_sets() {
             vk::DescriptorType::eStorageBuffer,
             vk::ShaderStageFlagBits::eAll
         )
+        .add_binding(
+            vk::DescriptorType::eStorageBuffer,
+            vk::ShaderStageFlagBits::eAll
+        )
+        .add_binding(
+            vk::DescriptorType::eStorageBuffer,
+            vk::ShaderStageFlagBits::eAll
+        )
         .create();
 
     _scene_lights_sets.resize(RenderConfig::swapchain_image_count);
@@ -713,7 +773,9 @@ void Renderer::_init_lights_sets() {
         _scene_lights_sets[frame]
             .allocate(_desc_pool, _scene_lights_layout)
             .add_ubo(_light_props_buffers[frame])
-            .add_ssbo(_scene_lights_buffers[frame])
+            .add_ssbo(_dir_ssbo_buffers[frame])
+            .add_ssbo(_point_ssbo_buffers[frame])
+            .add_ssbo(_spot_ssbo_buffers[frame])
             .write_set();
     }
 }

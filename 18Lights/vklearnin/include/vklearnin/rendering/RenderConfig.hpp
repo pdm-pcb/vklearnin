@@ -25,6 +25,10 @@ struct RenderConfig final {
 
     static std::array<float, 4> clear_color;
 
+    static uint32_t max_directional_lights;
+    static uint32_t max_point_lights;
+    static uint32_t max_spot_lights;
+
     inline static auto max_msaa_flag() {
         switch(max_msaa_samples) {
             case 64u: return vk::SampleCountFlagBits::e64; break;
