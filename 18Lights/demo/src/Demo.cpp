@@ -55,18 +55,21 @@ void Demo::update() {
             0.25f
         );
 
-    static vkl::SceneLights lights;
-    lights.dir.position = DIR_POS;
-    lights.dir.color    = DIR_COLOR;
+    _lights.dir[0].position = DIR_POS;
+    _lights.dir[0].color    = DIR_COLOR;
 
-    lights.point.position = POINT_POS;
-    lights.point.color    = POINT_COLOR;
+    _lights.point[0].position = POINT_POS;
+    _lights.point[0].color    = POINT_COLOR;
 
-    lights.spot.position = SPOT_POS;
-    lights.spot.color    = SPOT_COLOR;
-    lights.spot.forward  = SPOT_FWD;
+    _lights.spot[0].position = SPOT_POS;
+    _lights.spot[0].color    = SPOT_COLOR;
+    _lights.spot[0].forward  = SPOT_FWD;
 
-    vkl::Renderer::update_scene_lights(lights);
+    _light_props.dir_count   = _lights.dir.size();
+    _light_props.point_count = _lights.dir.size();
+    _light_props.spot_count  = _lights.dir.size();
+
+    vkl::Renderer::update_scene_lights(_lights, _light_props);
 }
 
 // =============================================================================
@@ -89,6 +92,10 @@ void Demo::init() {
     _init_meshes();
     _init_model_matrices();
     _init_textures();
+
+    _lights.dir.emplace_back();
+    _lights.point.emplace_back();
+    _lights.spot.emplace_back();
 }
 
 // =============================================================================

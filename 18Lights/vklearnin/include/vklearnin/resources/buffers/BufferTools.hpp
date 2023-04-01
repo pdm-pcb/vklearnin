@@ -7,16 +7,17 @@
 namespace vkl::BufferTools {
 
 void create(BufferObject &buffer,
-            const vk::BufferUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties);
+            vk::BufferUsageFlags const usage_flags,
+            vk::MemoryPropertyFlags const memory_properties);
 
 void destroy(BufferObject &buffer);
 
-BufferObject stage_data(const size_t size, const void * const data);
+BufferObject stage_data(size_t const size, void const * const data);
 
-void host_to_device(const BufferObject &dst, const void * const data);
+void host_to_device(BufferObject const &dst, void const * const data);
 
-void update_buffer(const BufferObject &buffer, const void * const data);
+void update_buffer(BufferObject const &buffer, void const * const data,
+                   size_t const size);
 
 } // namespace vkl::BufferTools
 

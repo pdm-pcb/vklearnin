@@ -36,9 +36,9 @@ struct SpotLight {
 };
 
 layout(std140, set = 1, binding = 0) readonly buffer SceneLights {
-    DirectionalLight dir[];
-    PointLight point[];
-    SpotLight spot[];
+    DirectionalLight dir;
+    PointLight point;
+    SpotLight spot;
 } lights;
 
 layout(std140, set = 1, binding = 1) readonly uniform LightProps {
@@ -70,19 +70,19 @@ void main() {
     vec3 spot        = vec3(0.0, 0.0, 0.0);
 
     directional += calc_directional_light(
-        lights.dir[0],
+        lights.dir,
         frag_normal,
         to_camera
     );
 
     point += calc_point_light(
-        lights.point[0],
+        lights.point,
         frag_normal,
         to_camera
     );
 
     spot += calc_spot_light(
-        lights.spot[0],
+        lights.spot,
         frag_normal,
         to_camera
     );

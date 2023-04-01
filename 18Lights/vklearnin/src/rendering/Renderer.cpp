@@ -69,6 +69,8 @@ Texture2D            Renderer::_skybox_texture;
 Renderer::BufferList Renderer::_scene_lights_buffers;
 Renderer::BufferList Renderer::_light_props_buffers;
 
+char * Renderer::_light_ssbo_data = nullptr;
+
 // Pipelines -------------------------------------------------------------------
 Pipeline Renderer::_flat_color_pipeline;
 Pipeline Renderer::_texture_pipeline;
@@ -87,34 +89,65 @@ Renderer::MaterialDrawQueue Renderer::_material_draws;
 
 // =============================================================================
 void Renderer::update_camera_data(CameraData const &data) {
-    BufferTools::update_buffer(_camera_buffers[_frame_index], &data);
+    BufferTools::update_buffer(
+        _camera_buffers[_frame_index],
+        &data,
+        sizeof(CameraData)
+    );
 }
 
 // =============================================================================
-void Renderer::update_scene_lights(SceneLights &lights) {
-    auto const dir_pos_mag = math::length(lights.dir.position);
+void Renderer::update_scene_lights(SceneLights &lights,
+                                   LightProps const &props) {
+    auto const dir_pos_mag = math::length(lights.dir.back().position);
     auto const dir_proj = math::ortho_proj_rh_zo(
         0.1f, 25.0f,
         -dir_pos_mag, dir_pos_mag,
         -dir_pos_mag, dir_pos_mag
     );
     auto const dir_view = math::look_at(
-        lights.dir.position,
+        lights.dir.back().position,
         Vec4::origin,
         Vec4::unit_y
     );
 
     auto const spot_proj = math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
     auto const spot_view = math::look_at(
-        lights.spot.position,
+        lights.spot.back().position,
         Vec4::origin,
         Vec4::unit_y
     );
 
-    lights.dir.vp_mat = dir_proj * dir_view;
-    lights.spot.vp_mat = spot_proj * spot_view;
+    lights.dir.back().vp_mat = dir_proj * dir_view;
+    lights.spot.back().vp_mat = spot_proj * spot_view;
 
-    BufferTools::update_buffer(_scene_lights_buffers[_frame_index], &lights);
+    auto const dir_size   = sizeof(DirectionalLight) * lights.dir.size();
+    auto const point_size = sizeof(PointLight) * lights.point.size();
+    auto const spot_size  = sizeof(SpotLight) * lights.spot.size();
+    auto const ssbo_size  = dir_size + point_size + spot_size;
+
+    if(_light_ssbo_data) {
+        delete[] _light_ssbo_data;
+    }
+
+    _light_ssbo_data = new char[ssbo_size];
+    char *dst = _light_ssbo_data;
+
+    memcpy(dst, lights.dir.data(), dir_size);
+    dst += dir_size;
+
+    memcpy(dst, lights.point.data(), point_size);
+    dst += point_size;
+
+    memcpy(dst, lights.spot.data(), spot_size);
+    dst += spot_size;
+
+    BufferTools::update_buffer(_scene_lights_buffers[_frame_index],
+                               &_light_ssbo_data,
+                               ssbo_size);
+    BufferTools::update_buffer(_light_props_buffers[_frame_index],
+                               &props,
+                               sizeof(LightProps));
 }
 
 // =============================================================================
@@ -337,6 +370,10 @@ void Renderer::shutdown() {
     _color_pass.destroy();
 
     Swapchain::destroy();
+
+    if(_light_ssbo_data) {
+        delete[] _light_ssbo_data;
+    }
 }
 
 // =============================================================================
@@ -627,9 +664,13 @@ void Renderer::_init_material_sets() {
 
 // =============================================================================
 void Renderer::_init_lights_buffers() {
+    auto const light_ssbo_size = 1 * sizeof(DirectionalLight) +
+                                 1 * sizeof(PointLight) +
+                                 1 * sizeof(SpotLight);
+
     _scene_lights_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _scene_lights_buffers) {
-        buffer.size = sizeof(SceneLights);
+        buffer.size = light_ssbo_size;
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eStorageBuffer,
@@ -640,7 +681,7 @@ void Renderer::_init_lights_buffers() {
 
     _light_props_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _light_props_buffers) {
-        buffer.size = sizeof(SceneLights);
+        buffer.size = sizeof(LightProps);
         vkl::BufferTools::create(
             buffer,
             vk::BufferUsageFlagBits::eUniformBuffer,

@@ -9,20 +9,20 @@ namespace vkl::BufferTools {
 
 void allocate(BufferObject &buffer, const vk::MemoryPropertyFlags flags);
 
-uint32_t find_memory_type(const vk::MemoryPropertyFlags flags,
-                          const vk::MemoryRequirements &reqs);
+uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
+                          vk::MemoryRequirements const &reqs);
 
 // =============================================================================
 void create(BufferObject &buffer,
-            const vk::BufferUsageFlags usage_flags,
-            const vk::MemoryPropertyFlags memory_properties)
+            vk::BufferUsageFlags const usage_flags,
+            vk::MemoryPropertyFlags const memory_properties)
 {
     if(buffer.handle) {
         CONSOLE_CRITICAL("Attempting to recreate a buffer object");
         return;
     }
 
-    const vk::BufferCreateInfo buffer_info {
+    vk::BufferCreateInfo const buffer_info {
         .size        = buffer.size,
         .usage       = usage_flags,
         .sharingMode = vk::SharingMode::eExclusive,
@@ -67,7 +67,7 @@ void destroy(BufferObject &buffer) {
 }
 
 // =============================================================================
-BufferObject stage_data(const size_t size, const void * const data) {
+BufferObject stage_data(size_t const size, void const * const data) {
     BufferObject staging_buffer {
         .size = size,
     };
@@ -102,7 +102,8 @@ BufferObject stage_data(const size_t size, const void * const data) {
 }
 
 // =============================================================================
-void host_to_device(const BufferObject &dst, const void * const data) {
+void host_to_device(BufferObject const &dst, void const * const data)
+{
     const vk::BufferCopy copy_region {
         .srcOffset = 0u,
         .dstOffset = 0u,
@@ -131,7 +132,17 @@ void host_to_device(const BufferObject &dst, const void * const data) {
 }
 
 // =============================================================================
-void update_buffer(const BufferObject &buffer, const void * const data) {
+void update_buffer(BufferObject const &buffer, void const * const data,
+                   size_t const size)
+{
+    if(size > buffer.size) {
+        CONSOLE_CRITICAL(
+            "Trying to copy {} bytes into a {} byte buffer.",
+            size, buffer.size
+        );
+        return;
+    }
+
     auto *mapped = LogicalDevice::native().mapMemory(
         buffer.memory,
         0u,
@@ -146,7 +157,7 @@ void update_buffer(const BufferObject &buffer, const void * const data) {
         return;
     }
 
-    memcpy(mapped, data, buffer.size);
+    memcpy(mapped, data, size);
     LogicalDevice::native().unmapMemory(buffer.memory);
 }
 

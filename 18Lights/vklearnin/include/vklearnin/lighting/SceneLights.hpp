@@ -28,9 +28,9 @@ struct alignas(16) SpotLight {
 };
 
 struct SceneLights {
-    DirectionalLight dir;
-    PointLight point;
-    SpotLight spot;
+    std::vector<DirectionalLight> dir;
+    std::vector<PointLight> point;
+    std::vector<SpotLight> spot;
 };
 
 struct LightProps {

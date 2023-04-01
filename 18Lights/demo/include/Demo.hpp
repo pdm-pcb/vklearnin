@@ -46,6 +46,9 @@ private:
     vkl::Material _floor_material;
     vkl::Material _wall_material;
 
+    vkl::SceneLights _lights;
+    vkl::LightProps  _light_props;
+
     void _init_camera();
     void _init_meshes();
     void _init_model_matrices();

@@ -29,7 +29,8 @@ public:
     };
 
     static void update_camera_data(CameraData const &data);
-    static void update_scene_lights(SceneLights &lights);
+    static void update_scene_lights(SceneLights &lights,
+                                    LightProps const &props);
 
     static void submit_draw_flat(GeneratedMesh const &mesh,
                                  Mat4 const &model_matrix);
@@ -124,6 +125,8 @@ private:
     static Texture2D  _skybox_texture;
     static BufferList _scene_lights_buffers;
     static BufferList _light_props_buffers;
+
+    static char *_light_ssbo_data;
 
     // Pipelines ---------------------------------------------------------------
     static Pipeline _flat_color_pipeline;
