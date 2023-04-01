@@ -143,7 +143,7 @@ void Renderer::update_scene_lights(SceneLights &lights,
     dst += spot_size;
 
     BufferTools::update_buffer(_scene_lights_buffers[_frame_index],
-                               &_light_ssbo_data,
+                               _light_ssbo_data,
                                ssbo_size);
     BufferTools::update_buffer(_light_props_buffers[_frame_index],
                                &props,
@@ -664,9 +664,9 @@ void Renderer::_init_material_sets() {
 
 // =============================================================================
 void Renderer::_init_lights_buffers() {
-    auto const light_ssbo_size = 1 * sizeof(DirectionalLight) +
-                                 1 * sizeof(PointLight) +
-                                 1 * sizeof(SpotLight);
+    auto const light_ssbo_size = 2 * sizeof(DirectionalLight) +
+                                 2 * sizeof(PointLight) +
+                                 2 * sizeof(SpotLight);
 
     _scene_lights_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _scene_lights_buffers) {
@@ -695,11 +695,11 @@ void Renderer::_init_lights_buffers() {
 void Renderer::_init_lights_sets() {
     _scene_lights_layout
         .add_binding(
-            vk::DescriptorType::eStorageBuffer,
+            vk::DescriptorType::eUniformBuffer,
             vk::ShaderStageFlagBits::eAll
         )
         .add_binding(
-            vk::DescriptorType::eUniformBuffer,
+            vk::DescriptorType::eStorageBuffer,
             vk::ShaderStageFlagBits::eAll
         )
         .create();
@@ -712,8 +712,8 @@ void Renderer::_init_lights_sets() {
     {
         _scene_lights_sets[frame]
             .allocate(_desc_pool, _scene_lights_layout)
-            .add_ssbo(_scene_lights_buffers[frame])
             .add_ubo(_light_props_buffers[frame])
+            .add_ssbo(_scene_lights_buffers[frame])
             .write_set();
     }
 }

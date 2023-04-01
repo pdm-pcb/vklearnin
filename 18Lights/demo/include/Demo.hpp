@@ -26,16 +26,24 @@ public:
 private:
     FPSCamera _camera;
 
-    vkl::Cube  _dir_lamp_mesh;
-    vkl::Cube  _point_lamp_mesh;
-    vkl::Cube  _spot_lamp_mesh;
+    vkl::Cube  _dir_lamp_mesh_a;
+    vkl::Cube  _dir_lamp_mesh_b;
+    vkl::Cube  _point_lamp_mesh_a;
+    vkl::Cube  _point_lamp_mesh_b;
+    vkl::Cube  _spot_lamp_mesh_a;
+    vkl::Cube  _spot_lamp_mesh_b;
+
     vkl::Cube  _cube_mesh;
     vkl::Plane _floor_mesh;
     vkl::Plane _wall_mesh;
 
-    vkl::Mat4 _dir_lamp_matrix;
-    vkl::Mat4 _point_lamp_matrix;
-    vkl::Mat4 _spot_lamp_matrix;
+    vkl::Mat4 _dir_lamp_matrix_a;
+    vkl::Mat4 _dir_lamp_matrix_b;
+    vkl::Mat4 _point_lamp_matrix_a;
+    vkl::Mat4 _point_lamp_matrix_b;
+    vkl::Mat4 _spot_lamp_matrix_a;
+    vkl::Mat4 _spot_lamp_matrix_b;
+
     vkl::Mat4 _cube_matrix_a;
     vkl::Mat4 _cube_matrix_b;
     vkl::Mat4 _floor_matrix;

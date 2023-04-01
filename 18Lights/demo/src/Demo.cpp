@@ -6,14 +6,19 @@ vkl::Vec4 CUBE_COLOR  { 0.15f, 0.65f, 0.25f, 256.0f };
 vkl::Vec4 FLOOR_COLOR { 0.15f, 0.25f, 0.65f, 256.0f };
 vkl::Vec4 WALL_COLOR  { 0.85f, 0.45f, 0.35f, 256.0f };
 
-vkl::Vec4 DIR_POS   { 2.0f, 4.0f, 2.0f, 1.0f  };
-vkl::Vec4 DIR_COLOR { vkl::color::sunlight, 1.0f };
+vkl::Vec4 DIR_POS_A   { 2.0f, 4.0f, 2.0f, 1.0f };
+vkl::Vec4 DIR_POS_B   { -2.0f, 4.0f, -2.0f, 1.0f };
+vkl::Vec4 DIR_COLOR_A { vkl::color::sunlight, 1.0f };
+vkl::Vec4 DIR_COLOR_B { 2.0f * vkl::color::sunlight, 1.0f };
 
-vkl::Vec4 POINT_POS   { 0.0f, 0.0f, 0.0f, 1.0f };
+vkl::Vec4 POINT_POS_A { 0.0f, 0.0f, 0.0f, 1.0f };
+vkl::Vec4 POINT_POS_B { 0.0f, 0.0f, 0.0f, 1.0f };
 vkl::Vec4 POINT_COLOR { vkl::color::sunlight, 2.0f };
 
-vkl::Vec4 SPOT_POS   { -5.0f, 1.0f, 5.0f, 1.0f };
-vkl::Vec4 SPOT_FWD = -vkl::math::normalize(SPOT_POS);
+vkl::Vec4 SPOT_POS_A { -5.0f, 1.0f, 5.0f, 1.0f };
+vkl::Vec4 SPOT_FWD_A = -vkl::math::normalize(SPOT_POS_A);
+vkl::Vec4 SPOT_POS_B { -5.0f, 1.0f, 5.0f, 1.0f };
+vkl::Vec4 SPOT_FWD_B = -vkl::math::normalize(SPOT_POS_B);
 vkl::Vec4 SPOT_COLOR { vkl::color::sunlight, 20.0f };
 
 float ROT_FACT = 20.0f;
@@ -28,9 +33,12 @@ void Demo::update() {
 
     vkl::Renderer::update_camera_data(camera_data);
 
-    _dir_lamp_matrix   = vkl::math::translate(vkl::Mat4::identity, DIR_POS);
-    _point_lamp_matrix = vkl::math::translate(vkl::Mat4::identity, POINT_POS);
-    _spot_lamp_matrix  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS);
+    _dir_lamp_matrix_a   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_A);
+    _dir_lamp_matrix_b   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_B);
+    _point_lamp_matrix_a = vkl::math::translate(vkl::Mat4::identity, POINT_POS_A);
+    _point_lamp_matrix_b = vkl::math::translate(vkl::Mat4::identity, POINT_POS_B);
+    _spot_lamp_matrix_a  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_A);
+    _spot_lamp_matrix_b  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_B);
 
     _cube_matrix_a =
         vkl::math::rotate(
@@ -55,15 +63,17 @@ void Demo::update() {
             0.25f
         );
 
-    _lights.dir[0].position = DIR_POS;
-    _lights.dir[0].color    = DIR_COLOR;
+    _lights.dir[0].position = DIR_POS_A;
+    _lights.dir[0].color    = DIR_COLOR_A;
+    _lights.dir[1].position = DIR_POS_B;
+    _lights.dir[1].color    = DIR_COLOR_B;
 
-    _lights.point[0].position = POINT_POS;
+    _lights.point[0].position = POINT_POS_A;
     _lights.point[0].color    = POINT_COLOR;
 
-    _lights.spot[0].position = SPOT_POS;
+    _lights.spot[0].position = SPOT_POS_A;
     _lights.spot[0].color    = SPOT_COLOR;
-    _lights.spot[0].forward  = SPOT_FWD;
+    _lights.spot[0].forward  = SPOT_FWD_A;
 
     _light_props.dir_count   = _lights.dir.size();
     _light_props.point_count = _lights.dir.size();
@@ -74,9 +84,10 @@ void Demo::update() {
 
 // =============================================================================
 void Demo::submit_draws() {
-    vkl::Renderer::submit_draw_flat(_dir_lamp_mesh,   _dir_lamp_matrix);
-    vkl::Renderer::submit_draw_flat(_point_lamp_mesh, _point_lamp_matrix);
-    vkl::Renderer::submit_draw_flat(_spot_lamp_mesh,  _spot_lamp_matrix);
+    vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_a,   _dir_lamp_matrix_a);
+    vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_b,   _dir_lamp_matrix_b);
+    vkl::Renderer::submit_draw_flat(_point_lamp_mesh_a, _point_lamp_matrix_a);
+    vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_a,  _spot_lamp_matrix_a);
 
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_a);
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_b);
@@ -93,16 +104,19 @@ void Demo::init() {
     _init_model_matrices();
     _init_textures();
 
-    _lights.dir.emplace_back();
-    _lights.point.emplace_back();
-    _lights.spot.emplace_back();
+    _lights.dir.resize(2);
+    _lights.point.resize(1);
+    _lights.spot.resize(1);
 }
 
 // =============================================================================
 void Demo::shutdown() {
-    _dir_lamp_mesh.destroy();
-    _point_lamp_mesh.destroy();
-    _spot_lamp_mesh.destroy();
+    _dir_lamp_mesh_a.destroy();
+    _dir_lamp_mesh_b.destroy();
+    _point_lamp_mesh_a.destroy();
+    _point_lamp_mesh_b.destroy();
+    _spot_lamp_mesh_a.destroy();
+    _spot_lamp_mesh_b.destroy();
     _cube_mesh.destroy();
     _floor_mesh.destroy();
     _wall_mesh.destroy();
@@ -124,9 +138,12 @@ void Demo::_init_camera() {
 
 // =============================================================================
 void Demo::_init_meshes() {
-    _dir_lamp_mesh.init(0.025f, DIR_COLOR);
-    _point_lamp_mesh.init(0.025f, POINT_COLOR);
-    _spot_lamp_mesh.init(0.025f, SPOT_COLOR);
+    _dir_lamp_mesh_a.init(0.025f, DIR_COLOR_A);
+    _dir_lamp_mesh_b.init(0.025f, DIR_COLOR_B);
+    _point_lamp_mesh_a.init(0.025f, POINT_COLOR);
+    _point_lamp_mesh_b.init(0.025f, POINT_COLOR);
+    _spot_lamp_mesh_a.init(0.025f, SPOT_COLOR);
+    _spot_lamp_mesh_b.init(0.025f, SPOT_COLOR);
 
     _cube_mesh.init(1.0f, CUBE_COLOR);
     _floor_mesh.init(10.0f, FLOOR_COLOR);

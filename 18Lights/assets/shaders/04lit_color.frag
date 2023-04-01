@@ -13,6 +13,14 @@ layout(set = 0, binding = 0) readonly uniform CameraData {
     mat4 proj_mat;
 };
 
+layout(std140, set = 1, binding = 0) readonly uniform LightProps {
+    float scene_ambient;
+
+    uint dir_count;
+    uint point_count;
+    uint spot_count;
+};
+
 struct DirectionalLight {
     mat4 vp_mat;
     vec4 position;
@@ -35,18 +43,8 @@ struct SpotLight {
     float outer_beam_angle;
 };
 
-layout(std140, set = 1, binding = 0) readonly buffer SceneLights {
-    DirectionalLight dir;
-    PointLight point;
-    SpotLight spot;
-} lights;
-
-layout(std140, set = 1, binding = 1) readonly uniform LightProps {
-    float scene_ambient;
-
-    uint dir_count;
-    uint point_count;
-    uint spot_count;
+layout(std140, set = 1, binding = 1) readonly buffer SceneLights {
+    DirectionalLight dir_lights[];
 };
 
 // layout(set = 3, binding = 0) uniform sampler2DShadow dir_shadow_maps[];
@@ -69,23 +67,25 @@ void main() {
     vec3 point       = vec3(0.0, 0.0, 0.0);
     vec3 spot        = vec3(0.0, 0.0, 0.0);
 
-    directional += calc_directional_light(
-        lights.dir,
-        frag_normal,
-        to_camera
-    );
+    for(uint dir = 0; dir < dir_count; ++dir) {
+        directional += calc_directional_light(
+            dir_lights[dir],
+            frag_normal,
+            to_camera
+        );
+    }
 
-    point += calc_point_light(
-        lights.point,
-        frag_normal,
-        to_camera
-    );
+    // point += calc_point_light(
+    //     lights.point[0],
+    //     frag_normal,
+    //     to_camera
+    // );
 
-    spot += calc_spot_light(
-        lights.spot,
-        frag_normal,
-        to_camera
-    );
+    // spot += calc_spot_light(
+    //     lights.spot[0],
+    //     frag_normal,
+    //     to_camera
+    // );
 
     vec3 light_sum = directional + point + spot;
     out_color = vec4(in_color.rgb * light_sum, 1.0);
