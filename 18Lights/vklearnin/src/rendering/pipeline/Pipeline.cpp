@@ -148,7 +148,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
     };
 
     vk::GraphicsPipelineCreateInfo const pipeline_info {
-        .pNext = &rendering_info,
+        // .pNext = &rendering_info,
 
         // If we're in a debug build, don't optimize out unused shader data
         // and such
@@ -171,10 +171,10 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
 
         .layout              = _layout,
 
-        // // Which render pass will use this pipeline?
-        // .renderPass          = render_pass.native(),
-        // // And within that render pass, which subpass will use this pipeline?
-        // .subpass             = config.subpass_index,
+        // Which render pass will use this pipeline?
+        .renderPass          = render_pass.native(),
+        // And within that render pass, which subpass will use this pipeline?
+        .subpass             = config.subpass_index,
 
         // A new pipeline may be derrived from an existing one, only updating
         // what needs to be updated. The .basePipeline* values designate an

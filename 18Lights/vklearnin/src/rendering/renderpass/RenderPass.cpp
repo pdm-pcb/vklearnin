@@ -10,6 +10,131 @@ namespace vkl {
 // =============================================================================
 RenderPass & RenderPass::default_color_attachments() {
     _attach_descs = {{
+        .format         = Swapchain::image_format(),
+        .samples        = vk::SampleCountFlagBits::e1,
+        .loadOp         = vk::AttachmentLoadOp::eClear,
+        .storeOp        = vk::AttachmentStoreOp::eStore,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+    }};
+
+    _color_attachments = {{
+        .attachment = 0u,
+        .layout     = vk::ImageLayout::eColorAttachmentOptimal,
+    }};
+
+    return *this;
+}
+
+// =============================================================================
+RenderPass & RenderPass::default_color_subpass() {
+    _subpass_deps = {{
+        .srcSubpass      = VK_SUBPASS_EXTERNAL,
+        .dstSubpass      = 0u,
+        .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
+        .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
+        .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
+        .dependencyFlags = vk::DependencyFlagBits::eByRegion
+    }};
+
+    _subpasses = {{
+        .pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+        .inputAttachmentCount    = 0u,
+        .pInputAttachments       = nullptr,
+        .colorAttachmentCount    =
+            static_cast<uint32_t>(_color_attachments.size()),
+        .pColorAttachments       = _color_attachments.data(),
+        .pResolveAttachments     = nullptr,
+        .pDepthStencilAttachment = nullptr,
+        .preserveAttachmentCount = 0u,
+        .pPreserveAttachments    = nullptr,
+    }};
+
+    return *this;
+}
+
+// =============================================================================
+RenderPass & RenderPass::depth_color_attachments() {
+    _attach_descs = {{
+        .format         = Swapchain::image_format(),
+        .samples        = vk::SampleCountFlagBits::e1,
+        .loadOp         = vk::AttachmentLoadOp::eDontCare,
+        .storeOp        = vk::AttachmentStoreOp::eStore,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+
+    },
+    {
+        .format         = PhysicalDevice::depth_format(),
+        .samples        = vk::SampleCountFlagBits::e1,
+        .loadOp         = vk::AttachmentLoadOp::eClear,
+        .storeOp        = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    }};
+
+    _color_attachments = {{
+        .attachment = 0u,
+        .layout     = vk::ImageLayout::eColorAttachmentOptimal,
+    }};
+
+    _depth_attachment = {
+        .attachment = 1u,
+        .layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    };
+
+    return *this;
+}
+
+// =============================================================================
+RenderPass & RenderPass::depth_color_subpass() {
+    _subpass_deps = {{
+        .srcSubpass      = VK_SUBPASS_EXTERNAL,
+        .dstSubpass      = 0u,
+        .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
+        .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
+        .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
+        .dependencyFlags = vk::DependencyFlagBits::eByRegion
+    },
+    {
+        .srcSubpass      = VK_SUBPASS_EXTERNAL,
+        .dstSubpass      = 0u,
+        .srcStageMask    = (vk::PipelineStageFlagBits::eEarlyFragmentTests |
+                            vk::PipelineStageFlagBits::eLateFragmentTests),
+        .dstStageMask    = (vk::PipelineStageFlagBits::eEarlyFragmentTests |
+                            vk::PipelineStageFlagBits::eLateFragmentTests),
+        .srcAccessMask   = vk::AccessFlagBits::eNone,
+        .dstAccessMask   = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+        .dependencyFlags = vk::DependencyFlagBits::eByRegion
+    }};
+
+    _subpasses = {{
+        .pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
+        .inputAttachmentCount = 0u,
+        .pInputAttachments    = nullptr,
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_color_attachments.size()),
+        .pColorAttachments       = _color_attachments.data(),
+        .pResolveAttachments     = _resolve_attachments.data(),
+        .pDepthStencilAttachment = &_depth_attachment,
+        .preserveAttachmentCount = 0u,
+        .pPreserveAttachments    = nullptr,
+    }};
+
+    return *this;
+}
+
+// =============================================================================
+RenderPass & RenderPass::msaa_depth_color_attachments() {
+    _attach_descs = {{
         // color buffer (msaa) attachment description
         .format         = Swapchain::image_format(),
         .samples        = RenderConfig::max_msaa_flag(),
@@ -60,7 +185,7 @@ RenderPass & RenderPass::default_color_attachments() {
 }
 
 // =============================================================================
-RenderPass & RenderPass::default_color_subpass() {
+RenderPass & RenderPass::msaa_depth_color_subpass() {
     _subpass_deps = {{
         .srcSubpass      = VK_SUBPASS_EXTERNAL,
         .dstSubpass      = 0u,
@@ -83,26 +208,14 @@ RenderPass & RenderPass::default_color_subpass() {
     }};
 
     _subpasses = {{
-        // This subpass is a graphical one
-        .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-
-        // ...Which has no input of any kind
+        .pipelineBindPoint    = vk::PipelineBindPoint::eGraphics,
         .inputAttachmentCount = 0u,
         .pInputAttachments    = nullptr,
-
-        // But does have a single color attachment
         .colorAttachmentCount =
             static_cast<uint32_t>(_color_attachments.size()),
-        .pColorAttachments = _color_attachments.data(),
-
-        // With whatever MSAA samples we've got
-        .pResolveAttachments = _resolve_attachments.data(),
-
-        // With a depth stencil
+        .pColorAttachments       = _color_attachments.data(),
+        .pResolveAttachments     = _resolve_attachments.data(),
         .pDepthStencilAttachment = &_depth_attachment,
-
-        // As we've only got a single subpass, there's nothing to preserve
-        // between subpasses
         .preserveAttachmentCount = 0u,
         .pPreserveAttachments    = nullptr,
     }};

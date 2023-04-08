@@ -10,7 +10,10 @@
 namespace vkl {
 
 // =============================================================================
-Framebuffer & Framebuffer::create_color_buffer(vk::Extent2D const &extent) {
+Framebuffer &
+Framebuffer::create_color_buffer(vk::Extent2D const &extent,
+                                 vk::SampleCountFlagBits const &samples)
+{
     if(extent.height == 0u || extent.width == 0u) {
         CONSOLE_CRITICAL("Cannot create a color buffer with a zero extent.");
     }
@@ -30,7 +33,7 @@ Framebuffer & Framebuffer::create_color_buffer(vk::Extent2D const &extent) {
     ImageTools::create(
         _color_buffer,
         vk::ImageType::e2D,
-        RenderConfig::max_msaa_flag(),
+        samples,
         (
             vk::ImageUsageFlagBits::eColorAttachment |
             vk::ImageUsageFlagBits::eTransientAttachment
@@ -51,7 +54,10 @@ Framebuffer & Framebuffer::create_color_buffer(vk::Extent2D const &extent) {
 }
 
 // =============================================================================
-Framebuffer & Framebuffer::create_depth_buffer(vk::Extent2D const &extent) {
+Framebuffer &
+Framebuffer::create_depth_buffer(vk::Extent2D const &extent,
+                                 vk::SampleCountFlagBits const &samples)
+{
     if(extent.height == 0u || extent.width == 0u) {
         CONSOLE_CRITICAL("Cannot create a depth buffer with a zero extent.");
     }
@@ -71,7 +77,7 @@ Framebuffer & Framebuffer::create_depth_buffer(vk::Extent2D const &extent) {
     ImageTools::create(
         _depth_buffer,
         vk::ImageType::e2D,
-        RenderConfig::max_msaa_flag(),
+        samples,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );

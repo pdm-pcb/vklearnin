@@ -10,8 +10,10 @@ class CmdBuffer;
 
 class Framebuffer final {
 public:
-    Framebuffer & create_color_buffer(vk::Extent2D const &extent);
-    Framebuffer & create_depth_buffer(vk::Extent2D const &extent);
+    Framebuffer & create_color_buffer(vk::Extent2D const &extent,
+                                      vk::SampleCountFlagBits const &samples);
+    Framebuffer & create_depth_buffer(vk::Extent2D const &extent,
+                                      vk::SampleCountFlagBits const &samples);
     Framebuffer & add_image_view(vk::ImageView const &view);
     Framebuffer & create_shadow_map(vk::Extent2D const &extent);
 

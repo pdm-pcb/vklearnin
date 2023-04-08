@@ -12,6 +12,12 @@ public:
     RenderPass & default_color_attachments();
     RenderPass & default_color_subpass();
 
+    RenderPass & depth_color_attachments();
+    RenderPass & depth_color_subpass();
+
+    RenderPass & msaa_depth_color_attachments();
+    RenderPass & msaa_depth_color_subpass();
+
     RenderPass & default_shadow_map_attachments();
     RenderPass & default_shadow_map_subpass();
 
