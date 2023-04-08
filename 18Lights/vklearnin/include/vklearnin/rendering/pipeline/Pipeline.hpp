@@ -14,6 +14,10 @@ class CmdBuffer;
 class Pipeline {
 public:
     struct Config {
+        // Attachment configuration
+        std::vector<vk::Format> color_formats;
+        vk::Format depth_format = vk::Format::eUndefined;
+
         // Viewport settings
         vk::Extent2D viewport_extent { 0u, 0u };
         vk::Offset2D viewport_offset { 0, 0 };
