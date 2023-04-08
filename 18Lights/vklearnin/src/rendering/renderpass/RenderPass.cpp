@@ -123,7 +123,7 @@ RenderPass & RenderPass::default_shadow_map_attachments() {
         .finalLayout    = vk::ImageLayout::eDepthStencilReadOnlyOptimal,
     }};
 
-    _shadow_map_attachment = {
+    _depth_attachment = {
         .attachment = 0u,
         .layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     };
@@ -154,7 +154,7 @@ RenderPass & RenderPass::default_shadow_map_subpass() {
 
     _subpasses = {{
         .pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
-        .pDepthStencilAttachment = &_shadow_map_attachment,
+        .pDepthStencilAttachment = &_depth_attachment,
     }};
 
     return *this;

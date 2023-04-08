@@ -61,6 +61,10 @@ private:
     void _init_meshes();
     void _init_model_matrices();
     void _init_textures();
+
+    void _update_camera();
+    void _update_scene_objects();
+    void _update_scene_lights();
 };
 
 #endif // DEMO_HPP

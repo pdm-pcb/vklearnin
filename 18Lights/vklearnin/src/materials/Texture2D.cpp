@@ -23,10 +23,11 @@ void Texture2D::texture_from_file(Filepath filepath) {
         _image.array_layers
     );
 
+    _image.aspect_flags = vk::ImageAspectFlagBits::eColor;
+
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
-        vk::ImageAspectFlagBits::eColor,
         vk::SampleCountFlagBits::e1,
         (
             vk::ImageUsageFlagBits::eSampled |
@@ -41,13 +42,9 @@ void Texture2D::texture_from_file(Filepath filepath) {
         image_data
     );
 
-    ImageTools::free_image_data(image_data);
+    ImageTools::create_view(_image, vk::ImageViewType::e2D);
 
-    ImageTools::create_view(
-        _image,
-        vk::ImageViewType::e2D,
-        vk::ImageAspectFlagBits::eColor
-    );
+    ImageTools::free_image_data(image_data);
 }
 
 // =============================================================================
@@ -68,10 +65,11 @@ void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
         _image.array_layers
     );
 
+    _image.aspect_flags = vk::ImageAspectFlagBits::eColor;
+
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
-        vk::ImageAspectFlagBits::eColor,
         vk::SampleCountFlagBits::e1,
         (
             vk::ImageUsageFlagBits::eSampled |
@@ -89,28 +87,25 @@ void Texture2D::cubemap_from_files(CubeFilepaths const &filepaths) {
 
     ImageTools::free_cubemap_data(image_data);
 
-    ImageTools::create_view(
-        _image,
-        vk::ImageViewType::eCube,
-        vk::ImageAspectFlagBits::eColor
-    );
+    ImageTools::create_view(_image, vk::ImageViewType::eCube);
 }
 
 // =============================================================================
 void Texture2D::create_shadow_map(vk::Extent2D const &extent,
                                   vk::Format const depth_format)
 {
-    _image.format = depth_format;
     _image.extent = vk::Extent3D {
         .width  = extent.width,
         .height = extent.height,
         .depth  = 1u
     };
+    _image.format = depth_format;
+    _image.layout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+    _image.aspect_flags = vk::ImageAspectFlagBits::eDepth;
 
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
-        vk::ImageAspectFlagBits::eDepth,
         // No multisampling for shadow maps in favor of PCF/soft shadows
         vk::SampleCountFlagBits::e1,
         ( vk::ImageUsageFlagBits::eDepthStencilAttachment |
@@ -118,13 +113,7 @@ void Texture2D::create_shadow_map(vk::Extent2D const &extent,
         vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 
-    _image.layout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-
-    ImageTools::create_view(
-        _image,
-        vk::ImageViewType::e2D,
-        vk::ImageAspectFlagBits::eDepth
-    );
+    ImageTools::create_view(_image, vk::ImageViewType::e2D);
 }
 
 // =============================================================================

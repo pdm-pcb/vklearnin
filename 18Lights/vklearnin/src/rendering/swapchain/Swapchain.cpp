@@ -360,16 +360,13 @@ void Swapchain::_get_images() {
 
     for(auto const &image_handle : image_handles) {
         _images.emplace_back(ImageObject{
-            .format = _image_format,
-            .layout =  vk::ImageLayout::eUndefined,
-            .handle = image_handle,
+            .format       = _image_format,
+            .layout       =  vk::ImageLayout::eUndefined,
+            .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            .handle       = image_handle,
         });
 
-        ImageTools::create_view(
-            _images.back(),
-            vk::ImageViewType::e2D,
-            vk::ImageAspectFlagBits::eColor
-        );
+        ImageTools::create_view(_images.back(), vk::ImageViewType::e2D);
     }
 }
 

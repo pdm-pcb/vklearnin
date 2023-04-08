@@ -27,7 +27,6 @@ void transition_layout(ImageObject &image,
 // =============================================================================
 void create(ImageObject &image,
             vk::ImageType const type,
-            vk::ImageAspectFlags const aspect_flags,
             vk::SampleCountFlagBits const samples,
             vk::ImageUsageFlags const usage_flags,
             vk::MemoryPropertyFlags const memory_properties,
@@ -58,7 +57,6 @@ void create(ImageObject &image,
     };
 
     image.handle = LogicalDevice::native().createImage(image_info);
-    image.aspect_flags = aspect_flags;
 
     CONSOLE_TRACE("Created image {:#x}",
                     reinterpret_cast<uint64_t>(::VkImage(image.handle)));
@@ -87,9 +85,7 @@ void destroy(ImageObject &image) {
 }
 
 // =============================================================================
-void create_view(ImageObject &image,
-                 vk::ImageViewType const view_type,
-                 vk::ImageAspectFlags const &aspect_flags) {
+void create_view(ImageObject &image, vk::ImageViewType const view_type) {
     if(!image.handle) {
         CONSOLE_CRITICAL("Cannot create view for non-existant image.");
     }
@@ -108,9 +104,9 @@ void create_view(ImageObject &image,
             .a = vk::ComponentSwizzle::eA,  // which should go where.
         },
         .subresourceRange {
-            .aspectMask = aspect_flags, // Aspect flags describe suitable
-                                        // interpretations for this image's
-                                        // data
+            .aspectMask = image.aspect_flags, // Aspect flags describe suitable
+                                              // interpretations for the image
+                                              // data in memory
             .baseMipLevel   = 0u,                // Starting mip level
             .levelCount     = image.mip_levels,  // Total mip levels
             .baseArrayLayer = 0u,                // Starting array layer
@@ -635,10 +631,10 @@ void transition_layout(ImageObject &image,
     command_buffer.pipelineBarrier(
         src_stage,
         dst_stage,
-        { },
-        nullptr,
-        nullptr,
-        { barrier }
+        { },        // dependency flags
+        nullptr,    // memory barriers
+        nullptr,    // buffer memory barriers
+        { barrier } // image memory barriers
     );
 
     image.layout = barrier.newLayout;

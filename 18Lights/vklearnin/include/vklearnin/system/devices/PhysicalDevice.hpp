@@ -10,7 +10,8 @@ public:
     enum class Features {
         FILL_MODE_NONSOLID,
         SAMPLER_ANISOTROPY,
-        NONUNIFORM_DESCRIPTOR_INDEXING
+        DYNAMIC_RENDERING,
+        NONUNIFORM_DESCRIPTOR_INDEXING,
     };
 
     static void query_devices(
@@ -26,9 +27,7 @@ public:
     inline static auto const & features()     { return _enabled_features;   }
     inline static auto const & extensions()   { return _enabled_extensions; }
 
-    inline static auto const & descriptor_indexing_features() {
-        return _descriptor_indexing_features;
-    }
+    inline static void * features_chain() { return _features_chain; }
 
     inline static auto depth_format() { return _depth_format; }
 
@@ -58,14 +57,18 @@ private:
     static vk::PhysicalDeviceFeatures         _enabled_features;
     static std::vector<char const *>          _enabled_extensions;
 
+    static vk::PhysicalDeviceDynamicRenderingFeatures
+        _dynamic_rendering_features;
+
     static vk::PhysicalDeviceDescriptorIndexingFeatures
         _descriptor_indexing_features;
+
+    static void *_features_chain;
 
     static vk::Format _depth_format;
 
     static bool _check_features(
-        vk::PhysicalDeviceFeatures const &supported_features,
-        vk::PhysicalDeviceDescriptorIndexingFeatures const &desc_indexing,
+        vk::PhysicalDeviceFeatures2 const &supported_features,
         std::vector<Features> const &required_features
     );
 

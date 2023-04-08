@@ -30,81 +30,9 @@ float ROT_FACT = 20.0f;
 
 // =============================================================================
 void Demo::update() {
-    _camera.update();
-
-    static vkl::Renderer::CameraData camera_data;
-    camera_data.view_matrix = _camera.view_matrix();
-    camera_data.proj_matrix = _camera.proj_matrix();
-
-    vkl::Renderer::update_camera_data(camera_data);
-
-    _dir_lamp_matrix_a   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_A);
-    _dir_lamp_matrix_b   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_B);
-    _point_lamp_matrix_a = vkl::math::translate(vkl::Mat4::identity, POINT_POS_A);
-    _point_lamp_matrix_b = vkl::math::translate(vkl::Mat4::identity, POINT_POS_B);
-    _spot_lamp_matrix_a  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_A);
-    _spot_lamp_matrix_b  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_B);
-
-    _cube_matrix_a =
-        vkl::math::rotate(
-            vkl::math::translate(
-                vkl::Mat4::identity,
-                -vkl::Vec4::unit_z * 2.0f
-            ),
-            vkl::Timekeeper::run_time() * ROT_FACT,
-            vkl::Vec4::unit_y
-        );
-
-    _cube_matrix_b =
-        vkl::math::scale(
-            vkl::math::rotate(
-                vkl::math::translate(
-                    vkl::Mat4::identity,
-                    vkl::Vec4::unit_z
-                ),
-                vkl::Timekeeper::run_time() * ROT_FACT,
-                vkl::Vec4::unit_x
-            ),
-            0.25f
-        );
-
-    _lights.dir.clear();
-    _lights.dir.emplace_back(vkl::DirectionalLight {
-        .position = DIR_POS_A,
-        .color    = DIR_COLOR_A,
-    });
-    // _lights.dir.emplace_back(vkl::DirectionalLight {
-    //     .position = DIR_POS_B,
-    //     .color    = DIR_COLOR_B,
-    // });
-
-    // _lights.point.clear();
-    // _lights.point.emplace_back(vkl::PointLight {
-    //     .position = POINT_POS_A,
-    //     .color    = POINT_COLOR_A,
-    // });
-    // _lights.point.emplace_back(vkl::PointLight {
-    //     .position = POINT_POS_B,
-    //     .color    = POINT_COLOR_B,
-    // });
-
-    _lights.spot.clear();
-    _lights.spot.emplace_back(vkl::SpotLight {
-        .position = SPOT_POS_A,
-        .color    = SPOT_COLOR_A,
-        .forward  = SPOT_FWD_A,
-    });
-    // _lights.spot.emplace_back(vkl::SpotLight {
-    //     .position = SPOT_POS_B,
-    //     .color    = SPOT_COLOR_B,
-    //     .forward  = SPOT_FWD_B,
-    // });
-
-    _light_props.dir_count   = _lights.dir.size();
-    _light_props.point_count = _lights.point.size();
-    _light_props.spot_count  = _lights.spot.size();
-
-    vkl::Renderer::update_scene_lights(_lights, _light_props);
+    _update_camera();
+    _update_scene_objects();
+    _update_scene_lights();
 }
 
 // =============================================================================
@@ -239,6 +167,118 @@ void Demo::_init_textures() {
     //     _cube_material,
     //     _floor_material,
     // });
+}
+
+// =============================================================================
+void Demo::_update_camera() {
+    _camera.update();
+
+    static vkl::Renderer::CameraData camera_data;
+    camera_data.view_matrix = _camera.view_matrix();
+    camera_data.proj_matrix = _camera.proj_matrix();
+
+    vkl::Renderer::update_camera_data(camera_data);
+}
+
+// =============================================================================
+void Demo::_update_scene_objects() {
+    _dir_lamp_matrix_a   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_A);
+    _dir_lamp_matrix_b   = vkl::math::translate(vkl::Mat4::identity, DIR_POS_B);
+    _point_lamp_matrix_a = vkl::math::translate(vkl::Mat4::identity, POINT_POS_A);
+    _point_lamp_matrix_b = vkl::math::translate(vkl::Mat4::identity, POINT_POS_B);
+    _spot_lamp_matrix_a  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_A);
+    _spot_lamp_matrix_b  = vkl::math::translate(vkl::Mat4::identity, SPOT_POS_B);
+
+    _cube_matrix_a =
+        vkl::math::rotate(
+            vkl::math::translate(
+                vkl::Mat4::identity,
+                -vkl::Vec4::unit_z * 2.0f
+            ),
+            vkl::Timekeeper::run_time() * ROT_FACT,
+            vkl::Vec4::unit_y
+        );
+
+    _cube_matrix_b =
+        vkl::math::scale(
+            vkl::math::rotate(
+                vkl::math::translate(
+                    vkl::Mat4::identity,
+                    vkl::Vec4::unit_z
+                ),
+                vkl::Timekeeper::run_time() * ROT_FACT,
+                vkl::Vec4::unit_x
+            ),
+            0.25f
+        );
+}
+
+// =============================================================================
+void Demo::_update_scene_lights() {
+    _lights.dir.clear();
+    _lights.dir.emplace_back(vkl::DirectionalLight {
+        .position = DIR_POS_A,
+        .color    = DIR_COLOR_A,
+    });
+    // _lights.dir.emplace_back(vkl::DirectionalLight {
+    //     .position = DIR_POS_B,
+    //     .color    = DIR_COLOR_B,
+    // });
+
+    // _lights.point.clear();
+    // _lights.point.emplace_back(vkl::PointLight {
+    //     .position = POINT_POS_A,
+    //     .color    = POINT_COLOR_A,
+    // });
+    // _lights.point.emplace_back(vkl::PointLight {
+    //     .position = POINT_POS_B,
+    //     .color    = POINT_COLOR_B,
+    // });
+
+    _lights.spot.clear();
+    _lights.spot.emplace_back(vkl::SpotLight {
+        .position = SPOT_POS_A,
+        .color    = SPOT_COLOR_A,
+        .forward  = SPOT_FWD_A,
+    });
+    // _lights.spot.emplace_back(vkl::SpotLight {
+    //     .position = SPOT_POS_B,
+    //     .color    = SPOT_COLOR_B,
+    //     .forward  = SPOT_FWD_B,
+    // });
+
+    for(auto &light : _lights.dir) {
+        auto const pos_mag = vkl::math::length(light.position);
+        auto const proj = vkl::math::ortho_proj_rh_zo(
+            0.1f, 25.0f,
+            -pos_mag, pos_mag,
+            -pos_mag, pos_mag
+        );
+        auto const view = vkl::math::look_at(
+            light.position,
+            vkl::Vec4::origin,
+            vkl::Vec4::unit_y
+        );
+
+        light.vp_mat = proj * view;
+    }
+
+    for(auto &light : _lights.spot) {
+        auto const proj = vkl::math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
+        auto const view = vkl::math::look_at(
+            light.position,
+            vkl::Vec4::origin,
+            vkl::Vec4::unit_y
+        );
+
+        light.vp_mat = proj * view;
+    }
+
+    _light_props.dir_count   = _lights.dir.size();
+    _light_props.point_count = _lights.point.size();
+    _light_props.spot_count  = _lights.spot.size();
+
+    vkl::Renderer::update_scene_lights(_light_props, _lights);
 }
 
 // =============================================================================

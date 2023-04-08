@@ -5,34 +5,28 @@
 #include "vklearnin/resources/buffers/BufferObject.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/meshes/GeneratedMesh.hpp"
+#include "vklearnin/system/devices/PhysicalDevice.hpp"
 
 namespace vkl {
 
-static vk::ClearValue const color_pass_clear[] = {
-    { .color { RenderConfig::clear_color }},
-    { .depthStencil
-        {
+static vk::ClearValue const clear_values[] {
+    { .color { RenderConfig::clear_color } },
+    {
+        .depthStencil {
             .depth = 1.0f,
             .stencil = 1u,
         }
     }
 };
 
-static vk::ClearValue const shadow_pass_clear[] = {
-    { .depthStencil
-        {
-            .depth = 1.0f,
-            .stencil = 1u,
-        }
-    }
-};
 
+// Renderer specific values ----------------------------------------------------
 RenderPass Renderer::_color_pass;
 RenderPass Renderer::_shadow_map_pass;
 
-std::vector<Framebuffer> Renderer::_color_framebuffers;
-std::vector<Framebuffer> Renderer::_dir_shadow_framebuffers;
-std::vector<Framebuffer> Renderer::_spot_shadow_framebuffers;
+Renderer::FramebufferList Renderer::_color_framebuffers;
+std::vector<Framebuffer>  Renderer::_dir_shadow_framebuffers;
+std::vector<Framebuffer>  Renderer::_spot_shadow_framebuffers;
 
 uint32_t Renderer::_shadow_map_resolution = 0u;
 
@@ -103,41 +97,20 @@ void Renderer::update_camera_data(CameraData const &data) {
 }
 
 // =============================================================================
-void Renderer::update_scene_lights(SceneLights &lights,
-                                   LightProps const &props)
+void Renderer::update_scene_lights(LightProps const &props,
+                                   SceneLights const &lights)
 {
     BufferTools::update_buffer(_light_props_buffers[_frame_index],
                                &props,
                                sizeof(LightProps));
 
-    // auto const dir_pos_mag = math::length(lights.dir.back().position);
-    // auto const dir_proj = math::ortho_proj_rh_zo(
-    //     0.1f, 25.0f,
-    //     -dir_pos_mag, dir_pos_mag,
-    //     -dir_pos_mag, dir_pos_mag
-    // );
-    // auto const dir_view = math::look_at(
-    //     lights.dir.back().position,
-    //     Vec4::origin,
-    //     Vec4::unit_y
-    // );
+    if(lights.dir.empty() == false) {
+        if(_dir_ssbo_data) {
+            delete[] _dir_ssbo_data;
+        }
 
-    // auto const spot_proj = math::persp_proj_rh_zo_inf(0.1f, 45.0f, 1.0f);
-    // auto const spot_view = math::look_at(
-    //     lights.spot.back().position,
-    //     Vec4::origin,
-    //     Vec4::unit_y
-    // );
-
-    // lights.dir.back().vp_mat = dir_proj * dir_view;
-    // lights.spot.back().vp_mat = spot_proj * spot_view;
-
-    if(_dir_ssbo_data)   { delete[] _dir_ssbo_data;   }
-    if(_point_ssbo_data) { delete[] _point_ssbo_data; }
-    if(_spot_ssbo_data)  { delete[] _spot_ssbo_data;  }
-
-    if(!lights.dir.empty()) {
         auto const buffer_size = sizeof(DirectionalLight) * lights.dir.size();
+
         _dir_ssbo_data = new char[buffer_size];
         memcpy(_dir_ssbo_data, lights.dir.data(), buffer_size);
 
@@ -146,8 +119,13 @@ void Renderer::update_scene_lights(SceneLights &lights,
                                    buffer_size);
     }
 
-    if(!lights.point.empty()) {
+    if(lights.point.empty() == false) {
+        if(_point_ssbo_data) {
+            delete[] _point_ssbo_data;
+        }
+
         auto const buffer_size = sizeof(PointLight) * lights.point.size();
+
         _point_ssbo_data = new char[buffer_size];
         memcpy(_point_ssbo_data, lights.point.data(), buffer_size);
 
@@ -156,8 +134,13 @@ void Renderer::update_scene_lights(SceneLights &lights,
                                    buffer_size);
     }
 
-    if(!lights.spot.empty()) {
+    if(lights.spot.empty() == false) {
+        if(_spot_ssbo_data) {
+            delete[] _spot_ssbo_data;
+        }
+
         auto const buffer_size = sizeof(SpotLight) * lights.spot.size();
+
         _spot_ssbo_data = new char[buffer_size];
         memcpy(_spot_ssbo_data,  lights.spot.data(),  buffer_size);
 
@@ -251,6 +234,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
 // =============================================================================
 void Renderer::record_commands() {
     auto const &frame_data = _frame_data[_frame_index];
+    // auto &color_framebuffer = _color_framebuffers[_frame_index];
 
     // Whatever frame index we're on, we need to wait on the fence signaling
     // completion of this frame's last submission to the device queue
@@ -260,26 +244,42 @@ void Renderer::record_commands() {
     // pool, which implicitly resets the command buffer/s
     frame_data.cmd_pool().reset();
 
-    vk::RenderPassBeginInfo shadow_pass_info {
-        .renderPass      = _shadow_map_pass.native(),
-        .framebuffer     = _dir_shadow_framebuffers[_frame_index].native(),
-        .renderArea      = _dir_shadow_framebuffers[_frame_index].render_area(),
-        .clearValueCount = static_cast<uint32_t>(std::size(shadow_pass_clear)),
-        .pClearValues    = shadow_pass_clear
-    };
-
     vk::RenderPassBeginInfo const color_pass_info {
         .renderPass      = _color_pass.native(),
         .framebuffer     = _color_framebuffers[_frame_index].native(),
         .renderArea      = _color_framebuffers[_frame_index].render_area(),
-        .clearValueCount = static_cast<uint32_t>(std::size(color_pass_clear)),
-        .pClearValues    = color_pass_clear
+        .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
+        .pClearValues    = clear_values
     };
+
+    // vk::RenderingAttachmentInfo const color_attachment_info {
+    //     .imageView = color_framebuffer.color_buffer().view,
+    //     .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+    //     .loadOp = vk::AttachmentLoadOp::eClear,
+    //     .storeOp = vk::AttachmentStoreOp::eStore,
+    //     .clearValue.color = clear_values[0].color
+    // };
+
+    // vk::RenderingAttachmentInfo const depth_attachment_info {
+    //     .imageView = color_framebuffer.depth_buffer().view,
+    //     .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+    //     .loadOp = vk::AttachmentLoadOp::eClear,
+    //     .storeOp = vk::AttachmentStoreOp::eStore,
+    //     .clearValue.depthStencil = clear_values[1].depthStencil
+    // };
+
+    // vk::RenderingInfo const rendering_info {
+    //     .renderArea = color_framebuffer.render_area(),
+    //     .layerCount = 1,
+    //     .colorAttachmentCount = 1,
+    //     .pColorAttachments = &color_attachment_info,
+    //     .pDepthAttachment = &depth_attachment_info,
+    // };
 
     frame_data.cmd_buffer().begin_one_time_submit();
 
         // frame_data.cmd_buffer().begin_render_pass(shadow_pass_info);
-        //     _execute_shadow_map_pipeline(_shadow_pass_transforms.dir_vp_mat);
+        //     _execute_shadow_map_pipeline();
         // frame_data.cmd_buffer().end_render_pass();
 
         // shadow_pass_info.framebuffer = _spot_shadow_framebuffers[_frame_index].native();
@@ -289,6 +289,9 @@ void Renderer::record_commands() {
         //     _execute_shadow_map_pipeline(_shadow_pass_transforms.spot_vp_mat);
         // frame_data.cmd_buffer().end_render_pass();
 
+        // color_framebuffer.transition_color_for_draw(frame_data.cmd_buffer());
+        // color_framebuffer.transition_depth_for_draw(frame_data.cmd_buffer());
+        // frame_data.cmd_buffer().native().beginRendering(rendering_info);
         frame_data.cmd_buffer().begin_render_pass(color_pass_info);
             _execute_flat_color_pipeline();
             _execute_texture_pipeline();
@@ -296,6 +299,9 @@ void Renderer::record_commands() {
             _execute_lit_color_pipeline();
             // _execute_material_pipeline();
         frame_data.cmd_buffer().end_render_pass();
+
+        // frame_data.cmd_buffer().native().endRendering();
+        // color_framebuffer.transition_color_for_present(frame_data.cmd_buffer());
 
     frame_data.cmd_buffer().end_recording();
 }
@@ -827,9 +833,9 @@ void Renderer::_init_flat_color_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent   = Swapchain::extent(),
-                .viewport_offset   = Swapchain::offset(),
-                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .viewport_extent         = Swapchain::extent(),
+                .viewport_offset         = Swapchain::offset(),
+                .msaa_samples            = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -852,9 +858,9 @@ void Renderer::_init_texture_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent   = Swapchain::extent(),
-                .viewport_offset   = Swapchain::offset(),
-                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .viewport_extent         = Swapchain::extent(),
+                .viewport_offset         = Swapchain::offset(),
+                .msaa_samples            = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -877,9 +883,9 @@ void Renderer::_init_skybox_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent   = Swapchain::extent(),
-                .viewport_offset   = Swapchain::offset(),
-                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .viewport_extent         = Swapchain::extent(),
+                .viewport_offset         = Swapchain::offset(),
+                .msaa_samples            = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -903,9 +909,9 @@ void Renderer::_init_lit_color_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent   = Swapchain::extent(),
-                .viewport_offset   = Swapchain::offset(),
-                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .viewport_extent         = Swapchain::extent(),
+                .viewport_offset         = Swapchain::offset(),
+                .msaa_samples            = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -929,9 +935,9 @@ void Renderer::_init_material_pipeline() {
         .create(
             _color_pass,
             Pipeline::Config {
-                .viewport_extent   = Swapchain::extent(),
-                .viewport_offset   = Swapchain::offset(),
-                .msaa_samples      = RenderConfig::max_msaa_flag(),
+                .viewport_extent         = Swapchain::extent(),
+                .viewport_offset         = Swapchain::offset(),
+                .msaa_samples            = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -1064,7 +1070,7 @@ void Renderer::_execute_material_pipeline() {
 }
 
 // =============================================================================
-void Renderer::_execute_shadow_map_pipeline(Mat4 const &light_vp) {
+void Renderer::_execute_shadow_map_pipeline() {
     auto const &frame_data = _frame_data[_frame_index];
     auto const &cmd_buffer = frame_data.cmd_buffer();
 
@@ -1074,23 +1080,26 @@ void Renderer::_execute_shadow_map_pipeline(Mat4 const &light_vp) {
         .size        = sizeof(ShadowPassMVP),
         .data        = &shadow_mvp,
     }};
-    shadow_mvp.light_vp_matrix = light_vp;
 
-    _shadow_map_pipeline.bind(cmd_buffer);
+    // _shadow_map_pipeline.bind(cmd_buffer);
 
-    for(auto const &draw : _lit_color_draws) {
-        shadow_mvp.model_matrix = *draw.model_matrix;
-        _send_push_constants(_shadow_map_pipeline, push);
-        draw.mesh->draw_indexed(cmd_buffer);
-    }
+    // for(auto const &light : _scene_lights.dir) {
+    //     shadow_mvp.light_vp_matrix = light.vp_mat;
 
-    for(auto &[material_id, per_material] : _material_draws) {
-        for(auto const &draw : per_material.queue) {
-            shadow_mvp.model_matrix = *draw.model_matrix;
-            _send_push_constants(_shadow_map_pipeline, push);
-            draw.mesh->draw_indexed(cmd_buffer);
-        }
-    }
+    //     for(auto const &draw : _lit_color_draws) {
+    //         shadow_mvp.model_matrix = *draw.model_matrix;
+    //         _send_push_constants(_shadow_map_pipeline, push);
+    //         draw.mesh->draw_indexed(cmd_buffer);
+    //     }
+
+    //     for(auto &[material_id, per_material] : _material_draws) {
+    //         for(auto const &draw : per_material.queue) {
+    //             shadow_mvp.model_matrix = *draw.model_matrix;
+    //             _send_push_constants(_shadow_map_pipeline, push);
+    //             draw.mesh->draw_indexed(cmd_buffer);
+    //         }
+    //     }
+    // }
 }
 
 // =============================================================================

@@ -9,7 +9,6 @@ namespace vkl::ImageTools {
 
 void create(ImageObject &image,
             vk::ImageType const type,
-            vk::ImageAspectFlags const aspect_flags,
             vk::SampleCountFlagBits const samples,
             vk::ImageUsageFlags const usage_flags,
             vk::MemoryPropertyFlags const memory_properties,
@@ -17,9 +16,7 @@ void create(ImageObject &image,
 
 void destroy(ImageObject &image);
 
-void create_view(ImageObject &image,
-                 vk::ImageViewType const view_type,
-                 vk::ImageAspectFlags const &aspect_flags);
+void create_view(ImageObject &image, vk::ImageViewType const view_type);
 
 void destroy_view(ImageObject &image);
 

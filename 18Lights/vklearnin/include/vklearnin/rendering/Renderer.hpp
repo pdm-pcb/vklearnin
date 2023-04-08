@@ -29,8 +29,8 @@ public:
     };
 
     static void update_camera_data(CameraData const &data);
-    static void update_scene_lights(SceneLights &lights,
-                                    LightProps const &props);
+    static void update_scene_lights(LightProps const &props,
+                                    SceneLights const &lights);
 
     static void submit_draw_flat(GeneratedMesh const &mesh,
                                  Mat4 const &model_matrix);
@@ -61,20 +61,9 @@ public:
     Renderer() = delete;
 
 private:
-    static RenderPass _color_pass;
-    static RenderPass _shadow_map_pass;
-
-    static std::vector<Framebuffer> _color_framebuffers;
-    static std::vector<Framebuffer> _dir_shadow_framebuffers;
-    static std::vector<Framebuffer> _spot_shadow_framebuffers;
-
-    static uint32_t _shadow_map_resolution;
-
-    static std::vector<FrameData> _frame_data;
-    static uint32_t               _frame_index;
-    static uint64_t               _frame_count;
-
     // Convenience using delcarations ------------------------------------------
+    using FramebufferList = std::vector<Framebuffer>;
+
     using PushList = std::vector<PushConstant>;
 
     using DescSetList = std::vector<DescriptorSet>;
@@ -98,6 +87,20 @@ private:
 
     using MaterialDrawQueue =
         std::unordered_map<uint64_t, PerMaterialDraws>;
+
+    // Renderer specific values ------------------------------------------------
+    static RenderPass _color_pass;
+    static RenderPass _shadow_map_pass;
+
+    static FramebufferList _color_framebuffers;
+    static std::vector<Framebuffer> _dir_shadow_framebuffers;
+    static std::vector<Framebuffer> _spot_shadow_framebuffers;
+
+    static uint32_t _shadow_map_resolution;
+
+    static std::vector<FrameData> _frame_data;
+    static uint32_t               _frame_index;
+    static uint64_t               _frame_count;
 
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
@@ -179,7 +182,7 @@ private:
     static void _execute_skybox_pipeline();
     static void _execute_lit_color_pipeline();
     static void _execute_material_pipeline();
-    static void _execute_shadow_map_pipeline(Mat4 const &light_vp);
+    static void _execute_shadow_map_pipeline();
 
     static void _send_push_constants(Pipeline const &pipeline,
                                      PushList const &push_constants);

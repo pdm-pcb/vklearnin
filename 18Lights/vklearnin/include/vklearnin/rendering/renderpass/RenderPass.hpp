@@ -38,8 +38,6 @@ private:
     std::vector<vk::SubpassDescription>    _subpasses;
 
     vk::RenderPass _render_pass;
-
-    vk::AttachmentReference _shadow_map_attachment;
 };
 
 } // namespace vkl

@@ -1,11 +1,12 @@
-#ifndef VKLEARNIN_RENDERINGRENDERPASS_FRAMEBUFFER_HPP
-#define VKLEARNIN_RENDERINGRENDERPASS_FRAMEBUFFER_HPP
+#ifndef VKLEARNIN_RENDERING_RENDERPASS_FRAMEBUFFER_HPP
+#define VKLEARNIN_RENDERING_RENDERPASS_FRAMEBUFFER_HPP
 
 #include "vklearnin/system/pch.hpp"
 
 namespace vkl {
 
 class RenderPass;
+class CmdBuffer;
 
 class Framebuffer final {
 public:
@@ -18,6 +19,10 @@ public:
                 vk::RenderPass const &render_pass);
 
     void destroy();
+
+    void transition_color_for_draw(CmdBuffer const &cmd_buffer);
+    void transition_depth_for_draw(CmdBuffer const &cmd_buffer);
+    void transition_color_for_present(CmdBuffer const &cmd_buffer);
 
     inline auto const & native()      const { return _framebuffer; }
     inline auto const & render_area() const { return _render_area; }
@@ -49,4 +54,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDERINGRENDERPASS_FRAMEBUFFER_HPP
+#endif // VKLEARNIN_RENDERING_RENDERPASS_FRAMEBUFFER_HPP

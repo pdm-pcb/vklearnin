@@ -16,8 +16,13 @@ vk::PhysicalDeviceMemoryProperties PhysicalDevice::_memory_properties;
 vk::PhysicalDeviceFeatures         PhysicalDevice::_enabled_features;
 std::vector<char const *>          PhysicalDevice::_enabled_extensions;
 
+vk::PhysicalDeviceDynamicRenderingFeatures
+        PhysicalDevice::_dynamic_rendering_features { };
+
 vk::PhysicalDeviceDescriptorIndexingFeatures
-        PhysicalDevice::_descriptor_indexing_features;
+        PhysicalDevice::_descriptor_indexing_features { };
+
+void * PhysicalDevice::_features_chain = nullptr;
 
 vk::Format PhysicalDevice::_depth_format = vk::Format::eD32Sfloat;
 
@@ -46,13 +51,12 @@ void PhysicalDevice::query_devices(
         // First, ensure that this device supports the feature set we require
         vk::PhysicalDeviceFeatures2 supported_features { };
         vk::PhysicalDeviceDescriptorIndexingFeatures indexing_features { };
+        vk::PhysicalDeviceDynamicRenderingFeatures rendering_features { };
         supported_features.pNext = &indexing_features;
+        indexing_features.pNext = &rendering_features;
 
         device.getFeatures2(&supported_features);
-        if(!_check_features(supported_features.features,
-                            indexing_features,
-                            required_features))
-        {
+        if(!_check_features(supported_features, required_features)) {
             CONSOLE_WARN(
                 "{} does not support all required features; skipping",
                 device_props.deviceName
@@ -198,7 +202,7 @@ void PhysicalDevice::select_device() {
     uint32_t gfx_queue_index = 0u;
     uint32_t present_queue_index = 0u;
 
-    for(uint32_t device_index = 0u;
+    for(uint32_t device_index = 1u;
         device_index < _available_devices.size();
         ++device_index)
     {
@@ -248,14 +252,23 @@ void PhysicalDevice::select_device() {
 
 // =============================================================================
 bool PhysicalDevice::_check_features(
-        vk::PhysicalDeviceFeatures const &supported_features,
-        vk::PhysicalDeviceDescriptorIndexingFeatures const &desc_indexing,
+        vk::PhysicalDeviceFeatures2 const &supported_features,
         std::vector<Features> const &required_features
     )
 {
+    auto const &dynamic_rendering =
+        reinterpret_cast<vk::PhysicalDeviceDynamicRenderingFeatures *>(
+            supported_features.pNext
+        );
+
+    auto const *desc_indexing =
+        reinterpret_cast<vk::PhysicalDeviceDescriptorIndexingFeatures *>(
+            dynamic_rendering->pNext
+        );
+
     for(auto const &feature : required_features) {
         if(feature == Features::FILL_MODE_NONSOLID) {
-            if(!supported_features.fillModeNonSolid) {
+            if(!supported_features.features.fillModeNonSolid) {
                 CONSOLE_WARN("No support for non-solid fill modes.");
                 return false;
             }
@@ -263,27 +276,43 @@ bool PhysicalDevice::_check_features(
             _enabled_features.fillModeNonSolid = VK_TRUE;
         }
         else if(feature == Features::SAMPLER_ANISOTROPY) {
-            if(!supported_features.samplerAnisotropy) {
+            if(!supported_features.features.samplerAnisotropy) {
                 CONSOLE_WARN("No support for sampler anisotropy.");
                 return false;
             }
 
             _enabled_features.samplerAnisotropy = VK_TRUE;
         }
+        else if(feature == Features::DYNAMIC_RENDERING) {
+            auto const &dynamic_rendering =
+                reinterpret_cast<vk::PhysicalDeviceDynamicRenderingFeatures *>
+                    (supported_features.pNext);
+
+            if(!dynamic_rendering->dynamicRendering) {
+                CONSOLE_WARN("No support for dynamic rendering.");
+                return false;
+            }
+
+            _dynamic_rendering_features =
+                vk::PhysicalDeviceDynamicRenderingFeatures
+                {
+                    .dynamicRendering = VK_TRUE,
+                };
+        }
         else if(feature == Features::NONUNIFORM_DESCRIPTOR_INDEXING) {
-            if(!desc_indexing.shaderSampledImageArrayNonUniformIndexing) {
+            if(!desc_indexing->shaderSampledImageArrayNonUniformIndexing) {
                 CONSOLE_WARN("No support for nonuniform sampler indexing.");
                 return false;
             }
-            if(!desc_indexing.runtimeDescriptorArray) {
+            if(!desc_indexing->runtimeDescriptorArray) {
                 CONSOLE_WARN("No support for runtime descriptor arrays.");
                 return false;
             }
-            if(!desc_indexing.descriptorBindingVariableDescriptorCount) {
+            if(!desc_indexing->descriptorBindingVariableDescriptorCount) {
                 CONSOLE_WARN("No support for binding variable descriptors.");
                 return false;
             }
-            if(!desc_indexing.descriptorBindingPartiallyBound) {
+            if(!desc_indexing->descriptorBindingPartiallyBound) {
                 CONSOLE_WARN("No support for partially bound descriptors.");
                 return false;
             }
@@ -301,6 +330,9 @@ bool PhysicalDevice::_check_features(
             return false;
         }
     }
+
+    _features_chain = &_dynamic_rendering_features;
+    _dynamic_rendering_features.pNext = &_descriptor_indexing_features;
 
     return true;
 }
