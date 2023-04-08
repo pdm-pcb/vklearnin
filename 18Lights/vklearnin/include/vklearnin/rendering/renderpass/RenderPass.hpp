@@ -15,7 +15,9 @@ public:
     RenderPass & depth_color_attachments();
     RenderPass & depth_color_subpass();
 
-    RenderPass & msaa_depth_color_attachments();
+    RenderPass & msaa_depth_color_attachments(
+        vk::SampleCountFlagBits const &sample_flags
+    );
     RenderPass & msaa_depth_color_subpass();
 
     RenderPass & default_shadow_map_attachments();
@@ -24,7 +26,8 @@ public:
     void create();
     void destroy();
 
-    inline auto const& native() const { return _render_pass; }
+    inline auto const & native() const { return _render_pass;  }
+    inline auto msaa_samples()   const { return _sample_flags; }
 
     RenderPass();
     ~RenderPass() = default;
@@ -42,6 +45,8 @@ private:
     std::vector<vk::AttachmentReference>   _resolve_attachments;
     std::vector<vk::SubpassDependency>     _subpass_deps;
     std::vector<vk::SubpassDescription>    _subpasses;
+
+    vk::SampleCountFlagBits _sample_flags;
 
     vk::RenderPass _render_pass;
 };

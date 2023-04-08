@@ -133,11 +133,15 @@ RenderPass & RenderPass::depth_color_subpass() {
 }
 
 // =============================================================================
-RenderPass & RenderPass::msaa_depth_color_attachments() {
+RenderPass &RenderPass::msaa_depth_color_attachments(
+    vk::SampleCountFlagBits const &sample_flags)
+{
+    _sample_flags = sample_flags;
+
     _attach_descs = {{
         // color buffer (msaa) attachment description
         .format         = Swapchain::image_format(),
-        .samples        = RenderConfig::max_msaa_flag(),
+        .samples        = _sample_flags,
         .loadOp         = vk::AttachmentLoadOp::eClear,
         .storeOp        = vk::AttachmentStoreOp::eDontCare,
         .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -147,7 +151,7 @@ RenderPass & RenderPass::msaa_depth_color_attachments() {
     },
     {   // depth buffer attachment description
         .format         = PhysicalDevice::depth_format(),
-        .samples        = RenderConfig::max_msaa_flag(),
+        .samples        = _sample_flags,
         .loadOp         = vk::AttachmentLoadOp::eClear,
         .storeOp        = vk::AttachmentStoreOp::eDontCare,
         .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -311,6 +315,7 @@ RenderPass::RenderPass() :
     _resolve_attachments { },
     _subpass_deps        { },
     _subpasses           { },
+    _sample_flags        { vk::SampleCountFlagBits::e1 },
     _render_pass         { }
 { }
 

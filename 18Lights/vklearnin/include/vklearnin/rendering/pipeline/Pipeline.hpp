@@ -27,9 +27,6 @@ public:
         vk::CullModeFlags cull_mode    = vk::CullModeFlagBits::eBack;
         vk::FrontFace     front_face   = vk::FrontFace::eClockwise;
 
-        // Multisampling configuration
-        vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
-
         // Depth/shadow buffer options
         vk::Bool32    enable_depth_test   = VK_TRUE;
         vk::CompareOp depth_compare       = vk::CompareOp::eLess;
@@ -109,7 +106,7 @@ private:
     void _init_assembly();
     void _init_viewport(Config const &config);
     void _init_raster(Config const &config);
-    void _init_multisample(Config const &config);
+    void _init_multisample(vk::SampleCountFlagBits const sample_flags);
     void _init_depth_stencil(Config const &config);
     void _init_blend();
     void _init_dynamic_states();

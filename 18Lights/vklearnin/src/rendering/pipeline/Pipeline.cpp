@@ -133,7 +133,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
     _init_assembly();
     _init_viewport(config);
     _init_raster(config);
-    _init_multisample(config);
+    _init_multisample(render_pass.msaa_samples());
     _init_depth_stencil(config);
     _init_blend();
     _init_dynamic_states();
@@ -305,9 +305,9 @@ void Pipeline::_init_raster(Config const &config) {
 }
 
 // =============================================================================
-void Pipeline::_init_multisample(Config const &config) {
+void Pipeline::_init_multisample(vk::SampleCountFlagBits const sample_flags) {
     _multisample_info = {
-        .rasterizationSamples  = config.msaa_samples,
+        .rasterizationSamples  = sample_flags,
         .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,

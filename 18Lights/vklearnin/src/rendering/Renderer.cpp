@@ -247,18 +247,18 @@ void Renderer::record_commands() {
 
     vk::RenderPassBeginInfo const color_pass_info {
         .renderPass      = _color_pass.native(),
-        .framebuffer     = _color_framebuffers[_frame_index].native(),
-        .renderArea      = _color_framebuffers[_frame_index].render_area(),
+        .framebuffer     = color_framebuffer.native(),
+        .renderArea      = color_framebuffer.render_area(),
         .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
         .pClearValues    = clear_values
     };
 
     // vk::RenderingAttachmentInfo const color_attachment_info {
-    //     .imageView = color_framebuffer.color_buffer().view,
+    //     .imageView = swapchain_image.view,
     //     .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-    //     .resolveMode = vk::ResolveModeFlagBits::eAverage,
-    //     .resolveImageView = swapchain_image.view,
-    //     .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+    //     // .resolveMode = vk::ResolveModeFlagBits::eAverage,
+    //     // .resolveImageView = color_framebuffer.color_buffer().view,
+    //     // .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
     //     .loadOp = vk::AttachmentLoadOp::eClear,
     //     .storeOp = vk::AttachmentStoreOp::eStore,
     //     .clearValue {
@@ -286,7 +286,7 @@ void Renderer::record_commands() {
 
     frame_data.cmd_buffer().begin_one_time_submit();
 
-        // color_framebuffer.transition_color_for_draw(frame_data.cmd_buffer());
+        // color_framebuffer.transition_color_for_draw(swapchain_image, frame_data.cmd_buffer());
         // color_framebuffer.transition_depth_for_draw(frame_data.cmd_buffer());
         // frame_data.cmd_buffer().native().beginRendering(rendering_info);
 
@@ -299,7 +299,7 @@ void Renderer::record_commands() {
         frame_data.cmd_buffer().end_render_pass();
 
         // frame_data.cmd_buffer().native().endRendering();
-        // color_framebuffer.transition_color_for_present(frame_data.cmd_buffer());
+        // color_framebuffer.transition_color_for_present(swapchain_image, frame_data.cmd_buffer());
 
     frame_data.cmd_buffer().end_recording();
 }
@@ -503,8 +503,8 @@ void Renderer::create_pipelines() {
 // =============================================================================
 void Renderer::_init_color_pass() {
     _color_pass
-        .depth_color_attachments()
-        .depth_color_subpass()
+        .msaa_depth_color_attachments(RenderConfig::max_msaa_flag())
+        .msaa_depth_color_subpass()
         .create();
 }
 
@@ -515,16 +515,15 @@ void Renderer::_init_color_framebuffers() {
     for(auto const &swapchain_image : Swapchain::images()) {
         _color_framebuffers.emplace_back();
         _color_framebuffers.back()
-            // .create_color_buffer(
-            //     Swapchain::extent(),
-            //     RenderConfig::max_msaa_flag()
-            // )
-            .add_image_view(swapchain_image.view)
+            .create_color_buffer(
+                Swapchain::extent(),
+                _color_pass.msaa_samples()
+            )
             .create_depth_buffer(
                 Swapchain::extent(),
-                vk::SampleCountFlagBits::e1
-                // RenderConfig::max_msaa_flag()
+                _color_pass.msaa_samples()
             )
+            .add_image_view(swapchain_image.view)
             .create(
                 Swapchain::render_area(),
                 _color_pass.native()
@@ -844,7 +843,6 @@ void Renderer::_init_flat_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                // .msaa_samples    = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -873,7 +871,6 @@ void Renderer::_init_texture_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                // .msaa_samples    = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -902,7 +899,6 @@ void Renderer::_init_skybox_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                // .msaa_samples    = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -932,7 +928,6 @@ void Renderer::_init_lit_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                // .msaa_samples    = RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -962,7 +957,6 @@ void Renderer::_init_material_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                // .msaa_samples    = RenderConfig::max_msaa_flag(),
             }
         );
 }

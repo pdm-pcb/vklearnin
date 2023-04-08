@@ -187,7 +187,7 @@ void Framebuffer::destroy() {
 }
 
 // =============================================================================
-void Framebuffer::transition_color_for_draw(CmdBuffer const &cmd_buffer) {
+void Framebuffer::transition_color_for_draw(ImageObject const &image, CmdBuffer const &cmd_buffer) {
 // vks::tools::insertImageMemoryBarrier(
     // cmd buffer       drawCmdBuffers[i],
     // image            swapChain.buffers[i].image,
@@ -206,9 +206,9 @@ void Framebuffer::transition_color_for_draw(CmdBuffer const &cmd_buffer) {
         .newLayout           = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image               = _color_buffer.handle,
+        .image               = image.handle,
         .subresourceRange {
-            .aspectMask     = _color_buffer.aspect_flags,
+            .aspectMask     = image.aspect_flags,
             .baseMipLevel   = 0u,
             .levelCount     = 1u,
             .baseArrayLayer = 0u,
@@ -273,7 +273,7 @@ void Framebuffer::transition_depth_for_draw(CmdBuffer const &cmd_buffer) {
 }
 
 // =============================================================================
-void Framebuffer::transition_color_for_present(CmdBuffer const &cmd_buffer) {
+void Framebuffer::transition_color_for_present(ImageObject const &image, CmdBuffer const &cmd_buffer) {
 // vks::tools::insertImageMemoryBarrier(
     // cmd buffer       drawCmdBuffers[i],
     // image            swapChain.buffers[i].image,
@@ -292,9 +292,9 @@ void Framebuffer::transition_color_for_present(CmdBuffer const &cmd_buffer) {
         .newLayout           = vk::ImageLayout::ePresentSrcKHR,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image               = _color_buffer.handle,
+        .image               = image.handle,
         .subresourceRange {
-            .aspectMask     = _color_buffer.aspect_flags,
+            .aspectMask     = image.aspect_flags,
             .baseMipLevel   = 0u,
             .levelCount     = 1u,
             .baseArrayLayer = 0u,
