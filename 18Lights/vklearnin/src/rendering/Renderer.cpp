@@ -9,17 +9,6 @@
 
 namespace vkl {
 
-static vk::ClearValue const color_clear_value {
-    .color { RenderConfig::clear_color }
-};
-
-static vk::ClearValue const depth_clear_value {
-    .depthStencil {
-        .depth = 1.0f,
-        .stencil = 1u,
-    }
-};
-
 // Renderer specific values ----------------------------------------------------
 Renderer::DepthBufferList Renderer::_depth_buffers;
 Renderer::ColorBufferList Renderer::_color_buffers;
@@ -220,7 +209,7 @@ void Renderer::record_commands() {
         .loadOp             = vk::AttachmentLoadOp::eClear,
         .storeOp            = vk::AttachmentStoreOp::eStore,
         .clearValue {
-            .color = color_clear_value.color
+            .color { RenderConfig::clear_color }
         }
     }};
 
@@ -230,7 +219,10 @@ void Renderer::record_commands() {
         .loadOp      = vk::AttachmentLoadOp::eClear,
         .storeOp     = vk::AttachmentStoreOp::eStore,
         .clearValue {
-            .depthStencil = depth_clear_value.depthStencil
+            .depthStencil {
+                .depth = 1.0f,
+                .stencil = 1u,
+            }
         }
     };
 
