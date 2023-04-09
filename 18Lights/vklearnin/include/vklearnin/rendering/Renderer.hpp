@@ -4,8 +4,7 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/rendering/FrameData.hpp"
 #include "vklearnin/rendering/DrawSubmission.hpp"
-#include "vklearnin/rendering/renderpass/RenderPass.hpp"
-#include "vklearnin/rendering/renderpass/Framebuffer.hpp"
+#include "vklearnin/rendering/FrameBuffer.hpp"
 #include "vklearnin/rendering/pipeline/Pipeline.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
@@ -62,7 +61,7 @@ public:
 
 private:
     // Convenience using delcarations ------------------------------------------
-    using FramebufferList = std::vector<Framebuffer>;
+    using FrameBufferList = std::vector<FrameBuffer>;
 
     using PushList = std::vector<PushConstant>;
 
@@ -89,12 +88,12 @@ private:
         std::unordered_map<uint64_t, PerMaterialDraws>;
 
     // Renderer specific values ------------------------------------------------
-    static RenderPass _color_pass;
-    static RenderPass _shadow_map_pass;
+    // static RenderPass _color_pass;
+    // static RenderPass _shadow_map_pass;
 
-    static FramebufferList _color_framebuffers;
-    static std::vector<Framebuffer> _dir_shadow_framebuffers;
-    static std::vector<Framebuffer> _spot_shadow_framebuffers;
+    static FrameBufferList _color_framebuffers;
+    static std::vector<FrameBuffer> _dir_shadow_framebuffers;
+    static std::vector<FrameBuffer> _spot_shadow_framebuffers;
 
     static uint32_t _shadow_map_resolution;
 
@@ -151,10 +150,7 @@ private:
     static DrawQueue         _lit_color_draws;
     static MaterialDrawQueue _material_draws;
 
-    static void _init_color_pass();
     static void _init_color_framebuffers();
-
-    static void _init_shadow_pass();
     static void _init_shadow_framebuffers();
 
     static void _init_frame_data();

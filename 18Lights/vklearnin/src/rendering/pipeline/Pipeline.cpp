@@ -4,7 +4,6 @@
 #include "vklearnin/rendering/swapchain/Swapchain.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
-#include "vklearnin/rendering/renderpass/RenderPass.hpp"
 #include "vklearnin/system/devices/CmdBuffer.hpp"
 
 namespace vkl {
@@ -170,11 +169,6 @@ void Pipeline::create(Config const &config) {
         .pDynamicState       = &_dynamic_state_info,
 
         .layout              = _layout,
-
-        // // Which render pass will use this pipeline?
-        // .renderPass          = render_pass.native(),
-        // // And within that render pass, which subpass will use this pipeline?
-        // .subpass             = config.subpass_index,
 
         // A new pipeline may be derrived from an existing one, only updating
         // what needs to be updated. The .basePipeline* values designate an

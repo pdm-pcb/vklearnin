@@ -19,14 +19,10 @@ static vk::ClearValue const clear_values[] {
     }
 };
 
-
 // Renderer specific values ----------------------------------------------------
-RenderPass Renderer::_color_pass;
-RenderPass Renderer::_shadow_map_pass;
-
-Renderer::FramebufferList Renderer::_color_framebuffers;
-std::vector<Framebuffer>  Renderer::_dir_shadow_framebuffers;
-std::vector<Framebuffer>  Renderer::_spot_shadow_framebuffers;
+Renderer::FrameBufferList Renderer::_color_framebuffers;
+std::vector<FrameBuffer>  Renderer::_dir_shadow_framebuffers;
+std::vector<FrameBuffer>  Renderer::_spot_shadow_framebuffers;
 
 uint32_t Renderer::_shadow_map_resolution = 0u;
 
@@ -321,10 +317,7 @@ void Renderer::submit_commands_and_present() {
 void Renderer::init() {
     Swapchain::create();
 
-    _init_color_pass();
     _init_color_framebuffers();
-
-    _init_shadow_pass();
     _init_shadow_framebuffers();
 
     _init_frame_data();
@@ -391,9 +384,6 @@ void Renderer::shutdown() {
     for(auto &frame : _frame_data) {
         frame.shutdown();
     }
-
-    _shadow_map_pass.destroy();
-    _color_pass.destroy();
 
     Swapchain::destroy();
 }
@@ -494,14 +484,6 @@ void Renderer::create_pipelines() {
 }
 
 // =============================================================================
-void Renderer::_init_color_pass() {
-    _color_pass
-        .msaa_depth_color_attachments(RenderConfig::max_msaa_flag())
-        .msaa_depth_color_subpass()
-        .create();
-}
-
-// =============================================================================
 void Renderer::_init_color_framebuffers() {
     _color_framebuffers.clear();
 
@@ -510,35 +492,24 @@ void Renderer::_init_color_framebuffers() {
         _color_framebuffers.back()
             .create_color_buffer(
                 Swapchain::extent(),
-                _color_pass.msaa_samples()
+                RenderConfig::max_msaa_flag()
             )
             .create_depth_buffer(
                 Swapchain::extent(),
-                _color_pass.msaa_samples()
+                RenderConfig::max_msaa_flag()
             )
             .add_image_view(swapchain_image.view)
-            .create(
-                Swapchain::render_area(),
-                _color_pass.native()
-            );
+            .create(Swapchain::render_area());
     }
 }
 
 // =============================================================================
-void Renderer::_init_shadow_pass() {
+void Renderer::_init_shadow_framebuffers() {
     _shadow_map_resolution =
         Swapchain::extent().width > Swapchain::extent().height ?
         Swapchain::extent().width :
         Swapchain::extent().height;
 
-    _shadow_map_pass
-        .default_shadow_map_attachments()
-        .default_shadow_map_subpass()
-        .create();
-}
-
-// =============================================================================
-void Renderer::_init_shadow_framebuffers() {
     vk::Extent2D const shadow_map_extent {
         .width  = _shadow_map_resolution,
         .height = _shadow_map_resolution,
@@ -553,20 +524,14 @@ void Renderer::_init_shadow_framebuffers() {
     for(auto &framebuffer : _dir_shadow_framebuffers) {
         framebuffer
             .create_shadow_map(shadow_map_extent)
-            .create(
-                shadow_map_render_area,
-                _shadow_map_pass.native()
-            );
+            .create(shadow_map_render_area);
     }
 
     _spot_shadow_framebuffers.resize(RenderConfig::swapchain_image_count);
     for(auto &framebuffer : _spot_shadow_framebuffers) {
         framebuffer
             .create_shadow_map(shadow_map_extent)
-            .create(
-                shadow_map_render_area,
-                _shadow_map_pass.native()
-            );
+            .create(shadow_map_render_area);
     }
 }
 
@@ -835,7 +800,7 @@ void Renderer::_init_flat_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                .sample_flags    = _color_pass.msaa_samples(),
+                .sample_flags    =  RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -863,7 +828,7 @@ void Renderer::_init_texture_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                .sample_flags    = _color_pass.msaa_samples(),
+                .sample_flags    =  RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -891,7 +856,7 @@ void Renderer::_init_skybox_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                .sample_flags    = _color_pass.msaa_samples(),
+                .sample_flags    =  RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -920,7 +885,7 @@ void Renderer::_init_lit_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                .sample_flags    = _color_pass.msaa_samples(),
+                .sample_flags    =  RenderConfig::max_msaa_flag(),
             }
         );
 }
@@ -949,7 +914,7 @@ void Renderer::_init_material_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
-                .sample_flags    = _color_pass.msaa_samples(),
+                .sample_flags    =  RenderConfig::max_msaa_flag(),
             }
         );
 }
