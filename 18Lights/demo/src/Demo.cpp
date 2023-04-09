@@ -130,38 +130,38 @@ void Demo::_init_model_matrices() {
 
 // =============================================================================
 void Demo::_init_textures() {
-    _cube_material.diffuse.texture_from_file("textures/brickwall017_d.jpg");
-    _cube_material.diffuse.create_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        VK_FALSE,
-        vk::CompareOp::eAlways
-    );
-    _cube_material.diffuse.generate_mipmap(vk::Filter::eLinear);
+    // _cube_material.diffuse.texture_from_file("textures/brickwall017_d.jpg");
+    // _cube_material.diffuse.create_sampler(
+    //     vk::Filter::eLinear,
+    //     vk::Filter::eLinear,
+    //     vk::SamplerMipmapMode::eLinear,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     VK_FALSE,
+    //     vk::CompareOp::eAlways
+    // );
+    // _cube_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
-    _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
-    _floor_material.diffuse.create_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        VK_FALSE,
-        vk::CompareOp::eAlways
-    );
-    _floor_material.diffuse.generate_mipmap(vk::Filter::eLinear);
+    // _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
+    // _floor_material.diffuse.create_sampler(
+    //     vk::Filter::eLinear,
+    //     vk::Filter::eLinear,
+    //     vk::SamplerMipmapMode::eLinear,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     vk::SamplerAddressMode::eRepeat,
+    //     VK_FALSE,
+    //     vk::CompareOp::eAlways
+    // );
+    // _floor_material.diffuse.generate_mipmap(vk::Filter::eLinear);
 
-    vkl::Renderer::set_skybox_texture({{
-        "textures/skybox/belfast_sunset/px.png",
-        "textures/skybox/belfast_sunset/nx.png",
-        "textures/skybox/belfast_sunset/py.png",
-        "textures/skybox/belfast_sunset/ny.png",
-        "textures/skybox/belfast_sunset/pz.png",
-        "textures/skybox/belfast_sunset/nz.png",
-    }});
+    // vkl::Renderer::set_skybox_texture({{
+    //     "textures/skybox/belfast_sunset/px.png",
+    //     "textures/skybox/belfast_sunset/nx.png",
+    //     "textures/skybox/belfast_sunset/py.png",
+    //     "textures/skybox/belfast_sunset/ny.png",
+    //     "textures/skybox/belfast_sunset/pz.png",
+    //     "textures/skybox/belfast_sunset/nz.png",
+    // }});
 
     // vkl::Renderer::set_materials({
     //     _cube_material,

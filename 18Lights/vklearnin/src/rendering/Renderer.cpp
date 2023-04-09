@@ -283,8 +283,8 @@ void Renderer::record_commands() {
         _frame_data[_frame_index].cmd_buffer().native().beginRendering(rendering_info);
 
             _execute_flat_color_pipeline();
-            _execute_texture_pipeline();
-            _execute_skybox_pipeline();
+            // _execute_texture_pipeline();
+            // _execute_skybox_pipeline();
             _execute_lit_color_pipeline();
             // _execute_material_pipeline();
 
@@ -468,7 +468,7 @@ void Renderer::create_pipelines() {
     _init_camera_buffers();
     _init_global_data_sets();
     _init_texture_sets();
-    _init_skybox_resources();
+    // _init_skybox_resources();
     _init_lights_buffers();
     _init_lights_sets();
     _init_material_sets();
@@ -486,8 +486,8 @@ void Renderer::create_pipelines() {
     }
 
     _init_flat_color_pipeline();
-    _init_texture_pipeline();
-    _init_skybox_pipeline();
+    // _init_texture_pipeline();
+    // _init_skybox_pipeline();
     _init_lit_color_pipeline();
     // _init_material_pipeline();
     _init_shadow_map_pipeline();

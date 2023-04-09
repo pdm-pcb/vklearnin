@@ -22,7 +22,12 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL VKDebugger::messenger(
             CONSOLE_INFO("{:s}", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            CONSOLE_WARN("\n{:s}\n", callback_data->pMessage);
+            if(callback_data->messageIdNumber == 0xb3d4346b ||
+               callback_data->messageIdNumber == 0xdc18ad6b)
+            {
+                break;
+            }
+            CONSOLE_WARN("{:s}", callback_data->pMessage);
             break;
         case ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
             CONSOLE_ERROR("\n{:s}\n", callback_data->pMessage);
