@@ -6,25 +6,25 @@ vkl::Vec4 CUBE_COLOR  { vkl::color::american_green, 256.0f };
 vkl::Vec4 FLOOR_COLOR { vkl::color::denim_blue, 256.0f };
 vkl::Vec4 WALL_COLOR  { vkl::color::terra_cotta, 256.0f };
 
-vkl::Vec4 DIR_POS_A   { 6.0f, 6.0f, 6.0f, 1.0f };
+vkl::Vec3 DIR_POS_A   { 6.0f, 6.0f, 6.0f };
 vkl::Vec4 DIR_COLOR_A { vkl::color::sunlight, 1.0f };
 
-vkl::Vec4 DIR_POS_B   { -6.0f, 6.0f, -6.0f, 1.0f };
+vkl::Vec3 DIR_POS_B   { -6.0f, 6.0f, -6.0f };
 vkl::Vec4 DIR_COLOR_B { vkl::color::sunlight, 1.0f };
 
-vkl::Vec4 POINT_POS_A { -5.0f, -0.5f, 0.0f, 5.0f };
+vkl::Vec3 POINT_POS_A { -5.0f, -0.5f, 0.0f };
 vkl::Vec4 POINT_COLOR_A { vkl::color::red, 2.0f };
 
-vkl::Vec4 POINT_POS_B { 5.0f, -0.5f, 0.0f, 5.0f };
+vkl::Vec3 POINT_POS_B { 5.0f, -0.5f, 0.0f };
 vkl::Vec4 POINT_COLOR_B { vkl::color::blue, 2.0f };
 
-vkl::Vec4 SPOT_POS_A { -10.0f, 0.0f, 10.0f, 1.0f };
+vkl::Vec3 SPOT_POS_A { -10.0f, 0.0f, 10.0f };
 vkl::Vec4 SPOT_COLOR_A { vkl::color::sunlight, 40.0f };
-vkl::Vec4 SPOT_FWD_A = -vkl::math::normalize(SPOT_POS_A);
+vkl::Vec3 SPOT_FWD_A = -vkl::math::normalize(SPOT_POS_A);
 
-vkl::Vec4 SPOT_POS_B { 5.0f, 0.0f, 5.0f, 1.0f };
+vkl::Vec3 SPOT_POS_B { 5.0f, 0.0f, 5.0f };
 vkl::Vec4 SPOT_COLOR_B { vkl::color::sunlight, 10.0f };
-vkl::Vec4 SPOT_FWD_B = -vkl::math::normalize(SPOT_POS_B);
+vkl::Vec3 SPOT_FWD_B = -vkl::math::normalize(SPOT_POS_B);
 
 float ROT_FACT = 20.0f;
 
@@ -37,20 +37,24 @@ void Demo::update() {
 
 // =============================================================================
 void Demo::submit_draws() {
-    // vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_a, _dir_lamp_matrix_a);
-    // vkl::Renderer::submit_draw_flat(_dir_lamp_mesh_b, _dir_lamp_matrix_b);
+    // vkl::Renderer::submit_draw(_dir_lamp_mesh_a, _dir_lamp_matrix_a);
+    // vkl::Renderer::submit_draw(_dir_lamp_mesh_b, _dir_lamp_matrix_b);
 
-    // vkl::Renderer::submit_draw_flat(_point_lamp_mesh_a, _point_lamp_matrix_a);
+    // vkl::Renderer::submit_draw(_point_lamp_mesh_a, _point_lamp_matrix_a);
+    // vkl::Renderer::submit_draw(_point_lamp_mesh_b, _point_lamp_matrix_b);
 
-    // vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_a, _spot_lamp_matrix_a);
-    // vkl::Renderer::submit_draw_flat(_spot_lamp_mesh_b, _spot_lamp_matrix_b);
+    // vkl::Renderer::submit_draw(_spot_lamp_mesh_a, _spot_lamp_matrix_a);
+    // vkl::Renderer::submit_draw(_spot_lamp_mesh_b, _spot_lamp_matrix_b);
 
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_a);
     vkl::Renderer::submit_draw_lit(_cube_mesh, _cube_matrix_b);
 
+    // vkl::Renderer::submit_draw(_cube_mesh, _hardwood_texture, _cube_matrix_a);
+    // vkl::Renderer::submit_draw(_cube_mesh, _brick_texture, _cube_matrix_b);
+
     vkl::Renderer::submit_draw_lit(_floor_mesh, _floor_matrix);
-    vkl::Renderer::submit_draw_lit(_wall_mesh,  _wall_matrix_a);
-    vkl::Renderer::submit_draw_lit(_wall_mesh,  _wall_matrix_b);
+    vkl::Renderer::submit_draw_lit(_wall_mesh, _wall_matrix_a);
+    vkl::Renderer::submit_draw_lit(_wall_mesh, _wall_matrix_b);
 }
 
 // =============================================================================
@@ -73,10 +77,8 @@ void Demo::shutdown() {
     _floor_mesh.destroy();
     _wall_mesh.destroy();
 
-    // TODO: material can be as smart as Texture2D
-    _cube_material.diffuse.destroy();
-    _floor_material.diffuse.destroy();
-    _wall_material.diffuse.destroy();
+    _brick_texture.destroy();
+    _hardwood_texture.destroy();
 }
 
 // =============================================================================
@@ -107,7 +109,7 @@ void Demo::_init_model_matrices() {
     _floor_matrix = vkl::math::rotate(
         vkl::math::translate(
             vkl::Mat4::identity,
-            { 0.0f, -1.0f, 0.0f, 1.0f }
+            -vkl::Vec3::unit_y
         ),
         -90.0f,
         vkl::Vec4::unit_x
@@ -115,12 +117,12 @@ void Demo::_init_model_matrices() {
 
     _wall_matrix_a = vkl::math::translate(
         vkl::Mat4::identity,
-        { 0.0f, -1.0f, -10.0f, 1.0f }
+        { 0.0f, -1.0f, -10.0f }
     );
 
     _wall_matrix_b = vkl::math::translate(
         vkl::Mat4::identity,
-        { 10.0f, -1.0f, 0.0f, 1.0f }
+        { 10.0f, -1.0f, 0.0f }
     ) * vkl::math::rotate(
         vkl::Mat4::identity,
         -90.0f,
@@ -130,43 +132,43 @@ void Demo::_init_model_matrices() {
 
 // =============================================================================
 void Demo::_init_textures() {
-    // _cube_material.diffuse.texture_from_file("textures/brickwall017_d.jpg");
-    // _cube_material.diffuse.create_sampler(
-    //     vk::Filter::eLinear,
-    //     vk::Filter::eLinear,
-    //     vk::SamplerMipmapMode::eLinear,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     VK_FALSE,
-    //     vk::CompareOp::eAlways
-    // );
-    // _cube_material.diffuse.generate_mipmap(vk::Filter::eLinear);
+    vkl::Renderer::set_skybox_texture({{
+        "textures/skybox/belfast_sunset/px.png",
+        "textures/skybox/belfast_sunset/nx.png",
+        "textures/skybox/belfast_sunset/py.png",
+        "textures/skybox/belfast_sunset/ny.png",
+        "textures/skybox/belfast_sunset/pz.png",
+        "textures/skybox/belfast_sunset/nz.png",
+    }});
 
-    // _floor_material.diffuse.texture_from_file("textures/woodfloor_051_d.jpg");
-    // _floor_material.diffuse.create_sampler(
-    //     vk::Filter::eLinear,
-    //     vk::Filter::eLinear,
-    //     vk::SamplerMipmapMode::eLinear,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     vk::SamplerAddressMode::eRepeat,
-    //     VK_FALSE,
-    //     vk::CompareOp::eAlways
-    // );
-    // _floor_material.diffuse.generate_mipmap(vk::Filter::eLinear);
+    _brick_texture.texture_from_file("textures/brickwall017_d.jpg");
+    _brick_texture.create_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        VK_FALSE,
+        vk::CompareOp::eAlways
+    );
+    _brick_texture.generate_mipmap(vk::Filter::eLinear);
 
-    // vkl::Renderer::set_skybox_texture({{
-    //     "textures/skybox/belfast_sunset/px.png",
-    //     "textures/skybox/belfast_sunset/nx.png",
-    //     "textures/skybox/belfast_sunset/py.png",
-    //     "textures/skybox/belfast_sunset/ny.png",
-    //     "textures/skybox/belfast_sunset/pz.png",
-    //     "textures/skybox/belfast_sunset/nz.png",
-    // }});
+    _hardwood_texture.texture_from_file("textures/woodfloor_051_d.jpg");
+    _hardwood_texture.create_sampler(
+        vk::Filter::eLinear,
+        vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eLinear,
+        vk::SamplerAddressMode::eRepeat,
+        vk::SamplerAddressMode::eRepeat,
+        VK_FALSE,
+        vk::CompareOp::eAlways
+    );
+    _hardwood_texture.generate_mipmap(vk::Filter::eLinear);
 
-    // vkl::Renderer::set_materials({
-    //     _cube_material,
-    //     _floor_material,
-    // });
+    vkl::Renderer::set_textures({
+        _brick_texture,
+        _hardwood_texture,
+    });
 }
 
 // =============================================================================
@@ -217,7 +219,7 @@ void Demo::_update_scene_objects() {
 void Demo::_update_scene_lights() {
     _lights.dir.clear();
     _lights.dir.emplace_back(vkl::DirectionalLight {
-        .position = DIR_POS_A,
+        .position = { DIR_POS_A, 1.0f },
         .color    = DIR_COLOR_A,
     });
     // _lights.dir.emplace_back(vkl::DirectionalLight {
@@ -237,9 +239,9 @@ void Demo::_update_scene_lights() {
 
     _lights.spot.clear();
     _lights.spot.emplace_back(vkl::SpotLight {
-        .position = SPOT_POS_A,
+        .position = { SPOT_POS_A, 1.0f },
         .color    = SPOT_COLOR_A,
-        .forward  = SPOT_FWD_A,
+        .forward  = { SPOT_FWD_A, 0.0f },
     });
     // _lights.spot.emplace_back(vkl::SpotLight {
     //     .position = SPOT_POS_B,

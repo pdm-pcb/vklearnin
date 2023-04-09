@@ -8,6 +8,10 @@ namespace vkl {
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_ubo(BufferObject const &buffer) {
+    if(!_set) {
+        CONSOLE_CRITICAL("Must allocate set before adding descriptors.");
+    }
+
     auto const *buffer_info =
         &_buffer_info.emplace_back(vk::DescriptorBufferInfo {
             .buffer = buffer.handle,
@@ -31,6 +35,10 @@ DescriptorSet & DescriptorSet::add_ubo(BufferObject const &buffer) {
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_ssbo(BufferObject const &buffer) {
+    if(!_set) {
+        CONSOLE_CRITICAL("Must allocate set before adding descriptors.");
+    }
+
     auto const *buffer_info =
         &_buffer_info.emplace_back(vk::DescriptorBufferInfo {
             .buffer = buffer.handle,
@@ -54,6 +62,10 @@ DescriptorSet & DescriptorSet::add_ssbo(BufferObject const &buffer) {
 
 // =============================================================================
 DescriptorSet & DescriptorSet::add_combined_sampler(ImageObject const &image) {
+    if(!_set) {
+        CONSOLE_CRITICAL("Must allocate set before adding descriptors.");
+    }
+
     auto const *image_info =
         &_image_info.emplace_back(vk::DescriptorImageInfo {
             .sampler     = image.sampler,

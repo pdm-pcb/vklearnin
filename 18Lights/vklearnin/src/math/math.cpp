@@ -46,8 +46,8 @@ namespace math {
 
 // =============================================================================
 // Vector operations
-Vec4 normalize(Vec4 const &v) {
-    Vec4 result = v;
+Vec3 normalize(Vec3 const &v) {
+    Vec3 result = v;
 
     auto length = length2(v);
     if(length <= 0.0f || length == 1.0f) {
@@ -63,18 +63,17 @@ Vec4 normalize(Vec4 const &v) {
     return result;
 }
 
-float dot(Vec4 const &a, Vec4 const &b) {
+float dot(Vec3 const &a, Vec3 const &b) {
     return a.x * b.x +
            a.y * b.y +
            a.z * b.z;
 }
 
-Vec4 cross(Vec4 const &a, Vec4 const &b) {
-    return Vec4 {
+Vec3 cross(Vec3 const &a, Vec3 const &b) {
+    return Vec3 {
         a.y * b.z - a.z * b.y,
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x,
-        0.0f
     };
 }
 
@@ -96,7 +95,7 @@ Mat4 transpose(Mat4 const &m) {
     return result;
 }
 
-Mat4 translate(Mat4 const &m, Vec4 const &v) {
+Mat4 translate(Mat4 const &m, Vec3 const &v) {
     // Ensure a deep copy
     Mat4 result { .x = m.x, .y = m.y, .z = m.z, .w = m.w, };
 
@@ -104,7 +103,7 @@ Mat4 translate(Mat4 const &m, Vec4 const &v) {
     return result;
 }
 
-Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis) {
+Mat4 rotate(Mat4 const &m, float const angle, Vec3 const &axis) {
     // Ensure a deep copy
     Mat4 result { .x = m.x, .y = m.y, .z = m.z, .w = m.w, };
 
@@ -207,8 +206,8 @@ Mat4 persp_proj_rh_oz_inf(float const near, float const vfov_degrees,
     return result;
 }
 
-Mat4 orient_view_matrix(Vec4 const &position, Vec4 const &forward,
-                        Vec4 const &side, Vec4 const &up)
+Mat4 orient_view_matrix(Vec3 const &position, Vec3 const &forward,
+                        Vec3 const &side, Vec3 const &up)
 {
     auto result = Mat4::identity;
 
@@ -228,7 +227,7 @@ Mat4 orient_view_matrix(Vec4 const &position, Vec4 const &forward,
     return result;
 }
 
-Mat4 look_at(Vec4 const &position, Vec4 const &target, Vec4 const &up) {
+Mat4 look_at(Vec3 const &position, Vec3 const &target, Vec3 const &up) {
     auto const forward = normalize(target - position);
     auto const side    = normalize(cross(up, forward));
     auto const new_up  = cross(forward, side);

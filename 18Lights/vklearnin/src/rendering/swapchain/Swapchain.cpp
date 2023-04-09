@@ -8,9 +8,10 @@
 
 namespace vkl {
 
-vk::Extent2D       Swapchain::_extent { 0u, 0u };
-vk::Offset2D       Swapchain::_offset { 0, 0 };
-vk::Rect2D         Swapchain::_render_area;
+vk::Rect2D Swapchain::_render_area {
+    .offset { .x = 0, .y = 0},
+    .extent { .width = 0u, .height = 0u }
+};
 
 vk::Format         Swapchain::_image_format = vk::Format::eUndefined;
 vk::ColorSpaceKHR  Swapchain::_color_space  = vk::ColorSpaceKHR::eSrgbNonlinear;
@@ -143,31 +144,26 @@ void Swapchain::_query_surface_capabilities() {
 
     // The vk::SurfaceCapabilitiesKHR struct will let us know what resolutions
     // our surface is allowed to be.
-    _extent.width = std::clamp(
+    _render_area.extent.width = std::clamp(
         static_cast<uint32_t>(RenderConfig::window_width),
         capabilities.minImageExtent.width,
         capabilities.maxImageExtent.width
     );
-    _extent.height = std::clamp(
+    _render_area.extent.height = std::clamp(
         static_cast<uint32_t>(RenderConfig::window_height),
         capabilities.minImageExtent.height,
         capabilities.maxImageExtent.height
     );
 
-    if(_extent.width != RenderConfig::window_width ||
-       _extent.height != RenderConfig::window_height)
+    if(_render_area.extent.width != RenderConfig::window_width ||
+       _render_area.extent.height != RenderConfig::window_height)
     {
         CONSOLE_WARN(
             "Requested resolution {}x{} unsupported; using {}x{} instead",
             RenderConfig::window_width, RenderConfig::window_height,
-            _extent.width, _extent.height
+            _render_area.extent.width, _render_area.extent.height
         );
     }
-
-    _render_area = vk::Rect2D {
-        .offset = _offset,
-        .extent = _extent,
-    };
 
     // Provided image count has already been used to set some array sizes (in
     // LogicalDevice, for example) it's become a hard requirement of the
@@ -288,7 +284,7 @@ void Swapchain::_populate_create_info(vk::SwapchainCreateInfoKHR &create_info) {
         .minImageCount   = RenderConfig::swapchain_image_count,
         .imageFormat     = _image_format,
         .imageColorSpace = _color_space,
-        .imageExtent     = _extent,
+        .imageExtent     = _render_area.extent,
 
         // Image array layers will always be one, except in the case of a
         // device with displays interested in the same swapchain, like a VR
@@ -328,11 +324,13 @@ void Swapchain::_populate_create_info(vk::SwapchainCreateInfoKHR &create_info) {
     CONSOLE_INFO(
         "\nSwapchain Create Info:"
         "\n    Extent:       {}x{}"
+        "\n    Offset:       {}x{}"
         "\n    Image Count:  {}"
         "\n    Format:       {}"
         "\n    Color Space:  {}"
         "\n    Present Mode: {}",
-        _extent.width, _extent.height,
+        _render_area.extent.width, _render_area.extent.height,
+        _render_area.offset.x, _render_area.offset.y,
         RenderConfig::swapchain_image_count,
         to_string(_image_format),
         to_string(_color_space),

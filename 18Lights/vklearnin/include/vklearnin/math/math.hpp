@@ -32,23 +32,23 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
 
 // =============================================================================
 // Vector operations
-[[nodiscard]] inline float length2(Vec4 const &v) {
+[[nodiscard]] inline float length2(Vec3 const &v) {
     return (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
 }
 
-[[nodiscard]] inline float length(Vec4 const &v) {
+[[nodiscard]] inline float length(Vec3 const &v) {
     return std::sqrt(length2(v));
 }
 
-[[nodiscard]] float dot(Vec4 const &a, Vec4 const &b);
-[[nodiscard]] Vec4 normalize(Vec4 const &v);
-[[nodiscard]] Vec4 cross(Vec4 const &a, Vec4 const &b);
+[[nodiscard]] Vec3 normalize(Vec3 const &v);
+[[nodiscard]] float dot(Vec3 const &a, Vec3 const &b);
+[[nodiscard]] Vec3 cross(Vec3 const &a, Vec3 const &b);
 
 // =============================================================================
 // Matrix operations
 [[nodiscard]] Mat4 transpose(Mat4 const &m);
-[[nodiscard]] Mat4 translate(Mat4 const &m, Vec4 const &v);
-[[nodiscard]] Mat4 rotate(Mat4 const &m, float const angle, Vec4 const &axis);
+[[nodiscard]] Mat4 translate(Mat4 const &m, Vec3 const &v);
+[[nodiscard]] Mat4 rotate(Mat4 const &m, float const angle, Vec3 const &axis);
 [[nodiscard]] Mat4 scale(Mat4 const &m, float const &pct);
 
 // =============================================================================
@@ -65,11 +65,11 @@ static uint8_t constexpr print_width = 2u * print_precs + 2u;
                                         float const vfov_degrees,
                                         float const aspect_ratio);
 
-[[nodiscard]] Mat4 orient_view_matrix(Vec4 const &position, Vec4 const &forward,
-                                      Vec4 const &side, Vec4 const &up);
+[[nodiscard]] Mat4 orient_view_matrix(Vec3 const &position, Vec3 const &forward,
+                                      Vec3 const &side, Vec3 const &up);
 
-[[nodiscard]] Mat4 look_at(Vec4 const &position, Vec4 const &target,
-                           Vec4 const &up);
+[[nodiscard]] Mat4 look_at(Vec3 const &position, Vec3 const &target,
+                           Vec3 const &up);
 
 } // namespace vkl::math
 

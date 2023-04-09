@@ -16,8 +16,6 @@ public:
     static void create();
     static void destroy();
 
-    inline static auto const& extent()       { return _extent;       }
-    inline static auto const& offset()       { return _offset;       }
     inline static auto const& render_area()  { return _render_area;  }
     inline static auto const& images()       { return _images;       }
     inline static auto        image_format() { return _image_format; }
@@ -25,8 +23,6 @@ public:
     Swapchain() = delete;
 
 private:
-    static vk::Extent2D       _extent;
-    static vk::Offset2D       _offset;
     static vk::Rect2D         _render_area;
     static vk::Format         _image_format;
     static vk::ColorSpaceKHR  _color_space;

@@ -4,11 +4,12 @@
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/rendering/FrameData.hpp"
 #include "vklearnin/rendering/DrawSubmission.hpp"
-#include "vklearnin/rendering/FrameBuffer.hpp"
 #include "vklearnin/rendering/pipeline/Pipeline.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSetLayout.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorSet.hpp"
+#include "vklearnin/rendering/targets/DepthBuffer.hpp"
+#include "vklearnin/rendering/targets/ColorBuffer.hpp"
 #include "vklearnin/meshes/Skybox.hpp"
 #include "vklearnin/lighting/SceneLights.hpp"
 
@@ -18,7 +19,6 @@ class GeneratedMesh;
 
 struct BufferObject;
 struct ImageObject;
-struct Material;
 
 class Renderer {
 public:
@@ -31,8 +31,8 @@ public:
     static void update_scene_lights(LightProps const &props,
                                     SceneLights const &lights);
 
-    static void submit_draw_flat(GeneratedMesh const &mesh,
-                                 Mat4 const &model_matrix);
+    static void submit_draw(GeneratedMesh const &mesh,
+                            Mat4 const &model_matrix);
 
     static void submit_draw(GeneratedMesh const &mesh,
                             Texture2D const &texture,
@@ -40,10 +40,6 @@ public:
 
     static void submit_draw_lit(GeneratedMesh const &mesh,
                                 Mat4 const &model_matrix);
-
-    static void submit_draw(GeneratedMesh const &mesh,
-                            Material const &material,
-                            Mat4 const &model_matrix);
 
     static void record_commands();
     static void submit_commands_and_present();
@@ -53,7 +49,6 @@ public:
 
     static void set_textures(std::vector<Texture2D> const &textures);
     static void set_skybox_texture(Texture2D::CubeFilepaths const &filepaths);
-    static void set_materials(std::vector<Material> const &materials);
 
     static void create_pipelines();
 
@@ -61,7 +56,8 @@ public:
 
 private:
     // Convenience using delcarations ------------------------------------------
-    using FrameBufferList = std::vector<FrameBuffer>;
+    using DepthBufferList = std::vector<DepthBuffer>;
+    using ColorBufferList = std::vector<ColorBuffer>;
 
     using PushList = std::vector<PushConstant>;
 
@@ -75,31 +71,18 @@ private:
         size_t const set_index = std::numeric_limits<size_t>::max();
         DrawQueue queue;
     };
-
-    using TextureDrawQueue =
-        std::unordered_map<uint64_t, PerTextureDraws>;
-
-    struct PerMaterialDraws {
-        size_t const set_index = std::numeric_limits<size_t>::max();
-        DrawQueue queue;
-    };
-
-    using MaterialDrawQueue =
-        std::unordered_map<uint64_t, PerMaterialDraws>;
+    using TextureDrawQueue = std::unordered_map<uint64_t, PerTextureDraws>;
 
     // Renderer specific values ------------------------------------------------
-    // static RenderPass _color_pass;
-    // static RenderPass _shadow_map_pass;
-
-    static FrameBufferList _color_framebuffers;
-    static std::vector<FrameBuffer> _dir_shadow_framebuffers;
-    static std::vector<FrameBuffer> _spot_shadow_framebuffers;
+    static DepthBufferList _depth_buffers;
+    static ColorBufferList _color_buffers;
 
     static uint32_t _shadow_map_resolution;
 
+    static uint32_t _frame_index;
+    static uint64_t _frame_count;
+
     static std::vector<FrameData> _frame_data;
-    static uint32_t               _frame_index;
-    static uint64_t               _frame_count;
 
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
@@ -114,12 +97,6 @@ private:
 
     static DescriptorSetLayout _scene_lights_layout;
     static DescSetList         _scene_lights_sets;
-
-    static DescriptorSetLayout _material_layout;
-    static DescSetList         _material_sets;
-
-    static DescriptorSetLayout _shadow_maps_layout;
-    static DescSetList         _shadow_maps_sets;
 
     // Shader Resources --------------------------------------------------------
     static BufferList _camera_buffers;
@@ -141,17 +118,14 @@ private:
     static Pipeline _texture_pipeline;
     static Pipeline _skybox_pipeline;
     static Pipeline _lit_color_pipeline;
-    static Pipeline _material_pipeline;
-    static Pipeline _shadow_map_pipeline;
 
     // Draw Queues -------------------------------------------------------------
-    static DrawQueue         _flat_color_draws;
-    static TextureDrawQueue  _texture_draws;
-    static DrawQueue         _lit_color_draws;
-    static MaterialDrawQueue _material_draws;
+    static DrawQueue        _flat_color_draws;
+    static TextureDrawQueue _texture_draws;
+    static DrawQueue        _lit_color_draws;
 
-    static void _init_color_framebuffers();
-    static void _init_shadow_framebuffers();
+    static void _init_depth_buffers();
+    static void _init_color_buffers();
 
     static void _init_frame_data();
 
@@ -159,26 +133,19 @@ private:
 
     static void _init_camera_buffers();
     static void _init_global_data_sets();
-    static void _init_texture_sets();
     static void _init_skybox_resources();
     static void _init_lights_buffers();
     static void _init_lights_sets();
-    static void _init_material_sets();
-    static void _init_shadow_map_sets();
 
     static void _init_flat_color_pipeline();
     static void _init_texture_pipeline();
     static void _init_skybox_pipeline();
     static void _init_lit_color_pipeline();
-    static void _init_material_pipeline();
-    static void _init_shadow_map_pipeline();
 
     static void _execute_flat_color_pipeline();
     static void _execute_texture_pipeline();
     static void _execute_skybox_pipeline();
     static void _execute_lit_color_pipeline();
-    static void _execute_material_pipeline();
-    static void _execute_shadow_map_pipeline();
 
     static void _send_push_constants(Pipeline const &pipeline,
                                      PushList const &push_constants);

@@ -1,12 +1,10 @@
-#ifndef VKLEARNIN_MATERIALS_TEXTURE2D_HPP
-#define VKLEARNIN_MATERIALS_TEXTURE2D_HPP
+#ifndef VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP
+#define VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/resources/images/ImageObject.hpp"
 
 namespace vkl {
-
-struct BufferObject;
 
 class Texture2D final {
 public:
@@ -50,4 +48,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_MATERIALS_TEXTURE2D_HPP
+#endif // VKLEARNIN_RESOURCES_IMAGES_TEXTURE2D_HPP

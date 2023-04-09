@@ -50,9 +50,8 @@ private:
     vkl::Mat4 _wall_matrix_a;
     vkl::Mat4 _wall_matrix_b;
 
-    vkl::Material _cube_material;
-    vkl::Material _floor_material;
-    vkl::Material _wall_material;
+    vkl::Texture2D _brick_texture;
+    vkl::Texture2D _hardwood_texture;
 
     vkl::SceneLights _lights;
     vkl::LightProps  _light_props;

@@ -48,10 +48,10 @@ private:
     } _kb;
 
     struct CameraState {
-        vkl::Vec4 pos;
-        vkl::Vec4 forward;
-        vkl::Vec4 side;
-        vkl::Vec4 up;
+        vkl::Vec3 pos;
+        vkl::Vec3 forward;
+        vkl::Vec3 side;
+        vkl::Vec3 up;
 
         float pitch;
         float yaw;

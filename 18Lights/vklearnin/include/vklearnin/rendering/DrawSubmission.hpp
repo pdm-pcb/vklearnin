@@ -3,8 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/meshes/GeneratedMesh.hpp"
-#include "vklearnin/materials/Texture2D.hpp"
-#include "vklearnin/materials/Material.hpp"
+#include "vklearnin/resources/images/Texture2D.hpp"
 
 namespace vkl {
 
@@ -18,7 +17,6 @@ struct DrawSubmission {
     GeneratedMesh const *mesh         = nullptr;
     Mat4          const *model_matrix = nullptr;
     Texture2D     const *texture      = nullptr;
-    Material      const *material     = nullptr;
 
     std::vector<PushConstant> const push_constants;
 };

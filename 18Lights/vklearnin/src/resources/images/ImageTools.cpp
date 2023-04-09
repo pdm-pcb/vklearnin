@@ -77,11 +77,12 @@ void destroy(ImageObject &image) {
         destroy_view(image);
     }
 
-    LogicalDevice::native().destroyImage(image.handle);
-    LogicalDevice::native().freeMemory(image.memory);
-
-    image.handle = nullptr;
-    image.memory = nullptr;
+    if(image.handle) {
+        LogicalDevice::native().destroyImage(image.handle);
+        LogicalDevice::native().freeMemory(image.memory);
+        image.handle = nullptr;
+        image.memory = nullptr;
+    }
 }
 
 // =============================================================================
@@ -128,7 +129,7 @@ void destroy_view(ImageObject &image) {
 }
 
 // =============================================================================
-void transition_color_buffer_for_draw(ImageObject const &image,
+void transition_image_for_draw(ImageObject const &image,
                                       CmdBuffer const &cmd_buffer)
 {
     vk::ImageMemoryBarrier barrier {
@@ -159,7 +160,7 @@ void transition_color_buffer_for_draw(ImageObject const &image,
 }
 
 // =============================================================================
-void transition_color_buffer_for_present(ImageObject const&image,
+void transition_image_for_present(ImageObject const&image,
                                          CmdBuffer const &cmd_buffer)
 {
     vk::ImageMemoryBarrier barrier {
