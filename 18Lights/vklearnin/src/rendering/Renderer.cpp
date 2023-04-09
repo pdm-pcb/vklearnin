@@ -233,75 +233,68 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
 
 // =============================================================================
 void Renderer::record_commands() {
-    auto const &frame_data = _frame_data[_frame_index];
-    auto &color_framebuffer = _color_framebuffers[_frame_index];
-    auto const &swapchain_image = Swapchain::images()[_frame_index];
-
     // Whatever frame index we're on, we need to wait on the fence signaling
     // completion of this frame's last submission to the device queue
-    frame_data.wait_on_queue_fence();
+    _frame_data[_frame_index].wait_on_queue_fence();
 
     // Once we're sure the frame's work is done, it's safe to reset the command
     // pool, which implicitly resets the command buffer/s
-    frame_data.cmd_pool().reset();
+    _frame_data[_frame_index].cmd_pool().reset();
 
-    vk::RenderPassBeginInfo const color_pass_info {
-        .renderPass      = _color_pass.native(),
-        .framebuffer     = color_framebuffer.native(),
-        .renderArea      = color_framebuffer.render_area(),
-        .clearValueCount = static_cast<uint32_t>(std::size(clear_values)),
-        .pClearValues    = clear_values
+    vk::RenderingAttachmentInfo const color_attachment_info[] {{
+        .imageView          = _color_framebuffers[_frame_index].color_buffer().view,
+        .imageLayout        = vk::ImageLayout::eColorAttachmentOptimal,
+        .resolveMode        = vk::ResolveModeFlagBits::eAverage,
+        .resolveImageView   = Swapchain::images()[_frame_index].view,
+        .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp             = vk::AttachmentLoadOp::eClear,
+        .storeOp            = vk::AttachmentStoreOp::eStore,
+        .clearValue {
+            .color = clear_values[0].color
+        }
+    }};
+
+    vk::RenderingAttachmentInfo const depth_attachment_info {
+        .imageView   = _color_framebuffers[_frame_index].depth_buffer().view,
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp      = vk::AttachmentLoadOp::eClear,
+        .storeOp     = vk::AttachmentStoreOp::eStore,
+        .clearValue {
+            .depthStencil = clear_values[1].depthStencil
+        }
     };
 
-    // vk::RenderingAttachmentInfo const color_attachment_info {
-    //     .imageView = swapchain_image.view,
-    //     .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-    //     // .resolveMode = vk::ResolveModeFlagBits::eAverage,
-    //     // .resolveImageView = color_framebuffer.color_buffer().view,
-    //     // .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-    //     .loadOp = vk::AttachmentLoadOp::eClear,
-    //     .storeOp = vk::AttachmentStoreOp::eStore,
-    //     .clearValue {
-    //         .color = clear_values[0].color
-    //     }
-    // };
+    vk::RenderingInfo const rendering_info {
+        .renderArea = _color_framebuffers[_frame_index].render_area(),
+        .layerCount = 1u,
+        .colorAttachmentCount = static_cast<uint32_t>(
+            std::size(color_attachment_info)
+        ),
+        .pColorAttachments = color_attachment_info,
+        .pDepthAttachment = &depth_attachment_info,
+    };
 
-    // vk::RenderingAttachmentInfo const depth_attachment_info {
-    //     .imageView = color_framebuffer.depth_buffer().view,
-    //     .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-    //     .loadOp = vk::AttachmentLoadOp::eClear,
-    //     .storeOp = vk::AttachmentStoreOp::eStore,
-    //     .clearValue {
-    //         .depthStencil = clear_values[1].depthStencil
-    //     }
-    // };
+    _frame_data[_frame_index].cmd_buffer().begin_one_time_submit();
 
-    // vk::RenderingInfo const rendering_info {
-    //     .renderArea = color_framebuffer.render_area(),
-    //     .layerCount = 1u,
-    //     .colorAttachmentCount = 1u,
-    //     .pColorAttachments = &color_attachment_info,
-    //     .pDepthAttachment = &depth_attachment_info,
-    // };
+        ImageTools::transition_color_buffer_for_draw(
+            Swapchain::images()[_frame_index],
+            _frame_data[_frame_index].cmd_buffer()
+        );
+        _frame_data[_frame_index].cmd_buffer().native().beginRendering(rendering_info);
 
-    frame_data.cmd_buffer().begin_one_time_submit();
-
-        // color_framebuffer.transition_color_for_draw(swapchain_image, frame_data.cmd_buffer());
-        // color_framebuffer.transition_depth_for_draw(frame_data.cmd_buffer());
-        // frame_data.cmd_buffer().native().beginRendering(rendering_info);
-
-        frame_data.cmd_buffer().begin_render_pass(color_pass_info);
             _execute_flat_color_pipeline();
             _execute_texture_pipeline();
             _execute_skybox_pipeline();
             _execute_lit_color_pipeline();
             // _execute_material_pipeline();
-        frame_data.cmd_buffer().end_render_pass();
 
-        // frame_data.cmd_buffer().native().endRendering();
-        // color_framebuffer.transition_color_for_present(swapchain_image, frame_data.cmd_buffer());
+        _frame_data[_frame_index].cmd_buffer().native().endRendering();
+        ImageTools::transition_color_buffer_for_present(
+            Swapchain::images()[_frame_index],
+            _frame_data[_frame_index].cmd_buffer()
+        );
 
-    frame_data.cmd_buffer().end_recording();
+    _frame_data[_frame_index].cmd_buffer().end_recording();
 }
 
 // =============================================================================
@@ -835,7 +828,6 @@ void Renderer::_init_flat_color_pipeline() {
             sizeof(Mat4)
         )
         .create(
-            _color_pass,
             Pipeline::Config {
                 .color_formats = {
                     Swapchain::image_format()
@@ -843,6 +835,7 @@ void Renderer::_init_flat_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
+                .sample_flags    = _color_pass.msaa_samples(),
             }
         );
 }
@@ -863,7 +856,6 @@ void Renderer::_init_texture_pipeline() {
             sizeof(Mat4)
         )
         .create(
-            _color_pass,
             Pipeline::Config {
                 .color_formats = {
                     Swapchain::image_format()
@@ -871,6 +863,7 @@ void Renderer::_init_texture_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
+                .sample_flags    = _color_pass.msaa_samples(),
             }
         );
 }
@@ -891,7 +884,6 @@ void Renderer::_init_skybox_pipeline() {
             sizeof(Mat4)
         )
         .create(
-            _color_pass,
             Pipeline::Config {
                 .color_formats = {
                     Swapchain::image_format()
@@ -899,6 +891,7 @@ void Renderer::_init_skybox_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
+                .sample_flags    = _color_pass.msaa_samples(),
             }
         );
 }
@@ -920,7 +913,6 @@ void Renderer::_init_lit_color_pipeline() {
             sizeof(Mat4)
         )
         .create(
-            _color_pass,
             Pipeline::Config {
                 .color_formats = {
                     Swapchain::image_format()
@@ -928,6 +920,7 @@ void Renderer::_init_lit_color_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
+                .sample_flags    = _color_pass.msaa_samples(),
             }
         );
 }
@@ -949,7 +942,6 @@ void Renderer::_init_material_pipeline() {
             sizeof(Mat4)
         )
         .create(
-            _color_pass,
             Pipeline::Config {
                 .color_formats = {
                     Swapchain::image_format()
@@ -957,6 +949,7 @@ void Renderer::_init_material_pipeline() {
                 .depth_format    = PhysicalDevice::depth_format(),
                 .viewport_extent = Swapchain::extent(),
                 .viewport_offset = Swapchain::offset(),
+                .sample_flags    = _color_pass.msaa_samples(),
             }
         );
 }
@@ -974,7 +967,6 @@ void Renderer::_init_shadow_map_pipeline() {
             sizeof(ShadowPassMVP)
         )
         .create(
-            _shadow_map_pass,
             Pipeline::Config {
                 .color_formats = { },
                 .depth_format    = PhysicalDevice::depth_format(),

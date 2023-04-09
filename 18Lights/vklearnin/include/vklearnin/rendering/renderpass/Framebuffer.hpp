@@ -22,10 +22,6 @@ public:
 
     void destroy();
 
-    void transition_color_for_draw(ImageObject const &image, CmdBuffer const &cmd_buffer);
-    void transition_depth_for_draw(CmdBuffer const &cmd_buffer);
-    void transition_color_for_present(ImageObject const &image, CmdBuffer const &cmd_buffer);
-
     inline auto const & native()      const { return _framebuffer; }
     inline auto const & render_area() const { return _render_area; }
 

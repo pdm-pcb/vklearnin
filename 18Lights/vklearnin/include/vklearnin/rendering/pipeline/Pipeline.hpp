@@ -27,6 +27,9 @@ public:
         vk::CullModeFlags cull_mode    = vk::CullModeFlagBits::eBack;
         vk::FrontFace     front_face   = vk::FrontFace::eClockwise;
 
+        // Multisample config
+        vk::SampleCountFlagBits sample_flags = vk::SampleCountFlagBits::e1;
+
         // Depth/shadow buffer options
         vk::Bool32    enable_depth_test   = VK_TRUE;
         vk::CompareOp depth_compare       = vk::CompareOp::eLess;
@@ -54,7 +57,7 @@ public:
     Pipeline & add_push_constant(vk::ShaderStageFlags const stage_flags,
                                  size_t const size);
 
-    void create(RenderPass const &render_pass, Config const &config);
+    void create(Config const &config);
     void destroy();
     void update_dimensions(vk::Extent2D const &extent,
                            vk::Offset2D const &offset);
@@ -106,7 +109,7 @@ private:
     void _init_assembly();
     void _init_viewport(Config const &config);
     void _init_raster(Config const &config);
-    void _init_multisample(vk::SampleCountFlagBits const sample_flags);
+    void _init_multisample(Config const &config);
     void _init_depth_stencil(Config const &config);
     void _init_blend();
     void _init_dynamic_states();

@@ -186,131 +186,51 @@ void Framebuffer::destroy() {
     _framebuffer = nullptr;
 }
 
-// =============================================================================
-void Framebuffer::transition_color_for_draw(ImageObject const &image, CmdBuffer const &cmd_buffer) {
-// vks::tools::insertImageMemoryBarrier(
-    // cmd buffer       drawCmdBuffers[i],
-    // image            swapChain.buffers[i].image,
-    // src access mask  0,
-    // dst access mask  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-    // old layout       VK_IMAGE_LAYOUT_UNDEFINED,
-    // new layout       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    // src stage mask   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    // dst stage mask   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    // subresource      VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
+// // =============================================================================
+// void Framebuffer::transition_depth_for_draw(CmdBuffer const &cmd_buffer) {
+// // vks::tools::insertImageMemoryBarrier(
+//     // cmd buffer       drawCmdBuffers[i],
+//     // image            depthStencil.image,
+//     // src access mask  0,
+//     // dst access mask  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+//     // old layout       VK_IMAGE_LAYOUT_UNDEFINED,
+//     // new layout       VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+//     // src stage mask   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+//     // dst stage mask   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+//     // subresource      VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 0, 1, 0, 1 });
 
-    vk::ImageMemoryBarrier barrier {
-        .srcAccessMask       = vk::AccessFlagBits::eNone,
-        .dstAccessMask       = vk::AccessFlagBits::eColorAttachmentWrite,
-        .oldLayout           = vk::ImageLayout::eUndefined,
-        .newLayout           = vk::ImageLayout::eColorAttachmentOptimal,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image               = image.handle,
-        .subresourceRange {
-            .aspectMask     = image.aspect_flags,
-            .baseMipLevel   = 0u,
-            .levelCount     = 1u,
-            .baseArrayLayer = 0u,
-            .layerCount     = 1u,
-        }
-    };
+//     vk::ImageMemoryBarrier barrier {
+//         .srcAccessMask       = vk::AccessFlagBits::eNone,
+//         .dstAccessMask       = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+//         .oldLayout           = vk::ImageLayout::eUndefined,
+//         .newLayout           = vk::ImageLayout::eDepthAttachmentOptimal,
+//         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+//         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+//         .image               = _depth_buffer.handle,
+//         .subresourceRange {
+//             .aspectMask     = _depth_buffer.aspect_flags,
+//             .baseMipLevel   = 0u,
+//             .levelCount     = 1u,
+//             .baseArrayLayer = 0u,
+//             .layerCount     = 1u,
+//         }
+//     };
 
-    cmd_buffer.native().pipelineBarrier(
-        vk::PipelineStageFlagBits::eTopOfPipe,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        { },        // dependency flags
-        nullptr,    // memory barriers
-        nullptr,    // buffer memory barriers
-        { barrier } // image memory barriers
-    );
-}
-
-// =============================================================================
-void Framebuffer::transition_depth_for_draw(CmdBuffer const &cmd_buffer) {
-// vks::tools::insertImageMemoryBarrier(
-    // cmd buffer       drawCmdBuffers[i],
-    // image            depthStencil.image,
-    // src access mask  0,
-    // dst access mask  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-    // old layout       VK_IMAGE_LAYOUT_UNDEFINED,
-    // new layout       VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-    // src stage mask   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-    // dst stage mask   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-    // subresource      VkImageSubresourceRange{ VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 0, 1, 0, 1 });
-
-    vk::ImageMemoryBarrier barrier {
-        .srcAccessMask       = vk::AccessFlagBits::eNone,
-        .dstAccessMask       = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-        .oldLayout           = vk::ImageLayout::eUndefined,
-        .newLayout           = vk::ImageLayout::eDepthAttachmentOptimal,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image               = _depth_buffer.handle,
-        .subresourceRange {
-            .aspectMask     = _depth_buffer.aspect_flags,
-            .baseMipLevel   = 0u,
-            .levelCount     = 1u,
-            .baseArrayLayer = 0u,
-            .layerCount     = 1u,
-        }
-    };
-
-    cmd_buffer.native().pipelineBarrier(
-        (
-            vk::PipelineStageFlagBits::eEarlyFragmentTests |
-            vk::PipelineStageFlagBits::eLateFragmentTests
-        ),
-        (
-            vk::PipelineStageFlagBits::eEarlyFragmentTests |
-            vk::PipelineStageFlagBits::eLateFragmentTests
-        ),
-        { },        // dependency flags
-        nullptr,    // memory barriers
-        nullptr,    // buffer memory barriers
-        { barrier } // image memory barriers
-    );
-}
-
-// =============================================================================
-void Framebuffer::transition_color_for_present(ImageObject const &image, CmdBuffer const &cmd_buffer) {
-// vks::tools::insertImageMemoryBarrier(
-    // cmd buffer       drawCmdBuffers[i],
-    // image            swapChain.buffers[i].image,
-    // src access mask  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-    // dst access mask  0,
-    // old layout       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    // new layout       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    // src stage mask   VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    // dst stage mask   VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-    // subresource      VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
-
-    vk::ImageMemoryBarrier barrier {
-        .srcAccessMask       = vk::AccessFlagBits::eColorAttachmentWrite,
-        .dstAccessMask       = vk::AccessFlagBits::eNone,
-        .oldLayout           = vk::ImageLayout::eColorAttachmentOptimal,
-        .newLayout           = vk::ImageLayout::ePresentSrcKHR,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image               = image.handle,
-        .subresourceRange {
-            .aspectMask     = image.aspect_flags,
-            .baseMipLevel   = 0u,
-            .levelCount     = 1u,
-            .baseArrayLayer = 0u,
-            .layerCount     = 1u,
-        }
-    };
-
-    cmd_buffer.native().pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eBottomOfPipe,
-        { },        // dependency flags
-        nullptr,    // memory barriers
-        nullptr,    // buffer memory barriers
-        { barrier } // image memory barriers
-    );
-}
+//     cmd_buffer.native().pipelineBarrier(
+//         (
+//             vk::PipelineStageFlagBits::eEarlyFragmentTests |
+//             vk::PipelineStageFlagBits::eLateFragmentTests
+//         ),
+//         (
+//             vk::PipelineStageFlagBits::eEarlyFragmentTests |
+//             vk::PipelineStageFlagBits::eLateFragmentTests
+//         ),
+//         { },        // dependency flags
+//         nullptr,    // memory barriers
+//         nullptr,    // buffer memory barriers
+//         { barrier } // image memory barriers
+//     );
+// }
 
 // =============================================================================
 Framebuffer::Framebuffer() :

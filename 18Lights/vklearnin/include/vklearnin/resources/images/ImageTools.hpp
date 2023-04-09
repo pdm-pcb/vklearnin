@@ -5,7 +5,11 @@
 #include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/materials/Texture2D.hpp"
 
-namespace vkl::ImageTools {
+namespace vkl {
+
+class CmdBuffer;
+
+namespace ImageTools {
 
 void create(ImageObject &image,
             vk::ImageType const type,
@@ -19,6 +23,12 @@ void destroy(ImageObject &image);
 void create_view(ImageObject &image, vk::ImageViewType const view_type);
 
 void destroy_view(ImageObject &image);
+
+void transition_color_buffer_for_draw(ImageObject const &image,
+                                      CmdBuffer const &cmd_buffer);
+
+void transition_color_buffer_for_present(ImageObject const &image,
+                                         CmdBuffer const &cmd_buffer);
 
 void * image_from_file(ImageObject &image, std::string_view filepath);
 void * cubemap_from_files(ImageObject &image,
@@ -42,6 +52,7 @@ void destroy_sampler(ImageObject &image);
 
 void generate_mipmap(ImageObject &image, vk::Filter const filter);
 
-} // namespace vkl::ImageTools
+} // namespace ImageTools
+} // namspace vkl
 
 #endif // VKLEARNIN_RESOURCES_IMAGES_IMAGETOOLS_HPP

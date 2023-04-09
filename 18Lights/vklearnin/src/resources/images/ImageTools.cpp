@@ -128,6 +128,68 @@ void destroy_view(ImageObject &image) {
 }
 
 // =============================================================================
+void transition_color_buffer_for_draw(ImageObject const &image,
+                                      CmdBuffer const &cmd_buffer)
+{
+    vk::ImageMemoryBarrier barrier {
+        .srcAccessMask       = vk::AccessFlagBits::eNone,
+        .dstAccessMask       = vk::AccessFlagBits::eColorAttachmentWrite,
+        .oldLayout           = vk::ImageLayout::eUndefined,
+        .newLayout           = vk::ImageLayout::eColorAttachmentOptimal,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image               = image.handle,
+        .subresourceRange {
+            .aspectMask     = image.aspect_flags,
+            .baseMipLevel   = 0u,
+            .levelCount     = 1u,
+            .baseArrayLayer = 0u,
+            .layerCount     = 1u,
+        }
+    };
+
+    cmd_buffer.native().pipelineBarrier(
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        { },        // dependency flags
+        nullptr,    // memory barriers
+        nullptr,    // buffer memory barriers
+        { barrier } // image memory barriers
+    );
+}
+
+// =============================================================================
+void transition_color_buffer_for_present(ImageObject const&image,
+                                         CmdBuffer const &cmd_buffer)
+{
+    vk::ImageMemoryBarrier barrier {
+        .srcAccessMask       = vk::AccessFlagBits::eColorAttachmentWrite,
+        .dstAccessMask       = vk::AccessFlagBits::eNone,
+        .oldLayout           = vk::ImageLayout::eColorAttachmentOptimal,
+        .newLayout           = vk::ImageLayout::ePresentSrcKHR,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image               = image.handle,
+        .subresourceRange {
+            .aspectMask     = image.aspect_flags,
+            .baseMipLevel   = 0u,
+            .levelCount     = 1u,
+            .baseArrayLayer = 0u,
+            .layerCount     = 1u,
+        }
+    };
+
+    cmd_buffer.native().pipelineBarrier(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eBottomOfPipe,
+        { },        // dependency flags
+        nullptr,    // memory barriers
+        nullptr,    // buffer memory barriers
+        { barrier } // image memory barriers
+    );
+}
+
+// =============================================================================
 void * image_from_file(ImageObject &image, std::string_view filepath) {
     auto const texture_path = ASSET_PATH / filepath.data();
     std::string const path = texture_path.string();

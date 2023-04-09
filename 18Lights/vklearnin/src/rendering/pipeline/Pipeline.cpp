@@ -124,7 +124,7 @@ Pipeline & Pipeline::add_push_constant(vk::ShaderStageFlags const stage_flags,
 }
 
 // =============================================================================
-void Pipeline::create(RenderPass const &render_pass, Config const &config) {
+void Pipeline::create(Config const &config) {
     if(_pipeline) {
         CONSOLE_CRITICAL("Attempting to recreate a pipeline.");
         return;
@@ -133,7 +133,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
     _init_assembly();
     _init_viewport(config);
     _init_raster(config);
-    _init_multisample(render_pass.msaa_samples());
+    _init_multisample(config);
     _init_depth_stencil(config);
     _init_blend();
     _init_dynamic_states();
@@ -148,7 +148,7 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
     };
 
     vk::GraphicsPipelineCreateInfo const pipeline_info {
-        // .pNext = &rendering_info,
+        .pNext = &rendering_info,
 
         // If we're in a debug build, don't optimize out unused shader data
         // and such
@@ -171,10 +171,10 @@ void Pipeline::create(RenderPass const &render_pass, Config const &config) {
 
         .layout              = _layout,
 
-        // Which render pass will use this pipeline?
-        .renderPass          = render_pass.native(),
-        // And within that render pass, which subpass will use this pipeline?
-        .subpass             = config.subpass_index,
+        // // Which render pass will use this pipeline?
+        // .renderPass          = render_pass.native(),
+        // // And within that render pass, which subpass will use this pipeline?
+        // .subpass             = config.subpass_index,
 
         // A new pipeline may be derrived from an existing one, only updating
         // what needs to be updated. The .basePipeline* values designate an
@@ -305,9 +305,9 @@ void Pipeline::_init_raster(Config const &config) {
 }
 
 // =============================================================================
-void Pipeline::_init_multisample(vk::SampleCountFlagBits const sample_flags) {
+void Pipeline::_init_multisample(Config const &config) {
     _multisample_info = {
-        .rasterizationSamples  = sample_flags,
+        .rasterizationSamples  = config.sample_flags,
         .sampleShadingEnable   = VK_FALSE,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
