@@ -1,12 +1,12 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/rendering/FrameData.hpp"
+#include "vklearnin/rendering/CmdBufferSync.hpp"
 
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 
 namespace vkl {
 
 // =============================================================================
-void FrameData::wait_on_queue_fence() const {
+void CmdBufferSync::wait_on_queue_fence() const {
     vk::Fence const queue_fences[] { _queue_complete };
     auto const wait_result = LogicalDevice::native().waitForFences(
         queue_fences,
@@ -26,7 +26,7 @@ void FrameData::wait_on_queue_fence() const {
 }
 
 // =============================================================================
-void FrameData::submit_to_device() const {
+void CmdBufferSync::submit_to_device() const {
     // Once LogicalDevice has acquired an image for us, it'll signal this
     // semaphore
     vk::Semaphore const acquire_complete_sems[] {
@@ -73,25 +73,25 @@ void FrameData::submit_to_device() const {
 }
 
 // =============================================================================
-void FrameData::init() {
+void CmdBufferSync::init() {
     _create_cmd_structures();
     _create_sync_primitives();
 }
 
 // =============================================================================
-void FrameData::shutdown() {
+void CmdBufferSync::shutdown() {
     _destroy_sync_primitives();
     _destroy_cmd_structures();
 }
 
 // =============================================================================
-void FrameData::_create_cmd_structures() {
+void CmdBufferSync::_create_cmd_structures() {
     _cmd_pool.create();
     _cmd_buffer.allocate(_cmd_pool.native());
 }
 
 // =============================================================================
-void FrameData::_create_sync_primitives() {
+void CmdBufferSync::_create_sync_primitives() {
     _acquire_complete  = LogicalDevice::native().createSemaphore({ });
     _commands_complete = LogicalDevice::native().createSemaphore({ });
 
@@ -112,13 +112,13 @@ void FrameData::_create_sync_primitives() {
 }
 
 // =============================================================================
-void FrameData::_destroy_cmd_structures() {
+void CmdBufferSync::_destroy_cmd_structures() {
     _cmd_buffer.free();
     _cmd_pool.destroy();
 }
 
 // =============================================================================
-void FrameData::_destroy_sync_primitives() {
+void CmdBufferSync::_destroy_sync_primitives() {
     CONSOLE_TRACE(
         "\nDestroying sync primitives:"
         "\n\tacquire complete semaphore  {:#x}"
@@ -135,7 +135,7 @@ void FrameData::_destroy_sync_primitives() {
 }
 
 // =============================================================================
-FrameData::FrameData() :
+CmdBufferSync::CmdBufferSync() :
     _cmd_pool          { },
     _cmd_buffer        { },
     _acquire_complete  { },
@@ -144,7 +144,7 @@ FrameData::FrameData() :
     _image_index       { std::numeric_limits<uint32_t>::max() }
 { }
 
-FrameData::FrameData(FrameData &&other) noexcept :
+CmdBufferSync::CmdBufferSync(CmdBufferSync &&other) noexcept :
     _cmd_pool          { std::move(other._cmd_pool) },
     _cmd_buffer        { std::move(other._cmd_buffer) },
     _acquire_complete  { other._acquire_complete },

@@ -129,7 +129,7 @@ void destroy_view(ImageObject &image) {
 }
 
 // =============================================================================
-void transition_image_for_draw(ImageObject const &image,
+void transition_for_draw(ImageObject const &image,
                                       CmdBuffer const &cmd_buffer)
 {
     vk::ImageMemoryBarrier barrier {
@@ -160,7 +160,7 @@ void transition_image_for_draw(ImageObject const &image,
 }
 
 // =============================================================================
-void transition_image_for_present(ImageObject const&image,
+void transition_for_present(ImageObject const&image,
                                          CmdBuffer const &cmd_buffer)
 {
     vk::ImageMemoryBarrier barrier {

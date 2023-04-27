@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RENDERING_FRAMEDATA_HPP
-#define VKLEARNIN_RENDERING_FRAMEDATA_HPP
+#ifndef VKLEARNIN_RENDERING_CMDBUFFERSYNC_HPP
+#define VKLEARNIN_RENDERING_CMDBUFFERSYNC_HPP
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/system/devices/CmdPool.hpp"
@@ -7,7 +7,7 @@
 
 namespace vkl {
 
-class FrameData {
+class CmdBufferSync {
 public:
     void wait_on_queue_fence() const;
     void submit_to_device() const;
@@ -33,14 +33,14 @@ public:
     inline void set_image_index(uint32_t const index) { _image_index = index; }
     inline auto image_index() const { return _image_index; }
 
-    FrameData();
-    ~FrameData() = default;
+    CmdBufferSync();
+    ~CmdBufferSync() = default;
 
-    FrameData(FrameData &&other) noexcept;
-    FrameData(FrameData const &) = delete;
+    CmdBufferSync(CmdBufferSync &&other) noexcept;
+    CmdBufferSync(CmdBufferSync const &) = delete;
 
-    FrameData & operator=(FrameData &&) = delete;
-    FrameData & operator=(FrameData const &) = delete;
+    CmdBufferSync & operator=(CmdBufferSync &&) = delete;
+    CmdBufferSync & operator=(CmdBufferSync const &) = delete;
 
 private:
     CmdPool   _cmd_pool;
@@ -60,4 +60,4 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDERING_SWAPCHAIN_FrameData_HPP
+#endif // VKLEARNIN_RENDERING_CMDBUFFERSYNC_HPP

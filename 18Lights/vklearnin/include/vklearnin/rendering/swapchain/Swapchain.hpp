@@ -6,12 +6,12 @@
 
 namespace vkl {
 
-class FrameData;
+class CmdBufferSync;
 
 class Swapchain final {
 public:
-    static void acquire_next_image_index(FrameData &frame);
-    static void present(FrameData const &frame);
+    static void acquire_next_image_index(CmdBufferSync &frame);
+    static void present(CmdBufferSync const &frame);
 
     static void create();
     static void destroy();

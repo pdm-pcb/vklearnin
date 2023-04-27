@@ -4,7 +4,7 @@
 #include "vklearnin/system/devices/PhysicalDevice.hpp"
 #include "vklearnin/system/devices/LogicalDevice.hpp"
 #include "vklearnin/system/window/TargetWindow.hpp"
-#include "vklearnin/rendering/FrameData.hpp"
+#include "vklearnin/rendering/CmdBufferSync.hpp"
 
 namespace vkl {
 
@@ -22,7 +22,7 @@ vk::SwapchainKHR Swapchain::_swapchain;
 std::vector<ImageObject> Swapchain::_images;
 
 // =============================================================================
-void Swapchain::acquire_next_image_index(FrameData &frame) {
+void Swapchain::acquire_next_image_index(CmdBufferSync &frame) {
     uint32_t next_image_index = std::numeric_limits<uint32_t>::max();
 
     auto const result =
@@ -45,7 +45,7 @@ void Swapchain::acquire_next_image_index(FrameData &frame) {
 }
 
 // =============================================================================
-void Swapchain::present(FrameData const &frame) {
+void Swapchain::present(CmdBufferSync const &frame) {
     // This array must be a duplicate of the one we used when submitting this
     // frame's command buffer to the GPU
     vk::Semaphore const commands_complete_sems[] {

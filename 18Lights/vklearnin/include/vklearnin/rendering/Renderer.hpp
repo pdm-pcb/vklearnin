@@ -2,7 +2,7 @@
 #define VKLEARNIN_RENDERING_RENDERER_HPP
 
 #include "vklearnin/system/pch.hpp"
-#include "vklearnin/rendering/FrameData.hpp"
+#include "vklearnin/rendering/CmdBufferSync.hpp"
 #include "vklearnin/rendering/DrawSubmission.hpp"
 #include "vklearnin/rendering/pipeline/Pipeline.hpp"
 #include "vklearnin/rendering/descriptors/DescriptorPool.hpp"
@@ -82,7 +82,7 @@ private:
     static uint32_t _frame_index;
     static uint64_t _frame_count;
 
-    static std::vector<FrameData> _frame_data;
+    static std::vector<CmdBufferSync> _cmd_buffer_sync;
 
     // Descriptors -------------------------------------------------------------
     static DescriptorPool _desc_pool;
@@ -127,7 +127,7 @@ private:
     static void _init_depth_buffers();
     static void _init_color_buffers();
 
-    static void _init_frame_data();
+    static void _init_cmd_buffer_sync();
 
     static void _init_descriptor_pool();
 

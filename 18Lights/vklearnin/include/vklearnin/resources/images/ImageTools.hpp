@@ -24,10 +24,10 @@ void create_view(ImageObject &image, vk::ImageViewType const view_type);
 
 void destroy_view(ImageObject &image);
 
-void transition_image_for_draw(ImageObject const &image,
+void transition_for_draw(ImageObject const &image,
                                       CmdBuffer const &cmd_buffer);
 
-void transition_image_for_present(ImageObject const &image,
+void transition_for_present(ImageObject const &image,
                                          CmdBuffer const &cmd_buffer);
 
 void * image_from_file(ImageObject &image, std::string_view filepath);

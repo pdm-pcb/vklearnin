@@ -18,7 +18,7 @@ uint32_t Renderer::_shadow_map_resolution = 0u;
 uint32_t Renderer::_frame_index = 0u;
 uint64_t Renderer::_frame_count = 0u;
 
-std::vector<FrameData> Renderer::_frame_data;
+std::vector<CmdBufferSync> Renderer::_cmd_buffer_sync;
 
 // Descriptors -----------------------------------------------------------------
 static constexpr uint32_t DESC_POOL_MAGIC_NUMBER = 100u; // TODO: nonsense
@@ -186,7 +186,7 @@ void Renderer::submit_draw_lit(GeneratedMesh const &mesh,
 
 // =============================================================================
 void Renderer::record_commands() {
-    auto &frame           = _frame_data[_frame_index];
+    auto &frame           = _cmd_buffer_sync[_frame_index];
     auto &cmd_buffer      = frame.cmd_buffer();
     auto &swapchain_image = Swapchain::images()[_frame_index];
     auto &depth_buffer    = _depth_buffers[_frame_index];
@@ -237,7 +237,7 @@ void Renderer::record_commands() {
     };
 
     cmd_buffer.begin_one_time_submit();
-    ImageTools::transition_image_for_draw(swapchain_image, cmd_buffer);
+    ImageTools::transition_for_draw(swapchain_image, cmd_buffer);
 
     cmd_buffer.native().beginRendering(rendering_info);
         _execute_flat_color_pipeline();
@@ -246,25 +246,25 @@ void Renderer::record_commands() {
         _execute_lit_color_pipeline();
     cmd_buffer.native().endRendering();
 
-    ImageTools::transition_image_for_present(swapchain_image, cmd_buffer);
+    ImageTools::transition_for_present(swapchain_image, cmd_buffer);
     cmd_buffer.end_recording();
 }
 
 // =============================================================================
 void Renderer::submit_commands_and_present() {
-    auto &frame_data = _frame_data[_frame_index];
+    auto &cmd_buffer_sync = _cmd_buffer_sync[_frame_index];
 
     // The first task after completing recording to the command buffer is to
     // query the presentation engine for which swapchain image it wants us to
     // write to next
-    Swapchain::acquire_next_image_index(frame_data);
+    Swapchain::acquire_next_image_index(cmd_buffer_sync);
 
     // Once we know which image this command buffer is being written to, we can
     // submit it to the graphics card
-    frame_data.submit_to_device();
+    cmd_buffer_sync.submit_to_device();
 
     // And finally, ask the presenatation engine to show the completed image
-    Swapchain::present(frame_data);
+    Swapchain::present(cmd_buffer_sync);
 
     ++_frame_count;
     _frame_index = _frame_count % RenderConfig::swapchain_image_count;
@@ -277,7 +277,7 @@ void Renderer::init() {
     _init_depth_buffers();
     _init_color_buffers();
 
-    _init_frame_data();
+    _init_cmd_buffer_sync();
 
     _init_descriptor_pool();
 }
@@ -330,7 +330,7 @@ void Renderer::shutdown() {
         buffer.destroy();
     }
 
-    for(auto &frame : _frame_data) {
+    for(auto &frame : _cmd_buffer_sync) {
         frame.shutdown();
     }
 
@@ -475,9 +475,9 @@ void Renderer::_init_color_buffers() {
 // }
 
 // =============================================================================
-void Renderer::_init_frame_data() {
-    _frame_data.resize(RenderConfig::swapchain_image_count);
-    for(auto &frame : _frame_data) {
+void Renderer::_init_cmd_buffer_sync() {
+    _cmd_buffer_sync.resize(RenderConfig::swapchain_image_count);
+    for(auto &frame : _cmd_buffer_sync) {
         frame.init();
     }
 }
@@ -816,8 +816,8 @@ void Renderer::_init_lit_color_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_flat_color_pipeline() {
-    auto const &frame_data        = _frame_data[_frame_index];
-    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &cmd_buffer_sync        = _cmd_buffer_sync[_frame_index];
+    auto const &cmd_buffer        = cmd_buffer_sync.cmd_buffer();
     auto const &global_buffer_set = _global_data_sets[_frame_index];
 
     _flat_color_pipeline.bind(cmd_buffer);
@@ -833,8 +833,8 @@ void Renderer::_execute_flat_color_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_texture_pipeline() {
-    auto const &frame_data        = _frame_data[_frame_index];
-    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &cmd_buffer_sync        = _cmd_buffer_sync[_frame_index];
+    auto const &cmd_buffer        = cmd_buffer_sync.cmd_buffer();
     auto const &global_buffer_set = _global_data_sets[_frame_index];
 
     _texture_pipeline.bind(cmd_buffer);
@@ -857,8 +857,8 @@ void Renderer::_execute_texture_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_skybox_pipeline() {
-    auto const &frame_data        = _frame_data[_frame_index];
-    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &cmd_buffer_sync        = _cmd_buffer_sync[_frame_index];
+    auto const &cmd_buffer        = cmd_buffer_sync.cmd_buffer();
     auto const &global_buffer_set = _global_data_sets[_frame_index];
 
     _skybox_pipeline.bind(cmd_buffer);
@@ -870,8 +870,8 @@ void Renderer::_execute_skybox_pipeline() {
 
 // =============================================================================
 void Renderer::_execute_lit_color_pipeline() {
-    auto const &frame_data        = _frame_data[_frame_index];
-    auto const &cmd_buffer        = frame_data.cmd_buffer();
+    auto const &cmd_buffer_sync        = _cmd_buffer_sync[_frame_index];
+    auto const &cmd_buffer        = cmd_buffer_sync.cmd_buffer();
     auto const &global_buffer_set = _global_data_sets[_frame_index];
     auto const &light_props_set   = _scene_lights_sets[_frame_index];
     // auto const &shadow_maps_set   = _shadow_maps_sets[_frame_index];
@@ -891,8 +891,8 @@ void Renderer::_execute_lit_color_pipeline() {
 
 // // =============================================================================
 // void Renderer::_execute_shadow_map_pipeline() {
-//     auto const &frame_data = _frame_data[_frame_index];
-//     auto const &cmd_buffer = frame_data.cmd_buffer();
+//     auto const &cmd_buffer_sync = _cmd_buffer_sync[_frame_index];
+//     auto const &cmd_buffer = cmd_buffer_sync.cmd_buffer();
 
 //     static ShadowPassMVP shadow_mvp;
 //     static const PushList push ={{
@@ -926,11 +926,11 @@ void Renderer::_execute_lit_color_pipeline() {
 void Renderer::_send_push_constants(Pipeline const &pipeline,
                                     PushList const &push_constants)
 {
-    auto const &frame_data = _frame_data[_frame_index];
+    auto const &cmd_buffer_sync = _cmd_buffer_sync[_frame_index];
 
     size_t offset = 0u;
     for(auto const& push_constant : push_constants) {
-        frame_data.cmd_buffer().native().pushConstants(
+        cmd_buffer_sync.cmd_buffer().native().pushConstants(
             pipeline.layout(),
             push_constant.stage_flags,
             static_cast<uint32_t>(offset),
