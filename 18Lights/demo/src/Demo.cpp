@@ -141,8 +141,9 @@ void Demo::_init_textures() {
         "textures/skybox/belfast_sunset/nz.png",
     }});
 
-    _brick_texture.texture_from_file("textures/brickwall017_d.jpg");
-    _brick_texture.create_sampler(
+    _brick_texture.create("textures/brickwall017_d.jpg");
+    vkl::ImageTools::create_sampler(
+        _brick_texture.image(),
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -151,10 +152,10 @@ void Demo::_init_textures() {
         VK_FALSE,
         vk::CompareOp::eAlways
     );
-    _brick_texture.generate_mipmap(vk::Filter::eLinear);
 
-    _hardwood_texture.texture_from_file("textures/woodfloor_051_d.jpg");
-    _hardwood_texture.create_sampler(
+    _hardwood_texture.create("textures/woodfloor_051_d.jpg");
+    vkl::ImageTools::create_sampler(
+        _hardwood_texture.image(),
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -163,7 +164,6 @@ void Demo::_init_textures() {
         VK_FALSE,
         vk::CompareOp::eAlways
     );
-    _hardwood_texture.generate_mipmap(vk::Filter::eLinear);
 
     vkl::Renderer::set_textures({
         _brick_texture,

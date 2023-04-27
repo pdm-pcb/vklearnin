@@ -15,6 +15,10 @@ void allocate(ImageObject &image, vk::MemoryPropertyFlags const flags);
 uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
                           vk::MemoryRequirements const &reqs);
 
+void calc_mip_levels(ImageObject &image);
+
+void generate_mipmaps(ImageObject &image, vk::Filter const filter);
+
 void transition_layout(ImageObject &image,
                        vk::CommandBuffer const &command_buffer,
                        vk::ImageLayout const old_layout,
@@ -27,6 +31,7 @@ void transition_layout(ImageObject &image,
 // =============================================================================
 void create(ImageObject &image,
             vk::ImageType const type,
+            bool use_mipmaps,
             vk::SampleCountFlagBits const samples,
             vk::ImageUsageFlags const usage_flags,
             vk::MemoryPropertyFlags const memory_properties,
@@ -40,6 +45,10 @@ void create(ImageObject &image,
     if(image.format == vk::Format::eUndefined) {
         CONSOLE_CRITICAL("Cannot create image with undefined format.");
         return;
+    }
+
+    if(use_mipmaps) {
+        calc_mip_levels(image);
     }
 
     vk::ImageCreateInfo const image_info {
@@ -433,6 +442,8 @@ void create_sampler(ImageObject &image,
         to_string(sampler_info.addressModeV),
         sampler_info.maxAnisotropy
     );
+
+    generate_mipmaps(image, vk::Filter::eLinear);
 }
 
 // =============================================================================
@@ -444,7 +455,72 @@ void destroy_sampler(ImageObject &image) {
 }
 
 // =============================================================================
-void generate_mipmap(ImageObject &image, const vk::Filter filter) {
+void allocate(ImageObject &image, vk::MemoryPropertyFlags const flags) {
+    vk::MemoryRequirements mem_reqs { };
+    LogicalDevice::native().getImageMemoryRequirements(
+        image.handle,
+        &mem_reqs
+    );
+
+    auto const type_index = find_memory_type(flags, mem_reqs);
+
+    vk::MemoryAllocateInfo const alloc_info {
+        .allocationSize  = mem_reqs.size,
+        .memoryTypeIndex = type_index,
+    };
+
+    image.memory = LogicalDevice::native().allocateMemory(alloc_info);
+
+    CONSOLE_TRACE(
+        "\n\tAllocated {} bytes : {:#x}"
+        "\n\tFor image {:#x}",
+        mem_reqs.size,
+        reinterpret_cast<uint64_t>(VkDeviceMemory(image.memory)),
+        reinterpret_cast<uint64_t>(VkImage(image.handle))
+    );
+
+    LogicalDevice::native().bindImageMemory(
+        image.handle,
+        image.memory,
+        0u
+    );
+}
+
+// =============================================================================
+uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
+                          vk::MemoryRequirements const &reqs)
+{
+    auto const& memory_properties = PhysicalDevice::memory_props();
+    auto const type_count = memory_properties.memoryTypeCount;
+
+    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
+        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
+            auto const& props = memory_properties.memoryTypes[type_index];
+            if(props.propertyFlags & flags) {
+                return type_index;
+            }
+        }
+    }
+
+    CONSOLE_CRITICAL("Could not find memory to match buffer requirements.");
+    return std::numeric_limits<uint32_t>::max();
+}
+
+// =============================================================================
+void calc_mip_levels(ImageObject &image) {
+    auto const longest_side = std::max(
+        static_cast<float>(image.extent.width),
+        static_cast<float>(image.extent.height)
+    );
+
+    auto const mip_levels =
+        static_cast<uint32_t>(std::floor(std::log2(longest_side))) + 1u;
+
+    image.mip_levels = mip_levels;
+}
+
+// =============================================================================
+void generate_mipmaps(ImageObject &image, const vk::Filter filter) {
     auto const format_props =
         PhysicalDevice::native().getFormatProperties(image.format);
 
@@ -550,58 +626,6 @@ void generate_mipmap(ImageObject &image, const vk::Filter filter) {
     cmd_buffer.end_recording();
     cmd_buffer.submit_and_wait_on_device();
     cmd_buffer.free();
-}
-
-// =============================================================================
-void allocate(ImageObject &image, vk::MemoryPropertyFlags const flags) {
-    vk::MemoryRequirements mem_reqs { };
-    LogicalDevice::native().getImageMemoryRequirements(
-        image.handle,
-        &mem_reqs
-    );
-
-    auto const type_index = find_memory_type(flags, mem_reqs);
-
-    vk::MemoryAllocateInfo const alloc_info {
-        .allocationSize  = mem_reqs.size,
-        .memoryTypeIndex = type_index,
-    };
-
-    image.memory = LogicalDevice::native().allocateMemory(alloc_info);
-
-    CONSOLE_TRACE(
-        "\n\tAllocated {} bytes : {:#x}"
-        "\n\tFor image {:#x}",
-        mem_reqs.size,
-        reinterpret_cast<uint64_t>(VkDeviceMemory(image.memory)),
-        reinterpret_cast<uint64_t>(VkImage(image.handle))
-    );
-
-    LogicalDevice::native().bindImageMemory(
-        image.handle,
-        image.memory,
-        0u
-    );
-}
-
-// =============================================================================
-uint32_t find_memory_type(vk::MemoryPropertyFlags const flags,
-                          vk::MemoryRequirements const &reqs)
-{
-    auto const& memory_properties = PhysicalDevice::memory_props();
-    auto const type_count = memory_properties.memoryTypeCount;
-
-    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
-        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
-            auto const& props = memory_properties.memoryTypes[type_index];
-            if(props.propertyFlags & flags) {
-                return type_index;
-            }
-        }
-    }
-
-    CONSOLE_CRITICAL("Could not find memory to match buffer requirements.");
-    return std::numeric_limits<uint32_t>::max();
 }
 
 // =============================================================================

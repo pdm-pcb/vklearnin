@@ -5,6 +5,7 @@
 #include "vklearnin/resources/images/ImageObject.hpp"
 #include "vklearnin/resources/images/Texture2D.hpp"
 
+
 namespace vkl {
 
 class CmdBuffer;
@@ -13,6 +14,7 @@ namespace ImageTools {
 
 void create(ImageObject &image,
             vk::ImageType const type,
+            bool use_mipmaps,
             vk::SampleCountFlagBits const samples,
             vk::ImageUsageFlags const usage_flags,
             vk::MemoryPropertyFlags const memory_properties,
@@ -25,10 +27,10 @@ void create_view(ImageObject &image, vk::ImageViewType const view_type);
 void destroy_view(ImageObject &image);
 
 void transition_for_draw(ImageObject const &image,
-                                      CmdBuffer const &cmd_buffer);
+                         CmdBuffer const &cmd_buffer);
 
 void transition_for_present(ImageObject const &image,
-                                         CmdBuffer const &cmd_buffer);
+                            CmdBuffer const &cmd_buffer);
 
 void * image_from_file(ImageObject &image, std::string_view filepath);
 void * cubemap_from_files(ImageObject &image,
@@ -49,8 +51,6 @@ void create_sampler(ImageObject &image,
                     vk::CompareOp const compare_op);
 
 void destroy_sampler(ImageObject &image);
-
-void generate_mipmap(ImageObject &image, vk::Filter const filter);
 
 } // namespace ImageTools
 } // namspace vkl

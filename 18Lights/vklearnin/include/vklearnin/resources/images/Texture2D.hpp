@@ -8,28 +8,12 @@ namespace vkl {
 
 class Texture2D final {
 public:
-    using Filepath = std::string_view;
-    void texture_from_file(Filepath filepath);
-
-    using CubeFilepaths = std::array<std::string_view, 6>;
-    void cubemap_from_files(CubeFilepaths const &filepaths);
-
-    void create_shadow_map(vk::Extent2D const &extent,
-                           vk::Format const depth_format);
-
-    void create_sampler(vk::Filter const min_filter,
-                        vk::Filter const mag_filter,
-                        vk::SamplerMipmapMode const mip_filter,
-                        vk::SamplerAddressMode const mode_u,
-                        vk::SamplerAddressMode const mode_v,
-                        vk::Bool32 const enable_compare,
-                        vk::CompareOp const compare_op);
-
-    void generate_mipmap(vk::Filter const mip_filter);
-
+    using FilePath = std::string_view;
+    void create(FilePath filepath, bool use_mipmaps = true);
     void destroy();
 
-    inline auto const& image() const { return _image; }
+    inline auto & image() { return _image; }
+    inline auto const & image() const { return _image; }
 
     Texture2D();
     ~Texture2D() = default;
@@ -42,8 +26,6 @@ public:
 
 private:
     ImageObject _image;
-
-    void _calc_mip_levels();
 };
 
 } // namespace vkl

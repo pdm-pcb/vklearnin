@@ -31,6 +31,7 @@ void DepthBuffer::create(vk::Rect2D const &render_area,
     ImageTools::create(
         _image,
         vk::ImageType::e2D,
+        false,
         samples,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal

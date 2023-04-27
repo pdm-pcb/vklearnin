@@ -14,9 +14,6 @@ class RenderGraph;
 
 class SkyboxPass {
 public:
-    void set_texutre(Texture2D::CubeFilepaths const &filepaths);
-    void init_resources();
-
     SkyboxPass();
     ~SkyboxPass() = default;
 

@@ -17,17 +17,17 @@ void ShadowMap::create(vk::Rect2D const &render_area, vk::Format const format) {
 
     _render_area = render_area;
 
-    _texture.create_shadow_map(_render_area.extent, format);
+    // _texture.create_shadow_map(_render_area.extent, format);
 
-    _texture.create_sampler(
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eClampToBorder,
-        vk::SamplerAddressMode::eClampToBorder,
-        VK_TRUE,
-        vk::CompareOp::eLessOrEqual
-    );
+    // _texture.create_sampler(
+    //     vk::Filter::eLinear,
+    //     vk::Filter::eLinear,
+    //     vk::SamplerMipmapMode::eLinear,
+    //     vk::SamplerAddressMode::eClampToBorder,
+    //     vk::SamplerAddressMode::eClampToBorder,
+    //     VK_TRUE,
+    //     vk::CompareOp::eLessOrEqual
+    // );
 }
 
 // =============================================================================

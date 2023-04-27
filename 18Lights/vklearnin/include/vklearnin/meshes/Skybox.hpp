@@ -3,6 +3,7 @@
 
 #include "vklearnin/system/pch.hpp"
 #include "vklearnin/meshes/GeneratedMesh.hpp"
+#include "vklearnin/resources/images/TextureCube.hpp"
 
 namespace vkl {
 

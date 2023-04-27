@@ -38,8 +38,9 @@ Renderer::DescSetList Renderer::_scene_lights_sets;
 
 // Shader Resources ------------------------------------------------------------
 Renderer::BufferList Renderer::_camera_buffers;
-Skybox               Renderer::_skybox_mesh;
-Texture2D            Renderer::_skybox_texture;
+
+Skybox      Renderer::_skybox_mesh;
+TextureCube Renderer::_skybox_texture;
 
 Renderer::BufferList Renderer::_light_props_buffers;
 
@@ -148,7 +149,7 @@ void Renderer::submit_draw(GeneratedMesh const &mesh,
                            Texture2D const &texture,
                            Mat4 const &model_matrix)
 {
-    auto texture_id = reinterpret_cast<uint64_t>(
+    auto const texture_id = reinterpret_cast<uint64_t>(
         VkImage(texture.image().handle)
     );
 
@@ -376,9 +377,10 @@ void Renderer::set_textures(std::vector<Texture2D> const &textures) {
 }
 
 // =============================================================================
-void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
-    _skybox_texture.cubemap_from_files(filepaths);
-    _skybox_texture.create_sampler(
+void Renderer::set_skybox_texture(TextureCube::FilePaths const &filepaths) {
+    _skybox_texture.create(filepaths);
+    ImageTools::create_sampler(
+        _skybox_texture.image(),
         vk::Filter::eLinear,
         vk::Filter::eLinear,
         vk::SamplerMipmapMode::eLinear,
@@ -387,7 +389,6 @@ void Renderer::set_skybox_texture(Texture2D::CubeFilepaths const &filepaths) {
         VK_FALSE,
         vk::CompareOp::eAlways
     );
-    _skybox_texture.generate_mipmap(vk::Filter::eLinear);
 }
 
 // =============================================================================

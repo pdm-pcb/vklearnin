@@ -48,7 +48,7 @@ public:
     static void shutdown();
 
     static void set_textures(std::vector<Texture2D> const &textures);
-    static void set_skybox_texture(Texture2D::CubeFilepaths const &filepaths);
+    static void set_skybox_texture(TextureCube::FilePaths const &filepaths);
 
     static void create_pipelines();
 
@@ -100,8 +100,9 @@ private:
 
     // Shader Resources --------------------------------------------------------
     static BufferList _camera_buffers;
-    static Skybox     _skybox_mesh;
-    static Texture2D  _skybox_texture;
+
+    static Skybox      _skybox_mesh;
+    static TextureCube _skybox_texture;
 
     static BufferList _light_props_buffers;
 
