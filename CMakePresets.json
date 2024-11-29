@@ -1,0 +1,186 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "debug-base",
+            "generator": "Ninja",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release-base",
+            "generator": "Ninja",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux-base",
+            "hidden": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "gcc-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_C_COMPILER": "gcc"
+            }
+        },
+        {
+            "name": "llvm-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_C_COMPILER": "clang"
+            }
+        },
+        {
+            "name": "linux-debug-gcc",
+            "inherits": [
+                "debug-base",
+                "linux-base",
+                "gcc-base"
+            ],
+            "displayName": "Linux Debug GCC"
+        },
+        {
+            "name": "linux-release-gcc",
+            "inherits": [
+                "release-base",
+                "linux-base",
+                "gcc-base"
+            ],
+            "displayName": "Linux Release GCC"
+        },
+        {
+            "name": "linux-debug-llvm",
+            "inherits": [
+                "debug-base",
+                "linux-base",
+                "llvm-base"
+            ],
+            "displayName": "Linux Debug LLVM"
+        },
+        {
+            "name": "linux-release-llvm",
+            "inherits": [
+                "release-base",
+                "linux-base",
+                "llvm-base"
+            ],
+            "displayName": "Linux Release LLVM"
+        },
+        {
+            "name": "windows-base",
+            "hidden": true,
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Windows"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "msvc-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_C_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "windows-debug-msvc",
+            "inherits": [
+                "debug-base",
+                "windows-base",
+                "msvc-base"
+            ],
+            "displayName": "Windows Debug MSVC"
+        },
+        {
+            "name": "windows-release-msvc",
+            "inherits": [
+                "release-base",
+                "windows-base",
+                "msvc-base"
+            ],
+            "displayName": "Windows Release MSVC"
+        },
+        {
+            "name": "windows-debug-llvm",
+            "inherits": [
+                "debug-base",
+                "windows-base",
+                "llvm-base"
+            ],
+            "displayName": "Windows Debug LLVM"
+        },
+        {
+            "name": "windows-release-llvm",
+            "inherits": [
+                "release-base",
+                "windows-base",
+                "llvm-base"
+            ],
+            "displayName": "Windows Release LLVM"
+        }
+    ],
+  "buildPresets": [
+    {
+      "name": "linux-debug-gcc",
+      "configurePreset": "linux-debug-gcc"
+    },
+    {
+      "name": "linux-release-gcc",
+      "configurePreset": "linux-release-gcc"
+    },
+    {
+      "name": "linux-debug-llvm",
+      "configurePreset": "linux-debug-llvm"
+    },
+    {
+      "name": "linux-release-llvm",
+      "configurePreset": "linux-release-llvm"
+    },
+    {
+      "name": "windows-debug-msvc",
+      "configurePreset": "windows-debug-msvc"
+    },
+    {
+      "name": "windows-release-msvc",
+      "configurePreset": "windows-release-msvc"
+    },
+    {
+      "name": "windows-debug-llvm",
+      "configurePreset": "windows-debug-llvm"
+    },
+    {
+      "name": "windows-release-llvm",
+      "configurePreset": "windows-release-llvm"
+    }
+  ]
+}

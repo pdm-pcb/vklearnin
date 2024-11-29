@@ -1,0 +1,178 @@
+#include "vklearnin/vklearnin.hpp"
+#include "vklearnin/platform/TargetWindow.hpp"
+
+#include "vklearnin/platform/GLFWtoVKLKeys.hpp"
+
+namespace vkl {
+
+bool TargetWindow::_initialized { false };
+
+// =============================================================================
+bool TargetWindow::init() {
+    if(_initialized) {
+        Log::warn("GLFW already initialized.");
+        return false;
+    }
+
+    if(::glfwInit() == 0) {
+        Log::error("Failed to initialize GLFW");
+        return false;
+    }
+
+    _initialized = true;
+    Log::info("Initialized GLFW {:s}", ::glfwGetVersionString());
+
+    ::glfwSetErrorCallback(TargetWindow::_error_callback);
+
+    // Tell GLFW we'll handle the API
+    ::glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    return true;
+}
+
+// =============================================================================
+bool TargetWindow::shutdown() {
+    if(!_initialized) {
+        Log::error("Cannot shut down GLFW before initializing it.");
+        return false;
+    }
+
+    ::glfwTerminate();
+
+    return true;
+}
+
+// =============================================================================
+bool TargetWindow::create(std::string_view const app_name) {
+    ::glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    // ::glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+
+    _window = ::glfwCreateWindow(
+        320, 240,        // Default size that'll change immediately
+        app_name.data(), // Window title/class/etc
+        nullptr,         // Windowed mode
+        nullptr          // No shared resources
+    );
+
+    if(_window == nullptr) {
+        Log::error("GLFW window creation failed");
+        return false;
+    }
+
+    ::glfwSetWindowSizeLimits(
+        _window,
+        320,            // minimum width
+        240,            // minimum height
+        GLFW_DONT_CARE, // maximum width
+        GLFW_DONT_CARE  // maximum height
+    );
+
+    ::glfwSetKeyCallback(_window, TargetWindow::_key_callback);
+    ::glfwSetWindowIconifyCallback(_window, TargetWindow::_iconify_callback);
+
+    _get_resolution();
+    _size_and_place();
+
+    return true;
+}
+
+// =============================================================================
+bool TargetWindow::destroy() {
+    if(_window == nullptr) {
+        Log::error("Must create target window before calling destroy.");
+        return false;
+    }
+
+    ::glfwDestroyWindow(_window);
+    return true;
+}
+
+// =============================================================================
+bool TargetWindow::poll_events() {
+    ::glfwPollEvents();
+    return static_cast<bool>(::glfwWindowShouldClose(_window));
+}
+
+// =============================================================================
+void TargetWindow::_get_resolution() {
+    auto const *current_mode = ::glfwGetVideoMode(::glfwGetPrimaryMonitor());
+
+    auto const width = static_cast<float>(current_mode->width);
+    auto const height = static_cast<float>(current_mode->height);
+
+    _window_size = vk::Extent2D {
+        .width  = static_cast<uint32_t>(width * 0.75f),
+        .height = static_cast<uint32_t>(height * 0.75f)
+    };
+
+    _screen_center = vk::Offset2D {
+        .x = static_cast<int32_t>(width * 0.5f),
+        .y = static_cast<int32_t>(height * 0.5f)
+    };
+}
+
+// =============================================================================
+void TargetWindow::_size_and_place() {
+    ::glfwSetWindowSize(_window,
+                        static_cast<int>(_window_size.width),
+                        static_cast<int>(_window_size.height));
+
+    auto const half_width  = static_cast<float>(_window_size.width)  * 0.5f;
+    auto const half_height = static_cast<float>(_window_size.height) * 0.5f;
+
+    _window_position = vk::Offset2D {
+        .x = (static_cast<int32_t>(_screen_center.x)
+              - static_cast<int32_t>(half_width)),
+        .y = (static_cast<int32_t>(_screen_center.y)
+              - static_cast<int32_t>(half_height)),
+    };
+
+    ::glfwSetWindowPos(_window,
+                       static_cast<int32_t>(_window_position.x),
+                       static_cast<int32_t>(_window_position.y));
+}
+
+// =============================================================================
+void TargetWindow::_error_callback(int code, char const *message) {
+    Log::error("GLFW Error {}: '{:s}'", code, message);
+}
+
+// =============================================================================
+void TargetWindow::_key_callback(GLFWwindow *window,
+                                 int key, [[maybe_unused]] int scancode,
+                                 int action,  [[maybe_unused]] int mods)
+{
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+        ::glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+}
+
+// =============================================================================
+void TargetWindow::_mouse_move_callback([[maybe_unused]] GLFWwindow* window,
+                                        [[maybe_unused]] double x,
+                                        [[maybe_unused]] double y)
+{ }
+
+// =============================================================================
+void TargetWindow::_mouse_button_callback([[maybe_unused]] GLFWwindow* window,
+                                          [[maybe_unused]] int button,
+                                          [[maybe_unused]] int action,
+                                          [[maybe_unused]] int mods)
+{ }
+
+// =============================================================================
+void TargetWindow::_iconify_callback(GLFWwindow* window, int iconified) {
+    if(iconified == GLFW_TRUE) {
+        Log::trace("Target window minimized.");
+
+        int width = 0, height = 0;
+        do {
+            ::glfwWaitEvents();
+            ::glfwGetFramebufferSize(window, &width, &height);
+        } while(width == 0 || height == 0);
+
+        Log::trace("Target window restored.");
+    }
+}
+
+} // namespace vkl

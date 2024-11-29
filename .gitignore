@@ -1,15 +1,25 @@
 .vs/
 .vscode/
+!.vscode/launch.json
+
 build/
 debug/
 release/
 
-**/vkl_demo
+docs/
+!docs/custom.css
+
+imgui.ini
+
+**/version.hpp
 
 **/*.spv
-**/*.d
+**/*.vert.d
+**/*.frag.d
 
 **/*.ilk
 **/*.pdb
 **/*.exe.manifest
 **/*.exe
+
+memtest.log

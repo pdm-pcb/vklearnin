@@ -1,9 +1,0 @@
-#!/bin/bash
-
-for dir in $(find -type d -iname build -o -iname debug -o -iname release);
-	do rm -rf $dir;
-done
-
-for file in $(find -iname *.spv -o -iname *.vert.d -o -iname *.frag.d -o -iname vkl_demo);
-	do rm -f $file;
-done

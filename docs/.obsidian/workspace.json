@@ -1,52 +1,39 @@
 {
   "main": {
-    "id": "87f08453220a47f6",
+    "id": "4edf6fd92a8ffdd0",
     "type": "split",
     "children": [
       {
-        "id": "2dc56ab1dd3f0136",
+        "id": "b388232e4604566a",
         "type": "tabs",
         "children": [
           {
-            "id": "49adfcd541c9117c",
+            "id": "43cc7af4ac54c389",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "10ShadersAndPipelines.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "213689dcfe9c50ac",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "09RenderPassesAndFramebuffers.md",
+                "file": "01VulkanSetup.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
   },
   "left": {
-    "id": "7d701657be5fc575",
+    "id": "b1b72ce9000ee533",
     "type": "split",
     "children": [
       {
-        "id": "9b03f25e79381392",
+        "id": "f95988b36bdd3415",
         "type": "tabs",
         "children": [
           {
-            "id": "a682f08cc7c17951",
+            "id": "3f4b3b1794d2271b",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -56,7 +43,7 @@
             }
           },
           {
-            "id": "6220fe38cf1d2c80",
+            "id": "5512d905f06f9b3b",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -71,15 +58,7 @@
             }
           },
           {
-            "id": "0ba0f03cdbac49c5",
-            "type": "leaf",
-            "state": {
-              "type": "starred",
-              "state": {}
-            }
-          },
-          {
-            "id": "8b3529b88c0e90fa",
+            "id": "71eec7aa1d6121d3",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -90,23 +69,23 @@
       }
     ],
     "direction": "horizontal",
-    "width": 295.5004348754883
+    "width": 300
   },
   "right": {
-    "id": "de4651be42096052",
+    "id": "add6a2000fe9e3f4",
     "type": "split",
     "children": [
       {
-        "id": "1d4c1c9a2697af71",
+        "id": "3dff10795a6f691c",
         "type": "tabs",
         "children": [
           {
-            "id": "0efb3424c2073121",
+            "id": "f02a5072dad2496e",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "09RenderPassesAndFramebuffers.md",
+                "file": "01VulkanSetup.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,19 +97,19 @@
             }
           },
           {
-            "id": "ee21dd84f8816ede",
+            "id": "09651ee05091a436",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "09RenderPassesAndFramebuffers.md",
+                "file": "01VulkanSetup.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
             }
           },
           {
-            "id": "3c602af72de832cc",
+            "id": "3949de0ea0483dca",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -141,12 +120,12 @@
             }
           },
           {
-            "id": "5333c3e1b1da97b0",
+            "id": "159771c6c001f440",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "09RenderPassesAndFramebuffers.md"
+                "file": "01VulkanSetup.md"
               }
             }
           }
@@ -167,24 +146,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "213689dcfe9c50ac",
+  "active": "43cc7af4ac54c389",
   "lastOpenFiles": [
-    "08Swapchain.md",
-    "07Images.md",
-    "09RenderPassesAndFramebuffers.md",
-    "10ShadersAndPipelines.md",
-    "11VertexBuffers.md",
-    "06DevicesAndQueues.md",
-    "05TargetWindowAndSurface.md",
-    "05CommandQueues.md",
-    "04PhysicalDeviceAndQueueFamilies.md",
-    "04bWin32.md",
-    "04aXCB.md",
-    "03RenderConfig.md",
-    "02APIAndDebugger.md",
-    "01Framework.md",
-    "00zDefinitions.md",
-    "00bSetup.md",
-    "00aIntro.md"
+    "terminology/Instance.md",
+    "01VulkanSetup.md",
+    "terminology"
   ]
 }
