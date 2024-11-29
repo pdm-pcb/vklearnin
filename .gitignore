@@ -16,6 +16,7 @@ imgui.ini
 **/*.spv
 **/*.vert.d
 **/*.frag.d
+**/*.comp.d
 
 **/*.ilk
 **/*.pdb
