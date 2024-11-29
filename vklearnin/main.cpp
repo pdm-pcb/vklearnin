@@ -23,7 +23,10 @@
 
 #define DRAW_TEXTURES
 // #define DRAW_PARTICLES
-#define MSAA
+
+// #define COLOR_PASS
+// #define DEPTH_PASS
+#define MSAA_PASS
 
 using namespace vkl;
 
@@ -69,16 +72,24 @@ static vkGraphicsPipeline graphics_pipeline;
 // render pass stuff -----------------------------------------------------------
 static std::vector<vk::ClearValue> const clear_values {{
     { .color { std::array<float, 4> {{ 0.08f, 0.08f, 0.16f, 1.0f }} }},
+#if defined(DEPTH_PASS) or defined(MSAA_PASS)
     { .depthStencil { .depth = 1.0f, .stencil = 1u } }
+#endif // DEPTH or MSAA
 }};
 
-// static ColorPass color_pass;
-#ifdef MSAA
+#ifdef COLOR_PASS
+static ColorPass color_pass;
+#endif // COLOR_PASS
+
+#ifdef DEPTH_PASS
+static ColorDepthPass color_depth_pass;
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
 static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 static ColorDepthResolvePass color_depth_resolve_pass;
 #else
-static ColorDepthPass color_depth_pass;
-#endif // MSAA
+#endif // MSAA_PASS
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -268,13 +279,18 @@ int main() {
 
         // ---------------------------------------------------------------------
         // begin render pass
-        // color_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
 
-#ifdef MSAA
-        color_depth_resolve_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
-#else
+#ifdef COLOR_PASS
+        color_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+#endif // COLOR_PASS
+
+#ifdef DEPTH_PASS
         color_depth_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
-#endif // MSAA
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
+        color_depth_resolve_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+#endif // MSAA_PASS
 
         graphics_pipeline.bind(gfx_cmd_buffer);
 
@@ -395,9 +411,19 @@ void vulkan_setup() {
 }
 
 void create_render_pass() {
-    // color_pass.create(surface, device);
+#ifdef COLOR_PASS
+    color_pass.create(surface, device);
+#endif // COLOR_PASS
 
-#ifdef MSAA
+#ifdef DEPTH_PASS
+    color_depth_pass.create(
+        surface,
+        vkPhysicalDevice::current_device(),
+        device
+    );
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
     msaa_samples = vkPhysicalDevice::current_device().max_samples();
 
     color_depth_resolve_pass.create(
@@ -406,13 +432,7 @@ void create_render_pass() {
         device,
         msaa_samples
     );
-#else
-    color_depth_pass.create(
-        surface,
-        vkPhysicalDevice::current_device(),
-        device
-    );
-#endif // MSAA
+#endif // MSAA_PASS
 }
 
 void create_swapchain() {
@@ -424,23 +444,27 @@ void create_swapchain() {
     for(uint32_t i = 0u; i < swapchain.image_count(); ++i) {
         frame_buffers[i].create(
 
-            // color_pass.render_pass(), // for color pass only (no depth)
-            // {{ swapchain.image_views()[i].native() }},
+#ifdef COLOR_PASS
+            color_pass.render_pass(), // for color pass only (no depth)
+            {{ swapchain.image_views()[i].native() }},
+#endif // COLOR_PASS
 
-#ifdef MSAA
+#ifdef DEPTH_PASS
+            color_depth_pass.render_pass(), // for color and depth
+            {{
+                swapchain.image_views()[i].native(),
+                color_depth_pass.depth_view().native()
+            }},
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
             color_depth_resolve_pass.render_pass(), // for color, depth, and resolve
             {{
                 color_depth_resolve_pass.multisample_view().native(),
                 color_depth_resolve_pass.depth_view().native(),
                 swapchain.image_views()[i].native(),
             }},
-#else
-            color_depth_pass.render_pass(), // for color and depth
-            {{
-                swapchain.image_views()[i].native(),
-                color_depth_pass.depth_view().native()
-            }},
-#endif // MSAA
+#endif // MSAA_PASS
 
             surface.extent(),
             device
@@ -642,13 +666,17 @@ void create_graphics_pipeline() {
         .add_descriptor_set_layout(texture_descriptor_set_layout.native())
 #endif // DRAW_TEXTURES
 
-        // .add_render_pass(color_pass.render_pass())
+#ifdef COLOR_PASS
+        .add_render_pass(color_pass.render_pass())
+#endif // COLOR_PASS
 
-#ifdef MSAA
-        .add_render_pass(color_depth_resolve_pass.render_pass())
-#else
+#ifdef DEPTH_PASS
         .add_render_pass(color_depth_pass.render_pass())
-#endif // MSAA
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
+        .add_render_pass(color_depth_resolve_pass.render_pass())
+#endif // MSAA_PASS
 
         .create(vkGraphicsPipeline::Config {
                 .viewport_extent = surface.extent(),
@@ -661,11 +689,13 @@ void create_graphics_pipeline() {
                 .topology = vk::PrimitiveTopology::ePointList,
 #endif // DRAW_PARTICLES
 
-#ifdef MSAA
-                .sample_flags = msaa_samples,
-#else
+#if defined(COLOR_PASS) || defined(DEPTH_PASS)
                 .sample_flags = vk::SampleCountFlagBits::e1,
-#endif // MSAA
+#endif // COLOR or DEPTH
+
+#ifdef MSAA_PASS
+                .sample_flags = msaa_samples,
+#endif // MSAA_PASS
 
 #ifdef DRAW_TEXTURES
                 .enable_depth_test = VK_TRUE,
@@ -854,12 +884,17 @@ void destroy_swapchain() {
 }
 
 void destroy_render_pass() {
-#ifdef MSAA
-    color_depth_resolve_pass.destroy();
-#else
+#ifdef COLOR_PASS
+    color_pass.destroy();
+#endif // COLOR_PASS
+
+#ifdef DEPTH_PASS
     color_depth_pass.destroy();
-#endif // MSAA
-    // color_pass.destroy();
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
+    color_depth_resolve_pass.destroy();
+#endif // MSAA_PASS
 }
 
 void vulkan_shutdown() {
@@ -979,11 +1014,13 @@ void recreate_swapchain() {
         fb.destroy();
     }
 
-#ifdef MSAA
-    color_depth_resolve_pass.destroy_swapchain_resources();
-#else
+#ifdef DEPTH_PASS
     color_depth_pass.destroy_swapchain_resources();
-#endif // MSAA
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
+    color_depth_resolve_pass.destroy_swapchain_resources();
+#endif // MSAA_PASS
 
     swapchain.destroy();
 
@@ -995,42 +1032,51 @@ void recreate_swapchain() {
 
     swapchain.create(device, surface);
 
-    // color_pass.update_render_area(surface);
+#ifdef COLOR_PASS
+    color_pass.update_render_area(surface);
+#endif // COLOR_PASS
 
-#ifdef MSAA
-    color_depth_resolve_pass.create_swapchain_resources(
-        surface,
-        vkPhysicalDevice::current_device(),
-        device
-    );
-#else
+#ifdef DEPTH_PASS
     color_depth_pass.create_swapchain_resources(
         surface,
         vkPhysicalDevice::current_device(),
         device
     );
-#endif // MSAA
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
+    color_depth_resolve_pass.create_swapchain_resources(
+        surface,
+        vkPhysicalDevice::current_device(),
+        device
+    );
+#endif // MSAA_PASS
 
     frame_buffers.resize(swapchain.image_count());
     for(uint32_t i = 0u; i < swapchain.image_count(); ++i) {
         frame_buffers[i].create(
 
-            // color_pass.render_pass(),
-            // {{ swapchain.image_views()[i].native() }},
-#ifdef MSAA
+#ifdef COLOR_PASS
+            color_pass.render_pass(),
+            {{ swapchain.image_views()[i].native() }},
+#endif // COLOR_PASS
+
+#ifdef DEPTH_PASS
+            color_depth_pass.render_pass(),
+            {{
+                swapchain.image_views()[i].native(),
+                color_depth_pass.depth_view().native()
+            }},
+#endif // DEPTH_PASS
+
+#ifdef MSAA_PASS
             color_depth_resolve_pass.render_pass(),
             {{
                 color_depth_resolve_pass.multisample_view().native(),
                 color_depth_resolve_pass.depth_view().native(),
                 swapchain.image_views()[i].native(),
             }},
-#else
-            color_depth_pass.render_pass(),
-            {{
-                swapchain.image_views()[i].native(),
-                color_depth_pass.depth_view().native()
-            }},
-#endif // MSAA
+#endif // MSAA_PASS
 
             surface.extent(),
             device

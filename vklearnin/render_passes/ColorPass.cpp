@@ -28,7 +28,7 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
         return false;
     }
 
-    _attachment_descriptions.emplace_back(vk::AttachmentDescription {
+    _attachment_descriptions = {{ vk::AttachmentDescription {
         .flags          = { },
         .format         = surface.format().format,
         .samples        = vk::SampleCountFlagBits::e1,
@@ -38,14 +38,14 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
         .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
         .initialLayout  = vk::ImageLayout::eUndefined,
         .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
-    });
+    }}};
 
-    _color_refs.emplace_back(vk::AttachmentReference {
-        .attachment = static_cast<uint32_t>(_color_refs.size()),
+    _color_refs = {{ vk::AttachmentReference {
+        .attachment = 0u,
         .layout     = vk::ImageLayout::eColorAttachmentOptimal,
-    });
+    }}};
 
-    _subpass_descs.emplace_back(vk::SubpassDescription {
+    _subpass_descriptions = {{ vk::SubpassDescription {
         .flags                   = { },
         .pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
         .inputAttachmentCount    = 0u,
@@ -56,9 +56,9 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
         .pDepthStencilAttachment = nullptr,
         .preserveAttachmentCount = 0u,
         .pPreserveAttachments    = nullptr,
-    });
+    }}};
 
-    _subpass_deps.emplace_back(vk::SubpassDependency {
+    _subpass_deps = {{ vk::SubpassDependency {
         .srcSubpass      = VK_SUBPASS_EXTERNAL,
         .dstSubpass      = 0u,
         .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
@@ -66,11 +66,11 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
         .srcAccessMask   = { },
         .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
         .dependencyFlags = { },
-    });
+    }}};
 
     if(!_render_pass.create(
         _attachment_descriptions,
-        _subpass_descs,
+        _subpass_descriptions,
         _subpass_deps,
         device
     ))
@@ -79,7 +79,7 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
 
         _attachment_descriptions.clear();
         _color_refs.clear();
-        _subpass_descs.clear();
+        _subpass_descriptions.clear();
         _subpass_deps.clear();
 
         return false;
@@ -104,7 +104,7 @@ bool ColorPass::destroy() {
 
     _attachment_descriptions.clear();
     _color_refs.clear();
-    _subpass_descs.clear();
+    _subpass_descriptions.clear();
     _subpass_deps.clear();
 
     _render_area = vk::Rect2D { };

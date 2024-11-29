@@ -50,11 +50,11 @@ private:
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
-    vk::AttachmentReference _color_ref { };
-    vk::AttachmentReference _depth_ref { };
+    std::vector<vk::AttachmentReference> _color_refs;
+    vk::AttachmentReference              _depth_ref { };
 
-    vk::SubpassDescription _subpass_desc { };
-    vk::SubpassDependency  _subpass_dep { };
+    std::vector<vk::SubpassDescription> _subpass_descriptions;
+    std::vector<vk::SubpassDependency>  _subpass_deps;
 
     vk::Rect2D _render_area { };
 

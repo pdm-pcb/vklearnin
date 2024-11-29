@@ -46,7 +46,7 @@ bool ColorDepthResolvePass::create(vkSurface const &surface,
 
     if(!_render_pass.create(
         _attachment_descriptions,
-        {{ _subpass_desc }},
+        _subpass_descriptions,
         _subpass_deps,
         device
     ))
@@ -55,11 +55,11 @@ bool ColorDepthResolvePass::create(vkSurface const &surface,
 
         _attachment_descriptions.clear();
 
-        _multisample_ref = vk::AttachmentReference { };
-        _depth_ref       = vk::AttachmentReference { };
-        _resolve_ref     = vk::AttachmentReference { };
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
 
-        _subpass_desc = vk::SubpassDescription { };
+        _subpass_descriptions.clear();
         _subpass_deps.clear();
 
         _color_format = vk::Format::eUndefined;
@@ -79,11 +79,11 @@ bool ColorDepthResolvePass::create(vkSurface const &surface,
 
         _attachment_descriptions.clear();
 
-        _multisample_ref = vk::AttachmentReference { };
-        _depth_ref       = vk::AttachmentReference { };
-        _resolve_ref     = vk::AttachmentReference { };
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
 
-        _subpass_desc = vk::SubpassDescription { };
+        _subpass_descriptions.clear();
         _subpass_deps.clear();
 
         _render_area = vk::Rect2D { };
@@ -108,11 +108,11 @@ bool ColorDepthResolvePass::destroy() {
 
     _attachment_descriptions.clear();
 
-    _multisample_ref = vk::AttachmentReference { };
-    _depth_ref       = vk::AttachmentReference { };
-    _resolve_ref     = vk::AttachmentReference { };
+    _multisample_refs.clear();
+    _depth_ref   = vk::AttachmentReference { };
+    _resolve_ref = vk::AttachmentReference { };
 
-    _subpass_desc = vk::SubpassDescription { };
+    _subpass_descriptions.clear();
     _subpass_deps.clear();
 
     _render_area = vk::Rect2D { };
@@ -230,10 +230,10 @@ void ColorDepthResolvePass::_init_attachments() {
         .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
     }};
 
-    _multisample_ref = vk::AttachmentReference {
+    _multisample_refs = {{ vk::AttachmentReference {
         .attachment = 0u,
         .layout = vk::ImageLayout::eColorAttachmentOptimal,
-    };
+    }}};
 
     _depth_ref = vk::AttachmentReference {
         .attachment = 1u,
@@ -248,7 +248,7 @@ void ColorDepthResolvePass::_init_attachments() {
 
 // =============================================================================
 void ColorDepthResolvePass::_init_subpasses() {
-    _subpass_desc = vk::SubpassDescription {
+    _subpass_descriptions = {{ vk::SubpassDescription {
         // This subpass is a graphical one
         .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
 
@@ -257,8 +257,8 @@ void ColorDepthResolvePass::_init_subpasses() {
         .pInputAttachments    = nullptr,
 
         // But does have a single color attachment
-        .colorAttachmentCount = 1u,
-        .pColorAttachments   = &_multisample_ref,
+        .colorAttachmentCount = static_cast<uint32_t>(_multisample_refs.size()),
+        .pColorAttachments    = _multisample_refs.data(),
 
         // With whatever MSAA samples we've got
         .pResolveAttachments = &_resolve_ref,
@@ -270,37 +270,24 @@ void ColorDepthResolvePass::_init_subpasses() {
         // between subpasses
         .preserveAttachmentCount = 0u,
         .pPreserveAttachments    = nullptr,
-    };
+    }}};
 
     _subpass_deps = {
         vk::SubpassDependency {
             .srcSubpass = vk::SubpassExternal,
             .dstSubpass = 0u,
 
-            .srcStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests
+            .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput
                             | vk::PipelineStageFlagBits::eLateFragmentTests,
 
-            .dstStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests
-                            | vk::PipelineStageFlagBits::eLateFragmentTests,
+            .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput
+                            | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 
-            .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-
-            .dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-
-            .dependencyFlags = { },
-        },
-        vk::SubpassDependency {
-            .srcSubpass = vk::SubpassExternal,
-            .dstSubpass = 0u,
-
-            .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-
-            .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-
-            .srcAccessMask = { },
+            .srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+                             | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 
             .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
-                             | vk::AccessFlagBits::eColorAttachmentRead,
+                             | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 
             .dependencyFlags = { },
         },

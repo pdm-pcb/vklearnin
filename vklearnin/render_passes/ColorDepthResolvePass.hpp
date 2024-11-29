@@ -52,12 +52,12 @@ private:
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
-    vk::AttachmentReference _multisample_ref { };
-    vk::AttachmentReference _depth_ref       { };
-    vk::AttachmentReference _resolve_ref     { };
+    std::vector<vk::AttachmentReference> _multisample_refs;
+    vk::AttachmentReference              _depth_ref   { };
+    vk::AttachmentReference              _resolve_ref { };
 
-    vk::SubpassDescription _subpass_desc { };
-    std::vector<vk::SubpassDependency> _subpass_deps;
+    std::vector<vk::SubpassDescription> _subpass_descriptions;
+    std::vector<vk::SubpassDependency>  _subpass_deps;
 
     vk::Rect2D _render_area { };
 
