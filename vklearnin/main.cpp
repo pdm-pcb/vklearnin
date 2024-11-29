@@ -208,7 +208,6 @@ int main() {
     uint64_t frame_count = 0u;
 
     while(!target_window.poll_events()) {
-        Log::trace("{}", ++frame_count);
         auto const frame_time = loop_end - loop_start;
         auto const frame_time_s =
             static_cast<float>(frame_time.count()) / 1'000'000'000.0f;
@@ -218,6 +217,8 @@ int main() {
             static_cast<float>(run_time.count()) / 1'000'000'000.0f;
 
         loop_start = loop_end;
+
+        Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
 
 #ifdef DRAW_PARTICLES
         // ---------------------------------------------------------------------
