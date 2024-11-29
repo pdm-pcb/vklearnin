@@ -43,7 +43,7 @@ private:
     static vk::Extent2D       _extent;
     static vk::Offset2D       _offset;
     static vk::PresentModeKHR _present_mode;
-    
+
     static vk::SwapchainCreateInfoKHR _create_info;
     static vk::SwapchainKHR _swapchain;
 

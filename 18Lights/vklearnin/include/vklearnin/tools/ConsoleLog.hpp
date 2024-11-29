@@ -17,7 +17,7 @@ public:
         spdlog::set_level(spdlog::level::trace);
         // The format string requests color, time with milliseconds, thread ID,
         // and the name of the function in which the logging macro was expanded
-        spdlog::set_pattern("%^[%T.%e][ %t ][%!()]: %v%$");
+        spdlog::set_pattern("%^[%T.%e][%t][%!()]: %v%$");
         SPDLOG_INFO("spdlog v{}.{}.{}", SPDLOG_VER_MAJOR,
                                         SPDLOG_VER_MINOR,
                                         SPDLOG_VER_PATCH);

@@ -132,6 +132,7 @@ elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
         target_compile_definitions(
             vklearnin PUBLIC
             "_CRT_SECURE_NO_WARNINGS" # ignore "may be unsafe" warnings
+            "_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING"
             "WIN64" # shun the 32 bit address space
         )
 

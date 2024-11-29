@@ -12,15 +12,6 @@
 // Prevent needing to load every function by hand
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 
-// Platform specific WSI defines
-#if defined(VKL_LINUX)
-    #define VK_USE_PLATFORM_XCB_KHR
-#elif defined(VKL_WINDOWS)
-    #define VK_USE_PLATFORM_WIN32_KHR
-#endif
-
-#include <vulkan/vulkan.hpp>
-
 #if defined(VKL_LINUX)
     #include <xcb/xcb.h>
     #include <xcb/xcb_keysyms.h>
@@ -30,18 +21,15 @@
     #include <X11/keysymdef.h>
     #include <X11/Xlib-xcb.h>
 
+    #define VK_USE_PLATFORM_XCB_KHR
+    #include <vulkan/vulkan.hpp>
     #include <vulkan/vulkan_xcb.h>
 #elif defined(VKL_WINDOWS)
-    #define WIN32_LEAN_AND_MEAN // Probably doesn't do much nowadays
+    #define NOMINMAX
     #include <Windows.h>
-    #undef min // Defining NOMINMAX above doesn't give the desired results with
-    #undef max // how I've got things set up. This is a blunt approach, but
-               // but nobody should be globally defining 'min' and 'max' in the
-               // first place.
-    // Grr...
-    #undef near
-    #undef far
 
+    #define VK_USE_PLATFORM_WIN32_KHR
+    #include <vulkan/vulkan.hpp>
     #include <vulkan/vulkan_win32.h>
 #endif
 

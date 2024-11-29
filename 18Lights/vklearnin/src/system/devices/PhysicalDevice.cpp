@@ -59,7 +59,7 @@ void PhysicalDevice::query_devices(
         if(!_check_features(supported_features, required_features)) {
             CONSOLE_WARN(
                 "{} does not support all required features; skipping",
-                device_props.deviceName
+                *device_props.deviceName
             );
             continue;
         }
@@ -70,7 +70,7 @@ void PhysicalDevice::query_devices(
         if(!_check_extensions(extensions, required_extensions)) {
             CONSOLE_WARN(
                 "{} does not support all required extensions; skipping",
-                device_props.deviceName
+                *device_props.deviceName
             );
             continue;
         }
@@ -80,7 +80,7 @@ void PhysicalDevice::query_devices(
             CONSOLE_WARN(
                 "{} does not support 32-bit signed float for depth image "
                 "format; skipping",
-                device_props.deviceName
+                *device_props.deviceName
             );
             continue;
         }
@@ -202,7 +202,7 @@ void PhysicalDevice::select_device() {
     uint32_t gfx_queue_index = 0u;
     uint32_t present_queue_index = 0u;
 
-    for(uint32_t device_index = 1u;
+    for(uint32_t device_index = 0u;
         device_index < _available_devices.size();
         ++device_index)
     {
@@ -436,7 +436,7 @@ void PhysicalDevice::_store_physical_device(
 
     store.driver_version = std::string(drivers.driverInfo.data());
 
-    store.vkapi_version = fmt::format(
+    store.vkapi_version = std::format(
         "{}.{}.{}",
         VK_API_VERSION_MAJOR(properties.apiVersion),
         VK_API_VERSION_MINOR(properties.apiVersion),
@@ -470,8 +470,11 @@ PhysicalDevice::_print_family_flags([[maybe_unused]] uint32_t const family,
     if(flags & vk::QueueFlagBits::eProtected) {
         flags_stream << "Protected      ";
     }
+    if(flags & vk::QueueFlagBits::eVideoDecodeKHR) {
+        flags_stream << "Video Decode   ";
+    }
 
-    CONSOLE_TRACE("    {}", flags_stream.str());
+    CONSOLE_TRACE("  {}", flags_stream.str());
 #endif // VKL_DEBUG
 }
 

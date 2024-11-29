@@ -504,7 +504,7 @@ void Renderer::_init_descriptor_pool() {
 
 // =============================================================================
 void Renderer::_init_camera_buffers() {
-     _camera_buffers.resize(RenderConfig::swapchain_image_count);
+    _camera_buffers.resize(RenderConfig::swapchain_image_count);
     for(auto &buffer : _camera_buffers) {
         buffer.size = sizeof(CameraData);
         BufferTools::create(

@@ -25,7 +25,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "00zDefinitions.md",
+                "file": "09RenderPassesAndFramebuffers.md",
                 "mode": "source",
                 "source": false
               }
@@ -77,6 +77,14 @@
               "type": "starred",
               "state": {}
             }
+          },
+          {
+            "id": "8b3529b88c0e90fa",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
           }
         ]
       }
@@ -98,7 +106,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "00zDefinitions.md",
+                "file": "09RenderPassesAndFramebuffers.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +123,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "00zDefinitions.md",
+                "file": "09RenderPassesAndFramebuffers.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -138,7 +146,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "00zDefinitions.md"
+                "file": "09RenderPassesAndFramebuffers.md"
               }
             }
           }
@@ -161,15 +169,22 @@
   },
   "active": "213689dcfe9c50ac",
   "lastOpenFiles": [
+    "08Swapchain.md",
+    "07Images.md",
+    "09RenderPassesAndFramebuffers.md",
     "10ShadersAndPipelines.md",
     "11VertexBuffers.md",
-    "09RenderPassesAndFramebuffers.md",
-    "00zDefinitions.md",
-    "08Swapchain.md",
-    "00bSetup.md",
-    "00aIntro.md",
     "06DevicesAndQueues.md",
-    "07Images.md",
-    "02APIAndDebugger.md"
+    "05TargetWindowAndSurface.md",
+    "05CommandQueues.md",
+    "04PhysicalDeviceAndQueueFamilies.md",
+    "04bWin32.md",
+    "04aXCB.md",
+    "03RenderConfig.md",
+    "02APIAndDebugger.md",
+    "01Framework.md",
+    "00zDefinitions.md",
+    "00bSetup.md",
+    "00aIntro.md"
   ]
 }

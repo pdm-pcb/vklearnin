@@ -5,9 +5,6 @@ include(CompileShaders)
 
 find_package(Vulkan REQUIRED)
 
-message(NOTICE "Fetch fmt")
-FetchContent_MakeAvailable(fmt)
-
 message(NOTICE "Fetch spdlog")
 FetchContent_MakeAvailable(spdlog)
 
@@ -57,7 +54,7 @@ target_precompile_headers(
 target_link_libraries(
 	vklearnin PUBLIC
 	Vulkan::Vulkan
-    fmt
+    # fmt
     spdlog
     # glm
     SDL2-static

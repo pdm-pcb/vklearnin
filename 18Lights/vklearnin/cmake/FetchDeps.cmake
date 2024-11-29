@@ -1,24 +1,15 @@
 include(FetchContent)
 
 # ------------------------------------------------------------------------------
-# fmtlib -----------------------------------------------------------------------
-FetchContent_Declare(
-    fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt
-    GIT_TAG a33701196adfad74917046096bf5a2aa0ab0bb50 # 2022-08-27
-    # FIND_PACKAGE_ARGS 9.1.0
-)
-
-# ------------------------------------------------------------------------------
 # spdlog -----------------------------------------------------------------------
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog
-    GIT_TAG ad0e89cbfb4d0c1ce4d097e134eb7be67baebb36 # 2022-11-02
-    # FIND_PACKAGE_ARGS 1.11.0
+    GIT_TAG 7e635fca68d014934b4af8a1cf874f63989352b7 # 2023-07-08
+    # FIND_PACKAGE_ARGS 1.12.0
 )
 
-set(SPDLOG_FMT_EXTERNAL "ON" CACHE BOOL "" FORCE)
+set(SPDLOG_USE_STD_FORMAT "ON" CACHE BOOL "" FORCE)
 
 # ------------------------------------------------------------------------------
 # glm --------------------------------------------------------------------------
@@ -35,8 +26,8 @@ FetchContent_Declare(
 FetchContent_Declare(
     SDL2
     GIT_REPOSITORY https://github.com/libsdl-org/SDL
-    GIT_TAG 07d0f51fa292895443f563f0cbde4cb3802d87fa # 2023-03-06
-    # FIND_PACKAGE_ARGS 2.26.4
+    GIT_TAG 15ead9a40d09a1eb9972215cceac2bf29c9b77f6 # 2023-11-02
+    # FIND_PACKAGE_ARGS 2.6.5
 )
 
 set(SDL2_DISABLE_INSTALL   "ON" CACHE BOOL "" FORCE)

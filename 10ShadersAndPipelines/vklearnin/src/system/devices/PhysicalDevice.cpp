@@ -24,7 +24,7 @@ void PhysicalDevice::query_devices() {
         );
         return;
     }
-    
+
     if(devices.empty()) {
         CONSOLE_CRITICAL("No physical devices found.");
         return;
@@ -39,7 +39,7 @@ void PhysicalDevice::query_devices() {
         // We'll want to know what extensions the devices support
         auto [enumext_result, extensions] =
             device.enumerateDeviceExtensionProperties();
-        
+
         if(enumext_result != vk::Result::eSuccess) {
             CONSOLE_CRITICAL(
                 "Failed to enumerate device extensions: '{}'",
@@ -77,7 +77,7 @@ void PhysicalDevice::query_devices() {
         vk::PhysicalDeviceProperties2KHR physical_props2 {
             .pNext = &driver_props
         };
-        
+
         // Run through what extensions we have until we find the driver info
         for(const auto &extension : extensions) {
             if(strcmp(extension.extensionName,
@@ -115,7 +115,7 @@ void PhysicalDevice::query_devices() {
             {
                 return true;
             }
-            
+
             if((dev_a.type == vk::PhysicalDeviceType::eDiscreteGpu &&
                 dev_b.type == vk::PhysicalDeviceType::eDiscreteGpu) ||
                (dev_a.type == vk::PhysicalDeviceType::eIntegratedGpu &&
@@ -233,7 +233,7 @@ void PhysicalDevice::select_device() {
         CONSOLE_CRITICAL("Could not find a device with support for a graphics "
                          "and present command queues.");
     }
-    
+
     if(gfx_queue_index != present_queue_index) {
         CONSOLE_CRITICAL("Device must support drawing and presenting in a "
                          "single queue.");
@@ -268,7 +268,7 @@ void PhysicalDevice::_store_physical_device(
 
     store.driver_version = std::string(drivers.driverInfo.data());
 
-    store.vkapi_version = fmt::format(
+    store.vkapi_version = std::format(
         "{}.{}.{}",
         VK_API_VERSION_MAJOR(properties.apiVersion),
         VK_API_VERSION_MINOR(properties.apiVersion),
