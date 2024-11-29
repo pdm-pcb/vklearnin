@@ -11,8 +11,9 @@ namespace vkl {
 
 // =============================================================================
 bool ColorDepthResolvePass::create(vkSurface const &surface,
-                            vkPhysicalDevice const &physical_device,
-                            vkDevice const &device)
+                                   vkPhysicalDevice const &physical_device,
+                                   vkDevice const &device,
+                                   vk::SampleCountFlagBits const msaa_samples)
 {
     if(_render_pass.native()) {
         Log::error(
@@ -38,7 +39,7 @@ bool ColorDepthResolvePass::create(vkSurface const &surface,
     }
 
     _color_format = surface.format().format;
-    _msaa_samples = physical_device.max_samples();
+    _msaa_samples = msaa_samples;
 
     _init_attachments();
     _init_subpasses();

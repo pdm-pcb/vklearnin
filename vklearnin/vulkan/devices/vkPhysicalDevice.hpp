@@ -31,16 +31,16 @@ public:
 
     static vkPhysicalDevice const & current_device();
 
-    inline auto const & native()            const { return _handle; }
-    inline std::string_view const name()    const { return _name; }
-    inline auto type()                      const { return _type; }
-    inline auto vram_bytes()                const { return _vram_bytes; }
-    inline auto cmd_queue_index()      const { return _cmd_queue_index; }
-    inline auto compute_queue_index()       const { return _compute_queue_index; }
-    inline auto const & features()          const { return _features; }
-    inline auto const & extensions()        const { return _extensions; }
-    inline auto max_aniso()                 const { return _max_aniso; }
-    inline auto const & max_samples()       const { return _max_samples; }
+    inline auto const & native()         const { return _handle; }
+    inline std::string_view const name() const { return _name; }
+    inline auto type()                   const { return _type; }
+    inline auto vram_bytes()             const { return _vram_bytes; }
+    inline auto cmd_queue_index()        const { return _cmd_queue_index; }
+    inline auto compute_queue_index()    const { return _compute_queue_index; }
+    inline auto const & features()       const { return _features; }
+    inline auto const & extensions()     const { return _extensions; }
+    inline auto max_aniso()              const { return _max_aniso; }
+    inline auto const max_samples()      const { return _max_samples; }
 
 private:
     explicit vkPhysicalDevice(vk::PhysicalDevice const handle);

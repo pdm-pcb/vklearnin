@@ -30,7 +30,8 @@ public:
 
     bool create(vkSurface const &surface,
                 vkPhysicalDevice const &physical_device,
-                vkDevice const &device);
+                vkDevice const &device,
+                vk::SampleCountFlagBits const msaa_samples);
     bool destroy();
 
     void destroy_swapchain_resources();

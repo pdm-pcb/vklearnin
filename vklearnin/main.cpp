@@ -23,6 +23,7 @@
 
 #define DRAW_TEXTURES
 // #define DRAW_PARTICLES
+#define MSAA
 
 using namespace vkl;
 
@@ -72,8 +73,12 @@ static std::vector<vk::ClearValue> const clear_values {{
 }};
 
 // static ColorPass color_pass;
+#ifdef MSAA
+static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+static ColorDepthResolvePass color_depth_resolve_pass;
+#else
 static ColorDepthPass color_depth_pass;
-// static ColorDepthResolvePass color_depth_resolve_pass;
+#endif // MSAA
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -264,8 +269,12 @@ int main() {
         // ---------------------------------------------------------------------
         // begin render pass
         // color_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+
+#ifdef MSAA
+        color_depth_resolve_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+#else
         color_depth_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
-        // color_depth_resolve_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+#endif // MSAA
 
         graphics_pipeline.bind(gfx_cmd_buffer);
 
@@ -388,17 +397,22 @@ void vulkan_setup() {
 void create_render_pass() {
     // color_pass.create(surface, device);
 
+#ifdef MSAA
+    msaa_samples = vkPhysicalDevice::current_device().max_samples();
+
+    color_depth_resolve_pass.create(
+        surface,
+        vkPhysicalDevice::current_device(),
+        device,
+        msaa_samples
+    );
+#else
     color_depth_pass.create(
         surface,
         vkPhysicalDevice::current_device(),
         device
     );
-
-    // color_depth_resolve_pass.create(
-    //     surface,
-    //     vkPhysicalDevice::current_device(),
-    //     device
-    // );
+#endif // MSAA
 }
 
 void create_swapchain() {
@@ -413,18 +427,20 @@ void create_swapchain() {
             // color_pass.render_pass(), // for color pass only (no depth)
             // {{ swapchain.image_views()[i].native() }},
 
+#ifdef MSAA
+            color_depth_resolve_pass.render_pass(), // for color, depth, and resolve
+            {{
+                color_depth_resolve_pass.multisample_view().native(),
+                color_depth_resolve_pass.depth_view().native(),
+                swapchain.image_views()[i].native(),
+            }},
+#else
             color_depth_pass.render_pass(), // for color and depth
             {{
                 swapchain.image_views()[i].native(),
                 color_depth_pass.depth_view().native()
             }},
-
-            // color_depth_resolve_pass.render_pass(), // for color, depth, and resolve
-            // {{
-            //     color_depth_resolve_pass.multisample_view().native(),
-            //     color_depth_resolve_pass.depth_view().native(),
-            //     swapchain.image_views()[i].native(),
-            // }},
+#endif // MSAA
 
             surface.extent(),
             device
@@ -627,8 +643,12 @@ void create_graphics_pipeline() {
 #endif // DRAW_TEXTURES
 
         // .add_render_pass(color_pass.render_pass())
+
+#ifdef MSAA
+        .add_render_pass(color_depth_resolve_pass.render_pass())
+#else
         .add_render_pass(color_depth_pass.render_pass())
-        // .add_render_pass(color_depth_resolve_pass.render_pass())
+#endif // MSAA
 
         .create(vkGraphicsPipeline::Config {
                 .viewport_extent = surface.extent(),
@@ -641,8 +661,11 @@ void create_graphics_pipeline() {
                 .topology = vk::PrimitiveTopology::ePointList,
 #endif // DRAW_PARTICLES
 
+#ifdef MSAA
+                .sample_flags = msaa_samples,
+#else
                 .sample_flags = vk::SampleCountFlagBits::e1,
-                // .sample_flags = vkPhysicalDevice::current_device().max_samples(),
+#endif // MSAA
 
 #ifdef DRAW_TEXTURES
                 .enable_depth_test = VK_TRUE,
@@ -831,8 +854,11 @@ void destroy_swapchain() {
 }
 
 void destroy_render_pass() {
-    // color_depth_resolve_pass.destroy();
+#ifdef MSAA
+    color_depth_resolve_pass.destroy();
+#else
     color_depth_pass.destroy();
+#endif // MSAA
     // color_pass.destroy();
 }
 
@@ -953,8 +979,11 @@ void recreate_swapchain() {
         fb.destroy();
     }
 
+#ifdef MSAA
+    color_depth_resolve_pass.destroy_swapchain_resources();
+#else
     color_depth_pass.destroy_swapchain_resources();
-    // color_depth_resolve_pass.destroy_swapchain_resources();
+#endif // MSAA
 
     swapchain.destroy();
 
@@ -968,17 +997,19 @@ void recreate_swapchain() {
 
     // color_pass.update_render_area(surface);
 
+#ifdef MSAA
+    color_depth_resolve_pass.create_swapchain_resources(
+        surface,
+        vkPhysicalDevice::current_device(),
+        device
+    );
+#else
     color_depth_pass.create_swapchain_resources(
         surface,
         vkPhysicalDevice::current_device(),
         device
     );
-
-    // color_depth_resolve_pass.create_swapchain_resources(
-    //     surface,
-    //     vkPhysicalDevice::current_device(),
-    //     device
-    // );
+#endif // MSAA
 
     frame_buffers.resize(swapchain.image_count());
     for(uint32_t i = 0u; i < swapchain.image_count(); ++i) {
@@ -986,19 +1017,20 @@ void recreate_swapchain() {
 
             // color_pass.render_pass(),
             // {{ swapchain.image_views()[i].native() }},
-
+#ifdef MSAA
+            color_depth_resolve_pass.render_pass(),
+            {{
+                color_depth_resolve_pass.multisample_view().native(),
+                color_depth_resolve_pass.depth_view().native(),
+                swapchain.image_views()[i].native(),
+            }},
+#else
             color_depth_pass.render_pass(),
             {{
                 swapchain.image_views()[i].native(),
                 color_depth_pass.depth_view().native()
             }},
-
-            // color_depth_resolve_pass.render_pass(),
-            // {{
-            //     color_depth_resolve_pass.multisample_view().native(),
-            //     color_depth_resolve_pass.depth_view().native(),
-            //     swapchain.image_views()[i].native(),
-            // }},
+#endif // MSAA
 
             surface.extent(),
             device
