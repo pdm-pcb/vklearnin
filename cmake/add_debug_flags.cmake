@@ -2,7 +2,7 @@ function(add_debug_flags)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             add_compile_options(
-                "-Od"    # Debug-safe optimization
+                "-Og"    # Debug-safe optimization
                 "-ggdb3" # All the gdb symbol data
             #     "-fsanitize=address"
             # )
