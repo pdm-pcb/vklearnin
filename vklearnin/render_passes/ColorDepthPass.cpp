@@ -192,7 +192,7 @@ void ColorDepthPass::_init_attachments() {
             .format         = _color_format,
             .samples        = vk::SampleCountFlagBits::e1,
             .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eDontCare,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
             .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
             .initialLayout  = vk::ImageLayout::eUndefined,
