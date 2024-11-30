@@ -11,7 +11,8 @@
 namespace vkl {
 
 // =============================================================================
-bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface) {
+bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface,
+                         uint32_t const min_image_offset) {
     if(_handle) {
         Log::error("Swapchain {} already exists", _handle);
         return false;
@@ -30,7 +31,22 @@ bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface) {
     _device = &device;
     _surface = &surface;
 
-    _image_count = _surface->min_image_count() + 1;
+    _image_count = _surface->min_image_count() + min_image_offset;
+
+    if(_image_count > _surface->max_image_count()) {
+        Log::error(
+            "Requested swapchain image count {} exceeds maximum surface image "
+            "count {}.",
+            _image_count,
+            _surface->max_image_count()
+        );
+
+        _device = nullptr;
+        _surface = nullptr;
+        _image_count = 0u;
+
+        return false;
+    }
 
     _images.resize(_image_count);
     _image_views.resize(_image_count);

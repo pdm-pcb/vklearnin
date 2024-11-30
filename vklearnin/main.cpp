@@ -710,17 +710,28 @@ void create_particle_descriptors() {
     std::vector<Particle> particles;
     particles.resize(PARTICLE_COUNT);
 
-    std::default_random_engine rengine((unsigned)time(nullptr));
-    std::uniform_real_distribution<float> rdist(0.0f, 1.0f);
+    auto const seed = static_cast<uint32_t>(::time(nullptr));
+    std::default_random_engine random_engine(seed);
+    std::uniform_real_distribution<float> zero_to_one(0.0f, 1.0f);
 
     for(auto &particle : particles) {
-        float r = 0.25f * ::sqrt(rdist(rengine));
-        float theta = rdist(rengine) * 2 * 3.14159265358979323846;
-        float x = r * ::cos(theta) * surface.aspect_ratio();
-        float y = r * ::sin(theta);
+        float const r = ::sqrtf(zero_to_one(random_engine)) * 0.25f;
+
+        float const theta = zero_to_one(random_engine)
+                            * 2.0f * std::numbers::pi_v<float>;
+
+        float const x = r * ::cosf(theta) * surface.aspect_ratio();
+
+        float const y = r * ::sinf(theta);
+
         particle.position = glm::vec2(x, y);
-        particle.velocity = glm::normalize(glm::vec2(x,y)) * 0.5f;
-        particle.color = glm::vec4(rdist(rengine), rdist(rengine), rdist(rengine), 1.0f);
+
+        particle.velocity = glm::normalize(particle.position) * 0.5f;
+
+        particle.color = glm::vec4(zero_to_one(random_engine),
+                                   zero_to_one(random_engine),
+                                   zero_to_one(random_engine),
+                                   1.0f);
     }
 
     particle_ubos.resize(swapchain.image_count());
@@ -910,7 +921,10 @@ void vulkan_shutdown() {
     instance.destroy();
 }
 
-void run_particle_compute(vkFrameSync const &compute_sync, vkCmdBuffer const &cmd_buffer, float const frame_time_s) {
+void run_particle_compute(vkFrameSync const &compute_sync,
+                          vkCmdBuffer const &cmd_buffer,
+                          float const frame_time_s)
+{
     compute_sync.wait_and_reset();
 
     cmd_buffer.begin_one_time_submit();

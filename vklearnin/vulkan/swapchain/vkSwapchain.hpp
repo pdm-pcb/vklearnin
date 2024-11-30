@@ -24,7 +24,8 @@ public:
     vkSwapchain & operator=(vkSwapchain &&) = delete;
     vkSwapchain & operator=(vkSwapchain const &) = delete;
 
-    bool create(vkDevice const &device, vkSurface const &surface);
+    bool create(vkDevice const &device, vkSurface const &surface,
+                uint32_t min_image_offset = 0u);
     bool destroy();
 
     uint32_t acquire_next_image(vk::Semaphore const &signal_sem) const;

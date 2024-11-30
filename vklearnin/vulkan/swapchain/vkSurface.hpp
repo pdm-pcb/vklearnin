@@ -32,6 +32,7 @@ public:
 
     inline auto const & native()  const { return _handle; }
     inline auto min_image_count() const { return _min_image_count; }
+    inline auto max_image_count() const { return _max_image_count; }
     inline auto const & extent()  const { return _extent; }
     inline auto const & format()  const { return _format; }
     inline auto present_mode()    const { return _present_mode; }
@@ -46,6 +47,7 @@ private:
     vk::Extent2D _extent          { };
     float        _aspect_ratio    { 0.0f };
     uint32_t     _min_image_count { 0u };
+    uint32_t     _max_image_count { 0u };
 
     vk::SurfaceFormatKHR _format       { vk::Format::eUndefined };
     vk::PresentModeKHR   _present_mode { vk::PresentModeKHR::eImmediate };

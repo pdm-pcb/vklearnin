@@ -7,6 +7,7 @@
 #include <bitset>
 #include <chrono>
 #include <random>
+#include <numbers>
 
 // Allow for the use of designated initializers
 // https://github.com/KhronosGroup/Vulkan-Hpp#designated-initializers

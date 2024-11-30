@@ -25,9 +25,9 @@ target_link_libraries(
 
 file(
     GLOB shader_sources
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.comp"
+    "${CMAKE_PROJECT_DIR}/assets/shaders/*.vert"
+    "${CMAKE_PROJECT_DIR}/assets/shaders/*.frag"
+    "${CMAKE_PROJECT_DIR}/assets/shaders/*.comp"
 )
 
 include("compile_shaders")

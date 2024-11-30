@@ -40,7 +40,7 @@ public:
     inline auto const & features()       const { return _features; }
     inline auto const & extensions()     const { return _extensions; }
     inline auto max_aniso()              const { return _max_aniso; }
-    inline auto const max_samples()      const { return _max_samples; }
+    inline auto max_samples()            const { return _max_samples; }
 
 private:
     explicit vkPhysicalDevice(vk::PhysicalDevice const handle);
