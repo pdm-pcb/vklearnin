@@ -30,6 +30,10 @@
 
 using namespace vkl;
 
+// app stuff -------------------------------------------------------------------
+static std::string const app_name = "Demo";
+static uint32_t const app_version = 010u;
+
 // system stuff ----------------------------------------------------------------
 static vkInstance instance;
 static TargetWindow target_window;
@@ -384,11 +388,11 @@ int main() {
 // =============================================================================
 void vulkan_setup() {
     // instance ----------------------------------------------------------------
-    instance.create(instance_config, VKL_NAME, 010u);
+    instance.create(instance_config, app_name, app_version);
 
     // target window, surface, and physical device -----------------------------
     TargetWindow::init();
-    target_window.create(std::format("{} v{}", VKL_NAME, VKL_VERSION_STRING));
+    target_window.create(app_name);
 
     surface.create(target_window, instance, { .enable_vsync = true });
 
