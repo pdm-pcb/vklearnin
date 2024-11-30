@@ -126,7 +126,7 @@ bool Plane::bind(vkCmdBuffer const &cmd_buffer) {
     cmd_buffer.native().bindVertexBuffers(
         0u,
         {{ _vertex_buffer.native() }},
-        {{ 0u }}
+        { 0u }
     );
 
     cmd_buffer.native().bindIndexBuffer(

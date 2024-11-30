@@ -22,7 +22,7 @@ add_compile_definitions(
     "VKL_VK_TARGET_MAJOR=${VKL_VK_TARGET_MAJOR}"
     "VKL_VK_TARGET_MINOR=${VKL_VK_TARGET_MINOR}"
 )
-find_package(Vulkan ${VK_TARGET_VERSION} REQUIRED)
+find_package(Vulkan ${VKL_VK_TARGET_VERSION} REQUIRED)
 
 # Where we keep the helpful extra CMake
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -42,14 +42,12 @@ include("fetch_spdlog")
 include("fetch_glfw3")
 include("fetch_glm")
 include("fetch_spirv_reflect")
-include("fetch_spirv_cross")
 
 fetch_fmt()
 fetch_spdlog()
 fetch_glfw3()
 fetch_glm()
 fetch_spirv_reflect()
-# fetch_spirv_cross()
 
 add_subdirectory(third_party)
 
