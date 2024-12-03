@@ -5,7 +5,7 @@ function(fetch_glfw3)
     FetchContent_Declare(
         glfw3 SYSTEM
         GIT_REPOSITORY https://github.com/glfw/glfw/
-        GIT_TAG 7b6aead9fb88b3623e3b3725ebb42670cbe4c579
+        GIT_TAG 7b6aead9fb88b3623e3b3725ebb42670cbe4c579 # 2024-02-23
         # GIT_PROGRESS TRUE
         FIND_PACKAGE_ARGS 3.4
     )

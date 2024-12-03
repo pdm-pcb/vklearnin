@@ -5,7 +5,7 @@ function(fetch_fmt)
     FetchContent_Declare(
         fmt SYSTEM
         GIT_REPOSITORY https://github.com/fmtlib/fmt/
-        GIT_TAG 0c9fce2ffefecfdce794e1859584e25877b7b592
+        GIT_TAG 0c9fce2ffefecfdce794e1859584e25877b7b592 # 2024-07-20
         # GIT_PROGRESS TRUE
         FIND_PACKAGE_ARGS 11.0
     )

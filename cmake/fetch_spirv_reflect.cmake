@@ -5,8 +5,9 @@ function(fetch_spirv_reflect)
     FetchContent_Declare(
         SPIRV-Reflect SYSTEM
         GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect/
-        GIT_TAG b4dc70d8e6ac30c719a2d05b8ad05e1d277c92b4 # 2024-04-27
+        GIT_TAG 8542f37bd9bb202e6c49dc6a9da364c58c34d2a4 # 2024-08-24
         # GIT_PROGRESS TRUE
+        FIND_PACKAGE_ARGS 1.3.296
     )
 
     set(SPIRV_REFLECT_EXECUTABLE     "OFF" CACHE BOOL "" FORCE)
