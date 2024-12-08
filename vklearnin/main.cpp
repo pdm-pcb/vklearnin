@@ -11,8 +11,8 @@
 #include "vklearnin/vulkan/pipelines/vkComputePipeline.hpp"
 
 #include "vklearnin/render_passes/ColorPass.hpp"
-#include "vklearnin/render_passes/ColorDepthPass.hpp"
-#include "vklearnin/render_passes/ColorDepthResolvePass.hpp"
+#include "vklearnin/render_passes/DepthPass.hpp"
+#include "vklearnin/render_passes/ResolvePass.hpp"
 
 #include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
@@ -86,12 +86,12 @@ static ColorPass color_pass;
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-static ColorDepthPass color_depth_pass;
+static DepthPass color_depth_pass;
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
 static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
-static ColorDepthResolvePass color_depth_resolve_pass;
+static ResolvePass color_depth_resolve_pass;
 #else
 #endif // MSAA_PASS
 

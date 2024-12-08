@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/render_passes/ColorDepthPass.hpp"
+#include "vklearnin/render_passes/ResolvePass.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
 #include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
@@ -10,9 +10,10 @@
 namespace vkl {
 
 // =============================================================================
-bool ColorDepthPass::create(vkSurface const &surface,
-                            vkPhysicalDevice const &physical_device,
-                            vkDevice const &device)
+bool ResolvePass::create(vkSurface const &surface,
+                         vkPhysicalDevice const &physical_device,
+                         vkDevice const &device,
+                         vk::SampleCountFlagBits const msaa_samples)
 {
     if(_render_pass.native()) {
         Log::error(
@@ -23,12 +24,12 @@ bool ColorDepthPass::create(vkSurface const &surface,
     }
 
     if(!surface.native()) {
-        Log::error("Cannot create color depth pass with invalid surface.");
+        Log::error("Cannot create color depth resolve pass with invalid surface.");
         return false;
     }
 
     if(!device.native()) {
-        Log::error("Cannot create color depth pass with invalid device.");
+        Log::error("Cannot create color depth resolve pass with invalid device.");
         return false;
     }
 
@@ -38,6 +39,7 @@ bool ColorDepthPass::create(vkSurface const &surface,
     }
 
     _color_format = surface.format().format;
+    _msaa_samples = msaa_samples;
 
     _init_attachments();
     _init_subpasses();
@@ -49,12 +51,13 @@ bool ColorDepthPass::create(vkSurface const &surface,
         device
     ))
     {
-        Log::error("Failed to create color depth pass.");
+        Log::error("Failed to create color depth resolve pass.");
 
         _attachment_descriptions.clear();
 
-        _color_refs.clear();
-        _depth_ref = vk::AttachmentReference { };
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
 
         _subpass_descriptions.clear();
         _subpass_deps.clear();
@@ -70,12 +73,15 @@ bool ColorDepthPass::create(vkSurface const &surface,
         .extent = surface.extent()
     };
 
+    _create_multisample_buffer(physical_device, device);
+
     if(!_create_depth_buffer(physical_device, device)) {
 
         _attachment_descriptions.clear();
 
-        _color_refs.clear();
-        _depth_ref = vk::AttachmentReference { };
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
 
         _subpass_descriptions.clear();
         _subpass_deps.clear();
@@ -92,9 +98,9 @@ bool ColorDepthPass::create(vkSurface const &surface,
 }
 
 // =============================================================================
-bool ColorDepthPass::destroy() {
+bool ResolvePass::destroy() {
     if(!_render_pass.native()) {
-        Log::error("Create color depth pass before calling destroy.");
+        Log::error("Create color depth resolve pass before calling destroy.");
         return false;
     }
 
@@ -102,8 +108,9 @@ bool ColorDepthPass::destroy() {
 
     _attachment_descriptions.clear();
 
-    _color_refs.clear();
-    _depth_ref = vk::AttachmentReference { };
+    _multisample_refs.clear();
+    _depth_ref   = vk::AttachmentReference { };
+    _resolve_ref = vk::AttachmentReference { };
 
     _subpass_descriptions.clear();
     _subpass_deps.clear();
@@ -113,23 +120,25 @@ bool ColorDepthPass::destroy() {
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
 
+    _destroy_multisample_buffer();
     _destroy_depth_buffer();
 
     return true;
 }
 
 // =============================================================================
-void ColorDepthPass::destroy_swapchain_resources() {
+void ResolvePass::destroy_swapchain_resources() {
     _render_area = vk::Rect2D { };
 
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
 
+    _destroy_multisample_buffer();
     _destroy_depth_buffer();
 }
 
 // =============================================================================
-void ColorDepthPass::create_swapchain_resources(
+void ResolvePass::create_swapchain_resources(
     vkSurface const &surface,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
@@ -142,13 +151,15 @@ void ColorDepthPass::create_swapchain_resources(
         .extent = surface.extent()
     };
 
+    _create_multisample_buffer(physical_device, device);
     _create_depth_buffer(physical_device, device);
 }
 
 // =============================================================================
-void ColorDepthPass::begin(vkFrameBuffer const &frame_buffer,
-                           std::span<vk::ClearValue const> const clear_values,
-                           vkCmdBuffer const &cmd_buffer)
+void ResolvePass::begin(
+    vkFrameBuffer const &frame_buffer,
+    std::span<vk::ClearValue const> const clear_values,
+    vkCmdBuffer const &cmd_buffer)
 {
     auto const begin_info = vk::RenderPassBeginInfo {
         .pNext = nullptr,
@@ -164,8 +175,7 @@ void ColorDepthPass::begin(vkFrameBuffer const &frame_buffer,
 }
 
 // =============================================================================
-bool ColorDepthPass::_find_depth_format(vkPhysicalDevice const &physical_device)
-{
+bool ResolvePass::_find_depth_format(vkPhysicalDevice const &physical_device) {
     static std::array<vk::Format const, 2> const depth_formats {
         vk::Format::eD32SfloatS8Uint, // One of these two will always be
         vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
@@ -185,33 +195,40 @@ bool ColorDepthPass::_find_depth_format(vkPhysicalDevice const &physical_device)
 }
 
 // =============================================================================
-void ColorDepthPass::_init_attachments() {
-    _attachment_descriptions = {
-        vk::AttachmentDescription {
-            // color buffer attachment description
-            .format         = _color_format,
-            .samples        = vk::SampleCountFlagBits::e1,
-            .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eStore,
-            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-            .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
-        },
-        vk::AttachmentDescription {
-            // depth buffer attachment description
-            .format         = _depth_format,
-            .samples        = vk::SampleCountFlagBits::e1,
-            .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eDontCare,
-            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-            .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        }
-    };
+void ResolvePass::_init_attachments() {
+    _attachment_descriptions = {{
+        // multisample buffer attachment description
+        .format         = _color_format,
+        .samples        = _msaa_samples,
+        .loadOp         = vk::AttachmentLoadOp::eClear,
+        .storeOp        = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
+    },
+    {   // depth buffer attachment description
+        .format         = _depth_format,
+        .samples        = _msaa_samples,
+        .loadOp         = vk::AttachmentLoadOp::eClear,
+        .storeOp        = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    },
+    {   // resolve attachment description
+        .format         = _color_format,
+        .samples        = vk::SampleCountFlagBits::e1,
+        .loadOp         = vk::AttachmentLoadOp::eDontCare,
+        .storeOp        = vk::AttachmentStoreOp::eStore,
+        .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout  = vk::ImageLayout::eUndefined,
+        .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
+    }};
 
-    _color_refs = {{ vk::AttachmentReference {
+    _multisample_refs = {{ vk::AttachmentReference {
         .attachment = 0u,
         .layout = vk::ImageLayout::eColorAttachmentOptimal,
     }}};
@@ -220,10 +237,15 @@ void ColorDepthPass::_init_attachments() {
         .attachment = 1u,
         .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     };
+
+    _resolve_ref = vk::AttachmentReference {
+        .attachment = 2u,
+        .layout = vk::ImageLayout::eColorAttachmentOptimal,
+    };
 }
 
 // =============================================================================
-void ColorDepthPass::_init_subpasses() {
+void ResolvePass::_init_subpasses() {
     _subpass_descriptions = {{ vk::SubpassDescription {
         // This subpass is a graphical one
         .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
@@ -233,11 +255,11 @@ void ColorDepthPass::_init_subpasses() {
         .pInputAttachments    = nullptr,
 
         // But does have a single color attachment
-        .colorAttachmentCount = static_cast<uint32_t>(_color_refs.size()),
-        .pColorAttachments    = _color_refs.data(),
+        .colorAttachmentCount = static_cast<uint32_t>(_multisample_refs.size()),
+        .pColorAttachments    = _multisample_refs.data(),
 
-        // With no MSAA samples
-        .pResolveAttachments = nullptr,
+        // With whatever MSAA samples we've got
+        .pResolveAttachments = &_resolve_ref,
 
         // With a depth stencil
         .pDepthStencilAttachment = &_depth_ref,
@@ -248,40 +270,83 @@ void ColorDepthPass::_init_subpasses() {
         .pPreserveAttachments    = nullptr,
     }}};
 
-    _subpass_deps = {{ vk::SubpassDependency {
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .dstSubpass = 0u,
+    _subpass_deps = {
+        vk::SubpassDependency {
+            .srcSubpass = vk::SubpassExternal,
+            .dstSubpass = 0u,
 
-        .srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput
-                         | vk::PipelineStageFlagBits::eLateFragmentTests,
+            .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput
+                            | vk::PipelineStageFlagBits::eLateFragmentTests,
 
-        .dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput
-                         | vk::PipelineStageFlagBits::eEarlyFragmentTests,
+            .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput
+                            | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 
-        .srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+            .srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+                             | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 
-        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
-                         | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+            .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+                             | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 
-        .dependencyFlags = { },
-    }}};
-
-
+            .dependencyFlags = { },
+        },
+    };
 }
 
 // =============================================================================
-bool
-ColorDepthPass::_create_depth_buffer(vkPhysicalDevice const &physical_device,
-                                     vkDevice const &device)
+bool ResolvePass::_create_multisample_buffer(
+    vkPhysicalDevice const &physical_device,
+    vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
-        .samples      = vk::SampleCountFlagBits::e1,
+        .samples      = _msaa_samples,
+        .usage_flags  = (vk::ImageUsageFlagBits::eColorAttachment |
+                         vk::ImageUsageFlagBits::eTransientAttachment),
+        .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
+    };
+
+    Log::trace("Creating multisample buffer for color depth resolve pass");
+
+    _multisample_buffer.create(
+        _render_area.extent,
+        _color_format,
+        details,
+        physical_device,
+        device
+    );
+
+    _multisample_view.create(
+        vkImageView::Details {
+            .image        = _multisample_buffer.native(),
+            .format       = _multisample_buffer.format(),
+            .type         = vk::ImageViewType::e2D,
+            .aspect_flags = vk::ImageAspectFlagBits::eColor
+        },
+        device
+    );
+
+    return true;
+}
+
+// =============================================================================
+void ResolvePass::_destroy_multisample_buffer() {
+    _multisample_view.destroy();
+    _multisample_buffer.destroy();
+}
+
+// =============================================================================
+bool ResolvePass::_create_depth_buffer(
+    vkPhysicalDevice const &physical_device,
+    vkDevice const &device)
+{
+    vkImage::Details const details {
+        .type         = vk::ImageType::e2D,
+        .samples      = _msaa_samples,
         .usage_flags  = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    Log::trace("Creating depth buffer for color depth pass");
+    Log::trace("Creating depth buffer for color depth resolve pass");
 
     if(!_depth_buffer.create(
         _render_area.extent,
@@ -314,7 +379,7 @@ ColorDepthPass::_create_depth_buffer(vkPhysicalDevice const &physical_device,
 }
 
 // =============================================================================
-void ColorDepthPass::_destroy_depth_buffer() {
+void ResolvePass::_destroy_depth_buffer() {
     _depth_view.destroy();
     _depth_buffer.destroy();
 }

@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RENDERPASSES_COLORDEPTHRESOLVEPASS_HPP
-#define VKLEARNIN_RENDERPASSES_COLORDEPTHRESOLVEPASS_HPP
+#ifndef VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
+#define VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
 
 #include "vklearnin/pch.hpp"
 
@@ -17,21 +17,20 @@ class vkCmdBuffer;
 class vkImage;
 class vkImageView;
 
-class ColorDepthResolvePass final {
+class DepthPass final {
 public:
-    ColorDepthResolvePass() = default;
-    ~ColorDepthResolvePass() = default;
+    DepthPass() = default;
+    ~DepthPass() = default;
 
-    ColorDepthResolvePass(ColorDepthResolvePass &&) = delete;
-    ColorDepthResolvePass(ColorDepthResolvePass const &) = delete;
+    DepthPass(DepthPass &&) = delete;
+    DepthPass(DepthPass const &) = delete;
 
-    ColorDepthResolvePass & operator=(ColorDepthResolvePass &&) = delete;
-    ColorDepthResolvePass & operator=(ColorDepthResolvePass const &) = delete;
+    DepthPass & operator=(DepthPass &&) = delete;
+    DepthPass & operator=(DepthPass const &) = delete;
 
     bool create(vkSurface const &surface,
                 vkPhysicalDevice const &physical_device,
-                vkDevice const &device,
-                vk::SampleCountFlagBits const msaa_samples);
+                vkDevice const &device);
     bool destroy();
 
     void destroy_swapchain_resources();
@@ -43,18 +42,16 @@ public:
                std::span<vk::ClearValue const> const clear_values,
                vkCmdBuffer const &cmd_buffer);
 
-    inline auto const & render_pass()      const { return _render_pass; }
-    inline auto const & multisample_view() const { return _multisample_view; }
-    inline auto const & depth_view()       const { return _depth_view; }
+    inline auto const & render_pass() const { return _render_pass; }
+    inline auto const & depth_view() const { return _depth_view; }
 
 private:
     vkRenderPass _render_pass;
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
-    std::vector<vk::AttachmentReference> _multisample_refs;
-    vk::AttachmentReference              _depth_ref   { };
-    vk::AttachmentReference              _resolve_ref { };
+    std::vector<vk::AttachmentReference> _color_refs;
+    vk::AttachmentReference              _depth_ref { };
 
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency>  _subpass_deps;
@@ -63,11 +60,6 @@ private:
 
     vk::Format _color_format { vk::Format::eUndefined };
     vk::Format _depth_format { vk::Format::eUndefined };
-
-    vk::SampleCountFlagBits _msaa_samples { };
-
-    vkImage     _multisample_buffer;
-    vkImageView _multisample_view;
 
     vkImage     _depth_buffer;
     vkImageView _depth_view;
@@ -79,10 +71,6 @@ private:
     void _init_attachments();
     void _init_subpasses();
 
-    bool _create_multisample_buffer(vkPhysicalDevice const &physical_device,
-                                    vkDevice const &device);
-    void _destroy_multisample_buffer();
-
     bool _create_depth_buffer(vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
@@ -90,5 +78,4 @@ private:
 
 } // namespace vkl
 
-
-#endif // VKLEARNIN_RENDERPASSES_COLORDEPTHRESOLVEPASS_HPP
+#endif // VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
