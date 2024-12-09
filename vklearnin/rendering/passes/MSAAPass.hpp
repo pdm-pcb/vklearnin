@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RENDERPASSES_RESOLVEPASS_HPP
-#define VKLEARNIN_RENDERPASSES_RESOLVEPASS_HPP
+#ifndef VKLEARNIN_RENDERING_PASSES_MSAAPASS_HPP
+#define VKLEARNIN_RENDERING_PASSES_MSAAPASS_HPP
 
 #include "vklearnin/pch.hpp"
 
@@ -12,26 +12,23 @@ namespace vkl {
 class vkSurface;
 class vkPhysicalDevice;
 class vkDevice;
-class vkFrameBuffer;
-class vkCmdBuffer;
-class vkImage;
-class vkImageView;
 
-class ResolvePass final {
+class MSAAPass final {
 public:
-    ResolvePass() = default;
-    ~ResolvePass() = default;
+    MSAAPass() = default;
+    ~MSAAPass() = default;
 
-    ResolvePass(ResolvePass &&) = delete;
-    ResolvePass(ResolvePass const &) = delete;
+    MSAAPass(MSAAPass &&) = delete;
+    MSAAPass(MSAAPass const &) = delete;
 
-    ResolvePass & operator=(ResolvePass &&) = delete;
-    ResolvePass & operator=(ResolvePass const &) = delete;
+    MSAAPass & operator=(MSAAPass &&) = delete;
+    MSAAPass & operator=(MSAAPass const &) = delete;
 
     bool create(vkSurface const &surface,
+                std::span<vk::ClearValue const> const clear_values,
+                vk::SampleCountFlagBits const msaa_samples,
                 vkPhysicalDevice const &physical_device,
-                vkDevice const &device,
-                vk::SampleCountFlagBits const msaa_samples);
+                vkDevice const &device);
     bool destroy();
 
     void destroy_swapchain_resources();
@@ -39,9 +36,7 @@ public:
                                     vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
-    void begin(vkFrameBuffer const &frame_buffer,
-               std::span<vk::ClearValue const> const clear_values,
-               vkCmdBuffer const &cmd_buffer);
+    inline auto & begin_info() { return _begin_info; }
 
     inline auto const & render_pass()      const { return _render_pass; }
     inline auto const & multisample_view() const { return _multisample_view; }
@@ -49,6 +44,8 @@ public:
 
 private:
     vkRenderPass _render_pass;
+
+    vk::RenderPassBeginInfo _begin_info { };
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
@@ -58,8 +55,6 @@ private:
 
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency>  _subpass_deps;
-
-    vk::Rect2D _render_area { };
 
     vk::Format _color_format { vk::Format::eUndefined };
     vk::Format _depth_format { vk::Format::eUndefined };
@@ -79,11 +74,13 @@ private:
     void _init_attachments();
     void _init_subpasses();
 
-    bool _create_multisample_buffer(vkPhysicalDevice const &physical_device,
+    bool _create_multisample_buffer(vkSurface const &surface,
+                                    vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
     void _destroy_multisample_buffer();
 
-    bool _create_depth_buffer(vkPhysicalDevice const &physical_device,
+    bool _create_depth_buffer(vkSurface const &surface,
+                              vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
 };
@@ -91,4 +88,4 @@ private:
 } // namespace vkl
 
 
-#endif // VKLEARNIN_RENDERPASSES_COLORDEPTHRESOLVEPASS_HPP
+#endif // VKLEARNIN_RENDERING_PASSES_MSAAPASS_HPP

@@ -122,11 +122,6 @@ bool vkCmdBuffer::begin_one_time_submit() const {
 }
 
 // =============================================================================
-void vkCmdBuffer::end_render_pass() const {
-    _handle.endRenderPass();
-}
-
-// =============================================================================
 void vkCmdBuffer::end_recording() const {
     auto const result = _handle.end();
     if(result != vk::Result::eSuccess) {
@@ -135,6 +130,18 @@ void vkCmdBuffer::end_recording() const {
             _handle
         );
     }
+}
+
+// =============================================================================
+void
+vkCmdBuffer::begin_render_pass(vk::RenderPassBeginInfo const &begin_info) const
+{
+    _handle.beginRenderPass(begin_info, vk::SubpassContents::eInline);
+}
+
+// =============================================================================
+void vkCmdBuffer::end_render_pass() const {
+    _handle.endRenderPass();
 }
 
 // =============================================================================

@@ -1,16 +1,15 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/render_passes/DepthPass.hpp"
+#include "vklearnin/rendering/passes/DepthPass.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
 #include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
-#include "vklearnin/vulkan/swapchain/vkFrameBuffer.hpp"
-#include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
 
 namespace vkl {
 
 // =============================================================================
 bool DepthPass::create(vkSurface const &surface,
+                       std::span<vk::ClearValue const> const clear_values,
                        vkPhysicalDevice const &physical_device,
                        vkDevice const &device)
 {
@@ -49,7 +48,7 @@ bool DepthPass::create(vkSurface const &surface,
         device
     ))
     {
-        Log::error("Failed to create color depth pass.");
+        Log::error("Failed to create depth pass.");
 
         _attachment_descriptions.clear();
 
@@ -65,28 +64,36 @@ bool DepthPass::create(vkSurface const &surface,
         return false;
     }
 
-    _render_area = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
+    if(!_create_depth_buffer(surface, physical_device, device)) {
+        Log::error("Failed to create depth pass depth buffer.");
+
+        _render_pass.destroy();
+
+        _attachment_descriptions.clear();
+
+        _color_refs.clear();
+        _depth_ref = vk::AttachmentReference { };
+
+        _subpass_descriptions.clear();
+        _subpass_deps.clear();
+
+        _color_format = vk::Format::eUndefined;
+        _depth_format = vk::Format::eUndefined;
+
+        return false;
+    }
+
+    _begin_info = vk::RenderPassBeginInfo {
+        .pNext = nullptr,
+        .renderPass = _render_pass.native(),
+        .framebuffer = { },
+        .renderArea = vk::Rect2D {
+            .offset = { },
+            .extent = surface.extent()
+        },
+        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+        .pClearValues = clear_values.data(),
     };
-
-    if(!_create_depth_buffer(physical_device, device)) {
-
-        _attachment_descriptions.clear();
-
-        _color_refs.clear();
-        _depth_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _render_area = vk::Rect2D { };
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
-        return false;
-    }
 
     return true;
 }
@@ -98,6 +105,8 @@ bool DepthPass::destroy() {
         return false;
     }
 
+    _begin_info = vk::RenderPassBeginInfo { };
+
     _render_pass.destroy();
 
     _attachment_descriptions.clear();
@@ -107,8 +116,6 @@ bool DepthPass::destroy() {
 
     _subpass_descriptions.clear();
     _subpass_deps.clear();
-
-    _render_area = vk::Rect2D { };
 
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
@@ -120,7 +127,7 @@ bool DepthPass::destroy() {
 
 // =============================================================================
 void DepthPass::destroy_swapchain_resources() {
-    _render_area = vk::Rect2D { };
+    _begin_info.renderArea = vk::Rect2D { };
 
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
@@ -137,30 +144,12 @@ void DepthPass::create_swapchain_resources(
     _find_depth_format(physical_device);
     _color_format = surface.format().format;
 
-    _render_area = vk::Rect2D {
+    _begin_info.renderArea = vk::Rect2D {
         .offset = { },
         .extent = surface.extent()
     };
 
-    _create_depth_buffer(physical_device, device);
-}
-
-// =============================================================================
-void DepthPass::begin(vkFrameBuffer const &frame_buffer,
-                      std::span<vk::ClearValue const> const clear_values,
-                      vkCmdBuffer const &cmd_buffer)
-{
-    auto const begin_info = vk::RenderPassBeginInfo {
-        .pNext = nullptr,
-        .renderPass = _render_pass.native(),
-        .framebuffer = frame_buffer.native(),
-        .renderArea = _render_area,
-        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
-        .pClearValues = clear_values.data(),
-    };
-
-    cmd_buffer.native().beginRenderPass(begin_info,
-                                        vk::SubpassContents::eInline);
+    _create_depth_buffer(surface, physical_device, device);
 }
 
 // =============================================================================
@@ -271,8 +260,9 @@ void DepthPass::_init_subpasses() {
 
 // =============================================================================
 bool
-DepthPass::_create_depth_buffer(vkPhysicalDevice const &physical_device,
-                                     vkDevice const &device)
+DepthPass::_create_depth_buffer(vkSurface const &surface,
+                                vkPhysicalDevice const &physical_device,
+                                vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
@@ -281,10 +271,8 @@ DepthPass::_create_depth_buffer(vkPhysicalDevice const &physical_device,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    Log::trace("Creating depth buffer for color depth pass");
-
     if(!_depth_buffer.create(
-        _render_area.extent,
+        surface.extent(),
         _depth_format,
         details,
         physical_device,

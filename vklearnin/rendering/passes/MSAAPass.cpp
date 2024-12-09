@@ -1,5 +1,5 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/render_passes/ResolvePass.hpp"
+#include "vklearnin/rendering/passes/MSAAPass.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
 #include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
@@ -10,10 +10,11 @@
 namespace vkl {
 
 // =============================================================================
-bool ResolvePass::create(vkSurface const &surface,
-                         vkPhysicalDevice const &physical_device,
-                         vkDevice const &device,
-                         vk::SampleCountFlagBits const msaa_samples)
+bool MSAAPass::create(vkSurface const &surface,
+                      std::span<vk::ClearValue const> const clear_values,
+                      vk::SampleCountFlagBits const msaa_samples,
+                      vkPhysicalDevice const &physical_device,
+                      vkDevice const &device)
 {
     if(_render_pass.native()) {
         Log::error(
@@ -24,12 +25,12 @@ bool ResolvePass::create(vkSurface const &surface,
     }
 
     if(!surface.native()) {
-        Log::error("Cannot create color depth resolve pass with invalid surface.");
+        Log::error("Cannot create MSAA pass with invalid surface.");
         return false;
     }
 
     if(!device.native()) {
-        Log::error("Cannot create color depth resolve pass with invalid device.");
+        Log::error("Cannot create MSAA pass with invalid device.");
         return false;
     }
 
@@ -51,7 +52,7 @@ bool ResolvePass::create(vkSurface const &surface,
         device
     ))
     {
-        Log::error("Failed to create color depth resolve pass.");
+        Log::error("Failed to create MSAA pass.");
 
         _attachment_descriptions.clear();
 
@@ -68,41 +69,72 @@ bool ResolvePass::create(vkSurface const &surface,
         return false;
     }
 
-    _render_area = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
+    if(!_create_multisample_buffer(surface, physical_device, device)) {
+        Log::error("Failed to create MSAA multisample buffer.");
+
+        _render_pass.destroy();
+
+        _attachment_descriptions.clear();
+
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
+
+        _subpass_descriptions.clear();
+        _subpass_deps.clear();
+
+        _color_format = vk::Format::eUndefined;
+        _depth_format = vk::Format::eUndefined;
+
+        return false;
+    }
+
+    if(!_create_depth_buffer(surface, physical_device, device)) {
+        Log::error("Failed to create MSAA multisample view.");
+
+        _multisample_view.destroy();
+        _multisample_buffer.destroy();
+
+        _render_pass.destroy();
+
+        _attachment_descriptions.clear();
+
+        _multisample_refs.clear();
+        _depth_ref   = vk::AttachmentReference { };
+        _resolve_ref = vk::AttachmentReference { };
+
+        _subpass_descriptions.clear();
+        _subpass_deps.clear();
+
+        _color_format = vk::Format::eUndefined;
+        _depth_format = vk::Format::eUndefined;
+
+        return false;
+    }
+
+    _begin_info = vk::RenderPassBeginInfo {
+        .pNext = nullptr,
+        .renderPass = _render_pass.native(),
+        .framebuffer = { },
+        .renderArea = vk::Rect2D {
+            .offset = { },
+            .extent = surface.extent()
+        },
+        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+        .pClearValues = clear_values.data(),
     };
-
-    _create_multisample_buffer(physical_device, device);
-
-    if(!_create_depth_buffer(physical_device, device)) {
-
-        _attachment_descriptions.clear();
-
-        _multisample_refs.clear();
-        _depth_ref   = vk::AttachmentReference { };
-        _resolve_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _render_area = vk::Rect2D { };
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
-        return false;
-    }
 
     return true;
 }
 
 // =============================================================================
-bool ResolvePass::destroy() {
+bool MSAAPass::destroy() {
     if(!_render_pass.native()) {
-        Log::error("Create color depth resolve pass before calling destroy.");
+        Log::error("Create MSAA pass before calling destroy.");
         return false;
     }
+
+    _begin_info = vk::RenderPassBeginInfo { };
 
     _render_pass.destroy();
 
@@ -115,8 +147,6 @@ bool ResolvePass::destroy() {
     _subpass_descriptions.clear();
     _subpass_deps.clear();
 
-    _render_area = vk::Rect2D { };
-
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
 
@@ -127,8 +157,8 @@ bool ResolvePass::destroy() {
 }
 
 // =============================================================================
-void ResolvePass::destroy_swapchain_resources() {
-    _render_area = vk::Rect2D { };
+void MSAAPass::destroy_swapchain_resources() {
+    _begin_info.renderArea = vk::Rect2D { };
 
     _color_format = vk::Format::eUndefined;
     _depth_format = vk::Format::eUndefined;
@@ -138,7 +168,7 @@ void ResolvePass::destroy_swapchain_resources() {
 }
 
 // =============================================================================
-void ResolvePass::create_swapchain_resources(
+void MSAAPass::create_swapchain_resources(
     vkSurface const &surface,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
@@ -146,36 +176,17 @@ void ResolvePass::create_swapchain_resources(
     _find_depth_format(physical_device);
     _color_format = surface.format().format;
 
-    _render_area = vk::Rect2D {
+    _begin_info.renderArea = vk::Rect2D {
         .offset = { },
         .extent = surface.extent()
     };
 
-    _create_multisample_buffer(physical_device, device);
-    _create_depth_buffer(physical_device, device);
+    _create_multisample_buffer(surface, physical_device, device);
+    _create_depth_buffer(surface, physical_device, device);
 }
 
 // =============================================================================
-void ResolvePass::begin(
-    vkFrameBuffer const &frame_buffer,
-    std::span<vk::ClearValue const> const clear_values,
-    vkCmdBuffer const &cmd_buffer)
-{
-    auto const begin_info = vk::RenderPassBeginInfo {
-        .pNext = nullptr,
-        .renderPass = _render_pass.native(),
-        .framebuffer = frame_buffer.native(),
-        .renderArea = _render_area,
-        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
-        .pClearValues = clear_values.data(),
-    };
-
-    cmd_buffer.native().beginRenderPass(begin_info,
-                                        vk::SubpassContents::eInline);
-}
-
-// =============================================================================
-bool ResolvePass::_find_depth_format(vkPhysicalDevice const &physical_device) {
+bool MSAAPass::_find_depth_format(vkPhysicalDevice const &physical_device) {
     static std::array<vk::Format const, 2> const depth_formats {
         vk::Format::eD32SfloatS8Uint, // One of these two will always be
         vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
@@ -195,7 +206,7 @@ bool ResolvePass::_find_depth_format(vkPhysicalDevice const &physical_device) {
 }
 
 // =============================================================================
-void ResolvePass::_init_attachments() {
+void MSAAPass::_init_attachments() {
     _attachment_descriptions = {{
         // multisample buffer attachment description
         .format         = _color_format,
@@ -245,7 +256,7 @@ void ResolvePass::_init_attachments() {
 }
 
 // =============================================================================
-void ResolvePass::_init_subpasses() {
+void MSAAPass::_init_subpasses() {
     _subpass_descriptions = {{ vk::SubpassDescription {
         // This subpass is a graphical one
         .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
@@ -293,7 +304,8 @@ void ResolvePass::_init_subpasses() {
 }
 
 // =============================================================================
-bool ResolvePass::_create_multisample_buffer(
+bool MSAAPass::_create_multisample_buffer(
+    vkSurface const &surface,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
@@ -305,17 +317,19 @@ bool ResolvePass::_create_multisample_buffer(
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    Log::trace("Creating multisample buffer for color depth resolve pass");
-
-    _multisample_buffer.create(
-        _render_area.extent,
+    if(!_multisample_buffer.create(
+        surface.extent(),
         _color_format,
         details,
         physical_device,
         device
-    );
+    ))
+    {
+        Log::error("Failed to create multisample buffer.");
+        return false;
+    }
 
-    _multisample_view.create(
+    if(!_multisample_view.create(
         vkImageView::Details {
             .image        = _multisample_buffer.native(),
             .format       = _multisample_buffer.format(),
@@ -323,19 +337,25 @@ bool ResolvePass::_create_multisample_buffer(
             .aspect_flags = vk::ImageAspectFlagBits::eColor
         },
         device
-    );
+    ))
+    {
+        Log::error("Failed to create multisample buffer view.");
+        _multisample_buffer.destroy();
+        return false;
+    }
 
     return true;
 }
 
 // =============================================================================
-void ResolvePass::_destroy_multisample_buffer() {
+void MSAAPass::_destroy_multisample_buffer() {
     _multisample_view.destroy();
     _multisample_buffer.destroy();
 }
 
 // =============================================================================
-bool ResolvePass::_create_depth_buffer(
+bool MSAAPass::_create_depth_buffer(
+    vkSurface const &surface,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
@@ -346,10 +366,10 @@ bool ResolvePass::_create_depth_buffer(
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    Log::trace("Creating depth buffer for color depth resolve pass");
+    Log::trace("Creating depth buffer for MSAA pass");
 
     if(!_depth_buffer.create(
-        _render_area.extent,
+        surface.extent(),
         _depth_format,
         details,
         physical_device,
@@ -379,7 +399,7 @@ bool ResolvePass::_create_depth_buffer(
 }
 
 // =============================================================================
-void ResolvePass::_destroy_depth_buffer() {
+void MSAAPass::_destroy_depth_buffer() {
     _depth_view.destroy();
     _depth_buffer.destroy();
 }

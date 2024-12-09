@@ -25,9 +25,10 @@ public:
     bool free();
 
     bool begin_one_time_submit() const;
-
-    void end_render_pass() const;
     void end_recording() const;
+
+    void begin_render_pass(vk::RenderPassBeginInfo const &begin_info) const;
+    void end_render_pass() const;
 
     struct GroupCounts final {
         uint32_t x { 0u };

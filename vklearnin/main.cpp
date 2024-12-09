@@ -10,9 +10,9 @@
 #include "vklearnin/vulkan/pipelines/vkGraphicsPipeline.hpp"
 #include "vklearnin/vulkan/pipelines/vkComputePipeline.hpp"
 
-#include "vklearnin/render_passes/ColorPass.hpp"
-#include "vklearnin/render_passes/DepthPass.hpp"
-#include "vklearnin/render_passes/ResolvePass.hpp"
+#include "vklearnin/rendering/passes/ColorPass.hpp"
+#include "vklearnin/rendering/passes/DepthPass.hpp"
+#include "vklearnin/rendering/passes/MSAAPass.hpp"
 
 #include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
@@ -86,12 +86,12 @@ static ColorPass color_pass;
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-static DepthPass color_depth_pass;
+static DepthPass depth_pass;
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
 static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
-static ResolvePass color_depth_resolve_pass;
+static MSAAPass msaa_pass;
 #else
 #endif // MSAA_PASS
 
@@ -285,17 +285,19 @@ int main() {
         // begin render pass
 
 #ifdef COLOR_PASS
-        color_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+        auto &begin_info = color_pass.begin_info();
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-        color_depth_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+        auto &begin_info = depth_pass.begin_info();
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-        color_depth_resolve_pass.begin(frame_buffer, clear_values, gfx_cmd_buffer);
+        auto &begin_info = msaa_pass.begin_info();
 #endif // MSAA_PASS
 
+        begin_info.framebuffer = frame_buffer.native();
+        gfx_cmd_buffer.begin_render_pass(begin_info);
         graphics_pipeline.bind(gfx_cmd_buffer);
 
 #ifdef DRAW_TEXTURES
@@ -416,12 +418,13 @@ void vulkan_setup() {
 
 void create_render_pass() {
 #ifdef COLOR_PASS
-    color_pass.create(surface, device);
+    color_pass.create(surface, clear_values, device);
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-    color_depth_pass.create(
+    depth_pass.create(
         surface,
+        clear_values,
         vkPhysicalDevice::current_device(),
         device
     );
@@ -430,11 +433,12 @@ void create_render_pass() {
 #ifdef MSAA_PASS
     msaa_samples = vkPhysicalDevice::current_device().max_samples();
 
-    color_depth_resolve_pass.create(
+    msaa_pass.create(
         surface,
+        clear_values,
+        msaa_samples,
         vkPhysicalDevice::current_device(),
-        device,
-        msaa_samples
+        device
     );
 #endif // MSAA_PASS
 }
@@ -454,18 +458,18 @@ void create_swapchain() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-            color_depth_pass.render_pass(), // for color and depth
+            depth_pass.render_pass(), // for color and depth
             {{
                 swapchain.image_views()[i].native(),
-                color_depth_pass.depth_view().native()
+                depth_pass.depth_view().native()
             }},
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-            color_depth_resolve_pass.render_pass(), // for color, depth, and resolve
+            msaa_pass.render_pass(), // for color, depth, and resolve
             {{
-                color_depth_resolve_pass.multisample_view().native(),
-                color_depth_resolve_pass.depth_view().native(),
+                msaa_pass.multisample_view().native(),
+                msaa_pass.depth_view().native(),
                 swapchain.image_views()[i].native(),
             }},
 #endif // MSAA_PASS
@@ -675,11 +679,11 @@ void create_graphics_pipeline() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-        .add_render_pass(color_depth_pass.render_pass())
+        .add_render_pass(depth_pass.render_pass())
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-        .add_render_pass(color_depth_resolve_pass.render_pass())
+        .add_render_pass(msaa_pass.render_pass())
 #endif // MSAA_PASS
 
         .create(vkGraphicsPipeline::Config {
@@ -904,11 +908,11 @@ void destroy_render_pass() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-    color_depth_pass.destroy();
+    depth_pass.destroy();
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-    color_depth_resolve_pass.destroy();
+    msaa_pass.destroy();
 #endif // MSAA_PASS
 }
 
@@ -1033,11 +1037,11 @@ void recreate_swapchain() {
     }
 
 #ifdef DEPTH_PASS
-    color_depth_pass.destroy_swapchain_resources();
+    depth_pass.destroy_swapchain_resources();
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-    color_depth_resolve_pass.destroy_swapchain_resources();
+    msaa_pass.destroy_swapchain_resources();
 #endif // MSAA_PASS
 
     swapchain.destroy();
@@ -1055,7 +1059,7 @@ void recreate_swapchain() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-    color_depth_pass.create_swapchain_resources(
+    depth_pass.create_swapchain_resources(
         surface,
         vkPhysicalDevice::current_device(),
         device
@@ -1063,7 +1067,7 @@ void recreate_swapchain() {
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-    color_depth_resolve_pass.create_swapchain_resources(
+    msaa_pass.create_swapchain_resources(
         surface,
         vkPhysicalDevice::current_device(),
         device
@@ -1080,18 +1084,18 @@ void recreate_swapchain() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
-            color_depth_pass.render_pass(),
+            depth_pass.render_pass(),
             {{
                 swapchain.image_views()[i].native(),
-                color_depth_pass.depth_view().native()
+                depth_pass.depth_view().native()
             }},
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-            color_depth_resolve_pass.render_pass(),
+            msaa_pass.render_pass(),
             {{
-                color_depth_resolve_pass.multisample_view().native(),
-                color_depth_resolve_pass.depth_view().native(),
+                msaa_pass.multisample_view().native(),
+                msaa_pass.depth_view().native(),
                 swapchain.image_views()[i].native(),
             }},
 #endif // MSAA_PASS

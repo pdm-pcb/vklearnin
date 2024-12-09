@@ -9,8 +9,6 @@ namespace vkl {
 
 class vkSurface;
 class vkDevice;
-class vkFrameBuffer;
-class vkCmdBuffer;
 
 class ColorPass final {
 public:
@@ -23,19 +21,21 @@ public:
     ColorPass & operator=(ColorPass &&) = delete;
     ColorPass & operator=(ColorPass const &) = delete;
 
-    bool create(vkSurface const &surface, vkDevice const &device);
+    bool create(vkSurface const &surface,
+                std::span<vk::ClearValue const> const clear_values,
+                vkDevice const &device);
     bool destroy();
 
     void update_render_area(vkSurface const &surface);
 
-    void begin(vkFrameBuffer const &frame_buffer,
-               std::span<vk::ClearValue const> const clear_values,
-               vkCmdBuffer const &cmd_buffer);
+    inline auto & begin_info() { return _begin_info; }
 
     inline auto const & render_pass() const { return _render_pass; }
 
 private:
     vkRenderPass _render_pass;
+
+    vk::RenderPassBeginInfo _begin_info { };
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
@@ -43,8 +43,6 @@ private:
 
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency> _subpass_deps;
-
-    vk::Rect2D _render_area { };
 };
 
 } // namespace vkl

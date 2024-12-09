@@ -1,15 +1,16 @@
 #include "vklearnin/vklearnin.hpp"
-#include "vklearnin/render_passes/ColorPass.hpp"
+#include "vklearnin/rendering/passes/ColorPass.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
-#include "vklearnin/vulkan/swapchain/vkFrameBuffer.hpp"
-#include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
 
 namespace vkl {
 
 // =============================================================================
-bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
+bool ColorPass::create(vkSurface const &surface,
+                       std::span<vk::ClearValue const> const clear_values,
+                       vkDevice const &device)
+{
     if(_render_pass.native()) {
         Log::error(
             "Color pass {} already exists.",
@@ -85,9 +86,16 @@ bool ColorPass::create(vkSurface const &surface, vkDevice const &device) {
         return false;
     }
 
-    _render_area = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
+    _begin_info = vk::RenderPassBeginInfo {
+        .pNext = nullptr,
+        .renderPass = _render_pass.native(),
+        .framebuffer = { },
+        .renderArea = vk::Rect2D {
+            .offset = { },
+            .extent = surface.extent()
+        },
+        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+        .pClearValues = clear_values.data(),
     };
 
     return true;
@@ -100,6 +108,7 @@ bool ColorPass::destroy() {
         return false;
     }
 
+    _begin_info = { };
     _render_pass.destroy();
 
     _attachment_descriptions.clear();
@@ -107,35 +116,15 @@ bool ColorPass::destroy() {
     _subpass_descriptions.clear();
     _subpass_deps.clear();
 
-    _render_area = vk::Rect2D { };
-
     return true;
 }
 
 // =============================================================================
 void ColorPass::update_render_area(vkSurface const &surface) {
-    _render_area = vk::Rect2D {
+    _begin_info.renderArea = vk::Rect2D {
         .offset = { },
         .extent = surface.extent()
     };
-}
-
-// =============================================================================
-void ColorPass::begin(vkFrameBuffer const &frame_buffer,
-                      std::span<vk::ClearValue const> const clear_values,
-                      vkCmdBuffer const &cmd_buffer)
-{
-    auto const begin_info = vk::RenderPassBeginInfo {
-        .pNext = nullptr,
-        .renderPass = _render_pass.native(),
-        .framebuffer = frame_buffer.native(),
-        .renderArea = _render_area,
-        .clearValueCount = static_cast<uint32_t>(clear_values.size()),
-        .pClearValues = clear_values.data(),
-    };
-
-    cmd_buffer.native().beginRenderPass(begin_info,
-                                        vk::SubpassContents::eInline);
 }
 
 } // namespace vkl

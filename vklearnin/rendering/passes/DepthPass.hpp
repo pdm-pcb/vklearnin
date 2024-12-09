@@ -1,5 +1,5 @@
-#ifndef VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
-#define VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
+#ifndef VKLEARNIN_RENDERING_PASSES_DEPTHPASS_HPP
+#define VKLEARNIN_RENDERING_PASSES_DEPTHPASS_HPP
 
 #include "vklearnin/pch.hpp"
 
@@ -12,10 +12,6 @@ namespace vkl {
 class vkSurface;
 class vkPhysicalDevice;
 class vkDevice;
-class vkFrameBuffer;
-class vkCmdBuffer;
-class vkImage;
-class vkImageView;
 
 class DepthPass final {
 public:
@@ -29,6 +25,7 @@ public:
     DepthPass & operator=(DepthPass const &) = delete;
 
     bool create(vkSurface const &surface,
+                std::span<vk::ClearValue const> const clear_values,
                 vkPhysicalDevice const &physical_device,
                 vkDevice const &device);
     bool destroy();
@@ -38,15 +35,15 @@ public:
                                     vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
-    void begin(vkFrameBuffer const &frame_buffer,
-               std::span<vk::ClearValue const> const clear_values,
-               vkCmdBuffer const &cmd_buffer);
+    inline auto & begin_info() { return _begin_info; }
 
     inline auto const & render_pass() const { return _render_pass; }
     inline auto const & depth_view() const { return _depth_view; }
 
 private:
     vkRenderPass _render_pass;
+
+    vk::RenderPassBeginInfo _begin_info { };
 
     std::vector<vk::AttachmentDescription> _attachment_descriptions;
 
@@ -55,8 +52,6 @@ private:
 
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency>  _subpass_deps;
-
-    vk::Rect2D _render_area { };
 
     vk::Format _color_format { vk::Format::eUndefined };
     vk::Format _depth_format { vk::Format::eUndefined };
@@ -71,11 +66,12 @@ private:
     void _init_attachments();
     void _init_subpasses();
 
-    bool _create_depth_buffer(vkPhysicalDevice const &physical_device,
+    bool _create_depth_buffer(vkSurface const &surface,
+                              vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
 };
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDERPASSES_DEPTHPASS_HPP
+#endif // VKLEARNIN_RENDERING_PASSES_DEPTHPASS_HPP
