@@ -21,12 +21,15 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define DRAW_TEXTURES
-// #define DRAW_PARTICLES
-
+#define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
 #define MSAA_PASS
+
+// #define DYNAMIC_RENDERING
+// #define COLOR_DYNMAIC
+// #define DEPTH_DYNAMIC
+// #define MSAA_DYNAMIC
 
 using namespace vkl;
 
@@ -81,6 +84,10 @@ static std::vector<vk::ClearValue> const clear_values {{
 #endif // DEPTH or MSAA
 }};
 
+#ifdef RENDER_PASS
+
+static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+
 #ifdef COLOR_PASS
 static ColorPass color_pass;
 #endif // COLOR_PASS
@@ -90,10 +97,10 @@ static DepthPass depth_pass;
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
-static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 static MSAAPass msaa_pass;
-#else
 #endif // MSAA_PASS
+
+#endif // RENDER_PASS
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -103,65 +110,21 @@ static struct CameraMatrices {
 
 static std::vector<vkBuffer> camera_ubos;
 
+static vkDescriptorPool descriptor_pool;
+static vkDescriptorSetLayout camera_descriptor_set_layout;
+static std::vector<vkDescriptorSet> camera_descriptor_sets;
+
 static Plane plane_a;
 static glm::mat4 model_mat_a;
 
 static Plane plane_b;
 static glm::mat4 model_mat_b;
 
-static vkDescriptorPool descriptor_pool;
-static vkDescriptorSetLayout camera_descriptor_set_layout;
-static std::vector<vkDescriptorSet> camera_descriptor_sets;
-
 static Texture2D brick_texture;
 static Texture2D wood_texture;
 static vkDescriptorSetLayout texture_descriptor_set_layout;
 static vkDescriptorSet brick_descriptor_set;
 static vkDescriptorSet wood_descriptor_set;
-
-// particles and compute -------------------------------------------------------
-struct Particle {
-    glm::vec2 position;
-    glm::vec2 velocity;
-    glm::vec4 color;
-
-    static std::vector<vk::VertexInputBindingDescription> const bindings;
-    static std::vector<vk::VertexInputAttributeDescription> const attributes;
-};
-
-static uint32_t const PARTICLE_COUNT = 8196u;
-
-std::vector<vk::VertexInputBindingDescription> const Particle::bindings {{
-    .binding = 0u,
-    .stride = sizeof(Particle),
-    .inputRate = vk::VertexInputRate::eVertex,
-}};
-
-std::vector<vk::VertexInputAttributeDescription> const Particle::attributes {
-    vk::VertexInputAttributeDescription {
-        .location = 0,
-        .binding = 0,
-        .format = vk::Format::eR32G32Sfloat,
-        .offset = offsetof(Particle, position),
-    },
-    vk::VertexInputAttributeDescription {
-        .location = 1,
-        .binding = 0,
-        .format = vk::Format::eR32G32B32A32Sfloat,
-        .offset = offsetof(Particle, color),
-    }
-};
-
-static std::vector<vkBuffer> particle_ubos;
-static std::vector<vkBuffer> particle_ssbos;
-
-static vkDescriptorSetLayout particle_descriptor_set_layout;
-static std::vector<vkDescriptorSet> particle_descriptor_sets;
-
-static vkShaderModule compute_stage;
-static vkComputePipeline compute_pipeline;
-
-static std::vector<vkFrameSync> compute_syncs;
 
 // =============================================================================
 
@@ -172,22 +135,12 @@ void create_draw_data();
 void create_descriptor_data();
 void create_graphics_pipeline();
 
-void create_particle_descriptors();
-void create_particle_pipeline();
-
-void destroy_particle_pipeline();
-void destroy_particle_descriptors();
-
 void destroy_graphics_pipeline();
 void destroy_descriptor_data();
 void destroy_draw_data();
 void destroy_swapchain();
 void destroy_render_pass();
 void vulkan_shutdown();
-
-void run_particle_compute(vkFrameSync const &compute_sync,
-                          vkCmdBuffer const &cmd_buffer,
-                          float const frame_time_s);
 
 void draw(vkCmdBuffer const &cmd_buffer, float run_time_s);
 
@@ -205,17 +158,10 @@ int main() {
         .set_type_count(vk::DescriptorType::eStorageBuffer, 10u)
         .create(100u, device);
 
-#ifdef DRAW_TEXTURES
     create_draw_data();
     create_descriptor_data();
-#endif // DRAW_TEXTURES
 
     create_graphics_pipeline();
-
-#ifdef DRAW_PARTICLES
-    create_particle_descriptors();
-    create_particle_pipeline();
-#endif // DRAW_PARTICLES
 
     // -------------------------------------------------------------------------
     // main loop ---------------------------------------------------------------
@@ -239,15 +185,6 @@ int main() {
         loop_start = loop_end;
 
         Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
-
-#ifdef DRAW_PARTICLES
-        // ---------------------------------------------------------------------
-        // begin compute commands
-        auto const &compute_sync       = compute_syncs[frame_index];
-        auto const &compute_cmd_buffer = compute_sync.cmd_buffer();
-
-        run_particle_compute(compute_sync, compute_cmd_buffer, frame_time_s);
-#endif // DRAW_PARTICLES
 
         // ---------------------------------------------------------------------
         // begin graphics commands
@@ -299,27 +236,7 @@ int main() {
         begin_info.framebuffer = frame_buffer.native();
         gfx_cmd_buffer.begin_render_pass(begin_info);
         graphics_pipeline.bind(gfx_cmd_buffer);
-
-#ifdef DRAW_TEXTURES
         draw(gfx_cmd_buffer, run_time_s);
-#endif // DRAW_TEXTURES
-
-#ifdef DRAW_PARTICLES
-        std::array<vk::DeviceSize, 1u> offsets { 0u };
-        gfx_cmd_buffer.native().bindVertexBuffers(
-            0u,
-            1u,
-            &particle_ssbos[frame_index].native(),
-            offsets.data()
-        );
-
-        gfx_cmd_buffer.native().draw(
-            PARTICLE_COUNT,
-            1u,
-            0u,
-            0u
-        );
-#endif // DRAW_PARTICLES
 
         gfx_cmd_buffer.end_render_pass();
         gfx_cmd_buffer.end_recording();
@@ -366,17 +283,9 @@ int main() {
     device.wait_idle();
 
     // destroy in reverse create order -----------------------------------------
-#ifdef DRAW_PARTICLES
-    destroy_particle_pipeline();
-    destroy_particle_descriptors();
-#endif // DRAW_PARTICLES
-
     destroy_graphics_pipeline();
-
-#ifdef DRAW_TEXTURES
     destroy_descriptor_data();
     destroy_draw_data();
-#endif // DRAW_TEXTURES
 
     descriptor_pool.destroy();
 
@@ -650,29 +559,18 @@ void create_descriptor_data() {
 
 void create_graphics_pipeline() {
     // shaders and pipeline after descriptor sets ------------------------------
-
-#ifdef DRAW_TEXTURES
     vert_stage.create("shaders/04texture.vert", device);
     frag_stage.create("shaders/02texture.frag", device);
-#endif // DRAW_TEXTURES
-
-#ifdef DRAW_PARTICLES
-    vert_stage.create("shaders/05particles.vert", device);
-    frag_stage.create("shaders/05particles.frag", device);
-#endif // DRAW_PARTICLES
 
     graphics_pipeline
         .add_shader(vert_stage)
         .add_shader(frag_stage)
-
-#ifdef DRAW_TEXTURES
         .add_push_constant(
             vk::ShaderStageFlagBits::eVertex,
             sizeof(glm::mat4)
         )
         .add_descriptor_set_layout(camera_descriptor_set_layout.native())
         .add_descriptor_set_layout(texture_descriptor_set_layout.native())
-#endif // DRAW_TEXTURES
 
 #ifdef COLOR_PASS
         .add_render_pass(color_pass.render_pass())
@@ -688,182 +586,16 @@ void create_graphics_pipeline() {
 
         .create(vkGraphicsPipeline::Config {
                 .viewport_extent = surface.extent(),
-
-#ifdef DRAW_TEXTURES
                 .topology = vk::PrimitiveTopology::eTriangleList,
-#endif // DRAW_TEXTUREs
-
-#ifdef DRAW_PARTICLES
-                .topology = vk::PrimitiveTopology::ePointList,
-#endif // DRAW_PARTICLES
-
-#if defined(COLOR_PASS) || defined(DEPTH_PASS)
-                .sample_flags = vk::SampleCountFlagBits::e1,
-#endif // COLOR or DEPTH
-
-#ifdef MSAA_PASS
                 .sample_flags = msaa_samples,
-#endif // MSAA_PASS
 
-#ifdef DRAW_TEXTURES
+#if defined(DEPTH_PASS) || defined(MSAA_PASS)
                 .enable_depth_test = VK_TRUE,
-#endif // DRAW_TEXTURES
+#endif // render passes that use depth testing
+
             },
             device
         );
-}
-
-void create_particle_descriptors() {
-    // particle buffers --------------------------------------------------------
-    std::vector<Particle> particles;
-    particles.resize(PARTICLE_COUNT);
-
-    auto const seed = static_cast<uint32_t>(::time(nullptr));
-    std::default_random_engine random_engine(seed);
-    std::uniform_real_distribution<float> zero_to_one(0.0f, 1.0f);
-
-    for(auto &particle : particles) {
-        float const r = ::sqrtf(zero_to_one(random_engine)) * 0.25f;
-
-        float const theta = zero_to_one(random_engine)
-                            * 2.0f * std::numbers::pi_v<float>;
-
-        float const x = r * ::cosf(theta) * surface.aspect_ratio();
-
-        float const y = r * ::sinf(theta);
-
-        particle.position = glm::vec2(x, y);
-
-        particle.velocity = glm::normalize(particle.position) * 0.5f;
-
-        particle.color = glm::vec4(zero_to_one(random_engine),
-                                   zero_to_one(random_engine),
-                                   zero_to_one(random_engine),
-                                   1.0f);
-    }
-
-    particle_ubos.resize(swapchain.image_count());
-    for(auto &ubo : particle_ubos) {
-        ubo.create(
-            sizeof(float),
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            vkPhysicalDevice::current_device(),
-            device
-        );
-
-        ubo.allocate(vk::MemoryPropertyFlagBits::eHostVisible
-                     | vk::MemoryPropertyFlagBits::eHostCoherent);
-    }
-
-    particle_ssbos.resize(swapchain.image_count());
-    for(auto &ssbo : particle_ssbos) {
-        ssbo.create(
-            sizeof(Particle) * PARTICLE_COUNT,
-            vk::BufferUsageFlagBits::eStorageBuffer
-            | vk::BufferUsageFlagBits::eVertexBuffer
-            | vk::BufferUsageFlagBits::eTransferDst,
-            vkPhysicalDevice::current_device(),
-            device
-        );
-
-        ssbo.allocate(vk::MemoryPropertyFlagBits::eHostVisible
-                      | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-        ssbo.fill_buffer(particles.data());
-    }
-
-    // particle descriptors ----------------------------------------------------
-    particle_descriptor_set_layout
-        .add_binding(
-            0u,
-            vk::DescriptorType::eUniformBuffer,
-            1u,
-            vk::ShaderStageFlagBits::eCompute)
-        .add_binding(
-            1u,
-            vk::DescriptorType::eStorageBuffer,
-            1u,
-            vk::ShaderStageFlagBits::eCompute)
-        .add_binding(
-            2u,
-            vk::DescriptorType::eStorageBuffer,
-            1u,
-            vk::ShaderStageFlagBits::eCompute)
-        .create(device);
-
-    particle_descriptor_sets.resize(swapchain.image_count());
-    for(uint32_t i = 0u; i < particle_descriptor_sets.size(); ++i) {
-        particle_descriptor_sets[i].allocate(
-            particle_descriptor_set_layout,
-            descriptor_pool,
-            device
-        );
-
-        auto const last_frame_index = (i - 1u) % swapchain.image_count();
-
-        particle_descriptor_sets[i]
-            .add_update(
-                vk::DescriptorBufferInfo {
-                    .buffer = particle_ubos[i].native(),
-                    .offset = 0u,
-                    .range = VK_WHOLE_SIZE,
-                },
-                0u,
-                vk::DescriptorType::eUniformBuffer
-            )
-            .add_update(
-                vk::DescriptorBufferInfo {
-                    .buffer = particle_ssbos[last_frame_index].native(),
-                    .offset = 0u,
-                    .range = VK_WHOLE_SIZE,
-                },
-                1u,
-                vk::DescriptorType::eStorageBuffer
-            )
-            .add_update(
-                vk::DescriptorBufferInfo {
-                    .buffer = particle_ssbos[i].native(),
-                    .offset = 0u,
-                    .range = VK_WHOLE_SIZE,
-                },
-                2u,
-                vk::DescriptorType::eStorageBuffer
-            )
-            .update();
-    }
-}
-
-void create_particle_pipeline() {
-    // particle pipeline -------------------------------------------------------
-    compute_stage.create("shaders/05particles.comp", device);
-    compute_pipeline
-        .add_shader(compute_stage)
-        .add_descriptor_set_layout(particle_descriptor_set_layout.native())
-        .create(device);
-
-    // particle sync -----------------------------------------------------------
-    compute_syncs.resize(swapchain.image_count());
-    for(auto &sync : compute_syncs) {
-        sync.create(device);
-    }
-}
-
-void destroy_particle_pipeline() {
-    for(auto &sync : compute_syncs) {
-        sync.destroy();
-    }
-    compute_pipeline.destroy();
-    compute_stage.destroy();
-}
-
-void destroy_particle_descriptors() {
-    particle_descriptor_set_layout.destroy();
-    for(auto &buffer : particle_ssbos) {
-        buffer.destroy();
-    }
-    for(auto &buffer : particle_ubos) {
-        buffer.destroy();
-    }
 }
 
 void destroy_graphics_pipeline() {
@@ -927,40 +659,6 @@ void vulkan_shutdown() {
     TargetWindow::shutdown();
 
     instance.destroy();
-}
-
-void run_particle_compute(vkFrameSync const &compute_sync,
-                          vkCmdBuffer const &cmd_buffer,
-                          float const frame_time_s)
-{
-    compute_sync.wait_and_reset();
-
-    cmd_buffer.begin_one_time_submit();
-    compute_pipeline.bind(cmd_buffer);
-
-    particle_ubos[frame_index].fill_buffer(&frame_time_s);
-
-    particle_descriptor_sets[frame_index].bind(
-        compute_pipeline,
-        0u,
-        cmd_buffer
-    );
-
-    cmd_buffer.dispatch({
-        .x = PARTICLE_COUNT / 256u,
-        .y = 1u,
-        .z = 1u
-    });
-
-    cmd_buffer.end_recording();
-
-    device.cmd_queue().submit(
-        {{ cmd_buffer.native() }},
-        { },
-        { },
-        {{ compute_sync.complete_semaphore() }},
-        compute_sync.in_flight_fence()
-    );
 }
 
 void draw(vkCmdBuffer const &cmd_buffer, float run_time_s) {
