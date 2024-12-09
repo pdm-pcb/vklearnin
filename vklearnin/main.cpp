@@ -190,7 +190,7 @@ int main() {
         // begin graphics commands
         auto const &frame_buffer   = frame_buffers[frame_index];
         auto const &gfx_sync       = graphics_syncs[frame_index];
-        auto const &gfx_cmd_buffer = gfx_sync.cmd_buffer();
+        auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
 
         // wait on queue fence, reset fence and command pool
         gfx_sync.wait_and_reset();
@@ -216,7 +216,7 @@ int main() {
             break;
         }
 
-        gfx_cmd_buffer.begin_one_time_submit();
+        graphics_cmd_buffer.begin_one_time_submit();
 
         // ---------------------------------------------------------------------
         // begin render pass
@@ -234,17 +234,17 @@ int main() {
 #endif // MSAA_PASS
 
         begin_info.framebuffer = frame_buffer.native();
-        gfx_cmd_buffer.begin_render_pass(begin_info);
-        graphics_pipeline.bind(gfx_cmd_buffer);
-        draw(gfx_cmd_buffer, run_time_s);
+        graphics_cmd_buffer.begin_render_pass(begin_info);
+        graphics_pipeline.bind(graphics_cmd_buffer);
+        draw(graphics_cmd_buffer, run_time_s);
 
-        gfx_cmd_buffer.end_render_pass();
-        gfx_cmd_buffer.end_recording();
+        graphics_cmd_buffer.end_render_pass();
+        graphics_cmd_buffer.end_recording();
 
         // ---------------------------------------------------------------------
         // submit graphics commands
         device.cmd_queue().submit(
-            {{ gfx_cmd_buffer.native() }},
+            {{ graphics_cmd_buffer.native() }},
             {{
 #ifdef DRAW_PARTICLES
                 compute_sync.complete_semaphore(),
