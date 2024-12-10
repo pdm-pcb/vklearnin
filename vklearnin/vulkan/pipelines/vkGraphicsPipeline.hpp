@@ -38,11 +38,13 @@ public:
         vk::SampleCountFlagBits sample_flags { vk::SampleCountFlagBits::e1 };
 
         // Depth/shadow buffer options
-        vk::Bool32    enable_depth_test   { VK_FALSE };
+        vk::Bool32    enable_depth_test   { vk::False };
         vk::CompareOp depth_compare       { vk::CompareOp::eLess };
-        vk::Bool32    enable_depth_bias   { VK_FALSE };
+        vk::Bool32    enable_depth_bias   { vk::False };
         float         depth_bias_constant { 0.0f };
         float         depth_bias_slope    { 0.0f };
+
+        vk::PipelineRenderingCreateInfoKHR const *rendering_create_info { nullptr };
     };
 
     using VertexBindings = std::span<vk::VertexInputBindingDescription const>;

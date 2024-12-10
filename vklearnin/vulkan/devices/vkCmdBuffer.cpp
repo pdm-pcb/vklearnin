@@ -145,6 +145,18 @@ void vkCmdBuffer::end_render_pass() const {
 }
 
 // =============================================================================
+void
+vkCmdBuffer::begin_rendering(vk::RenderingInfoKHR const &rendering_info) const
+{
+    _handle.beginRenderingKHR(rendering_info);
+}
+
+// =============================================================================
+void vkCmdBuffer::end_rendering() const {
+    _handle.endRenderingKHR();
+}
+
+// =============================================================================
 void vkCmdBuffer::dispatch(GroupCounts const &group_counts) const {
     _handle.dispatch(group_counts.x, group_counts.y, group_counts.z);
 }

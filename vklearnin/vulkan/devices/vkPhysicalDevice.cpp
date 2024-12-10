@@ -13,7 +13,7 @@ vkPhysicalDevice const * vkPhysicalDevice::_current_device { nullptr };
 bool vkPhysicalDevice::populate_device_list(
     vkInstance const &instance,
     vkSurface const &surface,
-    vk::PhysicalDeviceFeatures2 const &features,
+    Features const &features,
     std::span<char const * const> const extensions)
 {
     // Ask the instance for a list of devices
@@ -266,7 +266,7 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
 
             // And the second is if this device can present on the surface
             // we've been given
-            if(present_support == VK_TRUE) {
+            if(present_support == vk::True) {
                 if(families[i].queueFlags & vk::QueueFlagBits::eCompute) {
                     found_unified_family = true;
                     _cmd_queue_index = i;
@@ -297,26 +297,41 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
 
 // =============================================================================
 bool
-vkPhysicalDevice::_check_features(vk::PhysicalDeviceFeatures2 const &features) {
+vkPhysicalDevice::_check_features(Features const &features) {
     // Copy over the requested features
-    _features = features;
+    _features12 = vk::PhysicalDeviceVulkan12Features {
+        .pNext = nullptr,
+    };
 
-    // using PD11Features = vk::PhysicalDeviceVulkan11Features;
-    // _features11 = *(static_cast<PD11Features *>(_features.pNext));
+    _features11 = vk::PhysicalDeviceVulkan11Features {
+        .pNext = &_features12,
+    };
 
-    // using PD12Features = vk::PhysicalDeviceVulkan12Features;
-    // _features12 = *(static_cast<PD12Features *>(_features11.pNext));
+    _features = vk::PhysicalDeviceFeatures2 {
+        .pNext = &_features11,
+        .features {
+            .fillModeNonSolid = features.fill_mode_nonsolid,
+            .samplerAnisotropy = features.sampler_anisotropy,
+        }
+    };
 
-    // // Fix up the local features structure chain
-    // _features.pNext   = &_features11;
-    // _features11.pNext = &_features12;
+    if(features.dynamic_rendering) {
+        _dynamic_rendering.dynamicRendering = vk::True;
+        _features12.pNext = &_dynamic_rendering;
+    }
 
     // Build the structure chain we'll use to query the device
-    vk::PhysicalDeviceFeatures2 supported { };
-    // vk::PhysicalDeviceVulkan11Features supported11 { };
-    // vk::PhysicalDeviceVulkan12Features supported12 { };
-    // supported.pNext = &supported11;
-    // supported11.pNext = &supported12;
+    vk::PhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_supported { };
+
+    vk::PhysicalDeviceVulkan12Features supported12 {
+        .pNext = features.dynamic_rendering ? &dynamic_rendering_supported : nullptr,
+    };
+    vk::PhysicalDeviceVulkan11Features supported11 {
+        .pNext = &supported12,
+    };
+    vk::PhysicalDeviceFeatures2 supported {
+        .pNext = &supported11,
+    };
 
     // Ask the device what we're dealing with
     _handle.getFeatures2(&supported);
@@ -342,6 +357,23 @@ vkPhysicalDevice::_check_features(vk::PhysicalDeviceFeatures2 const &features) {
     }
     else if(_features.features.samplerAnisotropy) {
         Log::warn("{} does not samplerAnisotropy.", _name);
+        all_features_supported = false;
+    }
+
+    // VK1.1 features ----------------------------------------------------------
+    // ...
+
+    // VK1.2 features ----------------------------------------------------------
+    // ...
+
+    // Extensions --------------------------------------------------------------
+    if(_dynamic_rendering.dynamicRendering
+        && dynamic_rendering_supported.dynamicRendering)
+    {
+        Log::trace("{} supports dynamicRendering.", _name);
+    }
+    else if(_dynamic_rendering.dynamicRendering) {
+        Log::warn("{} does not support dynamicRendering.", _name);
         all_features_supported = false;
     }
 

@@ -94,7 +94,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL vkDebugMessenger::messenger(
         // assert(false);
     }
 
-    return VK_FALSE;
+    return vk::False;
 }
 
 } // namespace vkl

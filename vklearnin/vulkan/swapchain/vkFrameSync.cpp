@@ -127,7 +127,7 @@ bool vkFrameSync::wait_and_reset() const {
 
     auto const result = _device.waitForFences(
         _in_flight_fence, // The fence(s) to wait on
-        VK_TRUE,          // Whether or not to wait on all provided fences
+        vk::True,          // Whether or not to wait on all provided fences
         wait_period       // How long to wait for these fences
         // std::numeric_limits<uint64_t>::max()
     );

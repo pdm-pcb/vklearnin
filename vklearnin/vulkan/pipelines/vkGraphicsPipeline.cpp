@@ -114,7 +114,7 @@ bool vkGraphicsPipeline::create(Config const &config, vkDevice const &device) {
     }
 
     _create_info = vk::GraphicsPipelineCreateInfo {
-        .pNext = nullptr,
+        .pNext = config.rendering_create_info,
 
         // If we're in a debug build, don't optimize the shaders
         #ifdef VKL_DEBUG
@@ -289,7 +289,7 @@ void vkGraphicsPipeline::_init_input_assembly(Config const &config) {
         .topology = config.topology,
 
         // Restarting the assembly of primitives is not applicable here.
-        .primitiveRestartEnable = VK_FALSE
+        .primitiveRestartEnable = vk::False
     };
 }
 
@@ -320,13 +320,13 @@ void vkGraphicsPipeline::_init_raster(Config const &config) {
         // same name, and changes how the depth test of a given fragment might
         // go by clamping its Z value to be within the near and far planes of
         // the view frustum before running the test.
-        .depthClampEnable = VK_FALSE,
+        .depthClampEnable = vk::False,
 
         // There are some situations in which you want a pipeline to complete
         // only the vertex (or geometry, etc) stage on the geometry. In those
         // situations, it's hugely beneficial to discard the primitives before
         // reaching the rasterization stage.
-        .rasterizerDiscardEnable = VK_FALSE,
+        .rasterizerDiscardEnable = vk::False,
 
         .polygonMode = config.polygon_mode,
         .cullMode    = config.cull_mode,
@@ -348,11 +348,11 @@ void vkGraphicsPipeline::_init_multisample(Config const &config) {
         .pNext                 = nullptr,
         .flags                 = { },
         .rasterizationSamples  = config.sample_flags,
-        .sampleShadingEnable   = VK_FALSE,
+        .sampleShadingEnable   = vk::False,
         .minSampleShading      = 0.0f,
         .pSampleMask           = nullptr,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable      = VK_FALSE,
+        .alphaToCoverageEnable = vk::False,
+        .alphaToOneEnable      = vk::False,
     };
 }
 
@@ -362,10 +362,10 @@ void vkGraphicsPipeline::_init_depth_stencil(Config const &config) {
         .pNext                 = nullptr,
         .flags                 = { },
         .depthTestEnable       = config.enable_depth_test,
-        .depthWriteEnable      = VK_TRUE,
+        .depthWriteEnable      = vk::True,
         .depthCompareOp        = config.depth_compare,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable     = VK_FALSE,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable     = vk::False,
         .front                 = { },
         .back                  = { },
         .minDepthBounds        = 0.0f,
@@ -377,7 +377,7 @@ void vkGraphicsPipeline::_init_depth_stencil(Config const &config) {
 void vkGraphicsPipeline::_init_blend_states() {
     _blend_states.emplace_back(vk::PipelineColorBlendAttachmentState {
         // Even though blending is disabled, the pipeline still runs this stage
-        .blendEnable = VK_TRUE,
+        .blendEnable = vk::True,
 
         .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
         .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
@@ -397,7 +397,7 @@ void vkGraphicsPipeline::_init_blend_states() {
     _blend_info = {
         .pNext = nullptr,
         .flags = { },
-        .logicOpEnable = VK_FALSE,
+        .logicOpEnable = vk::False,
         .logicOp = vk::LogicOp::eCopy,
 
         // The blend stage also needs to know what images it's blending. Since

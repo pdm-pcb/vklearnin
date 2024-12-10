@@ -9,7 +9,7 @@ project(
 
 # Everything depends on Vulkan
 set(VKL_VK_TARGET_MAJOR 1)
-set(VKL_VK_TARGET_MINOR 1)
+set(VKL_VK_TARGET_MINOR 2)
 set(
 	VKL_VK_TARGET_VERSION
     "${VKL_VK_TARGET_MAJOR}.${VKL_VK_TARGET_MINOR}"

@@ -20,19 +20,25 @@ public:
     ColorDynamic & operator=(ColorDynamic &&) = delete;
     ColorDynamic & operator=(ColorDynamic const &) = delete;
 
-    bool create(vkSurface const &surface, vkDevice const &device);
-    bool destroy();
+    void init(vkSurface const &surface,
+              std::span<vk::ClearValue const> const clear_values);
 
     void update_render_area(vkSurface const &surface);
 
-    void begin(std::span<vk::ClearValue const> const clear_values,
-               vkCmdBuffer const &cmd_buffer);
+    vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,
+                                                vk::ImageLayout const &layout);
+
+    inline auto const & pipeline_create_info() const {
+        return _pipeline_create_info;
+    }
 
 private:
-    vk::RenderingAttachmentInfoKHR _color_attachment;
-    vk::RenderingInfoKHR _rendering_info;
+    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
+    std::vector<vk::Format> _color_attachment_formats;
 
-    vk::Rect2D _render_area { };
+    vk::RenderingInfoKHR _rendering_info { };
+    vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
+
 };
 
 } // namespace vkl

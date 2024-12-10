@@ -167,7 +167,7 @@ void vkSwapchain::_populate_create_info() {
         // Setting clipped to true allows Vulkan to ignore pixels on the render
         // surface that can't be seen. For example, moving another window in
         // front of the render surface
-        .clipped = VK_TRUE,
+        .clipped = vk::True,
 
         // There are situations during which you'll want to recreate the
         // swapchain, and providing an existing example can speed up the

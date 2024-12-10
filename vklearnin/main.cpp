@@ -14,6 +14,8 @@
 #include "vklearnin/rendering/passes/DepthPass.hpp"
 #include "vklearnin/rendering/passes/MSAAPass.hpp"
 
+#include "vklearnin/rendering/dynamic/ColorDynamic.hpp"
+
 #include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSet.hpp"
@@ -21,13 +23,13 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define RENDER_PASS
+// #define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
-#define MSAA_PASS
+// #define MSAA_PASS
 
-// #define DYNAMIC_RENDERING
-// #define COLOR_DYNMAIC
+#define DYNAMIC_RENDERING
+#define COLOR_DYNAMIC
 // #define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
@@ -44,7 +46,11 @@ static vkSurface surface;
 static vkDevice device;
 
 static vkSwapchain swapchain;
+
+#ifdef RENDER_PASS
 static std::vector<vkFrameBuffer> frame_buffers;
+#endif // RENDER_PASS
+
 static std::vector<vkFrameSync> graphics_syncs;
 static uint32_t frame_index = 0u;
 
@@ -60,15 +66,19 @@ static auto const instance_config = vkInstance::Config {
     .enable_validation = true,
 };
 
-static auto features = vk::PhysicalDeviceFeatures2 {
-    .pNext = nullptr,
-    .features {
-        .samplerAnisotropy = VK_TRUE,
-    }
+static auto features = vkPhysicalDevice::Features {
+    .sampler_anisotropy = true,
+
+#ifdef DYNAMIC_RENDERING
+    .dynamic_rendering  = true,
+#endif // DYNAMIC_RENDERING
 };
 
 static std::vector<char const *> const physical_device_extensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#ifdef DYNAMIC_RENDERING
+    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+#endif // DYNAMIC_RENDERING
 };
 
 // pipeline stuff --------------------------------------------------------------
@@ -84,9 +94,9 @@ static std::vector<vk::ClearValue> const clear_values {{
 #endif // DEPTH or MSAA
 }};
 
-#ifdef RENDER_PASS
-
 static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+
+#ifdef RENDER_PASS
 
 #ifdef COLOR_PASS
 static ColorPass color_pass;
@@ -101,6 +111,14 @@ static MSAAPass msaa_pass;
 #endif // MSAA_PASS
 
 #endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
+
+#ifdef COLOR_DYNAMIC
+static ColorDynamic color_dynamic;
+#endif // COLOR_DYNAMIC
+
+#endif // DYNAMIC_RENDERING
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -129,7 +147,7 @@ static vkDescriptorSet wood_descriptor_set;
 // =============================================================================
 
 void vulkan_setup();
-void create_render_pass();
+void init_rendering();
 void create_swapchain();
 void create_draw_data();
 void create_descriptor_data();
@@ -149,7 +167,7 @@ void recreate_swapchain();
 // =============================================================================
 int main() {
     vulkan_setup();
-    create_render_pass();
+    init_rendering();
     create_swapchain();
 
     descriptor_pool
@@ -160,7 +178,6 @@ int main() {
 
     create_draw_data();
     create_descriptor_data();
-
     create_graphics_pipeline();
 
     // -------------------------------------------------------------------------
@@ -188,7 +205,15 @@ int main() {
 
         // ---------------------------------------------------------------------
         // begin graphics commands
+#ifdef RENDER_PASS
         auto const &frame_buffer   = frame_buffers[frame_index];
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
+        auto const &swapchain_image_view = swapchain.image_views()[frame_index];
+        auto const &swapchain_image_layout = swapchain.images()[frame_index].layout();
+#endif // DYNAMIC_RENDERING
+
         auto const &gfx_sync       = graphics_syncs[frame_index];
         auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
 
@@ -218,6 +243,7 @@ int main() {
 
         graphics_cmd_buffer.begin_one_time_submit();
 
+#ifdef RENDER_PASS
         // ---------------------------------------------------------------------
         // begin render pass
 
@@ -234,11 +260,29 @@ int main() {
 #endif // MSAA_PASS
 
         begin_info.framebuffer = frame_buffer.native();
-        graphics_cmd_buffer.begin_render_pass(begin_info);
-        graphics_pipeline.bind(graphics_cmd_buffer);
-        draw(graphics_cmd_buffer, run_time_s);
 
+        graphics_cmd_buffer.begin_render_pass(begin_info);
+            graphics_pipeline.bind(graphics_cmd_buffer);
+            draw(graphics_cmd_buffer, run_time_s);
         graphics_cmd_buffer.end_render_pass();
+
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
+
+#ifdef COLOR_DYNAMIC
+        auto &rendering_info =
+            color_dynamic.rendering_info(swapchain_image_view.native(),
+                                         swapchain_image_layout);
+#endif // COLOR_DYNAMIC
+
+        graphics_cmd_buffer.begin_rendering(rendering_info);
+            graphics_pipeline.bind(graphics_cmd_buffer);
+            draw(graphics_cmd_buffer, run_time_s);
+        graphics_cmd_buffer.end_rendering();
+
+#endif // DYNAMIC_RENDERING
+
         graphics_cmd_buffer.end_recording();
 
         // ---------------------------------------------------------------------
@@ -246,15 +290,9 @@ int main() {
         device.cmd_queue().submit(
             {{ graphics_cmd_buffer.native() }},
             {{
-#ifdef DRAW_PARTICLES
-                compute_sync.complete_semaphore(),
-#endif // DRAW_PARTICLES
                 gfx_sync.wait_semaphore()
             }},
             {{
-#ifdef DRAW_PARTICLES
-                vk::PipelineStageFlagBits::eVertexInput,
-#endif // DRAW_PARTICLES
                 vk::PipelineStageFlagBits::eColorAttachmentOutput
             }},
             {{ gfx_sync.complete_semaphore() }},
@@ -325,7 +363,9 @@ void vulkan_setup() {
     device.create(vkPhysicalDevice::current_device());
 }
 
-void create_render_pass() {
+void init_rendering() {
+#ifdef RENDER_PASS
+
 #ifdef COLOR_PASS
     color_pass.create(surface, clear_values, device);
 #endif // COLOR_PASS
@@ -350,11 +390,24 @@ void create_render_pass() {
         device
     );
 #endif // MSAA_PASS
+
+#endif // RENDER_PASS
+
+
+#ifdef DYNAMIC_RENDERING
+
+#ifdef COLOR_DYNAMIC
+    color_dynamic.init(surface, clear_values);
+#endif // COLOR_DYNAMIC
+
+#endif // DNYMAIC_RENDERING
 }
 
 void create_swapchain() {
     // swapchain  --------------------------------------------------------------
     swapchain.create(device, surface);
+
+#ifdef RENDER_PASS
 
     // frame buffers -----------------------------------------------------------
     frame_buffers.resize(swapchain.image_count());
@@ -387,6 +440,8 @@ void create_swapchain() {
             device
         );
     }
+
+#endif // RENDER_PASS
 
     graphics_syncs.resize(swapchain.image_count());
     for(auto &sync : graphics_syncs) {
@@ -572,6 +627,8 @@ void create_graphics_pipeline() {
         .add_descriptor_set_layout(camera_descriptor_set_layout.native())
         .add_descriptor_set_layout(texture_descriptor_set_layout.native())
 
+#ifdef RENDER_PASS
+
 #ifdef COLOR_PASS
         .add_render_pass(color_pass.render_pass())
 #endif // COLOR_PASS
@@ -584,18 +641,25 @@ void create_graphics_pipeline() {
         .add_render_pass(msaa_pass.render_pass())
 #endif // MSAA_PASS
 
+#endif // RENDER_PASS
+
         .create(vkGraphicsPipeline::Config {
                 .viewport_extent = surface.extent(),
                 .topology = vk::PrimitiveTopology::eTriangleList,
                 .sample_flags = msaa_samples,
 
 #if defined(DEPTH_PASS) || defined(MSAA_PASS)
-                .enable_depth_test = VK_TRUE,
+                .enable_depth_test = vk::True,
 #endif // render passes that use depth testing
+
+#ifdef DYNAMIC_RENDERING
+                .rendering_create_info = &color_dynamic.pipeline_create_info(),
+#endif // DYNAMIC_RENDERING
 
             },
             device
         );
+
 }
 
 void destroy_graphics_pipeline() {
@@ -627,9 +691,11 @@ void destroy_swapchain() {
         sync.destroy();
     }
 
+#ifdef RENDER_PASS
     for(auto &fb : frame_buffers) {
         fb.destroy();
     }
+#endif // RENDER_PASS
 
     swapchain.destroy();
 }
@@ -730,9 +796,11 @@ void recreate_swapchain() {
         sync.destroy();
     }
 
+#ifdef RENDER_PASS
     for(auto &fb : frame_buffers) {
         fb.destroy();
     }
+#endif // RENDER_PASS
 
 #ifdef DEPTH_PASS
     depth_pass.destroy_swapchain_resources();
@@ -751,6 +819,8 @@ void recreate_swapchain() {
     graphics_pipeline.update_dimensions(surface.extent(), { });
 
     swapchain.create(device, surface);
+
+#ifdef RENDER_PASS
 
 #ifdef COLOR_PASS
     color_pass.update_render_area(surface);
@@ -802,6 +872,8 @@ void recreate_swapchain() {
             device
         );
     }
+
+#endif // RENDER_PASS
 
     graphics_syncs.resize(swapchain.image_count());
     for(auto &sync : graphics_syncs) {

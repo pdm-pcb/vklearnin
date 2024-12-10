@@ -122,8 +122,8 @@ bool ColorPass::destroy() {
 // =============================================================================
 void ColorPass::update_render_area(vkSurface const &surface) {
     _begin_info.renderArea = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
     };
 }
 

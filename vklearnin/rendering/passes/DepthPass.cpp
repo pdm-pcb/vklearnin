@@ -88,8 +88,8 @@ bool DepthPass::create(vkSurface const &surface,
         .renderPass = _render_pass.native(),
         .framebuffer = { },
         .renderArea = vk::Rect2D {
-            .offset = { },
-            .extent = surface.extent()
+            .offset = vk::Offset2D { },
+            .extent = surface.extent(),
         },
         .clearValueCount = static_cast<uint32_t>(clear_values.size()),
         .pClearValues = clear_values.data(),
@@ -145,8 +145,8 @@ void DepthPass::create_swapchain_resources(
     _color_format = surface.format().format;
 
     _begin_info.renderArea = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
     };
 
     _create_depth_buffer(surface, physical_device, device);

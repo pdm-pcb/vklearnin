@@ -18,10 +18,25 @@ public:
     vkPhysicalDevice & operator=(vkPhysicalDevice &&) = delete;
     vkPhysicalDevice & operator=(vkPhysicalDevice const &) = delete;
 
+    struct Features {
+        // VK1.0 features
+        bool fill_mode_nonsolid = false;
+        bool sampler_anisotropy = false;
+
+        // VK1.1 features
+        // ...
+
+        // VK1.2 features
+        // ...
+
+        // Extensions
+        bool dynamic_rendering  = false;
+    };
+
     static bool populate_device_list(
         vkInstance const &instance,
         vkSurface const &surface,
-        vk::PhysicalDeviceFeatures2 const &features,
+        Features const &features,
         std::span<char const * const> const extensions
     );
 
@@ -62,7 +77,11 @@ private:
     vk::SampleCountFlags    _samples     { };
     vk::SampleCountFlagBits _max_samples { };
 
-    vk::PhysicalDeviceFeatures2 _features   { };
+    vk::PhysicalDeviceFeatures2        _features   { };
+    vk::PhysicalDeviceVulkan11Features _features11 { };
+    vk::PhysicalDeviceVulkan12Features _features12 { };
+
+    vk::PhysicalDeviceDynamicRenderingFeaturesKHR _dynamic_rendering { };
 
     std::vector<vk::ExtensionProperties> _extensions;
 
@@ -77,7 +96,7 @@ private:
                                     vk::QueueFlags const flags);
 
     bool _check_queue_families(vkSurface const &surface);
-    bool _check_features(vk::PhysicalDeviceFeatures2 const &features);
+    bool _check_features(Features const &features);
     bool _check_extensions(std::span<char const * const> extensions);
 
     void _get_max_samples();

@@ -36,14 +36,14 @@ bool vkSampler::create(Filters const filters,
         .addressModeU     = address_mode.u,
         .addressModeV     = address_mode.v,
         .mipLodBias       = 0.0f,
-        .anisotropyEnable = VK_TRUE,
+        .anisotropyEnable = vk::True,
         .maxAnisotropy    = physical_device.max_aniso(),
-        .compareEnable    = VK_FALSE,
+        .compareEnable    = vk::False,
         .compareOp        = vk::CompareOp::eAlways,
         .minLod           = 0.0f,
         .maxLod           = VK_LOD_CLAMP_NONE,
         .borderColor      = vk::BorderColor::eIntOpaqueWhite,
-        .unnormalizedCoordinates = VK_FALSE
+        .unnormalizedCoordinates = vk::False
     };
 
     auto const [ result, value ] = _device.createSampler(create_info);

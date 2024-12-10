@@ -1,87 +1,74 @@
-// #include "vklearnin/vklearnin.hpp"
-// #include "vklearnin/rendering/dynamic/ColorDynamic.hpp"
+#include "vklearnin/vklearnin.hpp"
+#include "vklearnin/rendering/dynamic/ColorDynamic.hpp"
 
-// #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
-// #include "vklearnin/vulkan/devices/vkDevice.hpp"
-// #include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
+#include "vklearnin/vulkan/swapchain/vkSurface.hpp"
+#include "vklearnin/vulkan/devices/vkDevice.hpp"
+#include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
 
-// namespace vkl {
+namespace vkl {
 
-// // =============================================================================
-// bool ColorDynamic::create(vkSurface const &surface, vkDevice const &device) {
-//     if(_render_pass.native()) {
-//         Log::error(
-//             "Color pass {} already exists.",
-//             _render_pass.native()
-//         );
-//         return false;
-//     }
+// =============================================================================
+void ColorDynamic::init(vkSurface const &surface,
+                        std::span<vk::ClearValue const> const clear_values)
+{
+    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
+        .pNext = nullptr,
+        .imageView = { },
+        .imageLayout = { },
+        .resolveMode = { },
+        .resolveImageView = { },
+        .resolveImageLayout = { },
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = clear_values[0].color,
+    }}};
 
-//     if(!surface.native()) {
-//         Log::error("Cannot create color pass with invalid surface.");
-//         return false;
-//     }
+    _color_attachment_formats = {{ surface.format().format }};
 
-//     if(!device.native()) {
-//         Log::error("Cannot create color pass with invalid device.");
-//         return false;
-//     }
+    _rendering_info = vk::RenderingInfoKHR {
+        .pNext = nullptr,
+        .flags = { },
+        .renderArea = vk::Rect2D {
+            .offset = { },
+            .extent = surface.extent(),
+        },
+        .layerCount = 1u,
+        .viewMask = { },
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_color_attachments.size()),
+        .pColorAttachments = _color_attachments.data(),
+        .pDepthAttachment = { },
+        .pStencilAttachment = { },
+    };
 
-//     _color_attachment = vk::RenderingAttachmentInfoKHR {
-//         .pNext = nullptr,
-//         .imageView = { },
-//         .imageLayout = { },
-//         .resolveMode = { },
-//         .resolveImageView = { },
-//         .resolveImageLayout = { },
-//         .loadOp = { },
-//         .storeOp = { },
-//         .clearValue = { },
-//     };
+    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
+        .pNext = nullptr,
+        .viewMask = { },
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_color_attachment_formats.size()),
+        .pColorAttachmentFormats = _color_attachment_formats.data(),
+        .depthAttachmentFormat = { },
+        .stencilAttachmentFormat = { },
+    };
+}
 
-//     _render_area = vk::Rect2D {
-//         .offset = { },
-//         .extent = surface.extent()
-//     };
+// =============================================================================
+vk::RenderingInfoKHR const &
+ColorDynamic::rendering_info(vk::ImageView const &view,
+                             vk::ImageLayout const &layout)
+{
+    _color_attachments[0].imageView = view;
+    _color_attachments[0].imageLayout = layout;
 
-//     _rendering_info = vk::RenderingInfoKHR {
-//         .pNext = nullptr,
-//         .flags = { },
-//         .renderArea = { },
-//         .layerCount = { },
-//         .viewMask = { },
-//         .colorAttachmentCount = { },
-//         .pColorAttachments = { },
-//         .pDepthAttachment = { },
-//         .pStencilAttachment = { },
-//     };
+    return _rendering_info;
+}
 
-// auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-// auto render_info               = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-// render_info.layerCount         = 1;
-// render_info.pDepthAttachment   = &depth_attachment_info;
-// render_info.pStencilAttachment = &depth_attachment_info;
+// =============================================================================
+void ColorDynamic::update_render_area(vkSurface const &surface) {
+    _rendering_info.renderArea = vk::Rect2D {
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
+    };
+}
 
-//     return true;
-// }
-
-// // =============================================================================
-// bool ColorDynamic::destroy() {
-
-//     return true;
-// }
-
-// // =============================================================================
-// void ColorDynamic::update_render_area(vkSurface const &surface) {
-
-// }
-
-// // =============================================================================
-// void ColorDynamic::begin(vkFrameBuffer const &frame_buffer,
-//                          std::span<vk::ClearValue const> const clear_values,
-//                          vkCmdBuffer const &cmd_buffer)
-// {
-
-// }
-
-// } // namespace vkl
+} // namespace vkl
