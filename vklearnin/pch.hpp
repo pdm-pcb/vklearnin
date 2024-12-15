@@ -9,16 +9,10 @@
 #include <random>
 #include <numbers>
 
-// Allow for the use of designated initializers
-// https://github.com/KhronosGroup/Vulkan-Hpp#designated-initializers
-#define VULKAN_HPP_NO_CONSTRUCTORS
-
-// Check the return values manually
-// https://github.com/KhronosGroup/Vulkan-Hpp#return-values-error-codes--exceptions
-#define VULKAN_HPP_NO_EXCEPTIONS
-
-// No need to load every function by hand
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define VULKAN_HPP_NO_CONSTRUCTORS           // Use designated initializers
+#define VULKAN_HPP_NO_SETTERS                // structs don't need setters
+#define VULKAN_HPP_NO_EXCEPTIONS             // Check the return values manually
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1 // Find function pointers for us
 
 #ifdef VKL_LINUX
     #define VK_USE_PLATFORM_XLIB_KHR

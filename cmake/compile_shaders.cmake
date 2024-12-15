@@ -1,13 +1,9 @@
 # Thanks to diapir for this one. Slightly modified for my own uses:
 # https://stackoverflow.com/a/60472877/1464937
 
-find_package(Vulkan ${VKL_VK_TARGET_VERSION} REQUIRED COMPONENTS glslc)
-find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
-
-cmake_policy(SET CMP0116 NEW)
+find_program(glslc_bin NAMES glslc HINTS Vulkan::glslc)
 
 function(compile_shader target_name sources)
-
     foreach(source ${sources})
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set(output_filename "${source}-debug.spv")
@@ -26,7 +22,7 @@ function(compile_shader target_name sources)
             DEPENDS ${source}
             DEPFILE ${source}.d
             COMMAND
-                ${glslc_executable}
+                ${glslc_bin}
                 --target-env=vulkan${VK_TARGET_VERSION}
                 -mfmt=bin
                 -MD
@@ -42,5 +38,4 @@ function(compile_shader target_name sources)
             ${output_filename}
         )
     endforeach()
-
 endfunction()
