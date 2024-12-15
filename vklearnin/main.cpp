@@ -207,12 +207,10 @@ int main() {
         // begin graphics commands
 #ifdef RENDER_PASS
         auto const &frame_buffer   = frame_buffers[frame_index];
-#endif // RENDER_PASS
-
-#ifdef DYNAMIC_RENDERING
+#elif defined(DYNAMIC_RENDERING)
+        auto &swapchain_image = swapchain.images()[frame_index];
         auto const &swapchain_image_view = swapchain.image_views()[frame_index];
-        auto const &swapchain_image_layout = swapchain.images()[frame_index].layout();
-#endif // DYNAMIC_RENDERING
+#endif // render passes or dynamic rendering
 
         auto const &gfx_sync       = graphics_syncs[frame_index];
         auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
@@ -266,14 +264,21 @@ int main() {
             draw(graphics_cmd_buffer, run_time_s);
         graphics_cmd_buffer.end_render_pass();
 
-#endif // RENDER_PASS
+#elif defined(DYNAMIC_RENDERING)
 
-#ifdef DYNAMIC_RENDERING
+        // transition swapchain image for draw
+        swapchain_image.transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
+            }
+        );
 
 #ifdef COLOR_DYNAMIC
         auto &rendering_info =
             color_dynamic.rendering_info(swapchain_image_view.native(),
-                                         swapchain_image_layout);
+                                         swapchain_image.layout());
 #endif // COLOR_DYNAMIC
 
         graphics_cmd_buffer.begin_rendering(rendering_info);
@@ -281,7 +286,16 @@ int main() {
             draw(graphics_cmd_buffer, run_time_s);
         graphics_cmd_buffer.end_rendering();
 
-#endif // DYNAMIC_RENDERING
+        // transition swapchain image for present
+        swapchain_image.transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eColorAttachmentOptimal,
+                .new_layout = vk::ImageLayout::ePresentSrcKHR,
+            }
+        );
+
+#endif // render passes or dynamic rendering
 
         graphics_cmd_buffer.end_recording();
 

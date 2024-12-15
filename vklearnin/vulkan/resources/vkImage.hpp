@@ -48,13 +48,18 @@ public:
 
     bool destroy();
 
+    struct TransitionDetails {
+        vk::ImageLayout const old_layout = vk::ImageLayout::eUndefined;
+        vk::ImageLayout const new_layout = vk::ImageLayout::eUndefined;
+
+        uint32_t const base_mip_level = 0u;
+        uint32_t const mip_level_count = 1u;
+        uint32_t const base_array_layer = 0u;
+        uint32_t const array_layer_count = 1u;
+    };
+
     void transition_layout(vkCmdBuffer const &cmd_buffer,
-                           vk::ImageLayout const old_layout,
-                           vk::ImageLayout const new_layout,
-                           uint32_t const base_mip_level,
-                           uint32_t const mip_level_count,
-                           uint32_t const base_array_layer,
-                           uint32_t const array_layer_count);
+                           TransitionDetails const &details);
 
     inline auto const & native() const { return _handle; }
     inline auto format() const { return _format; }

@@ -33,7 +33,7 @@ public:
     inline auto const & native() const { return _handle; }
     inline auto image_count() const { return _image_count; }
 
-    inline std::span<vkImage const> const images() const {
+    inline std::span<vkImage> const images() {
         return _images;
     }
 

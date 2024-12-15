@@ -262,51 +262,53 @@ bool vkImage::destroy() {
 
 // =============================================================================
 void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
-                                vk::ImageLayout const old_layout,
-                                vk::ImageLayout const new_layout,
-                                uint32_t const base_mip_level,
-                                uint32_t const mip_level_count,
-                                uint32_t const base_array_layer,
-                                uint32_t const array_layer_count)
+                                TransitionDetails const &details)
 {
-    Log::trace(
-        "Image {}: '{:s}'->'{:s}'",
-        _handle,
-        vk::to_string(old_layout),
-        vk::to_string(new_layout)
-    );
+    // Log::trace(
+    //     "Image {}: '{:s}'->'{:s}'",
+    //     _handle,
+    //     vk::to_string(details.old_layout),
+    //     vk::to_string(details.new_layout)
+    // );
 
     vk::ImageMemoryBarrier barrier {
-        .oldLayout = old_layout,
-        .newLayout = new_layout,
+        .oldLayout = details.old_layout,
+        .newLayout = details.new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = _handle,
         .subresourceRange {
             .aspectMask     = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel   = base_mip_level,
-            .levelCount     = mip_level_count,
-            .baseArrayLayer = base_array_layer,
-            .layerCount     = array_layer_count,
+            .baseMipLevel   = details.base_mip_level,
+            .levelCount     = details.mip_level_count,
+            .baseArrayLayer = details.base_array_layer,
+            .layerCount     = details.array_layer_count,
         }
     };
 
     vk::PipelineStageFlags src_stage = { };
     vk::PipelineStageFlags dst_stage = { };
 
+    bool supported_transition = true;
+
     if(barrier.oldLayout == vk::ImageLayout::eUndefined) {
-        if(new_layout == vk::ImageLayout::eTransferDstOptimal) {
+        if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
             barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
 
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eTransfer;
         }
+        else if(details.new_layout == vk::ImageLayout::eColorAttachmentOptimal)
+        {
+            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+            barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        }
         else {
-            Log::error(
-                "Image {}: Unsupported layout transition",
-                _handle
-            );
-            return;
+            supported_transition = false;
         }
     }
     else if(barrier.oldLayout == vk::ImageLayout::eTransferDstOptimal) {
@@ -325,11 +327,7 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
             dst_stage = vk::PipelineStageFlagBits::eTransfer;
         }
         else {
-            Log::error(
-                "Image {}: Unsupported layout transition",
-                _handle
-            );
-            return;
+            supported_transition = false;
         }
     }
     else if(barrier.oldLayout == vk::ImageLayout::eTransferSrcOptimal) {
@@ -341,18 +339,27 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
             dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
         }
         else {
-            Log::error(
-                "Image {}: Unsupported layout transition",
-                _handle
-            );
-            return;
+            supported_transition = false;
+        }
+    }
+    else if(barrier.oldLayout == vk::ImageLayout::eColorAttachmentOptimal) {
+        if(details.new_layout == vk::ImageLayout::ePresentSrcKHR) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eNone;
+
+            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
+        }
+        else {
+            supported_transition = false;
         }
     }
     else {
-            Log::error(
-                "Image {}: Unsupported layout transition",
-                _handle
-            );
+        supported_transition = false;
+    }
+
+    if(!supported_transition) {
+        Log::error("Image {}: Unsupported layout transition", _handle);
         return;
     }
 
@@ -551,12 +558,14 @@ bool vkImage::_send_to_device() {
 
         transition_layout(
             cmd_buffer,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eTransferDstOptimal,
-            0u,
-            _mip_levels,
-            0u,
-            _array_layers
+            TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eTransferDstOptimal,
+                .base_mip_level = 0u,
+                .mip_level_count = _mip_levels,
+                .base_array_layer = 0u,
+                .array_layer_count = _array_layers,
+            }
         );
 
         cmd_buffer.native().copyBufferToImage(
@@ -599,12 +608,14 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
 
             transition_layout(
                 cmd_buffer,
-                vk::ImageLayout::eTransferDstOptimal,
-                vk::ImageLayout::eTransferSrcOptimal,
-                mip - 1u,
-                1u,
-                layer,
-                1u
+                TransitionDetails {
+                    .old_layout = vk::ImageLayout::eTransferDstOptimal,
+                    .new_layout = vk::ImageLayout::eTransferSrcOptimal,
+                    .base_mip_level = mip - 1u,
+                    .mip_level_count = 1u,
+                    .base_array_layer = layer,
+                    .array_layer_count = 1u
+                }
             );
 
             vk::ImageBlit const blit {
@@ -643,12 +654,14 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
 
             transition_layout(
                 cmd_buffer,
-                vk::ImageLayout::eTransferSrcOptimal,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                mip - 1u,
-                1u,
-                layer,
-                1u
+                TransitionDetails {
+                    .old_layout = vk::ImageLayout::eTransferSrcOptimal,
+                    .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                    .base_mip_level = mip - 1u,
+                    .mip_level_count = 1u,
+                    .base_array_layer = layer,
+                    .array_layer_count = 1u
+                }
             );
 
             if(mip_width  > 1) { mip_width  /= 2; }
@@ -657,12 +670,14 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
 
         transition_layout(
             cmd_buffer,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            _mip_levels - 1u,
-            1u,
-            layer,
-            1u
+            TransitionDetails {
+                .old_layout = vk::ImageLayout::eTransferDstOptimal,
+                .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                .base_mip_level = _mip_levels - 1u,
+                .mip_level_count = 1u,
+                .base_array_layer = layer,
+                .array_layer_count = 1u
+            }
         );
     }
 }
