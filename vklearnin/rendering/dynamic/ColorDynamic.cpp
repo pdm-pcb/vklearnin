@@ -20,10 +20,12 @@ void ColorDynamic::init(vkSurface const &surface,
         .resolveImageLayout = { },
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = clear_values[0].color,
+        .clearValue = {
+            .color = clear_values[0].color,
+        },
     }}};
 
-    _color_attachment_formats = {{ surface.format().format }};
+    _color_attachment_formats = { surface.format().format };
 
     _rendering_info = vk::RenderingInfoKHR {
         .pNext = nullptr,

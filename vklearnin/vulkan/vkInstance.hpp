@@ -46,7 +46,11 @@ private:
     std::string _app_name { };
     std::uint32_t _app_version { 0u };
 
+#ifdef VKL_LINUX
+    vk::detail::DynamicLoader _loader { };
+#elif defined(VKL_WINDOWS)
     vk::DynamicLoader         _loader { };
+#endif
     vk::ApplicationInfo       _app_info { };
     std::vector<char const *> _enabled_layers { };
     std::vector<char const *> _enabled_extensions { };
