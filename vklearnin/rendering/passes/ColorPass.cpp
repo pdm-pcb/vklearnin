@@ -108,7 +108,7 @@ bool ColorPass::destroy() {
         return false;
     }
 
-    _begin_info = { };
+    _begin_info = vk::RenderPassBeginInfo { };
     _render_pass.destroy();
 
     _attachment_descriptions.clear();
