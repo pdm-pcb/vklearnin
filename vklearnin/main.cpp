@@ -110,15 +110,13 @@ static DepthPass depth_pass;
 static MSAAPass msaa_pass;
 #endif // MSAA_PASS
 
-#endif // RENDER_PASS
-
-#ifdef DYNAMIC_RENDERING
+#elif defined(DYNAMIC_RENDERING)
 
 #ifdef COLOR_DYNAMIC
 static ColorDynamic color_dynamic;
 #endif // COLOR_DYNAMIC
 
-#endif // DYNAMIC_RENDERING
+#endif // render passes or dynamic rendering
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -405,16 +403,13 @@ void init_rendering() {
     );
 #endif // MSAA_PASS
 
-#endif // RENDER_PASS
-
-
-#ifdef DYNAMIC_RENDERING
+#elif defined(DYNAMIC_RENDERING)
 
 #ifdef COLOR_DYNAMIC
     color_dynamic.init(surface, clear_values);
 #endif // COLOR_DYNAMIC
 
-#endif // DNYMAIC_RENDERING
+#endif // render passes or dynamic rendering
 }
 
 void create_swapchain() {
@@ -887,7 +882,13 @@ void recreate_swapchain() {
         );
     }
 
-#endif // RENDER_PASS
+#elif defined(DYNAMIC_RENDERING)
+
+#ifdef COLOR_DYNAMIC
+    color_dynamic.update_render_area(surface);
+#endif // COLOR_DYNAMIC
+
+#endif // render passes or dynamic rendering
 
     graphics_syncs.resize(swapchain.image_count());
     for(auto &sync : graphics_syncs) {
