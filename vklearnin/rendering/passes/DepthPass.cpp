@@ -10,6 +10,7 @@ namespace vkl {
 // =============================================================================
 bool DepthPass::create(vkSurface const &surface,
                        std::span<vk::ClearValue const> const clear_values,
+                       vk::Format const depth_format,
                        vkPhysicalDevice const &physical_device,
                        vkDevice const &device)
 {
@@ -22,21 +23,22 @@ bool DepthPass::create(vkSurface const &surface,
     }
 
     if(!surface.native()) {
-        Log::error("Cannot create color depth pass with invalid surface.");
+        Log::error("Cannot create depth pass with invalid surface.");
         return false;
     }
 
     if(!device.native()) {
-        Log::error("Cannot create color depth pass with invalid device.");
+        Log::error("Cannot create depth pass with invalid device.");
         return false;
     }
 
-    if(!_find_depth_format(physical_device)) {
-        Log::error("Unable to find suitable depth format.");
+    if(depth_format == vk::Format::eUndefined) {
+        Log::error("Cannot create depth pass with undefined depth format.");
         return false;
     }
 
     _color_format = surface.format().format;
+    _depth_format = depth_format;
 
     _init_attachments();
     _init_subpasses();
@@ -101,7 +103,7 @@ bool DepthPass::create(vkSurface const &surface,
 // =============================================================================
 bool DepthPass::destroy() {
     if(!_render_pass.native()) {
-        Log::error("Create color depth pass before calling destroy.");
+        Log::error("Create depth pass before calling destroy.");
         return false;
     }
 
@@ -138,11 +140,12 @@ void DepthPass::destroy_swapchain_resources() {
 // =============================================================================
 void DepthPass::create_swapchain_resources(
     vkSurface const &surface,
+    vk::Format const depth_format,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
-    _find_depth_format(physical_device);
     _color_format = surface.format().format;
+    _depth_format = depth_format;
 
     _begin_info.renderArea = vk::Rect2D {
         .offset = vk::Offset2D { },
@@ -150,27 +153,6 @@ void DepthPass::create_swapchain_resources(
     };
 
     _create_depth_buffer(surface, physical_device, device);
-}
-
-// =============================================================================
-bool DepthPass::_find_depth_format(vkPhysicalDevice const &physical_device)
-{
-    static std::array<vk::Format const, 2> const depth_formats {
-        vk::Format::eD32SfloatS8Uint, // One of these two will always be
-        vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
-    };
-
-    for(auto const format : depth_formats) {
-        auto props = physical_device.native().getFormatProperties(format);
-        if(props.optimalTilingFeatures &
-           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
-        {
-            _depth_format = format;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 // =============================================================================

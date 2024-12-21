@@ -11,6 +11,11 @@ namespace vkl {
 void ColorDynamic::init(vkSurface const &surface,
                         std::span<vk::ClearValue const> const clear_values)
 {
+    if(!surface.native()) {
+        Log::error("Cannot create color dynamic with invalid surface.");
+        return;
+    }
+
     _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
         .pNext = nullptr,
         .imageView = { },

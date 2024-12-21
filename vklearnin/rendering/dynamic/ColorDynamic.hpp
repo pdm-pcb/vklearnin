@@ -38,7 +38,6 @@ private:
 
     vk::RenderingInfoKHR _rendering_info { };
     vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
-
 };
 
 } // namespace vkl

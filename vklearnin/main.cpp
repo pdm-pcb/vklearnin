@@ -15,6 +15,7 @@
 #include "vklearnin/rendering/passes/MSAAPass.hpp"
 
 #include "vklearnin/rendering/dynamic/ColorDynamic.hpp"
+#include "vklearnin/rendering/dynamic/DepthDynamic.hpp"
 
 #include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
@@ -23,13 +24,13 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-// #define RENDER_PASS
+#define RENDER_PASS
 // #define COLOR_PASS
-// #define DEPTH_PASS
+#define DEPTH_PASS
 // #define MSAA_PASS
 
-#define DYNAMIC_RENDERING
-#define COLOR_DYNAMIC
+// #define DYNAMIC_RENDERING
+// #define COLOR_DYNAMIC
 // #define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
@@ -104,6 +105,12 @@ static ColorPass color_pass;
 
 #ifdef DEPTH_PASS
 static DepthPass depth_pass;
+static vk::Format depth_format;
+
+static std::array<vk::Format const, 2> const depth_formats {
+    vk::Format::eD32SfloatS8Uint, // One of these two will always be
+    vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
+};
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
@@ -115,6 +122,10 @@ static MSAAPass msaa_pass;
 #ifdef COLOR_DYNAMIC
 static ColorDynamic color_dynamic;
 #endif // COLOR_DYNAMIC
+
+#ifdef DEPTH_DYNAMIC
+static DepthDynamic depth_dynamic;
+#endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
 
@@ -279,6 +290,12 @@ int main() {
                                          swapchain_image.layout());
 #endif // COLOR_DYNAMIC
 
+#ifdef DEPTH_DYNAMIC
+        auto &rendering_info =
+            depth_dynamic.rendering_info(swapchain_image_view.native(),
+                                         swapchain_image.layout());
+#endif // DEPTH_DYNAMIC
+
         graphics_cmd_buffer.begin_rendering(rendering_info);
             graphics_pipeline.bind(graphics_cmd_buffer);
             draw(graphics_cmd_buffer, run_time_s);
@@ -383,9 +400,13 @@ void init_rendering() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
     depth_pass.create(
         surface,
         clear_values,
+        depth_format,
         vkPhysicalDevice::current_device(),
         device
     );
@@ -408,6 +429,10 @@ void init_rendering() {
 #ifdef COLOR_DYNAMIC
     color_dynamic.init(surface, clear_values);
 #endif // COLOR_DYNAMIC
+
+#ifdef DEPTH_DYNAMIC
+    depth_dynamic.init(surface, clear_values);
+#endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
 }
@@ -662,7 +687,15 @@ void create_graphics_pipeline() {
 #endif // render passes that use depth testing
 
 #ifdef DYNAMIC_RENDERING
+
+#ifdef COLOR_DYNAMIC
                 .rendering_create_info = &color_dynamic.pipeline_create_info(),
+#endif // COLOR_DYNAMIC
+
+#ifdef DEPTH_DYNAMIC
+                .rendering_create_info = &depth_dynamic.pipeline_create_info(),
+#endif // DEPTH_DYNAMIC
+
 #endif // DYNAMIC_RENDERING
 
             },
@@ -836,8 +869,12 @@ void recreate_swapchain() {
 #endif // COLOR_PASS
 
 #ifdef DEPTH_PASS
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
     depth_pass.create_swapchain_resources(
         surface,
+        depth_format,
         vkPhysicalDevice::current_device(),
         device
     );
@@ -887,6 +924,10 @@ void recreate_swapchain() {
 #ifdef COLOR_DYNAMIC
     color_dynamic.update_render_area(surface);
 #endif // COLOR_DYNAMIC
+
+#ifdef DEPTH_DYNAMIC
+    depth_dynamic.update_render_area(surface);
+#endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
 

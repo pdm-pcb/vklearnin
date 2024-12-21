@@ -102,6 +102,29 @@ vkPhysicalDevice const & vkPhysicalDevice::current_device() {
 }
 
 // =============================================================================
+vk::Format
+vkPhysicalDevice::find_depth_format(std::span<vk::Format const> const formats)
+const
+{
+    for(auto const format : formats) {
+        auto props = _handle.getFormatProperties(format);
+        if(props.optimalTilingFeatures &
+           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+        {
+            Log::trace(
+                "{} selected depth format {}",
+                _name,
+                vk::to_string(format)
+            );
+            return format;
+        }
+    }
+
+    Log::error("{} failed to find suitable depth format.", _name);
+    return vk::Format::eUndefined;
+}
+
+// =============================================================================
 vkPhysicalDevice::vkPhysicalDevice(vk::PhysicalDevice const handle) :
     _handle { handle }
 {

@@ -46,6 +46,9 @@ public:
 
     static vkPhysicalDevice const & current_device();
 
+    vk::Format
+    find_depth_format(std::span<vk::Format const> const formats) const;
+
     inline auto const & native()         const { return _handle; }
     inline std::string_view const name() const { return _name; }
     inline auto type()                   const { return _type; }
