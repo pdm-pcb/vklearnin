@@ -10,15 +10,17 @@ namespace vkl {
 // =============================================================================
 void DepthDynamic::init(vkSurface const &surface,
                         std::span<vk::ClearValue const> const clear_values,
-                        vkPhysicalDevice const &physical_device)
+                        vk::Format const depth_format,
+                        vkPhysicalDevice const &physical_device,
+                        vkDevice const &device)
 {
     if(!surface.native()) {
-        Log::error("Cannot create color dynamic with invalid surface.");
+        Log::error("Cannot create depth dynamic with invalid surface.");
         return;
     }
 
-    if(!_find_depth_format(physical_device)) {
-        Log::error("Unable to find suitable depth format.");
+    if(depth_format == vk::Format::eUndefined) {
+        Log::error("Cannot create depth dynamic with undefined depth format.");
         return;
     }
 
@@ -38,6 +40,35 @@ void DepthDynamic::init(vkSurface const &surface,
 
     _color_attachment_formats = { surface.format().format };
 
+    _depth_format = depth_format;
+
+    if(!_create_depth_buffer(surface, physical_device, device)) {
+        Log::error("Failed to create depth pass depth buffer.");
+
+        _depth_format = vk::Format::eUndefined;
+        _color_attachment_formats.clear();
+        _color_attachments.clear();
+
+        return;
+    }
+
+    _depth_attachment = vk::RenderingAttachmentInfoKHR {
+        .pNext = nullptr,
+        .imageView = _depth_view.native(),
+        .imageLayout = _depth_buffer.layout(),
+        .resolveMode = { },
+        .resolveImageView = { },
+        .resolveImageLayout = { },
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = {
+            .depthStencil = vk::ClearDepthStencilValue {
+                .depth = 1.0f,
+                .stencil = 0u
+            },
+        },
+    };
+
     _rendering_info = vk::RenderingInfoKHR {
         .pNext = nullptr,
         .flags = { },
@@ -50,8 +81,8 @@ void DepthDynamic::init(vkSurface const &surface,
         .colorAttachmentCount =
             static_cast<uint32_t>(_color_attachments.size()),
         .pColorAttachments = _color_attachments.data(),
-        .pDepthAttachment = { },
-        .pStencilAttachment = { },
+        .pDepthAttachment = &_depth_attachment,
+        .pStencilAttachment = &_depth_attachment,
     };
 
     _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
@@ -60,12 +91,10 @@ void DepthDynamic::init(vkSurface const &surface,
         .colorAttachmentCount =
             static_cast<uint32_t>(_color_attachment_formats.size()),
         .pColorAttachmentFormats = _color_attachment_formats.data(),
-        .depthAttachmentFormat = { },
-        .stencilAttachmentFormat = { },
+        .depthAttachmentFormat = _depth_format,
+        .stencilAttachmentFormat = _depth_format,
     };
 }
-
-
 
 // =============================================================================
 vk::RenderingInfoKHR const &
@@ -84,26 +113,6 @@ void DepthDynamic::update_render_area(vkSurface const &surface) {
         .offset = vk::Offset2D { },
         .extent = surface.extent(),
     };
-}
-
-// =============================================================================
-bool DepthDynamic::_find_depth_format(vkPhysicalDevice const &physical_device) {
-    static std::array<vk::Format const, 2> const depth_formats {
-        vk::Format::eD32SfloatS8Uint, // One of these two will always be
-        vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
-    };
-
-    for(auto const format : depth_formats) {
-        auto props = physical_device.native().getFormatProperties(format);
-        if(props.optimalTilingFeatures &
-           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
-        {
-            _depth_format = format;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 // =============================================================================

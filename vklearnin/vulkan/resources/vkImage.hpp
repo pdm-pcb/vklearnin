@@ -59,7 +59,8 @@ public:
     };
 
     void transition_layout(vkCmdBuffer const &cmd_buffer,
-                           TransitionDetails const &details);
+                           TransitionDetails const &details,
+                           vk::ImageAspectFlags const aspect_flags);
 
     inline auto const & native() const { return _handle; }
     inline auto format() const { return _format; }

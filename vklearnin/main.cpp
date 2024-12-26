@@ -24,14 +24,14 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define RENDER_PASS
+// #define RENDER_PASS
 // #define COLOR_PASS
-#define DEPTH_PASS
+// #define DEPTH_PASS
 // #define MSAA_PASS
 
-// #define DYNAMIC_RENDERING
+#define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
+#define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -105,12 +105,6 @@ static ColorPass color_pass;
 
 #ifdef DEPTH_PASS
 static DepthPass depth_pass;
-static vk::Format depth_format;
-
-static std::array<vk::Format const, 2> const depth_formats {
-    vk::Format::eD32SfloatS8Uint, // One of these two will always be
-    vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
-};
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
@@ -128,6 +122,15 @@ static DepthDynamic depth_dynamic;
 #endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
+
+#if defined(DEPTH_PASS) || defined(DEPTH_DYNAMIC)
+static vk::Format depth_format;
+
+static std::array<vk::Format const, 2> const depth_formats {
+    vk::Format::eD32SfloatS8Uint, // One of these two will always be
+    vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
+};
+#endif // depth enabled render techniques
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -281,7 +284,8 @@ int main() {
             vkImage::TransitionDetails {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
-            }
+            },
+            vk::ImageAspectFlagBits::eColor
         );
 
 #ifdef COLOR_DYNAMIC
@@ -291,9 +295,21 @@ int main() {
 #endif // COLOR_DYNAMIC
 
 #ifdef DEPTH_DYNAMIC
+
+        depth_dynamic.depth_buffer().transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+            },
+            (vk::ImageAspectFlagBits::eDepth
+             | vk::ImageAspectFlagBits::eStencil)
+        );
+
         auto &rendering_info =
             depth_dynamic.rendering_info(swapchain_image_view.native(),
                                          swapchain_image.layout());
+
 #endif // DEPTH_DYNAMIC
 
         graphics_cmd_buffer.begin_rendering(rendering_info);
@@ -307,7 +323,8 @@ int main() {
             vkImage::TransitionDetails {
                 .old_layout = vk::ImageLayout::eColorAttachmentOptimal,
                 .new_layout = vk::ImageLayout::ePresentSrcKHR,
-            }
+            },
+            vk::ImageAspectFlagBits::eColor
         );
 
 #endif // render passes or dynamic rendering
@@ -431,7 +448,16 @@ void init_rendering() {
 #endif // COLOR_DYNAMIC
 
 #ifdef DEPTH_DYNAMIC
-    depth_dynamic.init(surface, clear_values);
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
+    depth_dynamic.init(
+        surface,
+        clear_values,
+        depth_format,
+        vkPhysicalDevice::current_device(),
+        device
+    );
 #endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
@@ -682,7 +708,7 @@ void create_graphics_pipeline() {
                 .topology = vk::PrimitiveTopology::eTriangleList,
                 .sample_flags = msaa_samples,
 
-#if defined(DEPTH_PASS) || defined(MSAA_PASS)
+#if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC)
                 .enable_depth_test = vk::True,
 #endif // render passes that use depth testing
 

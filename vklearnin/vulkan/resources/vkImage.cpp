@@ -262,14 +262,15 @@ bool vkImage::destroy() {
 
 // =============================================================================
 void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
-                                TransitionDetails const &details)
+                                TransitionDetails const &details,
+                                vk::ImageAspectFlags const aspect_flags)
 {
-    // Log::trace(
-    //     "Image {}: '{:s}'->'{:s}'",
-    //     _handle,
-    //     vk::to_string(details.old_layout),
-    //     vk::to_string(details.new_layout)
-    // );
+    Log::trace(
+        "Image {}: '{:s}'->'{:s}'",
+        _handle,
+        vk::to_string(details.old_layout),
+        vk::to_string(details.new_layout)
+    );
 
     vk::ImageMemoryBarrier barrier {
         .oldLayout = details.old_layout,
@@ -278,7 +279,7 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = _handle,
         .subresourceRange {
-            .aspectMask     = vk::ImageAspectFlagBits::eColor,
+            .aspectMask     = aspect_flags,
             .baseMipLevel   = details.base_mip_level,
             .levelCount     = details.mip_level_count,
             .baseArrayLayer = details.base_array_layer,
@@ -292,20 +293,43 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
     bool supported_transition = true;
 
     if(barrier.oldLayout == vk::ImageLayout::eUndefined) {
-        if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eTransfer;
-        }
-        else if(details.new_layout == vk::ImageLayout::eColorAttachmentOptimal)
+        if(details.new_layout == vk::ImageLayout::eColorAttachmentOptimal)
         {
             barrier.srcAccessMask = vk::AccessFlagBits::eNone;
             barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 
             src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
             dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        }
+        else if(details.new_layout ==
+                vk::ImageLayout::eDepthStencilAttachmentOptimal)
+        {
+            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+            src_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
+                        | vk::PipelineStageFlagBits::eLateFragmentTests;
+            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
+                        | vk::PipelineStageFlagBits::eLateFragmentTests;
+        }
+        else if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        }
+        else {
+            supported_transition = false;
+        }
+    }
+    else if(barrier.oldLayout == vk::ImageLayout::eColorAttachmentOptimal) {
+        if(details.new_layout == vk::ImageLayout::ePresentSrcKHR) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eNone;
+
+            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
         }
         else {
             supported_transition = false;
@@ -337,18 +361,6 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
 
             src_stage = vk::PipelineStageFlagBits::eTransfer;
             dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
-        }
-        else {
-            supported_transition = false;
-        }
-    }
-    else if(barrier.oldLayout == vk::ImageLayout::eColorAttachmentOptimal) {
-        if(details.new_layout == vk::ImageLayout::ePresentSrcKHR) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eNone;
-
-            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-            dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
         }
         else {
             supported_transition = false;
@@ -565,7 +577,8 @@ bool vkImage::_send_to_device() {
                 .mip_level_count = _mip_levels,
                 .base_array_layer = 0u,
                 .array_layer_count = _array_layers,
-            }
+            },
+            vk::ImageAspectFlagBits::eColor
         );
 
         cmd_buffer.native().copyBufferToImage(
@@ -615,7 +628,8 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
                     .array_layer_count = 1u
-                }
+                },
+                vk::ImageAspectFlagBits::eColor
             );
 
             vk::ImageBlit const blit {
@@ -661,7 +675,8 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
                     .array_layer_count = 1u
-                }
+                },
+                vk::ImageAspectFlagBits::eColor
             );
 
             if(mip_width  > 1) { mip_width  /= 2; }
@@ -677,7 +692,8 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                 .mip_level_count = 1u,
                 .base_array_layer = layer,
                 .array_layer_count = 1u
-            }
+            },
+            vk::ImageAspectFlagBits::eColor
         );
     }
 }
