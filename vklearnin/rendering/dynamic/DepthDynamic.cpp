@@ -104,6 +104,8 @@ DepthDynamic::rendering_info(vk::ImageView const &view,
     _color_attachments[0].imageView = view;
     _color_attachments[0].imageLayout = layout;
 
+    _depth_attachment.imageLayout = _depth_buffer.layout();
+
     return _rendering_info;
 }
 
