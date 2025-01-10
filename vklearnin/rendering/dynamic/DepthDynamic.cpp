@@ -60,7 +60,7 @@ void DepthDynamic::init(vkSurface const &surface,
         .resolveImageView = { },
         .resolveImageLayout = { },
         .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
         .clearValue = {
             .depthStencil = vk::ClearDepthStencilValue {
                 .depth = 1.0f,
