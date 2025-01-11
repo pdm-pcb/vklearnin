@@ -23,18 +23,14 @@ public:
     bool set(vkDevice const &device, uint32_t const family_index);
     bool clear();
 
-    using CmdBuffers = std::span<vk::CommandBuffer const>;
-    using WaitSemaphores = std::span<vk::Semaphore const>;
-    using WaitStageFlags = std::span<vk::PipelineStageFlags const>;
-    using SignalSemaphores = std::span<vk::Semaphore const>;
-
-    bool submit(CmdBuffers const cmd_buffers,
-                WaitSemaphores const wait_sems,
-                WaitStageFlags const wait_stage_flags,
-                SignalSemaphores const signal_sems,
+    bool submit(vk::CommandBuffer const &cmd_buffer,
+                vk::Semaphore const &wait_semaphore,
+                vk::PipelineStageFlagBits2KHR const wait_stage_flags,
+                vk::Semaphore const &signal_semaphore,
+                vk::PipelineStageFlagBits2KHR const signal_stage_flags,
                 vk::Fence const &in_flight_fence) const;
 
-    bool submit(CmdBuffers const cmd_buffers) const;
+    bool submit(vk::CommandBuffer const &cmd_buffer) const;
 
     [[nodiscard]] bool present(vkSwapchain const &swapchain,
                                vk::Semaphore const &wait_sem,

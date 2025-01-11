@@ -82,7 +82,7 @@ void DepthDynamic::init(vkSurface const &surface,
             static_cast<uint32_t>(_color_attachments.size()),
         .pColorAttachments = _color_attachments.data(),
         .pDepthAttachment = &_depth_attachment,
-        .pStencilAttachment = &_depth_attachment,
+        .pStencilAttachment = nullptr,
     };
 
     _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {

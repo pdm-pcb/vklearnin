@@ -298,7 +298,7 @@ bool vkBuffer::send_to_device(void const *data,
 
     cmd_buffer.end_recording();
 
-    auto const submit_success = queue.submit({{ cmd_buffer.native() }});
+    auto const submit_success = queue.submit(cmd_buffer.native());
 
     _device->wait_idle();
 

@@ -319,8 +319,7 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
 }
 
 // =============================================================================
-bool
-vkPhysicalDevice::_check_features(Features const &features) {
+bool vkPhysicalDevice::_check_features(Features const &features) {
     // Copy over the requested features
     _features12 = vk::PhysicalDeviceVulkan12Features {
         .pNext = nullptr,
@@ -338,16 +337,23 @@ vkPhysicalDevice::_check_features(Features const &features) {
         }
     };
 
+    auto **next_feature = &_features12.pNext;
+
+    if(features.sync2) {
+        _sync2.synchronization2 = vk::True;
+        *next_feature = &_sync2;
+        next_feature = &_sync2.pNext;
+    }
+
     if(features.dynamic_rendering) {
         _dynamic_rendering.dynamicRendering = vk::True;
-        _features12.pNext = &_dynamic_rendering;
+        *next_feature = &_dynamic_rendering;
+        next_feature = &_dynamic_rendering.pNext;
     }
 
     // Build the structure chain we'll use to query the device
-    vk::PhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_supported { };
-
     vk::PhysicalDeviceVulkan12Features supported12 {
-        .pNext = features.dynamic_rendering ? &dynamic_rendering_supported : nullptr,
+        .pNext = nullptr,
     };
     vk::PhysicalDeviceVulkan11Features supported11 {
         .pNext = &supported12,
@@ -355,6 +361,21 @@ vkPhysicalDevice::_check_features(Features const &features) {
     vk::PhysicalDeviceFeatures2 supported {
         .pNext = &supported11,
     };
+
+    vk::PhysicalDeviceSynchronization2FeaturesKHR sync2_supported { };
+    vk::PhysicalDeviceDynamicRenderingFeaturesKHR dr_supported { };
+
+    auto **next_supported = &supported12.pNext;
+
+    if(features.sync2) {
+        *next_supported = &sync2_supported;
+        next_supported = &sync2_supported.pNext;
+    }
+
+    if(features.dynamic_rendering) {
+        *next_supported = &dr_supported;
+        next_supported = &dr_supported.pNext;
+    }
 
     // Ask the device what we're dealing with
     _handle.getFeatures2(&supported);
@@ -390,8 +411,16 @@ vkPhysicalDevice::_check_features(Features const &features) {
     // ...
 
     // Extensions --------------------------------------------------------------
+    if(_sync2.synchronization2 && sync2_supported.synchronization2) {
+        Log::trace("{} supports synchronization2.", _name);
+    }
+    else if(_sync2.synchronization2) {
+        Log::warn("{} does not support synchronization2.", _name);
+        all_features_supported = false;
+    }
+
     if(_dynamic_rendering.dynamicRendering
-        && dynamic_rendering_supported.dynamicRendering)
+        && dr_supported.dynamicRendering)
     {
         Log::trace("{} supports dynamicRendering.", _name);
     }
