@@ -226,7 +226,7 @@ bool vkQueue::present(vkSwapchain const &swapchain,
     // createing a present info struct that'll satisfy the Vulkan C API for the
     // call to present.
 
-    auto const present_info_c = VkPresentInfoKHR(present_info);
+    auto const present_info_c = ::VkPresentInfoKHR(present_info);
 
     auto const result =
         vk::Result(::vkQueuePresentKHR(_handle, &present_info_c));
