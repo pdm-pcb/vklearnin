@@ -26,6 +26,7 @@ public:
         vk::ImageUsageFlags usage_flags = { };
         vk::MemoryPropertyFlags memory_flags = { };
         vk::ImageAspectFlags aspect_flags = { };
+        bool generate_mips = false;
         uint32_t array_layers = 1u;
     };
 

@@ -30,8 +30,8 @@
 // #define MSAA_PASS
 
 #define DYNAMIC_RENDERING
-// #define COLOR_DYNAMIC
-#define DEPTH_DYNAMIC
+#define COLOR_DYNAMIC
+// #define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -548,6 +548,7 @@ void create_draw_data() {
             ),
             .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
             .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            .generate_mips = false,
             .array_layers = 1u,
         },
         vk::ImageViewType::e2D,
@@ -576,6 +577,7 @@ void create_draw_data() {
             ),
             .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
             .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            .generate_mips = false,
             .array_layers = 1u,
         },
         vk::ImageViewType::e2D,

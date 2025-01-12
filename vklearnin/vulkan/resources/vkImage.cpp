@@ -83,7 +83,10 @@ bool vkImage::create(std::string_view const file_name,
     _array_layers = details.array_layers;
 
     _raw_data = _load_from_file(file_name);
-    _calc_mip_levels();
+
+    if(details.generate_mips) {
+        _calc_mip_levels();
+    }
 
     Log::trace(
         "\nCreating image with"
