@@ -24,14 +24,14 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define RENDER_PASS
-#define COLOR_PASS
+// #define RENDER_PASS
+// #define COLOR_PASS
 // #define DEPTH_PASS
 // #define MSAA_PASS
 
-// #define DYNAMIC_RENDERING
+#define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
+#define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -70,7 +70,7 @@ static auto const instance_config = vkInstance::Config {
 static auto features = vkPhysicalDevice::Features {
     .sampler_anisotropy = true,
 
-    .sync2 = true,
+    // .sync2 = true,
 
 #ifdef DYNAMIC_RENDERING
     .dynamic_rendering  = true,
@@ -79,7 +79,7 @@ static auto features = vkPhysicalDevice::Features {
 
 static std::vector<char const *> const physical_device_extensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+    // VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
 #ifdef DYNAMIC_RENDERING
     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 #endif // DYNAMIC_RENDERING
@@ -339,9 +339,8 @@ int main() {
         device.cmd_queue().submit(
             graphics_cmd_buffer.native(),
             gfx_sync.wait_semaphore(),
-            vk::PipelineStageFlagBits2KHR::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
             gfx_sync.complete_semaphore(),
-            vk::PipelineStageFlagBits2KHR::eAllCommands,
             gfx_sync.in_flight_fence()
         );
 
@@ -780,6 +779,10 @@ void destroy_render_pass() {
 #ifdef MSAA_PASS
     msaa_pass.destroy();
 #endif // MSAA_PASS
+
+#ifdef DEPTH_DYNAMIC
+    depth_dynamic.shutdown();
+#endif // DEPTH_DYNAMIC
 }
 
 void vulkan_shutdown() {

@@ -30,6 +30,8 @@ public:
               vkPhysicalDevice const &physical_device,
               vkDevice const &device);
 
+    void shutdown();
+
     void update_render_area(vkSurface const &surface);
 
     vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,

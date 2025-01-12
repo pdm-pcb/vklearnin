@@ -97,6 +97,12 @@ void DepthDynamic::init(vkSurface const &surface,
 }
 
 // =============================================================================
+void DepthDynamic::shutdown() {
+    _depth_view.destroy();
+    _depth_buffer.destroy();
+}
+
+// =============================================================================
 vk::RenderingInfoKHR const &
 DepthDynamic::rendering_info(vk::ImageView const &view,
                              vk::ImageLayout const &layout)

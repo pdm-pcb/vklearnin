@@ -50,52 +50,24 @@ bool vkQueue::clear() {
     return true;
 }
 
-// =============================================================================
 bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer,
                      vk::Semaphore const &wait_semaphore,
-                     vk::PipelineStageFlagBits2KHR const wait_stage_flags,
+                     vk::PipelineStageFlags const wait_stage_flags,
                      vk::Semaphore const &signal_semaphore,
-                     vk::PipelineStageFlagBits2KHR const signal_stage_flags,
                      vk::Fence const &in_flight_fence) const
 {
-    vk::CommandBufferSubmitInfo const cmd_submit_info {
-        .pNext = nullptr,
-        .commandBuffer = cmd_buffer,
-        .deviceMask = 0u,
+    vk::SubmitInfo const submit_info {
+        .pNext                = nullptr,
+        .waitSemaphoreCount   = 1u,
+        .pWaitSemaphores      = &wait_semaphore,
+        .pWaitDstStageMask    = &wait_stage_flags,
+        .commandBufferCount   = 1u,
+        .pCommandBuffers      = &cmd_buffer,
+        .signalSemaphoreCount = 1u,
+        .pSignalSemaphores    = &signal_semaphore,
     };
 
-    vk::SemaphoreSubmitInfoKHR const wait_info {
-        .pNext = nullptr,
-        .semaphore = wait_semaphore,
-        .value = 0u,
-        .stageMask = wait_stage_flags,
-        .deviceIndex = 0u,
-    };
-
-    vk::SemaphoreSubmitInfoKHR const signal_info {
-        .pNext = nullptr,
-        .semaphore = signal_semaphore,
-        .value = 0u,
-        .stageMask = signal_stage_flags,
-        .deviceIndex = 0u,
-    };
-
-    vk::SubmitInfo2KHR const queue_submit_info {
-      .pNext = nullptr,
-      .flags = { },
-      .waitSemaphoreInfoCount = 1u,
-      .pWaitSemaphoreInfos = &wait_info,
-      .commandBufferInfoCount = 1u,
-      .pCommandBufferInfos = &cmd_submit_info,
-      .signalSemaphoreInfoCount = 1u,
-      .pSignalSemaphoreInfos = &signal_info,
-    };
-
-    auto const result = _handle.submit2KHR(
-        1u,
-        &queue_submit_info,
-        in_flight_fence
-    );
+    auto const result = _handle.submit(submit_info, in_flight_fence);
 
     if(result != vk::Result::eSuccess) {
         Log::error(
@@ -111,28 +83,18 @@ bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer,
 
 // =============================================================================
 bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer) const {
-    vk::CommandBufferSubmitInfo const cmd_submit_info {
-        .pNext = nullptr,
-        .commandBuffer = cmd_buffer,
-        .deviceMask = { },
+    vk::SubmitInfo const submit_info {
+        .pNext                = nullptr,
+        .waitSemaphoreCount   = 0u,
+        .pWaitSemaphores      = nullptr,
+        .pWaitDstStageMask    = nullptr,
+        .commandBufferCount   = 1u,
+        .pCommandBuffers      = &cmd_buffer,
+        .signalSemaphoreCount = 0u,
+        .pSignalSemaphores    = nullptr,
     };
 
-    vk::SubmitInfo2KHR const queue_submit_info {
-      .pNext = nullptr,
-      .flags = { },
-      .waitSemaphoreInfoCount = 0u,
-      .pWaitSemaphoreInfos = nullptr,
-      .commandBufferInfoCount = 0u,
-      .pCommandBufferInfos = &cmd_submit_info,
-      .signalSemaphoreInfoCount = 0u,
-      .pSignalSemaphoreInfos = nullptr,
-    };
-
-    auto const result = _handle.submit2KHR(
-        1u,
-        &queue_submit_info,
-        nullptr
-    );
+    auto const result = _handle.submit(submit_info);
 
     if(result != vk::Result::eSuccess) {
         Log::error(
@@ -145,6 +107,102 @@ bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer) const {
 
     return true;
 }
+
+// // =============================================================================
+// bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer,
+//                      vk::Semaphore const &wait_semaphore,
+//                      vk::PipelineStageFlagBits2KHR const wait_stage_flags,
+//                      vk::Semaphore const &signal_semaphore,
+//                      vk::PipelineStageFlagBits2KHR const signal_stage_flags,
+//                      vk::Fence const &in_flight_fence) const
+// {
+//     vk::CommandBufferSubmitInfo const cmd_submit_info {
+//         .pNext = nullptr,
+//         .commandBuffer = cmd_buffer,
+//         .deviceMask = 0u,
+//     };
+
+//     vk::SemaphoreSubmitInfoKHR const wait_info {
+//         .pNext = nullptr,
+//         .semaphore = wait_semaphore,
+//         .value = 0u,
+//         .stageMask = wait_stage_flags,
+//         .deviceIndex = 0u,
+//     };
+
+//     vk::SemaphoreSubmitInfoKHR const signal_info {
+//         .pNext = nullptr,
+//         .semaphore = signal_semaphore,
+//         .value = 0u,
+//         .stageMask = signal_stage_flags,
+//         .deviceIndex = 0u,
+//     };
+
+//     vk::SubmitInfo2KHR const queue_submit_info {
+//       .pNext = nullptr,
+//       .flags = { },
+//       .waitSemaphoreInfoCount = 1u,
+//       .pWaitSemaphoreInfos = &wait_info,
+//       .commandBufferInfoCount = 1u,
+//       .pCommandBufferInfos = &cmd_submit_info,
+//       .signalSemaphoreInfoCount = 1u,
+//       .pSignalSemaphoreInfos = &signal_info,
+//     };
+
+//     auto const result = _handle.submit2KHR(
+//         1u,
+//         &queue_submit_info,
+//         in_flight_fence
+//     );
+
+//     if(result != vk::Result::eSuccess) {
+//         Log::error(
+//             "Submission to queue {} failed: '{}'",
+//             _handle,
+//             vk::to_string(result)
+//         );
+//         return false;
+//     }
+
+//     return true;
+// }
+
+// // =============================================================================
+// bool vkQueue::submit(vk::CommandBuffer const &cmd_buffer) const {
+//     vk::CommandBufferSubmitInfo const cmd_submit_info {
+//         .pNext = nullptr,
+//         .commandBuffer = cmd_buffer,
+//         .deviceMask = { },
+//     };
+
+//     vk::SubmitInfo2KHR const queue_submit_info {
+//       .pNext = nullptr,
+//       .flags = { },
+//       .waitSemaphoreInfoCount = 0u,
+//       .pWaitSemaphoreInfos = nullptr,
+//       .commandBufferInfoCount = 0u,
+//       .pCommandBufferInfos = &cmd_submit_info,
+//       .signalSemaphoreInfoCount = 0u,
+//       .pSignalSemaphoreInfos = nullptr,
+//     };
+
+//     auto const result = _handle.submit2KHR(
+//         1u,
+//         &queue_submit_info,
+//         nullptr
+//     );
+
+//     if(result != vk::Result::eSuccess) {
+//         Log::error(
+//             "Submission to queue {} failed: '{}'",
+//             _handle,
+//             vk::to_string(result)
+//         );
+//         return false;
+//     }
+
+//     return true;
+// }
 
 // =============================================================================
 bool vkQueue::present(vkSwapchain const &swapchain,

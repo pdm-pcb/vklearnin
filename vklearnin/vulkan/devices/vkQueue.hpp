@@ -25,12 +25,20 @@ public:
 
     bool submit(vk::CommandBuffer const &cmd_buffer,
                 vk::Semaphore const &wait_semaphore,
-                vk::PipelineStageFlagBits2KHR const wait_stage_flags,
+                vk::PipelineStageFlags const wait_stage_flags,
                 vk::Semaphore const &signal_semaphore,
-                vk::PipelineStageFlagBits2KHR const signal_stage_flags,
                 vk::Fence const &in_flight_fence) const;
 
     bool submit(vk::CommandBuffer const &cmd_buffer) const;
+
+    // bool submit(vk::CommandBuffer const &cmd_buffer,
+    //             vk::Semaphore const &wait_semaphore,
+    //             vk::PipelineStageFlagBits2KHR const wait_stage_flags,
+    //             vk::Semaphore const &signal_semaphore,
+    //             vk::PipelineStageFlagBits2KHR const signal_stage_flags,
+    //             vk::Fence const &in_flight_fence) const;
+
+    // bool submit(vk::CommandBuffer const &cmd_buffer) const;
 
     [[nodiscard]] bool present(vkSwapchain const &swapchain,
                                vk::Semaphore const &wait_sem,
