@@ -312,9 +312,9 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
             barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 
             src_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-                                   | vk::PipelineStageFlagBits::eLateFragmentTests;
+                         | vk::PipelineStageFlagBits::eLateFragmentTests;
             dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-                                   | vk::PipelineStageFlagBits::eLateFragmentTests;
+                         | vk::PipelineStageFlagBits::eLateFragmentTests;
         }
         else if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
             barrier.srcAccessMask = vk::AccessFlagBits::eNone;

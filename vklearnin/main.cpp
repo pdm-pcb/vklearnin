@@ -30,8 +30,8 @@
 // #define MSAA_PASS
 
 #define DYNAMIC_RENDERING
-#define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
+// #define COLOR_DYNAMIC
+#define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -93,7 +93,7 @@ static vkGraphicsPipeline graphics_pipeline;
 // render pass stuff -----------------------------------------------------------
 static std::vector<vk::ClearValue> const clear_values {{
     { .color { std::array<float, 4> {{ 0.08f, 0.08f, 0.16f, 1.0f }} }},
-#if defined(DEPTH_PASS) or defined(MSAA_PASS)
+#if defined(DEPTH_PASS) or defined(MSAA_PASS) or defined(DEPTH_DYNAMIC)
     { .depthStencil { .depth = 1.0f, .stencil = 1u } }
 #endif // DEPTH or MSAA
 }};
