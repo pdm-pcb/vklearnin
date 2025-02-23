@@ -24,9 +24,9 @@ public:
     inline auto const & native() const { return _handle; }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL messenger(
-        ::VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
-        ::VkDebugUtilsMessageTypeFlagsEXT             types,
-        const ::VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+        vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
+        vk::DebugUtilsMessageTypeFlagsEXT             types,
+        vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
         void                                         *user_data
     );
 

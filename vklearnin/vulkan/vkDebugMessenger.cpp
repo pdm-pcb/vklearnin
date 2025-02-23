@@ -75,21 +75,21 @@ bool vkDebugMessenger::destroy() {
 
 // =============================================================================
 VKAPI_ATTR vk::Bool32 VKAPI_CALL vkDebugMessenger::messenger(
-        ::VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-        [[maybe_unused]] ::VkDebugUtilsMessageTypeFlagsEXT types,
-        const ::VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-        [[maybe_unused]] void *user_data)
+    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+    [[maybe_unused]] vk::DebugUtilsMessageTypeFlagsEXT types,
+    vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
+    [[maybe_unused]] void *user_data)
 {
-    if((severity & ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0) {
+    if(severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose) {
         Log::trace("{}", callback_data->pMessage);
     }
-    if((severity & ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0) {
+    else if(severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo) {
         Log::info("{}", callback_data->pMessage);
     }
-    if((severity & ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0) {
+    else if(severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
         Log::warn("{}", callback_data->pMessage);
     }
-    if((severity & ::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0) {
+    else if(severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError) {
         Log::error("\n{}\n", callback_data->pMessage);
         // assert(false);
     }
