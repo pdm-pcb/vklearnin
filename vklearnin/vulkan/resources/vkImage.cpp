@@ -51,8 +51,8 @@ vkImage::vkImage(vkImage &&other) :
 bool vkImage::create(vk::Image const &handle,
                      vk::Format const format,
                      vk::Extent3D const &extent,
-                     vkDevice const &device,
-                     std::string_view const debug_name)
+                     [[maybe_unused]] vkDevice const &device,
+                     [[maybe_unused]] std::string_view const debug_name)
 {
     if(_handle) {
         Log::error("Swapchain image {}", _handle);
@@ -94,7 +94,7 @@ bool vkImage::create(std::string_view const file_name,
                      Details const &details,
                      vkPhysicalDevice const &physical_device,
                      vkDevice const &device,
-                     std::string_view const debug_name)
+                     [[maybe_unused]] std::string_view const debug_name)
 {
     if(_handle) {
         Log::error("Image  {} already exists", _handle);
@@ -204,7 +204,7 @@ bool vkImage::create(vk::Extent2D const &extent,
                      Details const &details,
                      vkPhysicalDevice const &physical_device,
                      vkDevice const &device,
-                     std::string_view const debug_name)
+                     [[maybe_unused]] std::string_view const debug_name)
 {
     if(_handle) {
         Log::error("Image {} already exists", _handle);
