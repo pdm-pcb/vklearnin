@@ -36,7 +36,7 @@ set_target_arch()   # Target newer CPUs, specifically AVX2
 add_debug_flags()   # Disable optimizations and add debugging info
 add_release_flags() # Enable optimizations and strip excess symbols
 
-# External dependencies=
+# External dependencies
 include("fetch_fmt")
 include("fetch_spdlog")
 include("fetch_glfw3")

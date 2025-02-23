@@ -10,8 +10,8 @@ function(fetch_glfw3)
         FIND_PACKAGE_ARGS 3.4
     )
 
-    # brasstacks will link the Vulkan library statically, and if we're building
-    # for Linux, prefer the X11 backend
+    # we will link the Vulkan library statically, and if we're building for
+    # Linux, prefer the X11 backend
     set(GLFW_VULKAN_STATIC  "ON"  CACHE BOOL "" FORCE)
     set(GLFW_BUILD_X11      "ON"  CACHE BOOL "" FORCE)
     set(GLFW_BUILD_WAYLAND  "OFF" CACHE BOOL "" FORCE)
