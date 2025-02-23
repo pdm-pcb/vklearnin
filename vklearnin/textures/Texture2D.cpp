@@ -36,7 +36,8 @@ bool Texture2D::create(std::string_view const file_name,
         file_name,
         image_details,
         physical_device,
-        device
+        device,
+        file_name
     ))
     {
         Log::error("Failed to create Texture2D image.");

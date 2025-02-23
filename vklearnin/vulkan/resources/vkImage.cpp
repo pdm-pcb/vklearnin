@@ -24,6 +24,10 @@ vkImage::vkImage(vkImage &&other) :
     _mip_levels      { other._mip_levels },
     _size_bytes      { other._size_bytes },
     _raw_data        { other._raw_data }
+
+#ifdef VKL_DEBUG
+    , _debug_name      { other._debug_name }
+#endif // VKL_DEBUG
 {
     other._handle          = nullptr;
     other._memory_handle   = nullptr;
@@ -37,18 +41,47 @@ vkImage::vkImage(vkImage &&other) :
     other._mip_levels      = 0u;
     other._size_bytes      = 0u;
     other._raw_data        = nullptr;
+
+#ifdef VKL_DEBUG
+    other._debug_name.clear();
+#endif // VKL_DEBUG
 }
 
 // =============================================================================
-bool vkImage::create(vk::Image const &handle, vk::Format const format,
-                     vk::Extent3D const &extent)
+bool vkImage::create(vk::Image const &handle,
+                     vk::Format const format,
+                     vk::Extent3D const &extent,
+                     vkDevice const &device,
+                     std::string_view const debug_name)
 {
     if(_handle) {
-        Log::error("Swapchain image {} already exists", _handle);
+        Log::error("Swapchain image {}", _handle);
         return false;
     }
 
     _handle = handle;
+
+#ifdef VKL_DEBUG
+    _debug_name = debug_name;
+    auto const result = device.native().setDebugUtilsObjectNameEXT(
+        vk::DebugUtilsObjectNameInfoEXT {
+            .pNext        = nullptr,
+            .objectType   = _handle.objectType,
+            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
+            .pObjectName  = _debug_name.c_str(),
+        }
+    );
+
+    if(result != vk::Result::eSuccess) {
+        Log::error(
+            "Unable to set image {} debug name: '{}'",
+            _handle,
+            vk::to_string(result)
+        );
+        return false;
+    }
+#endif // VKL_DEBUG
+
     _format = format;
     _extent = extent;
     _aspect_flags = vk::ImageAspectFlagBits::eColor;
@@ -60,15 +93,16 @@ bool vkImage::create(vk::Image const &handle, vk::Format const format,
 bool vkImage::create(std::string_view const file_name,
                      Details const &details,
                      vkPhysicalDevice const &physical_device,
-                     vkDevice const &device)
+                     vkDevice const &device,
+                     std::string_view const debug_name)
 {
     if(_handle) {
-        Log::error("Image {} already exists", _handle);
+        Log::error("Image  {} already exists", _handle);
         return false;
     }
 
     if(!physical_device.native()) {
-        Log::error("Cannot create buffer with invalid physical device.");
+        Log::error("Cannot create image with invalid physical device.");
         return false;
     }
 
@@ -126,11 +160,28 @@ bool vkImage::create(std::string_view const file_name,
     }
 
     _handle = value;
-    Log::trace(
-        "Created image {} from file '{}'.",
-        _handle,
-        file_name.data()
+    Log::trace("Created image {} from file '{}'.", _handle, file_name.data());
+
+#ifdef VKL_DEBUG
+    _debug_name = debug_name;
+    auto const debug_name_result = device.native().setDebugUtilsObjectNameEXT(
+        vk::DebugUtilsObjectNameInfoEXT {
+            .pNext        = nullptr,
+            .objectType   = _handle.objectType,
+            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
+            .pObjectName  = _debug_name.c_str(),
+        }
     );
+
+    if(debug_name_result != vk::Result::eSuccess) {
+        Log::error(
+            "Unable to set image {} debug name: '{}'",
+            _handle,
+            vk::to_string(debug_name_result)
+        );
+        return false;
+    }
+#endif // VKL_DEBUG
 
     Log::trace("Image {}: {} mip levels.", _handle, _mip_levels);
 
@@ -152,7 +203,8 @@ bool vkImage::create(vk::Extent2D const &extent,
                      vk::Format const format,
                      Details const &details,
                      vkPhysicalDevice const &physical_device,
-                     vkDevice const &device)
+                     vkDevice const &device,
+                     std::string_view const debug_name)
 {
     if(_handle) {
         Log::error("Image {} already exists", _handle);
@@ -165,7 +217,7 @@ bool vkImage::create(vk::Extent2D const &extent,
     }
 
     if(!physical_device.native()) {
-        Log::error("Cannot create buffer with invalid physical device.");
+        Log::error("Cannot create image with invalid physical device.");
         return false;
     }
 
@@ -214,6 +266,27 @@ bool vkImage::create(vk::Extent2D const &extent,
         vk::to_string(details.samples)
     );
 
+#ifdef VKL_DEBUG
+    _debug_name = debug_name;
+    auto const debug_name_result = device.native().setDebugUtilsObjectNameEXT(
+        vk::DebugUtilsObjectNameInfoEXT {
+            .pNext        = nullptr,
+            .objectType   = _handle.objectType,
+            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
+            .pObjectName  = _debug_name.c_str(),
+        }
+    );
+
+    if(debug_name_result != vk::Result::eSuccess) {
+        Log::error(
+            "Unable to set image {} debug name: '{}'",
+            _handle,
+            vk::to_string(debug_name_result)
+        );
+        return false;
+    }
+#endif // VKL_DEBUG
+
     if(!_allocate(details.memory_flags)) {
         destroy();
         return false;
@@ -233,6 +306,10 @@ bool vkImage::destroy() {
     _device->native().destroy(_handle);
 
     _handle = nullptr;
+
+#ifdef VKL_DEBUG
+    _debug_name.clear();
+#endif // VKL_DEBUG
 
     if(_memory_handle) {
         Log::trace(
@@ -269,7 +346,7 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
                                 vk::ImageAspectFlags const aspect_flags)
 {
     Log::trace(
-        "Image {}: '{:s}'->'{:s}'",
+        "Image {} - '{:s}'->'{:s}'",
         _handle,
         vk::to_string(details.old_layout),
         vk::to_string(details.new_layout)
@@ -308,13 +385,22 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
         else if(details.new_layout ==
                 vk::ImageLayout::eDepthStencilAttachmentOptimal)
         {
-            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            // Old - does not work
+            // barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+            // barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 
-            src_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-                         | vk::PipelineStageFlagBits::eLateFragmentTests;
-            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-                         | vk::PipelineStageFlagBits::eLateFragmentTests;
+            // src_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
+            //              | vk::PipelineStageFlagBits::eLateFragmentTests;
+            // dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
+            //              | vk::PipelineStageFlagBits::eLateFragmentTests;
+
+            // New - works
+            barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead
+                                    | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+            src_stage = vk::PipelineStageFlagBits::eLateFragmentTests;
+            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
         }
         else if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
             barrier.srcAccessMask = vk::AccessFlagBits::eNone;
@@ -375,7 +461,7 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
     }
 
     if(!supported_transition) {
-        Log::error("Image {}: Unsupported layout transition", _handle);
+        Log::error("Image {} - Unsupported layout transition", _handle);
         return;
     }
 
@@ -460,7 +546,7 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
     auto [ result, value ] = _device->native().allocateMemory(alloc_info);
     if(result != vk::Result::eSuccess) {
         Log::error(
-            "Unable to allocate device memory for image {}: '{}'",
+            "Unable to allocate device memory for image {} - '{}'",
             _handle,
             vk::to_string(result)
         );
@@ -470,9 +556,9 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
     _memory_handle = value;
     Log::trace(
         "Allocated {} bytes as {} for image {}",
-         mem_reqs.size,
-         _memory_handle,
-         _handle
+        mem_reqs.size,
+        _memory_handle,
+        _handle
     );
 
     result = _device->native().bindImageMemory(_handle, _memory_handle, 0u);
@@ -500,29 +586,20 @@ bool vkImage::_send_to_device() {
         *_device
     ))
     {
-        Log::error(
-            "Failed to create staging buffer for image {}",
-            _handle
-        );
+        Log::error("Failed to create staging buffer for image {}", _handle);
         return false;
     }
 
     if(!staging_buffer.allocate(vk::MemoryPropertyFlagBits::eHostVisible
                                 | vk::MemoryPropertyFlagBits::eHostCoherent))
     {
-        Log::error(
-            "Failed to allocate staging buffer for image {}",
-            _handle
-        );
+        Log::error("Failed to allocate staging buffer for image {}", _handle);
         staging_buffer.destroy();
         return false;
     }
 
     if(!staging_buffer.fill_buffer(_raw_data)) {
-        Log::error(
-            "Failed to fill staging buffer for image {}",
-            _handle
-        );
+        Log::error("Failed to fill staging buffer for image {}", _handle);
         staging_buffer.destroy();
         return false;
     }
@@ -553,10 +630,7 @@ bool vkImage::_send_to_device() {
         _device->cmd_queue()
     ))
     {
-        Log::error(
-            "Failed to create command buffer for image {}",
-            _handle
-        );
+        Log::error("Failed to create command buffer for image {}", _handle);
         staging_buffer.destroy();
         return false;
     }
@@ -564,10 +638,7 @@ bool vkImage::_send_to_device() {
     if(!cmd_buffer.begin_one_time_submit())
 
     {
-        Log::error(
-            "Failed to begin one-time-submit for image {}",
-            _handle
-        );
+        Log::error("Failed to begin one-time-submit for image {}", _handle);
         staging_buffer.destroy();
         return false;
     }

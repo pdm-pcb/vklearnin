@@ -212,13 +212,17 @@ void vkSwapchain::_get_images() {
     Log::trace("Acquired {} swapchain images", swapchain_images.size());
 
     for(uint32_t i = 0u; i < _images.size(); ++i) {
+        std::string debug_name { std::format("Swapchain image {}", i).c_str() };
+
         _images[i].create(
             swapchain_images[i],
             _surface->format().format,
             vk::Extent3D {
                 .width = _surface->extent().width,
                 .height = _surface->extent().height,
-            }
+            },
+            *_device,
+            debug_name
         );
 
         _image_views[i].create(

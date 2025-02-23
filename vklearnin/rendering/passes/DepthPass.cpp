@@ -258,7 +258,8 @@ DepthPass::_create_depth_buffer(vkSurface const &surface,
         _depth_format,
         details,
         physical_device,
-        device
+        device,
+        "DepthPass depth buffer"
     ))
     {
         Log::error("Failed to create depth buffer.");

@@ -322,7 +322,8 @@ bool MSAAPass::_create_multisample_buffer(
         _color_format,
         details,
         physical_device,
-        device
+        device,
+        "MSAAPass multisample buffer"
     ))
     {
         Log::error("Failed to create multisample buffer.");
@@ -373,7 +374,8 @@ bool MSAAPass::_create_depth_buffer(
         _depth_format,
         details,
         physical_device,
-        device
+        device,
+        "MSAAPass depth buffer"
     ))
     {
         Log::error("Failed to create depth buffer.");

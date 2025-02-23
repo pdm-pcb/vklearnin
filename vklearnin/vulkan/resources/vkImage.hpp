@@ -31,21 +31,26 @@ public:
     };
 
     // For swapchain images
-    bool create(vk::Image const &handle, vk::Format const format,
-                vk::Extent3D const &extent);
+    bool create(vk::Image const &handle,
+                vk::Format const format,
+                vk::Extent3D const &extent,
+                vkDevice const &device,
+                std::string_view const debug_name);
 
     // For reading texture data from a file
     bool create(std::string_view const file_name,
                 Details const &details,
                 vkPhysicalDevice const &physical_device,
-                vkDevice const &device);
+                vkDevice const &device,
+                std::string_view const debug_name);
 
     // For render targets, eg color buffer
     bool create(vk::Extent2D const &extent,
                 vk::Format const format,
                 Details const &details,
                 vkPhysicalDevice const &physical_device,
-                vkDevice const &device);
+                vkDevice const &device,
+                std::string_view const debug_name);
 
     bool destroy();
 
@@ -99,6 +104,10 @@ private:
         vk::MemoryPropertyFlags const flags,
         vk::MemoryRequirements const reqs
     );
+
+#ifdef VKL_DEBUG
+    std::string _debug_name { "UNNAMED IMAGE" };
+#endif // VKL_DEBUG
 };
 
 } // namespace vkl

@@ -58,13 +58,17 @@ static uint32_t frame_index = 0u;
 static auto const instance_config = vkInstance::Config {
     .extensions = {
         VK_KHR_SURFACE_EXTENSION_NAME,
+
         #ifdef VKL_LINUX
             VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
         #elif VKL_WINDOWS
             VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
         #endif // VKL platform
+
     },
+#ifdef VKL_DEBUG
     .enable_validation = true,
+#endif // VKL_DEBUG
 };
 
 static auto features = vkPhysicalDevice::Features {
