@@ -196,7 +196,7 @@ uint64_t vkPhysicalDevice::_get_vram_bytes(vk::PhysicalDevice const &device) {
     for(uint32_t index = 0u; index < memory_props.memoryHeapCount; ++index) {
         auto const flags = memory_props.memoryHeaps[index].flags;
 
-        if((flags & vk::MemoryHeapFlagBits::eDeviceLocal) == flags) {
+        if((flags | vk::MemoryHeapFlagBits::eDeviceLocal) == flags) {
             vram_bytes = memory_props.memoryHeaps[index].size;
             break;
         }
@@ -256,6 +256,10 @@ void vkPhysicalDevice::_print_family_flags(uint32_t const family,
         flags_str += "Optical Flow    ";
     }
 #endif // VK_NV_optical_flow
+
+    if(flags_str.size() < 16) {
+        flags_str += "Present Only";
+    }
 
     Log::trace("  {}", flags_str);
 }
