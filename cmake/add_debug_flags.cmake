@@ -6,8 +6,7 @@ function(add_debug_flags)
                 "-ggdb3" # All the gdb symbol data
             #     "-fsanitize=address"
             # )
-            # target_link_options(
-            #     ${target_name} PUBLIC
+            # add_link_options(
             #     "-fsanitize=address"
             )
         endif()
