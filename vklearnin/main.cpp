@@ -291,8 +291,8 @@ int main() {
             vkImage::TransitionDetails {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
-            },
-            vk::ImageAspectFlagBits::eColor
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            }
         );
 
 #ifdef COLOR_DYNAMIC
@@ -308,9 +308,9 @@ int main() {
             vkImage::TransitionDetails {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-            },
-            (vk::ImageAspectFlagBits::eDepth
-             | vk::ImageAspectFlagBits::eStencil)
+                .aspect_flags = vk::ImageAspectFlagBits::eDepth
+                                | vk::ImageAspectFlagBits::eStencil,
+            }
         );
 
         auto &rendering_info =
@@ -330,8 +330,8 @@ int main() {
             vkImage::TransitionDetails {
                 .old_layout = vk::ImageLayout::eColorAttachmentOptimal,
                 .new_layout = vk::ImageLayout::ePresentSrcKHR,
-            },
-            vk::ImageAspectFlagBits::eColor
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            }
         );
 
 #endif // render passes or dynamic rendering

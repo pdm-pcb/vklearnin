@@ -340,33 +340,95 @@ bool vkImage::destroy() {
     return true;
 }
 
+/*
+vk::AccessFlags getAccessFlags(vk::ImageLayout layout) {
+	switch(layout) {
+		case vk::ImageLayout::eUndefined:
+		case vk::ImageLayout::ePresentSrcKHR:
+			return vk::AccessFlagBits(0u);
+		case vk::ImageLayout::ePreinitialized:
+			return vk::AccessFlagBits::eHostWrite;
+		case vk::ImageLayout::eColorAttachmentOptimal:
+			return vk::AccessFlagBits::eColorAttachmentRead
+                   | vk::AccessFlagBits::eColorAttachmentWrite;
+		case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+			return vk::AccessFlagBits::eDepthStencilAttachmentRead
+                   | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		case vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR:
+			return vk::AccessFlagBits::eFragmentShadingRateAttachmentReadKHR;
+		case vk::ImageLayout::eShaderReadOnlyOptimal:
+			return vk::AccessFlagBits::eShaderRead
+                   | vk::AccessFlagBits::eInputAttachmentRead;
+		case vk::ImageLayout::eTransferSrcOptimal:
+			return vk::AccessFlagBits::eTransferRead;
+		case vk::ImageLayout::eTransferDstOptimal:
+			return vk::AccessFlagBits::eTransferWrite;
+		case vk::ImageLayout::eGeneral:
+			assert(false && "Don't use vk::ImageLayout::eGeneral.");
+			return vk::AccessFlagBits(0u);
+		default:
+			assert(false && "Unknown image layout - no access flags.");
+			return vk::AccessFlagBits(0u);
+	}
+}
+
+vk::PipelineStageFlags getPipelineStageFlags(vk::ImageLayout layout) {
+	switch(layout) {
+		case vk::ImageLayout::eUndefined:
+			return vk::PipelineStageFlagBits::eTopOfPipe;
+		case vk::ImageLayout::ePreinitialized:
+			return vk::PipelineStageFlagBits::eHost;
+		case vk::ImageLayout::eTransferSrcOptimal:
+		case vk::ImageLayout::eTransferDstOptimal:
+			return vk::PipelineStageFlagBits::eTransfer;
+		case vk::ImageLayout::eColorAttachmentOptimal:
+			return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+			return vk::PipelineStageFlagBits::eEarlyFragmentTests
+                   | vk::PipelineStageFlagBits::eLateFragmentTests;
+		case vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR:
+			return vk::PipelineStageFlagBits::eFragmentShadingRateAttachmentKHR;
+		case vk::ImageLayout::eShaderReadOnlyOptimal:
+			return vk::PipelineStageFlagBits::eVertexShader
+                   | vk::PipelineStageFlagBits::eFragmentShader;
+		case vk::ImageLayout::ePresentSrcKHR:
+			return vk::PipelineStageFlagBits::eBottomOfPipe;
+		case vk::ImageLayout::eGeneral:
+            assert(false && "Don't use vk::ImageLayout::eGeneral.");
+			return vk::PipelineStageFlagBits(0u);
+		default:
+            assert(false && "Unknown image layout - no pipeline stage flags.");
+			return vk::PipelineStageFlagBits(0u);
+	}
+}
+*/
+
 // =============================================================================
 void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
-                                TransitionDetails const &details,
-                                vk::ImageAspectFlags const aspect_flags)
+                                TransitionDetails const &details)
 {
-    Log::trace(
-        "Image {} - '{:s}'->'{:s}'",
-        _handle,
-        vk::to_string(details.old_layout),
-        vk::to_string(details.new_layout)
-    );
+
 
     vk::ImageMemoryBarrier barrier {
         .pNext = nullptr,
+        .srcAccessMask = { }, // getAccessFlags(details.old_layout),
+        .dstAccessMask = { }, // getAccessFlags(details.new_layout),
         .oldLayout = details.old_layout,
         .newLayout = details.new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = _handle,
         .subresourceRange {
-            .aspectMask     = aspect_flags,
+            .aspectMask     = details.aspect_flags,
             .baseMipLevel   = details.base_mip_level,
             .levelCount     = details.mip_level_count,
             .baseArrayLayer = details.base_array_layer,
             .layerCount     = details.array_layer_count,
         }
     };
+
+    // vk::PipelineStageFlags src_stage = getPipelineStageFlags(details.old_layout);
+    // vk::PipelineStageFlags dst_stage = getPipelineStageFlags(details.new_layout);
 
     vk::PipelineStageFlags src_stage = { };
     vk::PipelineStageFlags dst_stage = { };
@@ -461,9 +523,30 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
     }
 
     if(!supported_transition) {
-        Log::error("Image {} - Unsupported layout transition", _handle);
+        Log::error(
+            "Image {} - Unsupported layout transition {:s}->{:s}",
+            _handle,
+            vk::to_string(details.old_layout),
+            vk::to_string(details.new_layout)
+        );
         return;
     }
+
+    Log::trace(
+        "Image {} - {:s}->{:s} aspect {:s}"
+        "\n\tsrcAccess = {:s}"
+        "\n\tdstAccess = {:s}"
+        "\n\tsrcStage  = {:s}"
+        "\n\tdstSTage  = {:s}",
+        _handle,
+        vk::to_string(details.old_layout),
+        vk::to_string(details.new_layout),
+        vk::to_string(details.aspect_flags),
+        vk::to_string(barrier.srcAccessMask),
+        vk::to_string(barrier.dstAccessMask),
+        vk::to_string(src_stage),
+        vk::to_string(dst_stage)
+    );
 
     cmd_buffer.native().pipelineBarrier(
         src_stage,    // Source stage
@@ -648,12 +731,12 @@ bool vkImage::_send_to_device() {
             TransitionDetails {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eTransferDstOptimal,
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
                 .base_mip_level = 0u,
                 .mip_level_count = _mip_levels,
                 .base_array_layer = 0u,
                 .array_layer_count = _array_layers,
-            },
-            vk::ImageAspectFlagBits::eColor
+            }
         );
 
         cmd_buffer.native().copyBufferToImage(
@@ -699,12 +782,12 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                 TransitionDetails {
                     .old_layout = vk::ImageLayout::eTransferDstOptimal,
                     .new_layout = vk::ImageLayout::eTransferSrcOptimal,
+                    .aspect_flags = vk::ImageAspectFlagBits::eColor,
                     .base_mip_level = mip - 1u,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
                     .array_layer_count = 1u
-                },
-                vk::ImageAspectFlagBits::eColor
+                }
             );
 
             vk::ImageBlit const blit {
@@ -746,12 +829,12 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                 TransitionDetails {
                     .old_layout = vk::ImageLayout::eTransferSrcOptimal,
                     .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                    .aspect_flags = vk::ImageAspectFlagBits::eColor,
                     .base_mip_level = mip - 1u,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
                     .array_layer_count = 1u
-                },
-                vk::ImageAspectFlagBits::eColor
+                }
             );
 
             if(mip_width  > 1) { mip_width  /= 2; }
@@ -763,12 +846,12 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
             TransitionDetails {
                 .old_layout = vk::ImageLayout::eTransferDstOptimal,
                 .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
                 .base_mip_level = _mip_levels - 1u,
                 .mip_level_count = 1u,
                 .base_array_layer = layer,
                 .array_layer_count = 1u
-            },
-            vk::ImageAspectFlagBits::eColor
+            }
         );
     }
 }

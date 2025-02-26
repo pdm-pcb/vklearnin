@@ -58,6 +58,8 @@ public:
         vk::ImageLayout const old_layout = vk::ImageLayout::eUndefined;
         vk::ImageLayout const new_layout = vk::ImageLayout::eUndefined;
 
+        vk::ImageAspectFlags const aspect_flags { 0u };
+
         uint32_t const base_mip_level = 0u;
         uint32_t const mip_level_count = 1u;
         uint32_t const base_array_layer = 0u;
@@ -65,8 +67,7 @@ public:
     };
 
     void transition_layout(vkCmdBuffer const &cmd_buffer,
-                           TransitionDetails const &details,
-                           vk::ImageAspectFlags const aspect_flags);
+                           TransitionDetails const &details);
 
     inline auto const & native() const { return _handle; }
     inline auto format() const { return _format; }
