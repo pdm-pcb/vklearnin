@@ -976,6 +976,7 @@ void recreate_swapchain() {
 #ifdef DEPTH_DYNAMIC
     depth_dynamic.create_swapchain_resources(
         surface,
+        clear_values,
         depth_format,
         vkPhysicalDevice::current_device(),
         device

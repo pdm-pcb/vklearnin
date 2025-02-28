@@ -34,10 +34,12 @@ public:
     void update_render_area(vkSurface const &surface);
 
     void destroy_swapchain_resources();
-    void create_swapchain_resources(vkSurface const &surface,
-                                    vk::Format const depth_format,
-                                    vkPhysicalDevice const &physical_device,
-                                    vkDevice const &device);
+    void create_swapchain_resources(
+        vkSurface const &surface,
+        std::span<vk::ClearValue const> const clear_values,
+        vk::Format const depth_format,
+        vkPhysicalDevice const &physical_device,
+        vkDevice const &device);
 
     vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,
                                                 vk::ImageLayout const &layout);
@@ -60,6 +62,9 @@ private:
     vk::Format  _depth_format { vk::Format::eUndefined };
     vkImage     _depth_buffer;
     vkImageView _depth_view;
+
+    void _init_attachments(std::span<vk::ClearValue const> const clear_values);
+    void _init_rendering_info(vkSurface const &surface);
 
     bool _create_depth_buffer(vkSurface const &surface,
                               vkPhysicalDevice const &physical_device,

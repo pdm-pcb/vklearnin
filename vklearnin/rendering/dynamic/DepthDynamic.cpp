@@ -51,35 +51,18 @@ void DepthDynamic::init(vkSurface const &surface,
         return;
     }
 
-    _depth_attachment = vk::RenderingAttachmentInfoKHR {
-        .pNext = nullptr,
-        .imageView = _depth_view.native(),
-        .imageLayout = _depth_buffer.layout(),
-        .resolveMode = { },
-        .resolveImageView = { },
-        .resolveImageLayout = { },
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = {
-            .depthStencil = clear_values[1].depthStencil,
-        },
-    };
+    _init_attachments(clear_values);
+    _init_rendering_info(surface);
+    // _init_pipeline_create_info();
 
-    _rendering_info = vk::RenderingInfoKHR {
-        .pNext = nullptr,
-        .flags = { },
-        .renderArea = vk::Rect2D {
-            .offset = { },
-            .extent = surface.extent(),
-        },
-        .layerCount = 1u,
-        .viewMask = { },
-        .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachments.size()),
-        .pColorAttachments = _color_attachments.data(),
-        .pDepthAttachment = &_depth_attachment,
-        .pStencilAttachment = nullptr,
-    };
+    // TODO: what's up next is not only making sure that attachments and begin
+    // info get updated on swapchain recreation, but then also sorting out
+    // pipeline recreation, since that's clearly happening here too.
+    //
+    // Does pipeline creation happen after populating _pipeline_create_info
+    // normally? If so, do I recreate the pipeline during swapchain recreation?
+    // I feel like I don't, especially with render passes. But maybe that's
+    // happening in the wrong order, too.
 
     _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
         .pNext = nullptr,
@@ -132,6 +115,7 @@ void DepthDynamic::destroy_swapchain_resources() {
 // =============================================================================
 void DepthDynamic::create_swapchain_resources(
     vkSurface const &surface,
+    std::span<vk::ClearValue const> const clear_values,
     vk::Format const depth_format,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
@@ -141,6 +125,47 @@ void DepthDynamic::create_swapchain_resources(
 
     update_render_area(surface);
     _create_depth_buffer(surface, physical_device, device);
+
+    _init_attachments(clear_values);
+    _init_rendering_info(surface);
+}
+
+// =============================================================================
+void DepthDynamic::_init_attachments(
+    std::span<vk::ClearValue const> const clear_values)
+{
+    _depth_attachment = vk::RenderingAttachmentInfoKHR {
+        .pNext = nullptr,
+        .imageView = _depth_view.native(),
+        .imageLayout = _depth_buffer.layout(),
+        .resolveMode = { },
+        .resolveImageView = { },
+        .resolveImageLayout = { },
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = {
+            .depthStencil = clear_values[1].depthStencil,
+        },
+    };
+}
+
+// =============================================================================
+void DepthDynamic::_init_rendering_info(vkSurface const &surface) {
+    _rendering_info = vk::RenderingInfoKHR {
+        .pNext = nullptr,
+        .flags = { },
+        .renderArea = vk::Rect2D {
+            .offset = { },
+            .extent = surface.extent(),
+        },
+        .layerCount = 1u,
+        .viewMask = { },
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_color_attachments.size()),
+        .pColorAttachments = _color_attachments.data(),
+        .pDepthAttachment = &_depth_attachment,
+        .pStencilAttachment = nullptr,
+    };
 }
 
 // =============================================================================
