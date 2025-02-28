@@ -139,11 +139,7 @@ void DepthDynamic::create_swapchain_resources(
     _color_attachment_formats = { surface.format().format };
     _depth_format = depth_format;
 
-    _rendering_info.renderArea = vk::Rect2D {
-        .offset = vk::Offset2D { },
-        .extent = surface.extent(),
-    };
-
+    update_render_area(surface);
     _create_depth_buffer(surface, physical_device, device);
 }
 
@@ -187,6 +183,8 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
         _depth_buffer.destroy();
         return false;
     }
+
+    Log::info("Created depth buffer {} and view {}", _depth_buffer.native(), _depth_view.native());
 
     return true;
 }

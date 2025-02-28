@@ -254,6 +254,14 @@ bool vkImage::create(vk::Extent2D const &extent,
 
     if(result != vk::Result::eSuccess) {
         Log::error("Unable to create image: '{}'", vk::to_string(result));
+
+        _physical_device = nullptr;
+        _device = nullptr;
+        _aspect_flags = { };
+        _array_layers = 0u;
+        _format = { };
+        _extent = vk::Extent3D { };
+
         return false;
     }
 
@@ -283,6 +291,8 @@ bool vkImage::create(vk::Extent2D const &extent,
             _handle,
             vk::to_string(debug_name_result)
         );
+
+        destroy();
         return false;
     }
 #endif // VKL_DEBUG
@@ -340,69 +350,6 @@ bool vkImage::destroy() {
     return true;
 }
 
-/*
-vk::AccessFlags getAccessFlags(vk::ImageLayout layout) {
-	switch(layout) {
-		case vk::ImageLayout::eUndefined:
-		case vk::ImageLayout::ePresentSrcKHR:
-			return vk::AccessFlagBits(0u);
-		case vk::ImageLayout::ePreinitialized:
-			return vk::AccessFlagBits::eHostWrite;
-		case vk::ImageLayout::eColorAttachmentOptimal:
-			return vk::AccessFlagBits::eColorAttachmentRead
-                   | vk::AccessFlagBits::eColorAttachmentWrite;
-		case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-			return vk::AccessFlagBits::eDepthStencilAttachmentRead
-                   | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-		case vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR:
-			return vk::AccessFlagBits::eFragmentShadingRateAttachmentReadKHR;
-		case vk::ImageLayout::eShaderReadOnlyOptimal:
-			return vk::AccessFlagBits::eShaderRead
-                   | vk::AccessFlagBits::eInputAttachmentRead;
-		case vk::ImageLayout::eTransferSrcOptimal:
-			return vk::AccessFlagBits::eTransferRead;
-		case vk::ImageLayout::eTransferDstOptimal:
-			return vk::AccessFlagBits::eTransferWrite;
-		case vk::ImageLayout::eGeneral:
-			assert(false && "Don't use vk::ImageLayout::eGeneral.");
-			return vk::AccessFlagBits(0u);
-		default:
-			assert(false && "Unknown image layout - no access flags.");
-			return vk::AccessFlagBits(0u);
-	}
-}
-
-vk::PipelineStageFlags getPipelineStageFlags(vk::ImageLayout layout) {
-	switch(layout) {
-		case vk::ImageLayout::eUndefined:
-			return vk::PipelineStageFlagBits::eTopOfPipe;
-		case vk::ImageLayout::ePreinitialized:
-			return vk::PipelineStageFlagBits::eHost;
-		case vk::ImageLayout::eTransferSrcOptimal:
-		case vk::ImageLayout::eTransferDstOptimal:
-			return vk::PipelineStageFlagBits::eTransfer;
-		case vk::ImageLayout::eColorAttachmentOptimal:
-			return vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-			return vk::PipelineStageFlagBits::eEarlyFragmentTests
-                   | vk::PipelineStageFlagBits::eLateFragmentTests;
-		case vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR:
-			return vk::PipelineStageFlagBits::eFragmentShadingRateAttachmentKHR;
-		case vk::ImageLayout::eShaderReadOnlyOptimal:
-			return vk::PipelineStageFlagBits::eVertexShader
-                   | vk::PipelineStageFlagBits::eFragmentShader;
-		case vk::ImageLayout::ePresentSrcKHR:
-			return vk::PipelineStageFlagBits::eBottomOfPipe;
-		case vk::ImageLayout::eGeneral:
-            assert(false && "Don't use vk::ImageLayout::eGeneral.");
-			return vk::PipelineStageFlagBits(0u);
-		default:
-            assert(false && "Unknown image layout - no pipeline stage flags.");
-			return vk::PipelineStageFlagBits(0u);
-	}
-}
-*/
-
 // =============================================================================
 void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
                                 TransitionDetails const &details)
@@ -411,8 +358,8 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
 
     vk::ImageMemoryBarrier barrier {
         .pNext = nullptr,
-        .srcAccessMask = { }, // getAccessFlags(details.old_layout),
-        .dstAccessMask = { }, // getAccessFlags(details.new_layout),
+        .srcAccessMask = { },
+        .dstAccessMask = { },
         .oldLayout = details.old_layout,
         .newLayout = details.new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -426,9 +373,6 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
             .layerCount     = details.array_layer_count,
         }
     };
-
-    // vk::PipelineStageFlags src_stage = getPipelineStageFlags(details.old_layout);
-    // vk::PipelineStageFlags dst_stage = getPipelineStageFlags(details.new_layout);
 
     vk::PipelineStageFlags src_stage = { };
     vk::PipelineStageFlags dst_stage = { };

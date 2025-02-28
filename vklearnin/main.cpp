@@ -974,7 +974,12 @@ void recreate_swapchain() {
 #endif // COLOR_DYNAMIC
 
 #ifdef DEPTH_DYNAMIC
-    depth_dynamic.update_render_area(surface);
+    depth_dynamic.create_swapchain_resources(
+        surface,
+        depth_format,
+        vkPhysicalDevice::current_device(),
+        device
+    );
 #endif // DEPTH_DYNAMIC
 
 #endif // render passes or dynamic rendering
