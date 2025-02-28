@@ -1,5 +1,7 @@
-#ifndef VKLEARNIN_RENDERING_DYNAMIC_DEPTHDYNAMIC_HPP
-#define VKLEARNIN_RENDERING_DYNAMIC_DEPTHDYNAMIC_HPP
+/*
+
+#ifndef VKLEARNIN_RENDERING_DYNAMIC_MSAADYNAMIC_HPP
+#define VKLEARNIN_RENDERING_DYNAMIC_MSAADYNAMIC_HPP
 
 #include "vklearnin/pch.hpp"
 
@@ -12,16 +14,16 @@ class vkSurface;
 class vkPhysicalDevice;
 class vkDevice;
 
-class DepthDynamic final {
+class MSAADynamic final {
 public:
-    DepthDynamic() = default;
-    ~DepthDynamic() = default;
+    MSAADynamic() = default;
+    ~MSAADynamic() = default;
 
-    DepthDynamic(DepthDynamic &&) = delete;
-    DepthDynamic(DepthDynamic const &) = delete;
+    MSAADynamic(MSAADynamic &&) = delete;
+    MSAADynamic(MSAADynamic const &) = delete;
 
-    DepthDynamic & operator=(DepthDynamic &&) = delete;
-    DepthDynamic & operator=(DepthDynamic const &) = delete;
+    MSAADynamic & operator=(MSAADynamic &&) = delete;
+    MSAADynamic & operator=(MSAADynamic const &) = delete;
 
     void init(vkSurface const &surface,
               std::span<vk::ClearValue const> const clear_values,
@@ -63,4 +65,6 @@ private:
 
 } // namespace vkl
 
-#endif // VKLEARNIN_RENDERING_DYNAMIC_DEPTHDYNAMIC_HPP
+#endif // VKLEARNIN_RENDERING_DYNAMIC_MSAADYNAMIC_HPP
+
+*/
