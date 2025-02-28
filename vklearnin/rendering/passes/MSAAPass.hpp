@@ -25,14 +25,19 @@ public:
     MSAAPass & operator=(MSAAPass const &) = delete;
 
     bool create(vkSurface const &surface,
+                vk::Format const depth_format,
                 std::span<vk::ClearValue const> const clear_values,
                 vk::SampleCountFlagBits const msaa_samples,
                 vkPhysicalDevice const &physical_device,
                 vkDevice const &device);
     bool destroy();
 
+    void update_render_area(vkSurface const &surface);
+
     void destroy_swapchain_resources();
     void create_swapchain_resources(vkSurface const &surface,
+                                    vk::Format const depth_format,
+                                    vk::SampleCountFlagBits const msaa_samples,
                                     vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
@@ -68,8 +73,6 @@ private:
     vkImageView _depth_view;
 
     std::vector<std::array<vk::ImageView, 2u>> _views_by_frame_index;
-
-    bool _find_depth_format(vkPhysicalDevice const &physical_device);
 
     void _init_attachments();
     void _init_subpasses();

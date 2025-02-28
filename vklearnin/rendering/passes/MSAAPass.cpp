@@ -11,16 +11,14 @@ namespace vkl {
 
 // =============================================================================
 bool MSAAPass::create(vkSurface const &surface,
+                      vk::Format const depth_format,
                       std::span<vk::ClearValue const> const clear_values,
                       vk::SampleCountFlagBits const msaa_samples,
                       vkPhysicalDevice const &physical_device,
                       vkDevice const &device)
 {
     if(_render_pass.native()) {
-        Log::error(
-            "Color depth pass {} already exists.",
-            _render_pass.native()
-        );
+        Log::error("MSAA pass {} already exists.", _render_pass.native());
         return false;
     }
 
@@ -34,12 +32,8 @@ bool MSAAPass::create(vkSurface const &surface,
         return false;
     }
 
-    if(!_find_depth_format(physical_device)) {
-        Log::error("Unable to find suitable depth format.");
-        return false;
-    }
-
     _color_format = surface.format().format;
+    _depth_format = depth_format;
     _msaa_samples = msaa_samples;
 
     _init_attachments();
@@ -157,6 +151,14 @@ bool MSAAPass::destroy() {
 }
 
 // =============================================================================
+void MSAAPass::update_render_area(vkSurface const &surface) {
+    _begin_info.renderArea = vk::Rect2D {
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
+    };
+}
+
+// =============================================================================
 void MSAAPass::destroy_swapchain_resources() {
     _begin_info.renderArea = vk::Rect2D { };
 
@@ -170,39 +172,22 @@ void MSAAPass::destroy_swapchain_resources() {
 // =============================================================================
 void MSAAPass::create_swapchain_resources(
     vkSurface const &surface,
+    vk::Format const depth_format,
+    vk::SampleCountFlagBits const msaa_samples,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
-    _find_depth_format(physical_device);
     _color_format = surface.format().format;
+    _msaa_samples = msaa_samples;
+    _depth_format = depth_format;
 
-    _begin_info.renderArea = vk::Rect2D {
-        .offset = { },
-        .extent = surface.extent()
-    };
+    update_render_area(surface);
+
+    _init_attachments();
+    _init_subpasses();
 
     _create_multisample_buffer(surface, physical_device, device);
     _create_depth_buffer(surface, physical_device, device);
-}
-
-// =============================================================================
-bool MSAAPass::_find_depth_format(vkPhysicalDevice const &physical_device) {
-    static std::array<vk::Format const, 2> const depth_formats {
-        vk::Format::eD32SfloatS8Uint, // One of these two will always be
-        vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
-    };
-
-    for(auto const format : depth_formats) {
-        auto props = physical_device.native().getFormatProperties(format);
-        if(props.optimalTilingFeatures &
-           vk::FormatFeatureFlagBits::eDepthStencilAttachment)
-        {
-            _depth_format = format;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 // =============================================================================

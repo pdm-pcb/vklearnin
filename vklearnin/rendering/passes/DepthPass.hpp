@@ -31,6 +31,8 @@ public:
                 vkDevice const &device);
     bool destroy();
 
+    void update_render_area(vkSurface const &surface);
+
     void destroy_swapchain_resources();
     void create_swapchain_resources(vkSurface const &surface,
                                     vk::Format const depth_format,

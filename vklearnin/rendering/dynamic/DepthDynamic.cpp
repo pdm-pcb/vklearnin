@@ -39,7 +39,6 @@ void DepthDynamic::init(vkSurface const &surface,
     }}};
 
     _color_attachment_formats = { surface.format().format };
-
     _depth_format = depth_format;
 
     if(!_create_depth_buffer(surface, physical_device, device)) {
@@ -118,6 +117,34 @@ void DepthDynamic::update_render_area(vkSurface const &surface) {
         .offset = vk::Offset2D { },
         .extent = surface.extent(),
     };
+}
+
+// =============================================================================
+void DepthDynamic::destroy_swapchain_resources() {
+    _rendering_info.renderArea = vk::Rect2D { };
+
+    _color_attachment_formats.clear();
+    _depth_format = vk::Format::eUndefined;
+
+    _destroy_depth_buffer();
+}
+
+// =============================================================================
+void DepthDynamic::create_swapchain_resources(
+    vkSurface const &surface,
+    vk::Format const depth_format,
+    vkPhysicalDevice const &physical_device,
+    vkDevice const &device)
+{
+    _color_attachment_formats = { surface.format().format };
+    _depth_format = depth_format;
+
+    _rendering_info.renderArea = vk::Rect2D {
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
+    };
+
+    _create_depth_buffer(surface, physical_device, device);
 }
 
 // =============================================================================

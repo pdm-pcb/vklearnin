@@ -130,7 +130,7 @@ static DepthDynamic depth_dynamic;
 
 #endif // render passes or dynamic rendering
 
-#if defined(DEPTH_PASS) || defined(DEPTH_DYNAMIC)
+#if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC) || defined(MSAA_DYNAMIC)
 static vk::Format depth_format;
 
 static std::array<vk::Format const, 2> const depth_formats {
@@ -433,10 +433,14 @@ void init_rendering() {
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
     msaa_samples = vkPhysicalDevice::current_device().max_samples();
 
     msaa_pass.create(
         surface,
+        depth_format,
         clear_values,
         msaa_samples,
         vkPhysicalDevice::current_device(),
@@ -887,9 +891,11 @@ void recreate_swapchain() {
     msaa_pass.destroy_swapchain_resources();
 #endif // MSAA_PASS
 
-    swapchain.destroy();
+#ifdef DEPTH_DYNAMIC
+    depth_dynamic.destroy_swapchain_resources();
+#endif // DEPTH_DYNAMIC
 
-    // ...
+    swapchain.destroy();
 
     surface.get_details(vkPhysicalDevice::current_device());
 
@@ -916,8 +922,15 @@ void recreate_swapchain() {
 #endif // DEPTH_PASS
 
 #ifdef MSAA_PASS
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
+    msaa_samples = vkPhysicalDevice::current_device().max_samples();
+
     msaa_pass.create_swapchain_resources(
         surface,
+        depth_format,
+        msaa_samples,
         vkPhysicalDevice::current_device(),
         device
     );

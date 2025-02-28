@@ -15,10 +15,7 @@ bool DepthPass::create(vkSurface const &surface,
                        vkDevice const &device)
 {
     if(_render_pass.native()) {
-        Log::error(
-            "Color depth pass {} already exists.",
-            _render_pass.native()
-        );
+        Log::error("Depth pass {} already exists.", _render_pass.native());
         return false;
     }
 
@@ -128,6 +125,14 @@ bool DepthPass::destroy() {
 }
 
 // =============================================================================
+void DepthPass::update_render_area(vkSurface const &surface) {
+    _begin_info.renderArea = vk::Rect2D {
+        .offset = vk::Offset2D { },
+        .extent = surface.extent(),
+    };
+}
+
+// =============================================================================
 void DepthPass::destroy_swapchain_resources() {
     _begin_info.renderArea = vk::Rect2D { };
 
@@ -147,10 +152,10 @@ void DepthPass::create_swapchain_resources(
     _color_format = surface.format().format;
     _depth_format = depth_format;
 
-    _begin_info.renderArea = vk::Rect2D {
-        .offset = vk::Offset2D { },
-        .extent = surface.extent(),
-    };
+    update_render_area(surface);
+
+    _init_attachments();
+    _init_subpasses();
 
     _create_depth_buffer(surface, physical_device, device);
 }
