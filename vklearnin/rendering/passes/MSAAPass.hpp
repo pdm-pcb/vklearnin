@@ -80,12 +80,14 @@ private:
     bool _create_multisample_buffer(vkSurface const &surface,
                                     vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
-    void _destroy_multisample_buffer();
-
     bool _create_depth_buffer(vkSurface const &surface,
                               vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
+
+    void _destroy_multisample_buffer();
     void _destroy_depth_buffer();
+
+    void _reset_object();
 };
 
 } // namespace vkl

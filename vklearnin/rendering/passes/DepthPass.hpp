@@ -57,8 +57,8 @@ private:
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency>  _subpass_deps;
 
-    vk::Format _color_format { vk::Format::eUndefined };
-    vk::Format _depth_format { vk::Format::eUndefined };
+    vk::Format _color_format = vk::Format::eUndefined;
+    vk::Format _depth_format = vk::Format::eUndefined;
 
     vkImage     _depth_buffer;
     vkImageView _depth_view;
@@ -70,6 +70,8 @@ private:
                               vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
+
+    void _reset_object();
 };
 
 } // namespace vkl

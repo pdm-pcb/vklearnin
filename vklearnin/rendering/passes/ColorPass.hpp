@@ -43,6 +43,8 @@ private:
 
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency> _subpass_deps;
+
+    void _reset_object();
 };
 
 } // namespace vkl

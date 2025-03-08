@@ -24,14 +24,14 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-// #define RENDER_PASS
+#define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
-// #define MSAA_PASS
+#define MSAA_PASS
 
-#define DYNAMIC_RENDERING
+// #define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-#define DEPTH_DYNAMIC
+// #define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -220,7 +220,7 @@ int main() {
 
         loop_start = loop_end;
 
-        Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
+        // Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
 
         // ---------------------------------------------------------------------
         // begin graphics commands
@@ -231,7 +231,7 @@ int main() {
         auto const &swapchain_image_view = swapchain.image_views()[frame_index];
 #endif // render passes or dynamic rendering
 
-        auto const &gfx_sync       = graphics_syncs[frame_index];
+        auto const &gfx_sync = graphics_syncs[frame_index];
         auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
 
         // wait on queue fence, reset fence and command pool

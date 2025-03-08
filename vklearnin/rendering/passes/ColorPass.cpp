@@ -12,10 +12,7 @@ bool ColorPass::create(vkSurface const &surface,
                        vkDevice const &device)
 {
     if(_render_pass.native()) {
-        Log::error(
-            "Color pass {} already exists.",
-            _render_pass.native()
-        );
+        Log::error("Color pass {} already exists.", _render_pass.native());
         return false;
     }
 
@@ -69,20 +66,13 @@ bool ColorPass::create(vkSurface const &surface,
         .dependencyFlags = { },
     }}};
 
-    if(!_render_pass.create(
-        _attachment_descriptions,
-        _subpass_descriptions,
-        _subpass_deps,
-        device
-    ))
+    if(!_render_pass.create(_attachment_descriptions,
+                            _subpass_descriptions,
+                            _subpass_deps,
+                            device))
     {
         Log::error("Failed to create color pass.");
-
-        _attachment_descriptions.clear();
-        _color_refs.clear();
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
+        _reset_object();
         return false;
     }
 
@@ -108,13 +98,7 @@ bool ColorPass::destroy() {
         return false;
     }
 
-    _begin_info = vk::RenderPassBeginInfo { };
-    _render_pass.destroy();
-
-    _attachment_descriptions.clear();
-    _color_refs.clear();
-    _subpass_descriptions.clear();
-    _subpass_deps.clear();
+    _reset_object();
 
     return true;
 }
@@ -125,6 +109,19 @@ void ColorPass::update_render_area(vkSurface const &surface) {
         .offset = vk::Offset2D { },
         .extent = surface.extent(),
     };
+}
+
+// =============================================================================
+void ColorPass::_reset_object() {
+    if(_render_pass.native()) {
+        _render_pass.destroy();
+    }
+
+    _begin_info = vk::RenderPassBeginInfo { };
+    _attachment_descriptions.clear();
+    _color_refs.clear();
+    _subpass_descriptions.clear();
+    _subpass_deps.clear();
 }
 
 } // namespace vkl

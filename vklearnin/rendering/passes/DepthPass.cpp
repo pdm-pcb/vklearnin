@@ -40,45 +40,19 @@ bool DepthPass::create(vkSurface const &surface,
     _init_attachments();
     _init_subpasses();
 
-    if(!_render_pass.create(
-        _attachment_descriptions,
-        _subpass_descriptions,
-        _subpass_deps,
-        device
-    ))
+    if(!_render_pass.create(_attachment_descriptions,
+                            _subpass_descriptions,
+                            _subpass_deps,
+                            device))
     {
         Log::error("Failed to create depth pass.");
-
-        _attachment_descriptions.clear();
-
-        _color_refs.clear();
-        _depth_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
+        _reset_object();
         return false;
     }
 
     if(!_create_depth_buffer(surface, physical_device, device)) {
         Log::error("Failed to create depth pass depth buffer.");
-
-        _render_pass.destroy();
-
-        _attachment_descriptions.clear();
-
-        _color_refs.clear();
-        _depth_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
+        _reset_object();
         return false;
     }
 
@@ -104,22 +78,7 @@ bool DepthPass::destroy() {
         return false;
     }
 
-    _begin_info = vk::RenderPassBeginInfo { };
-
-    _render_pass.destroy();
-
-    _attachment_descriptions.clear();
-
-    _color_refs.clear();
-    _depth_ref = vk::AttachmentReference { };
-
-    _subpass_descriptions.clear();
-    _subpass_deps.clear();
-
-    _color_format = vk::Format::eUndefined;
-    _depth_format = vk::Format::eUndefined;
-
-    _destroy_depth_buffer();
+    _reset_object();
 
     return true;
 }
@@ -291,8 +250,33 @@ DepthPass::_create_depth_buffer(vkSurface const &surface,
 
 // =============================================================================
 void DepthPass::_destroy_depth_buffer() {
-    _depth_view.destroy();
-    _depth_buffer.destroy();
+    if(_depth_view.native()) {
+        _depth_view.destroy();
+    }
+
+    if(_depth_buffer.native()) {
+        _depth_buffer.destroy();
+    }
+}
+
+// =============================================================================
+void DepthPass::_reset_object() {
+    if(_render_pass.native()) {
+        _render_pass.destroy();
+    }
+
+    _begin_info = vk::RenderPassBeginInfo { };
+    _attachment_descriptions.clear();
+    _color_refs.clear();
+    _depth_ref = vk::AttachmentReference { };
+
+    _subpass_descriptions.clear();
+    _subpass_deps.clear();
+
+    _color_format = vk::Format::eUndefined;
+    _depth_format = vk::Format::eUndefined;
+
+    _destroy_depth_buffer();
 }
 
 } // namespace vkl

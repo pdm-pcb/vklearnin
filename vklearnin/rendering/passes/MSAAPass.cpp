@@ -39,70 +39,25 @@ bool MSAAPass::create(vkSurface const &surface,
     _init_attachments();
     _init_subpasses();
 
-    if(!_render_pass.create(
-        _attachment_descriptions,
-        _subpass_descriptions,
-        _subpass_deps,
-        device
-    ))
+    if(!_render_pass.create(_attachment_descriptions,
+                            _subpass_descriptions,
+                            _subpass_deps,
+                            device))
     {
         Log::error("Failed to create MSAA pass.");
-
-        _attachment_descriptions.clear();
-
-        _multisample_refs.clear();
-        _depth_ref   = vk::AttachmentReference { };
-        _resolve_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
+        _reset_object();
         return false;
     }
 
     if(!_create_multisample_buffer(surface, physical_device, device)) {
         Log::error("Failed to create MSAA multisample buffer.");
-
-        _render_pass.destroy();
-
-        _attachment_descriptions.clear();
-
-        _multisample_refs.clear();
-        _depth_ref   = vk::AttachmentReference { };
-        _resolve_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
+        _reset_object();
         return false;
     }
 
     if(!_create_depth_buffer(surface, physical_device, device)) {
         Log::error("Failed to create MSAA multisample view.");
-
-        _multisample_view.destroy();
-        _multisample_buffer.destroy();
-
-        _render_pass.destroy();
-
-        _attachment_descriptions.clear();
-
-        _multisample_refs.clear();
-        _depth_ref   = vk::AttachmentReference { };
-        _resolve_ref = vk::AttachmentReference { };
-
-        _subpass_descriptions.clear();
-        _subpass_deps.clear();
-
-        _color_format = vk::Format::eUndefined;
-        _depth_format = vk::Format::eUndefined;
-
+        _reset_object();
         return false;
     }
 
@@ -128,24 +83,7 @@ bool MSAAPass::destroy() {
         return false;
     }
 
-    _begin_info = vk::RenderPassBeginInfo { };
-
-    _render_pass.destroy();
-
-    _attachment_descriptions.clear();
-
-    _multisample_refs.clear();
-    _depth_ref   = vk::AttachmentReference { };
-    _resolve_ref = vk::AttachmentReference { };
-
-    _subpass_descriptions.clear();
-    _subpass_deps.clear();
-
-    _color_format = vk::Format::eUndefined;
-    _depth_format = vk::Format::eUndefined;
-
-    _destroy_multisample_buffer();
-    _destroy_depth_buffer();
+    _reset_object();
 
     return true;
 }
@@ -334,12 +272,6 @@ bool MSAAPass::_create_multisample_buffer(
 }
 
 // =============================================================================
-void MSAAPass::_destroy_multisample_buffer() {
-    _multisample_view.destroy();
-    _multisample_buffer.destroy();
-}
-
-// =============================================================================
 bool MSAAPass::_create_depth_buffer(
     vkSurface const &surface,
     vkPhysicalDevice const &physical_device,
@@ -386,9 +318,49 @@ bool MSAAPass::_create_depth_buffer(
 }
 
 // =============================================================================
+void MSAAPass::_destroy_multisample_buffer() {
+    if(_multisample_view.native()) {
+        _multisample_view.destroy();
+    }
+
+    if(_multisample_buffer.native()) {
+        _multisample_buffer.destroy();
+    }
+}
+
+// =============================================================================
 void MSAAPass::_destroy_depth_buffer() {
-    _depth_view.destroy();
-    _depth_buffer.destroy();
+    if(_depth_view.native()) {
+        _depth_view.destroy();
+    }
+
+    if(_depth_buffer.native()) {
+        _depth_buffer.destroy();
+    }
+}
+
+// =============================================================================
+void MSAAPass::_reset_object() {
+    if(_render_pass.native()) {
+        _render_pass.destroy();
+    }
+
+    _begin_info = vk::RenderPassBeginInfo { };
+    _attachment_descriptions.clear();
+    _multisample_refs.clear();
+    _depth_ref = vk::AttachmentReference { };
+    _resolve_ref = vk::AttachmentReference { };
+
+    _subpass_descriptions.clear();
+    _subpass_deps.clear();
+
+    _color_format = vk::Format::eUndefined;
+    _depth_format = vk::Format::eUndefined;
+
+    _msaa_samples = vk::SampleCountFlagBits { };
+
+    _destroy_multisample_buffer();
+    _destroy_depth_buffer();
 }
 
 } // namespace vkl
