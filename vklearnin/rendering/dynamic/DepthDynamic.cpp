@@ -24,61 +24,23 @@ void DepthDynamic::init(vkSurface const &surface,
         return;
     }
 
-    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
-        .pNext = nullptr,
-        .imageView = { },
-        .imageLayout = { },
-        .resolveMode = { },
-        .resolveImageView = { },
-        .resolveImageLayout = { },
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = {
-            .color = clear_values[0].color,
-        },
-    }}};
-
     _color_attachment_formats = { surface.format().format };
-    _depth_format = depth_format;
+    _depth_attachment_format = depth_format;
 
     if(!_create_depth_buffer(surface, physical_device, device)) {
-        Log::error("Failed to create depth pass depth buffer.");
-
-        _depth_format = vk::Format::eUndefined;
-        _color_attachment_formats.clear();
-        _color_attachments.clear();
-
+        Log::error("Failed to create depth dynamic depth buffer.");
+        _reset_object();
         return;
     }
 
     _init_attachments(clear_values);
     _init_rendering_info(surface);
-    // _init_pipeline_create_info();
-
-    // TODO: what's up next is not only making sure that attachments and begin
-    // info get updated on swapchain recreation, but then also sorting out
-    // pipeline recreation, since that's clearly happening here too.
-    //
-    // Does pipeline creation happen after populating _pipeline_create_info
-    // normally? If so, do I recreate the pipeline during swapchain recreation?
-    // I feel like I don't, especially with render passes. But maybe that's
-    // happening in the wrong order, too.
-
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
-        .pNext = nullptr,
-        .viewMask = { },
-        .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachment_formats.size()),
-        .pColorAttachmentFormats = _color_attachment_formats.data(),
-        .depthAttachmentFormat = _depth_format,
-        .stencilAttachmentFormat = _depth_format,
-    };
+    _init_pipeline_create_info();
 }
 
 // =============================================================================
 void DepthDynamic::shutdown() {
-    _depth_view.destroy();
-    _depth_buffer.destroy();
+    _reset_object();
 }
 
 // =============================================================================
@@ -107,7 +69,7 @@ void DepthDynamic::destroy_swapchain_resources() {
     _rendering_info.renderArea = vk::Rect2D { };
 
     _color_attachment_formats.clear();
-    _depth_format = vk::Format::eUndefined;
+    _depth_attachment_format = vk::Format::eUndefined;
 
     _destroy_depth_buffer();
 }
@@ -121,7 +83,7 @@ void DepthDynamic::create_swapchain_resources(
     vkDevice const &device)
 {
     _color_attachment_formats = { surface.format().format };
-    _depth_format = depth_format;
+    _depth_attachment_format = depth_format;
 
     update_render_area(surface);
     _create_depth_buffer(surface, physical_device, device);
@@ -134,6 +96,20 @@ void DepthDynamic::create_swapchain_resources(
 void DepthDynamic::_init_attachments(
     std::span<vk::ClearValue const> const clear_values)
 {
+    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
+        .pNext = nullptr,
+        .imageView = { },
+        .imageLayout = { },
+        .resolveMode = { },
+        .resolveImageView = { },
+        .resolveImageLayout = { },
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = {
+            .color = clear_values[0].color,
+        },
+    }}};
+
     _depth_attachment = vk::RenderingAttachmentInfoKHR {
         .pNext = nullptr,
         .imageView = _depth_view.native(),
@@ -169,6 +145,19 @@ void DepthDynamic::_init_rendering_info(vkSurface const &surface) {
 }
 
 // =============================================================================
+void DepthDynamic::_init_pipeline_create_info() {
+    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
+        .pNext = nullptr,
+        .viewMask = { },
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_color_attachment_formats.size()),
+        .pColorAttachmentFormats = _color_attachment_formats.data(),
+        .depthAttachmentFormat = _depth_attachment_format,
+        .stencilAttachmentFormat = _depth_attachment_format,
+    };
+}
+
+// =============================================================================
 bool
 DepthDynamic::_create_depth_buffer(vkSurface const &surface,
                                    vkPhysicalDevice const &physical_device,
@@ -181,14 +170,12 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    if(!_depth_buffer.create(
-        surface.extent(),
-        _depth_format,
-        details,
-        physical_device,
-        device,
-        "DepthDynamic depth buffer"
-    ))
+    if(!_depth_buffer.create(surface.extent(),
+                             _depth_attachment_format,
+                             details,
+                             physical_device,
+                             device,
+                             "DepthDynamic depth buffer"))
     {
         Log::error("Failed to create depth buffer.");
         return false;
@@ -205,19 +192,35 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
     ))
     {
         Log::error("Failed to create depth view.");
-        _depth_buffer.destroy();
         return false;
     }
-
-    Log::info("Created depth buffer {} and view {}", _depth_buffer.native(), _depth_view.native());
 
     return true;
 }
 
 // =============================================================================
 void DepthDynamic::_destroy_depth_buffer() {
-    _depth_view.destroy();
-    _depth_buffer.destroy();
+    if(_depth_view.native()) {
+        _depth_view.destroy();
+    }
+
+    if(_depth_buffer.native()) {
+        _depth_buffer.destroy();
+    }
+}
+
+// =============================================================================
+void DepthDynamic::_reset_object() {
+    _color_attachment_formats.clear();
+    _depth_attachment_format = vk::Format::eUndefined;
+
+    _color_attachments.clear();
+    _depth_attachment = vk::RenderingAttachmentInfoKHR { };
+
+    _destroy_depth_buffer();
+
+    _rendering_info = vk::RenderingInfoKHR { };
+    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR { };
 }
 
 } // namespace vkl

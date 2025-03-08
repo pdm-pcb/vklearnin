@@ -51,25 +51,28 @@ public:
     }
 
 private:
-    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
     std::vector<vk::Format> _color_attachment_formats;
+    vk::Format _depth_attachment_format { vk::Format::eUndefined };
+
+    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
+    vk::RenderingAttachmentInfoKHR _depth_attachment { };
+
+    vkImage     _depth_buffer;
+    vkImageView _depth_view;
 
     vk::RenderingInfoKHR _rendering_info { };
     vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
 
-    vk::RenderingAttachmentInfoKHR _depth_attachment { };
-
-    vk::Format  _depth_format { vk::Format::eUndefined };
-    vkImage     _depth_buffer;
-    vkImageView _depth_view;
-
     void _init_attachments(std::span<vk::ClearValue const> const clear_values);
     void _init_rendering_info(vkSurface const &surface);
+    void _init_pipeline_create_info();
 
     bool _create_depth_buffer(vkSurface const &surface,
                               vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
+
+    void _reset_object();
 };
 
 } // namespace vkl

@@ -24,14 +24,14 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define RENDER_PASS
+// #define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
-#define MSAA_PASS
+// #define MSAA_PASS
 
-// #define DYNAMIC_RENDERING
+#define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
+#define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;

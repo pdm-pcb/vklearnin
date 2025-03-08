@@ -16,6 +16,8 @@ void ColorDynamic::init(vkSurface const &surface,
         return;
     }
 
+    _color_attachment_formats = { surface.format().format };
+
     _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
         .pNext = nullptr,
         .imageView = { },
@@ -29,8 +31,6 @@ void ColorDynamic::init(vkSurface const &surface,
             .color = clear_values[0].color,
         },
     }}};
-
-    _color_attachment_formats = { surface.format().format };
 
     _rendering_info = vk::RenderingInfoKHR {
         .pNext = nullptr,

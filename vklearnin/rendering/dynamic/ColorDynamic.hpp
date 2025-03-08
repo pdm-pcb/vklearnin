@@ -33,8 +33,8 @@ public:
     }
 
 private:
-    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
     std::vector<vk::Format> _color_attachment_formats;
+    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
 
     vk::RenderingInfoKHR _rendering_info { };
     vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };

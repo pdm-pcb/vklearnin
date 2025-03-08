@@ -476,21 +476,21 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
         return;
     }
 
-    Log::trace(
-        "Image {} - {:s}->{:s} aspect {:s}"
-        "\n\tsrcAccess = {:s}"
-        "\n\tdstAccess = {:s}"
-        "\n\tsrcStage  = {:s}"
-        "\n\tdstSTage  = {:s}",
-        _handle,
-        vk::to_string(details.old_layout),
-        vk::to_string(details.new_layout),
-        vk::to_string(details.aspect_flags),
-        vk::to_string(barrier.srcAccessMask),
-        vk::to_string(barrier.dstAccessMask),
-        vk::to_string(src_stage),
-        vk::to_string(dst_stage)
-    );
+    // Log::trace(
+    //     "Image {} - {:s}->{:s} aspect {:s}"
+    //     "\n\tsrcAccess = {:s}"
+    //     "\n\tdstAccess = {:s}"
+    //     "\n\tsrcStage  = {:s}"
+    //     "\n\tdstSTage  = {:s}",
+    //     _handle,
+    //     vk::to_string(details.old_layout),
+    //     vk::to_string(details.new_layout),
+    //     vk::to_string(details.aspect_flags),
+    //     vk::to_string(barrier.srcAccessMask),
+    //     vk::to_string(barrier.dstAccessMask),
+    //     vk::to_string(src_stage),
+    //     vk::to_string(dst_stage)
+    // );
 
     cmd_buffer.native().pipelineBarrier(
         src_stage,    // Source stage
