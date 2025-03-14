@@ -217,14 +217,11 @@ DepthPass::_create_depth_buffer(vkSurface const &surface,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    if(!_depth_buffer.create(
-        surface.extent(),
-        _depth_format,
-        details,
-        physical_device,
-        device,
-        "DepthPass depth buffer"
-    ))
+    if(!_depth_buffer.create(surface.extent(),
+                             _depth_format,
+                             details,
+                             physical_device,
+                             device))
     {
         Log::error("Failed to create depth buffer.");
         return false;

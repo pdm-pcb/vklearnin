@@ -102,7 +102,7 @@ static std::vector<vk::ClearValue> const clear_values {{
 #endif // DEPTH or MSAA
 }};
 
-static vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 
 #ifdef RENDER_PASS
 
@@ -436,13 +436,13 @@ void init_rendering() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
-    msaa_samples = vkPhysicalDevice::current_device().max_samples();
+    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
 
     msaa_pass.create(
         surface,
         depth_format,
         clear_values,
-        msaa_samples,
+        msaa_sample_count,
         vkPhysicalDevice::current_device(),
         device
     );
@@ -715,7 +715,7 @@ void create_graphics_pipeline() {
         .create(vkGraphicsPipeline::Config {
                 .viewport_extent = surface.extent(),
                 .topology = vk::PrimitiveTopology::eTriangleList,
-                .sample_flags = msaa_samples,
+                .sample_flags = msaa_sample_count,
 
 #if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC)
                 .enable_depth_test = vk::True,
@@ -925,12 +925,12 @@ void recreate_swapchain() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
-    msaa_samples = vkPhysicalDevice::current_device().max_samples();
+    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
 
     msaa_pass.create_swapchain_resources(
         surface,
         depth_format,
-        msaa_samples,
+        msaa_sample_count,
         vkPhysicalDevice::current_device(),
         device
     );

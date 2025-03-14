@@ -27,7 +27,7 @@ public:
     bool create(vkSurface const &surface,
                 vk::Format const depth_format,
                 std::span<vk::ClearValue const> const clear_values,
-                vk::SampleCountFlagBits const msaa_samples,
+                vk::SampleCountFlagBits const msaa_sample_count,
                 vkPhysicalDevice const &physical_device,
                 vkDevice const &device);
     bool destroy();
@@ -37,7 +37,7 @@ public:
     void destroy_swapchain_resources();
     void create_swapchain_resources(vkSurface const &surface,
                                     vk::Format const depth_format,
-                                    vk::SampleCountFlagBits const msaa_samples,
+                                    vk::SampleCountFlagBits const msaa_sample_count,
                                     vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
@@ -61,18 +61,16 @@ private:
     std::vector<vk::SubpassDescription> _subpass_descriptions;
     std::vector<vk::SubpassDependency>  _subpass_deps;
 
-    vk::Format _color_format { vk::Format::eUndefined };
-    vk::Format _depth_format { vk::Format::eUndefined };
+    vk::Format _multisample_format { vk::Format::eUndefined };
+    vk::Format _depth_format       { vk::Format::eUndefined };
 
-    vk::SampleCountFlagBits _msaa_samples { };
+    vk::SampleCountFlagBits _msaa_sample_count { };
 
     vkImage     _multisample_buffer;
     vkImageView _multisample_view;
 
     vkImage     _depth_buffer;
     vkImageView _depth_view;
-
-    std::vector<std::array<vk::ImageView, 2u>> _views_by_frame_index;
 
     void _init_attachments();
     void _init_subpasses();

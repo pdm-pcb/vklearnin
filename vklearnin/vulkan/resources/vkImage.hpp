@@ -50,7 +50,7 @@ public:
                 Details const &details,
                 vkPhysicalDevice const &physical_device,
                 vkDevice const &device,
-                std::string_view const debug_name);
+                std::string_view const debug_name = "");
 
     bool destroy();
 

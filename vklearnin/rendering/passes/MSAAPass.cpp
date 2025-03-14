@@ -13,7 +13,7 @@ namespace vkl {
 bool MSAAPass::create(vkSurface const &surface,
                       vk::Format const depth_format,
                       std::span<vk::ClearValue const> const clear_values,
-                      vk::SampleCountFlagBits const msaa_samples,
+                      vk::SampleCountFlagBits const msaa_sample_count,
                       vkPhysicalDevice const &physical_device,
                       vkDevice const &device)
 {
@@ -32,9 +32,9 @@ bool MSAAPass::create(vkSurface const &surface,
         return false;
     }
 
-    _color_format = surface.format().format;
-    _depth_format = depth_format;
-    _msaa_samples = msaa_samples;
+    _multisample_format = surface.format().format;
+    _depth_format       = depth_format;
+    _msaa_sample_count  = msaa_sample_count;
 
     _init_attachments();
     _init_subpasses();
@@ -100,8 +100,8 @@ void MSAAPass::update_render_area(vkSurface const &surface) {
 void MSAAPass::destroy_swapchain_resources() {
     _begin_info.renderArea = vk::Rect2D { };
 
-    _color_format = vk::Format::eUndefined;
-    _depth_format = vk::Format::eUndefined;
+    _multisample_format = vk::Format::eUndefined;
+    _depth_format       = vk::Format::eUndefined;
 
     _destroy_multisample_buffer();
     _destroy_depth_buffer();
@@ -111,13 +111,13 @@ void MSAAPass::destroy_swapchain_resources() {
 void MSAAPass::create_swapchain_resources(
     vkSurface const &surface,
     vk::Format const depth_format,
-    vk::SampleCountFlagBits const msaa_samples,
+    vk::SampleCountFlagBits const msaa_sample_count,
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
-    _color_format = surface.format().format;
-    _msaa_samples = msaa_samples;
-    _depth_format = depth_format;
+    _multisample_format = surface.format().format;
+    _msaa_sample_count       = msaa_sample_count;
+    _depth_format       = depth_format;
 
     update_render_area(surface);
 
@@ -132,8 +132,8 @@ void MSAAPass::create_swapchain_resources(
 void MSAAPass::_init_attachments() {
     _attachment_descriptions = {{
         // multisample buffer attachment description
-        .format         = _color_format,
-        .samples        = _msaa_samples,
+        .format         = _multisample_format,
+        .samples        = _msaa_sample_count,
         .loadOp         = vk::AttachmentLoadOp::eClear,
         .storeOp        = vk::AttachmentStoreOp::eDontCare,
         .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -143,7 +143,7 @@ void MSAAPass::_init_attachments() {
     },
     {   // depth buffer attachment description
         .format         = _depth_format,
-        .samples        = _msaa_samples,
+        .samples        = _msaa_sample_count,
         .loadOp         = vk::AttachmentLoadOp::eClear,
         .storeOp        = vk::AttachmentStoreOp::eDontCare,
         .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
@@ -152,7 +152,7 @@ void MSAAPass::_init_attachments() {
         .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
     },
     {   // resolve attachment description
-        .format         = _color_format,
+        .format         = _multisample_format,
         .samples        = vk::SampleCountFlagBits::e1,
         .loadOp         = vk::AttachmentLoadOp::eDontCare,
         .storeOp        = vk::AttachmentStoreOp::eStore,
@@ -234,20 +234,17 @@ bool MSAAPass::_create_multisample_buffer(
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
-        .samples      = _msaa_samples,
+        .samples      = _msaa_sample_count,
         .usage_flags  = (vk::ImageUsageFlagBits::eColorAttachment |
                          vk::ImageUsageFlagBits::eTransientAttachment),
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
-    if(!_multisample_buffer.create(
-        surface.extent(),
-        _color_format,
-        details,
-        physical_device,
-        device,
-        "MSAAPass multisample buffer"
-    ))
+    if(!_multisample_buffer.create(surface.extent(),
+                                   _multisample_format,
+                                   details,
+                                   physical_device,
+                                   device))
     {
         Log::error("Failed to create multisample buffer.");
         return false;
@@ -279,21 +276,18 @@ bool MSAAPass::_create_depth_buffer(
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
-        .samples      = _msaa_samples,
+        .samples      = _msaa_sample_count,
         .usage_flags  = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
 
     Log::trace("Creating depth buffer for MSAA pass");
 
-    if(!_depth_buffer.create(
-        surface.extent(),
-        _depth_format,
-        details,
-        physical_device,
-        device,
-        "MSAAPass depth buffer"
-    ))
+    if(!_depth_buffer.create(surface.extent(),
+                             _depth_format,
+                             details,
+                             physical_device,
+                             device))
     {
         Log::error("Failed to create depth buffer.");
         return false;
@@ -354,13 +348,12 @@ void MSAAPass::_reset_object() {
     _subpass_descriptions.clear();
     _subpass_deps.clear();
 
-    _color_format = vk::Format::eUndefined;
-    _depth_format = vk::Format::eUndefined;
+    _multisample_format = vk::Format::eUndefined;
+    _depth_format       = vk::Format::eUndefined;
+    _msaa_sample_count       = vk::SampleCountFlagBits { };
 
-    _msaa_samples = vk::SampleCountFlagBits { };
-
-    _destroy_multisample_buffer();
     _destroy_depth_buffer();
+    _destroy_multisample_buffer();
 }
 
 } // namespace vkl

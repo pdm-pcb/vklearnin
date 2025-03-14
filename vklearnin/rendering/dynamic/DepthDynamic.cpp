@@ -174,10 +174,9 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
                              _depth_attachment_format,
                              details,
                              physical_device,
-                             device,
-                             "DepthDynamic depth buffer"))
+                             device))
     {
-        Log::error("Failed to create depth buffer.");
+        Log::error("Failed to create depth dynamic depth buffer.");
         return false;
     }
 
@@ -191,7 +190,7 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
         device
     ))
     {
-        Log::error("Failed to create depth view.");
+        Log::error("Failed to create depth dynamic depth view.");
         return false;
     }
 
