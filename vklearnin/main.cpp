@@ -16,6 +16,7 @@
 
 #include "vklearnin/rendering/dynamic/ColorDynamic.hpp"
 #include "vklearnin/rendering/dynamic/DepthDynamic.hpp"
+#include "vklearnin/rendering/dynamic/MSAADynamic.hpp"
 
 #include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
@@ -31,8 +32,8 @@
 
 #define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-#define DEPTH_DYNAMIC
-// #define MSAA_DYNAMIC
+// #define DEPTH_DYNAMIC
+#define MSAA_DYNAMIC
 
 using namespace vkl;
 
@@ -97,14 +98,12 @@ static vkGraphicsPipeline graphics_pipeline;
 // render pass stuff -----------------------------------------------------------
 static std::vector<vk::ClearValue> const clear_values {{
     { .color { std::array<float, 4> {{ 0.08f, 0.08f, 0.16f, 1.0f }} }},
-#if defined(DEPTH_PASS) or defined(MSAA_PASS) or defined(DEPTH_DYNAMIC)
+#if defined(DEPTH_PASS) or defined(MSAA_PASS) or defined(DEPTH_DYNAMIC) or defined(MSAA_DYNAMIC)
     { .depthStencil { .depth = 1.0f, .stencil = 1u } }
 #endif // DEPTH or MSAA
 }};
 
 static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
-
-#ifdef RENDER_PASS
 
 #ifdef COLOR_PASS
 static ColorPass color_pass;
@@ -118,8 +117,6 @@ static DepthPass depth_pass;
 static MSAAPass msaa_pass;
 #endif // MSAA_PASS
 
-#elif defined(DYNAMIC_RENDERING)
-
 #ifdef COLOR_DYNAMIC
 static ColorDynamic color_dynamic;
 #endif // COLOR_DYNAMIC
@@ -128,7 +125,9 @@ static ColorDynamic color_dynamic;
 static DepthDynamic depth_dynamic;
 #endif // DEPTH_DYNAMIC
 
-#endif // render passes or dynamic rendering
+#ifdef MSAA_DYNAMIC
+static MSAADynamic msaa_dynamic;
+#endif // MSAA_DYNAMIC
 
 #if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC) || defined(MSAA_DYNAMIC)
 static vk::Format depth_format;
@@ -224,12 +223,15 @@ int main() {
 
         // ---------------------------------------------------------------------
         // begin graphics commands
+
 #ifdef RENDER_PASS
         auto const &frame_buffer   = frame_buffers[frame_index];
-#elif defined(DYNAMIC_RENDERING)
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
         auto &swapchain_image = swapchain.images()[frame_index];
         auto const &swapchain_image_view = swapchain.image_views()[frame_index];
-#endif // render passes or dynamic rendering
+#endif // DYNAMIC_RENDERING
 
         auto const &gfx_sync = graphics_syncs[frame_index];
         auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
@@ -283,7 +285,9 @@ int main() {
             draw(graphics_cmd_buffer, run_time_s);
         graphics_cmd_buffer.end_render_pass();
 
-#elif defined(DYNAMIC_RENDERING)
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
 
         // transition swapchain image for draw
         swapchain_image.transition_layout(
@@ -319,6 +323,24 @@ int main() {
 
 #endif // DEPTH_DYNAMIC
 
+#ifdef MSAA_DYNAMIC
+
+        msaa_dynamic.depth_buffer().transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                .aspect_flags = vk::ImageAspectFlagBits::eDepth
+                                | vk::ImageAspectFlagBits::eStencil,
+            }
+        );
+
+        auto &rendering_info =
+            msaa_dynamic.rendering_info(swapchain_image_view.native(),
+                                        swapchain_image.layout());
+
+#endif // MSAA_DYNAMIC
+
         graphics_cmd_buffer.begin_rendering(rendering_info);
             graphics_pipeline.bind(graphics_cmd_buffer);
             draw(graphics_cmd_buffer, run_time_s);
@@ -334,7 +356,7 @@ int main() {
             }
         );
 
-#endif // render passes or dynamic rendering
+#endif // DYNAMIC_RENDERING
 
         graphics_cmd_buffer.end_recording();
 
@@ -448,7 +470,9 @@ void init_rendering() {
     );
 #endif // MSAA_PASS
 
-#elif defined(DYNAMIC_RENDERING)
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
 
 #ifdef COLOR_DYNAMIC
     color_dynamic.init(surface, clear_values);
@@ -467,7 +491,21 @@ void init_rendering() {
     );
 #endif // DEPTH_DYNAMIC
 
-#endif // render passes or dynamic rendering
+#ifdef MSAA_DYNAMIC
+    depth_format =
+        vkPhysicalDevice::current_device().find_depth_format(depth_formats);
+
+    msaa_dynamic.init(
+        surface,
+        clear_values,
+        depth_format,
+        vkPhysicalDevice::current_device(),
+        device
+    );
+#endif // MSAA_DYNAMIC
+
+#endif // DYNAMIC_RENDERING
+
 }
 
 void create_swapchain() {
@@ -717,7 +755,7 @@ void create_graphics_pipeline() {
                 .topology = vk::PrimitiveTopology::eTriangleList,
                 .sample_flags = msaa_sample_count,
 
-#if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC)
+#if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC) || defined(MSAA_DYNAMIC)
                 .enable_depth_test = vk::True,
 #endif // render passes that use depth testing
 
@@ -729,6 +767,10 @@ void create_graphics_pipeline() {
 
 #ifdef DEPTH_DYNAMIC
                 .rendering_create_info = &depth_dynamic.pipeline_create_info(),
+#endif // DEPTH_DYNAMIC
+
+#ifdef MSAA_DYNAMIC
+                .rendering_create_info = &msaa_dynamic.pipeline_create_info(),
 #endif // DEPTH_DYNAMIC
 
 #endif // DYNAMIC_RENDERING
@@ -793,6 +835,10 @@ void destroy_render_pass() {
 #ifdef DEPTH_DYNAMIC
     depth_dynamic.shutdown();
 #endif // DEPTH_DYNAMIC
+
+#ifdef MSAA_DYNAMIC
+    msaa_dynamic.shutdown();
+#endif // MSAA_DYNAMIC
 }
 
 void vulkan_shutdown() {
@@ -895,6 +941,10 @@ void recreate_swapchain() {
     depth_dynamic.destroy_swapchain_resources();
 #endif // DEPTH_DYNAMIC
 
+#ifdef MSAA_DYNAMIC
+    msaa_dynamic.destroy_swapchain_resources();
+#endif // MSAA_DYNAMIC
+
     swapchain.destroy();
 
     surface.get_details(vkPhysicalDevice::current_device());
@@ -967,7 +1017,9 @@ void recreate_swapchain() {
         );
     }
 
-#elif defined(DYNAMIC_RENDERING)
+#endif // RENDER_PASS
+
+#ifdef DYNAMIC_RENDERING
 
 #ifdef COLOR_DYNAMIC
     color_dynamic.update_render_area(surface);
@@ -983,7 +1035,17 @@ void recreate_swapchain() {
     );
 #endif // DEPTH_DYNAMIC
 
-#endif // render passes or dynamic rendering
+#ifdef MSAA_DYNAMIC
+    msaa_dynamic.create_swapchain_resources(
+        surface,
+        clear_values,
+        depth_format,
+        vkPhysicalDevice::current_device(),
+        device
+    );
+#endif // MSAA_DYNAMIC
+
+#endif // DYNAMIC_RENDERING
 
     graphics_syncs.resize(swapchain.image_count());
     for(auto &sync : graphics_syncs) {

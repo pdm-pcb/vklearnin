@@ -116,7 +116,7 @@ void MSAAPass::create_swapchain_resources(
     vkDevice const &device)
 {
     _multisample_format = surface.format().format;
-    _msaa_sample_count       = msaa_sample_count;
+    _msaa_sample_count  = msaa_sample_count;
     _depth_format       = depth_format;
 
     update_render_area(surface);

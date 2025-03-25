@@ -354,8 +354,6 @@ bool vkImage::destroy() {
 void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
                                 TransitionDetails const &details)
 {
-
-
     vk::ImageMemoryBarrier barrier {
         .pNext = nullptr,
         .srcAccessMask = { },

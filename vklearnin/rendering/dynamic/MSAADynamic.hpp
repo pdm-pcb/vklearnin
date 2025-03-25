@@ -44,26 +44,29 @@ public:
     vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,
                                                 vk::ImageLayout const &layout);
 
-    inline auto & depth_buffer() { return _depth_buffer; }
+    inline auto & depth_buffer()       { return _depth_buffer; }
+    inline auto & multisample_buffer() { return _multisample_buffer; }
 
     inline auto const & pipeline_create_info() const {
         return _pipeline_create_info;
     }
 
 private:
-    std::vector<vk::Format> _multisample_attachment_formats;
-    vk::Format _depth_attachment_format { vk::Format::eUndefined };
+    std::vector<vk::Format> _resolve_attachment_formats;
+    vk::Format _depth_attachment_format       { vk::Format::eUndefined };
+    vk::Format _multisample_attachment_format { vk::Format::eUndefined };
 
-    std::vector<vk::RenderingAttachmentInfoKHR> _multisample_attachments;
+    std::vector<vk::RenderingAttachmentInfoKHR> _resolve_attachments;
     vk::RenderingAttachmentInfoKHR _depth_attachment { };
+    vk::RenderingAttachmentInfoKHR _multisample_attachment { };
 
-    vk::SampleCountFlagBits _msaa_sample_count { };
+    vkImage     _depth_buffer;
+    vkImageView _depth_view;
 
     vkImage     _multisample_buffer;
     vkImageView _multisample_view;
 
-    vkImage     _depth_buffer;
-    vkImageView _depth_view;
+    vk::SampleCountFlagBits _msaa_sample_count { vk::SampleCountFlagBits::e1 };
 
     vk::RenderingInfoKHR _rendering_info { };
     vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
@@ -72,15 +75,15 @@ private:
     void _init_rendering_info(vkSurface const &surface);
     void _init_pipeline_create_info();
 
-    bool _create_multisample_buffer(vkSurface const &surface,
-                                    vkPhysicalDevice const &physical_device,
-                                    vkDevice const &device);
     bool _create_depth_buffer(vkSurface const &surface,
                               vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
-
-    void _destroy_multisample_buffer();
     void _destroy_depth_buffer();
+
+    bool _create_multisample_buffer(vkSurface const &surface,
+                                    vkPhysicalDevice const &physical_device,
+                                    vkDevice const &device);
+    void _destroy_multisample_buffer();
 
     void _reset_object();
 };
