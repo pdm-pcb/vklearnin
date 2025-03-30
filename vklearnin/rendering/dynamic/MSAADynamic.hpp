@@ -53,10 +53,10 @@ public:
     }
 
 private:
-    std::vector<vk::Format> _color_attachment_formats;
+    std::vector<vk::Format> _resolve_attachment_formats;
     vk::Format _depth_attachment_format { vk::Format::eUndefined };
 
-    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
+    std::vector<vk::RenderingAttachmentInfoKHR> _resolve_attachments;
     vk::RenderingAttachmentInfoKHR _depth_attachment { };
 
     vkImage     _depth_buffer;

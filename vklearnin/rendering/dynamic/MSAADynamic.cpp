@@ -25,12 +25,8 @@ void MSAADynamic::init(vkSurface const &surface,
         return;
     }
 
-    _color_attachment_formats = {
-        surface.format().format,
-        surface.format().format
-    };
-
-    _depth_attachment_format = depth_format;
+    _resolve_attachment_formats    = { surface.format().format };
+    _depth_attachment_format       = depth_format;
 
     _msaa_sample_count = msaa_sample_count;
 
@@ -61,8 +57,8 @@ vk::RenderingInfoKHR const &
 MSAADynamic::rendering_info(vk::ImageView const &view,
                             vk::ImageLayout const &layout)
 {
-    _color_attachments[1].imageView = view;
-    _color_attachments[1].imageLayout = layout;
+    _resolve_attachments[0].resolveImageView = view;
+    _resolve_attachments[0].resolveImageLayout = layout;
 
     _depth_attachment.imageLayout = _depth_buffer.layout();
 
@@ -81,7 +77,7 @@ void MSAADynamic::update_render_area(vkSurface const &surface) {
 void MSAADynamic::destroy_swapchain_resources() {
     _rendering_info.renderArea = vk::Rect2D { };
 
-    _color_attachment_formats.clear();
+    _resolve_attachment_formats.clear();
     _depth_attachment_format = vk::Format::eUndefined;
 
     _destroy_depth_buffer();
@@ -96,12 +92,8 @@ void MSAADynamic::create_swapchain_resources(
     vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
-    _color_attachment_formats = {
-        surface.format().format,
-        surface.format().format
-    };
-
-    _depth_attachment_format = depth_format;
+    _resolve_attachment_formats = { surface.format().format };
+    _depth_attachment_format    = depth_format;
 
     update_render_area(surface);
     _create_depth_buffer(surface, physical_device, device);
@@ -115,34 +107,19 @@ void MSAADynamic::create_swapchain_resources(
 void MSAADynamic::_init_attachments(
     std::span<vk::ClearValue const> const clear_values)
 {
-    _color_attachments = {{
-        vk::RenderingAttachmentInfoKHR {
-            .pNext = nullptr,
-            .imageView = _multisample_view.native(),
-            .imageLayout = _multisample_buffer.layout(),
-            .resolveMode = { },
-            .resolveImageView = { },
-            .resolveImageLayout = { },
-            .loadOp = vk::AttachmentLoadOp::eClear,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .clearValue = {
-                .color = clear_values[0].color,
-            },
+    _resolve_attachments = {{ vk::RenderingAttachmentInfoKHR {
+        .pNext = nullptr,
+        .imageView = _multisample_view.native(),
+        .imageLayout = _multisample_buffer.layout(),
+        .resolveMode = vk::ResolveModeFlagBitsKHR::eAverage,
+        .resolveImageView = { },
+        .resolveImageLayout = { },
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = {
+            .color = clear_values[0].color,
         },
-        vk::RenderingAttachmentInfoKHR {
-            .pNext = nullptr,
-            .imageView = { },
-            .imageLayout = { },
-            .resolveMode = { },
-            .resolveImageView = { },
-            .resolveImageLayout = { },
-            .loadOp = vk::AttachmentLoadOp::eClear,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .clearValue = {
-                .color = clear_values[0].color,
-            },
-        },
-    }};
+    }}};
 
     _depth_attachment = vk::RenderingAttachmentInfoKHR {
         .pNext = nullptr,
@@ -171,8 +148,8 @@ void MSAADynamic::_init_rendering_info(vkSurface const &surface) {
         .layerCount = 1u,
         .viewMask = { },
         .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachments.size()),
-        .pColorAttachments = _color_attachments.data(),
+            static_cast<uint32_t>(_resolve_attachments.size()),
+        .pColorAttachments = _resolve_attachments.data(),
         .pDepthAttachment = &_depth_attachment,
         .pStencilAttachment = nullptr,
     };
@@ -183,8 +160,9 @@ void MSAADynamic::_init_pipeline_create_info() {
     _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
         .pNext = nullptr,
         .viewMask = { },
-        .colorAttachmentCount = static_cast<uint32_t>(_color_attachments.size()),
-        .pColorAttachmentFormats = _color_attachment_formats.data(),
+        .colorAttachmentCount =
+            static_cast<uint32_t>(_resolve_attachment_formats.size()),
+        .pColorAttachmentFormats = _resolve_attachment_formats.data(),
         .depthAttachmentFormat = _depth_attachment_format,
         .stencilAttachmentFormat = _depth_attachment_format,
     };
@@ -256,7 +234,7 @@ MSAADynamic::_create_multisample_buffer(vkSurface const &surface,
     };
 
     if(!_multisample_buffer.create(surface.extent(),
-                                   _color_attachment_formats[0],
+                                   _resolve_attachment_formats[0],
                                    details,
                                    physical_device,
                                    device))
@@ -297,10 +275,10 @@ void MSAADynamic::_destroy_multisample_buffer() {
 void MSAADynamic::_reset_object() {
     _msaa_sample_count = vk::SampleCountFlagBits::e1;
 
-    _color_attachment_formats.clear();
-    _depth_attachment_format = vk::Format::eUndefined;
+    _resolve_attachment_formats.clear();
+    _depth_attachment_format       = vk::Format::eUndefined;
 
-    _color_attachments.clear();
+    _resolve_attachments.clear();
     _depth_attachment = vk::RenderingAttachmentInfoKHR { };
 
     _destroy_depth_buffer();
