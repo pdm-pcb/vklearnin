@@ -57,6 +57,7 @@ vk::RenderingInfoKHR const &
 MSAADynamic::rendering_info(vk::ImageView const &view,
                             vk::ImageLayout const &layout)
 {
+    _resolve_attachments[0].imageLayout = _multisample_buffer.layout();
     _resolve_attachments[0].resolveImageView = view;
     _resolve_attachments[0].resolveImageLayout = layout;
 
@@ -110,7 +111,7 @@ void MSAADynamic::_init_attachments(
     _resolve_attachments = {{ vk::RenderingAttachmentInfoKHR {
         .pNext = nullptr,
         .imageView = _multisample_view.native(),
-        .imageLayout = _multisample_buffer.layout(),
+        .imageLayout = { },
         .resolveMode = vk::ResolveModeFlagBitsKHR::eAverage,
         .resolveImageView = { },
         .resolveImageLayout = { },
