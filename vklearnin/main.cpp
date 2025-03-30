@@ -113,7 +113,6 @@ static DepthPass depth_pass;
 
 #ifdef MSAA_PASS
 static MSAAPass msaa_pass;
-static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 #endif // MSAA_PASS
 
 #ifdef COLOR_DYNAMIC
@@ -126,7 +125,6 @@ static DepthDynamic depth_dynamic;
 
 #ifdef MSAA_DYNAMIC
 static MSAADynamic msaa_dynamic;
-static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 #endif // MSAA_DYNAMIC
 
 #if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC) || defined(MSAA_DYNAMIC)
@@ -137,6 +135,8 @@ static std::array<vk::Format const, 2> const depth_formats {
     vk::Format::eD24UnormS8Uint,  // supported, according to the Guide.
 };
 #endif // depth enabled render techniques
+
+static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 
 // drawing stuff ---------------------------------------------------------------
 static struct CameraMatrices {
@@ -874,7 +874,7 @@ void draw(vkCmdBuffer const &cmd_buffer, float run_time_s) {
     );
 
     camera_mats.view = glm::lookAtRH(
-        glm::vec3{ 0.0f,  0.0f,  2.0f }, // camera position
+        glm::vec3{ 0.0f,  -1.75f,  1.5f }, // camera position
         glm::vec3{ 0.0f,  0.0f,  0.0f }, // camera target
         glm::vec3{ 0.0f,  1.0f,  0.0f }  // camera "up"
     );
