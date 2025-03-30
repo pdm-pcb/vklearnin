@@ -350,7 +350,7 @@ void MSAAPass::_reset_object() {
 
     _multisample_format = vk::Format::eUndefined;
     _depth_format       = vk::Format::eUndefined;
-    _msaa_sample_count       = vk::SampleCountFlagBits { };
+    _msaa_sample_count  = vk::SampleCountFlagBits { };
 
     _destroy_depth_buffer();
     _destroy_multisample_buffer();

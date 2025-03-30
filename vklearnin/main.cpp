@@ -103,8 +103,6 @@ static std::vector<vk::ClearValue> const clear_values {{
 #endif // DEPTH or MSAA
 }};
 
-static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
-
 #ifdef COLOR_PASS
 static ColorPass color_pass;
 #endif // COLOR_PASS
@@ -115,6 +113,7 @@ static DepthPass depth_pass;
 
 #ifdef MSAA_PASS
 static MSAAPass msaa_pass;
+static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 #endif // MSAA_PASS
 
 #ifdef COLOR_DYNAMIC
@@ -127,6 +126,7 @@ static DepthDynamic depth_dynamic;
 
 #ifdef MSAA_DYNAMIC
 static MSAADynamic msaa_dynamic;
+static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 #endif // MSAA_DYNAMIC
 
 #if defined(DEPTH_PASS) || defined(MSAA_PASS) || defined(DEPTH_DYNAMIC) || defined(MSAA_DYNAMIC)
@@ -219,7 +219,7 @@ int main() {
 
         loop_start = loop_end;
 
-        // Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
+        Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
 
         // ---------------------------------------------------------------------
         // begin graphics commands
@@ -300,7 +300,7 @@ int main() {
         );
 
 #ifdef COLOR_DYNAMIC
-        auto &rendering_info =
+        auto const &rendering_info =
             color_dynamic.rendering_info(swapchain_image_view.native(),
                                          swapchain_image.layout());
 #endif // COLOR_DYNAMIC
@@ -317,13 +317,22 @@ int main() {
             }
         );
 
-        auto &rendering_info =
+        auto const &rendering_info =
             depth_dynamic.rendering_info(swapchain_image_view.native(),
                                          swapchain_image.layout());
 
 #endif // DEPTH_DYNAMIC
 
 #ifdef MSAA_DYNAMIC
+
+        msaa_dynamic.multisample_buffer().transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
+            }
+        );
 
         msaa_dynamic.depth_buffer().transition_layout(
             graphics_cmd_buffer,
@@ -335,7 +344,7 @@ int main() {
             }
         );
 
-        auto &rendering_info =
+        auto const &rendering_info =
             msaa_dynamic.rendering_info(swapchain_image_view.native(),
                                         swapchain_image.layout());
 
@@ -495,10 +504,13 @@ void init_rendering() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
+    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
+
     msaa_dynamic.init(
         surface,
         clear_values,
         depth_format,
+        msaa_sample_count,
         vkPhysicalDevice::current_device(),
         device
     );

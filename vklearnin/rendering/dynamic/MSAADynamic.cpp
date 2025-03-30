@@ -11,6 +11,7 @@ namespace vkl {
 void MSAADynamic::init(vkSurface const &surface,
                        std::span<vk::ClearValue const> const clear_values,
                        vk::Format const depth_format,
+                       vk::SampleCountFlagBits const msaa_sample_count,
                        vkPhysicalDevice const &physical_device,
                        vkDevice const &device)
 {
@@ -27,6 +28,8 @@ void MSAADynamic::init(vkSurface const &surface,
     _resolve_attachment_formats    = { surface.format().format };
     _depth_attachment_format       = depth_format;
     _multisample_attachment_format = surface.format().format;
+
+    _msaa_sample_count = msaa_sample_count;
 
     if(!_create_depth_buffer(surface, physical_device, device)) {
         Log::error("Failed to create MSAA dynamic depth buffer.");
@@ -145,7 +148,7 @@ void MSAADynamic::_init_attachments(
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = {
-            .depthStencil = clear_values[1].depthStencil,
+            .color = clear_values[0].color,
         },
     };
 }
@@ -190,7 +193,7 @@ MSAADynamic::_create_depth_buffer(vkSurface const &surface,
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
-        .samples      = vk::SampleCountFlagBits::e1,
+        .samples      = _msaa_sample_count,
         .usage_flags  = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .memory_flags = vk::MemoryPropertyFlagBits::eDeviceLocal,
     };
@@ -287,6 +290,8 @@ void MSAADynamic::_destroy_multisample_buffer() {
 
 // =============================================================================
 void MSAADynamic::_reset_object() {
+    _msaa_sample_count = vk::SampleCountFlagBits::e1;
+
     _resolve_attachment_formats.clear();
     _depth_attachment_format       = vk::Format::eUndefined;
     _multisample_attachment_format = vk::Format::eUndefined;

@@ -26,6 +26,7 @@ public:
     void init(vkSurface const &surface,
               std::span<vk::ClearValue const> const clear_values,
               vk::Format const depth_format,
+              vk::SampleCountFlagBits const msaa_sample_count,
               vkPhysicalDevice const &physical_device,
               vkDevice const &device);
 
