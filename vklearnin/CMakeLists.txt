@@ -21,6 +21,7 @@ target_link_libraries(
         glm::glm
         spirv-reflect-static
         stb
+        cpptrace::cpptrace
 )
 
 file(
