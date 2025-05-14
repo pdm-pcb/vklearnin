@@ -293,9 +293,12 @@ int main() {
         swapchain_image.transition_layout(
             graphics_cmd_buffer,
             vkImage::TransitionDetails {
-                .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                .dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                .src_access = vk::AccessFlagBits::eNone,
+                .dst_access = vk::AccessFlagBits::eColorAttachmentWrite,
             }
         );
 
@@ -310,10 +313,14 @@ int main() {
         depth_dynamic.depth_buffer().transition_layout(
             graphics_cmd_buffer,
             vkImage::TransitionDetails {
-                .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eDepth
                                 | vk::ImageAspectFlagBits::eStencil,
+                .src_stage = vk::PipelineStageFlagBits::eLateFragmentTests,
+                .dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests,
+                .src_access = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                .dst_access = vk::AccessFlagBits::eDepthStencilAttachmentRead
+                              | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
             }
         );
 
@@ -331,16 +338,24 @@ int main() {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eTopOfPipe,
+                .dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                .src_access = vk::AccessFlagBits::eNone,
+                .dst_access = vk::AccessFlagBits::eColorAttachmentWrite,
             }
         );
 
         msaa_dynamic.depth_buffer().transition_layout(
             graphics_cmd_buffer,
             vkImage::TransitionDetails {
-                .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eDepth
                                 | vk::ImageAspectFlagBits::eStencil,
+                .src_stage = vk::PipelineStageFlagBits::eLateFragmentTests,
+                .dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests,
+                .src_access = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                .dst_access = vk::AccessFlagBits::eDepthStencilAttachmentRead
+                              | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
             }
         );
 
@@ -362,6 +377,10 @@ int main() {
                 .old_layout = vk::ImageLayout::eColorAttachmentOptimal,
                 .new_layout = vk::ImageLayout::ePresentSrcKHR,
                 .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                .dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe,
+                .src_access = vk::AccessFlagBits::eColorAttachmentWrite,
+                .dst_access = vk::AccessFlagBits::eNone,
             }
         );
 

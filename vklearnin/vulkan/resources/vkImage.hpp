@@ -60,6 +60,12 @@ public:
 
         vk::ImageAspectFlags const aspect_flags { 0u };
 
+        vk::PipelineStageFlags src_stage { 0u };
+        vk::PipelineStageFlags dst_stage { 0u };
+
+        vk::AccessFlags src_access { 0u };
+        vk::AccessFlags dst_access { 0u };
+
         uint32_t const base_mip_level = 0u;
         uint32_t const mip_level_count = 1u;
         uint32_t const base_array_layer = 0u;

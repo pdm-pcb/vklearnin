@@ -356,8 +356,8 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
 {
     vk::ImageMemoryBarrier barrier {
         .pNext = nullptr,
-        .srcAccessMask = { },
-        .dstAccessMask = { },
+        .srcAccessMask = details.src_access,
+        .dstAccessMask = details.dst_access,
         .oldLayout = details.old_layout,
         .newLayout = details.new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -372,131 +372,29 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
         }
     };
 
-    vk::PipelineStageFlags src_stage = { };
-    vk::PipelineStageFlags dst_stage = { };
-
-    bool supported_transition = true;
-
-    if(barrier.oldLayout == vk::ImageLayout::eUndefined) {
-        if(details.new_layout == vk::ImageLayout::eColorAttachmentOptimal)
-        {
-            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-            barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-            dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-        }
-        else if(details.new_layout ==
-                vk::ImageLayout::eDepthStencilAttachmentOptimal)
-        {
-            // Old - does not work
-            // barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-            // barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-            // src_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-            //              | vk::PipelineStageFlagBits::eLateFragmentTests;
-            // dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests
-            //              | vk::PipelineStageFlagBits::eLateFragmentTests;
-
-            // New - works
-            barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead
-                                    | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-            src_stage = vk::PipelineStageFlagBits::eLateFragmentTests;
-            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-        }
-        else if(details.new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eTransfer;
-        }
-        else {
-            supported_transition = false;
-        }
-    }
-    else if(barrier.oldLayout == vk::ImageLayout::eColorAttachmentOptimal) {
-        if(details.new_layout == vk::ImageLayout::ePresentSrcKHR) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eNone;
-
-            src_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-            dst_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
-        }
-        else {
-            supported_transition = false;
-        }
-    }
-    else if(barrier.oldLayout == vk::ImageLayout::eTransferDstOptimal) {
-        if(barrier.newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-            src_stage = vk::PipelineStageFlagBits::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
-        }
-        else if(barrier.newLayout == vk::ImageLayout::eTransferSrcOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
-
-            src_stage = vk::PipelineStageFlagBits::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits::eTransfer;
-        }
-        else {
-            supported_transition = false;
-        }
-    }
-    else if(barrier.oldLayout == vk::ImageLayout::eTransferSrcOptimal) {
-        if(barrier.newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-            src_stage = vk::PipelineStageFlagBits::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
-        }
-        else {
-            supported_transition = false;
-        }
-    }
-    else {
-        supported_transition = false;
-    }
-
-    if(!supported_transition) {
-        Log::error(
-            "Image {} - Unsupported layout transition {:s}->{:s}",
-            _handle,
-            vk::to_string(details.old_layout),
-            vk::to_string(details.new_layout)
-        );
-        return;
-    }
-
     Log::trace(
         "Image {} - {:s}->{:s} aspect {:s}"
-        "\n\tsrcAccess = {:s}"
-        "\n\tdstAccess = {:s}"
         "\n\tsrcStage  = {:s}"
-        "\n\tdstSTage  = {:s}",
+        "\n\tdstStage  = {:s}"
+        "\n\tsrcAccess = {:s}"
+        "\n\tdstAccess = {:s}",
         _handle,
         vk::to_string(details.old_layout),
         vk::to_string(details.new_layout),
         vk::to_string(details.aspect_flags),
+        vk::to_string(details.src_stage),
+        vk::to_string(details.dst_stage),
         vk::to_string(barrier.srcAccessMask),
-        vk::to_string(barrier.dstAccessMask),
-        vk::to_string(src_stage),
-        vk::to_string(dst_stage)
+        vk::to_string(barrier.dstAccessMask)
     );
 
     cmd_buffer.native().pipelineBarrier(
-        src_stage,    // Source stage
-        dst_stage,    // Destination stage
-        { },          // Dependency flags
-        nullptr,      // Memory barriers
-        nullptr,      // Buffer memory barriers
-        {{ barrier }} // Image memory barriers
+        details.src_stage, // Source stage
+        details.dst_stage, // Destination stage
+        { },               // Dependency flags
+        nullptr,           // Memory barriers
+        nullptr,           // Buffer memory barriers
+        {{ barrier }}      // Image memory barriers
     );
 
     _layout = barrier.newLayout;
@@ -674,6 +572,10 @@ bool vkImage::_send_to_device() {
                 .old_layout = vk::ImageLayout::eUndefined,
                 .new_layout = vk::ImageLayout::eTransferDstOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eTopOfPipe,
+                .dst_stage = vk::PipelineStageFlagBits::eTransfer,
+                .src_access = vk::AccessFlagBits::eNone,
+                .dst_access = vk::AccessFlagBits::eTransferWrite,
                 .base_mip_level = 0u,
                 .mip_level_count = _mip_levels,
                 .base_array_layer = 0u,
@@ -725,6 +627,10 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                     .old_layout = vk::ImageLayout::eTransferDstOptimal,
                     .new_layout = vk::ImageLayout::eTransferSrcOptimal,
                     .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                    .src_stage = vk::PipelineStageFlagBits::eTransfer,
+                    .dst_stage = vk::PipelineStageFlagBits::eTransfer,
+                    .src_access = vk::AccessFlagBits::eTransferWrite,
+                    .dst_access = vk::AccessFlagBits::eTransferRead,
                     .base_mip_level = mip - 1u,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
@@ -772,6 +678,10 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                     .old_layout = vk::ImageLayout::eTransferSrcOptimal,
                     .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
                     .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                    .src_stage = vk::PipelineStageFlagBits::eTransfer,
+                    .dst_stage = vk::PipelineStageFlagBits::eFragmentShader,
+                    .src_access = vk::AccessFlagBits::eTransferRead,
+                    .dst_access = vk::AccessFlagBits::eShaderRead,
                     .base_mip_level = mip - 1u,
                     .mip_level_count = 1u,
                     .base_array_layer = layer,
@@ -789,6 +699,10 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                 .old_layout = vk::ImageLayout::eTransferDstOptimal,
                 .new_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
                 .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eTransfer,
+                .dst_stage = vk::PipelineStageFlagBits::eFragmentShader,
+                .src_access = vk::AccessFlagBits::eTransferWrite,
+                .dst_access = vk::AccessFlagBits::eShaderRead,
                 .base_mip_level = _mip_levels - 1u,
                 .mip_level_count = 1u,
                 .base_array_layer = layer,
