@@ -33,6 +33,7 @@ bool vkCmdPool::create(vkDevice const &device,
     _device = device.native();
 
     vk::CommandPoolCreateInfo const pool_info {
+        .pNext = nullptr,
         .flags = flags,
         .queueFamilyIndex = queue_index,
     };

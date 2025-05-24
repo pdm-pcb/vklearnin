@@ -8,17 +8,17 @@ namespace vkl {
 
 // =============================================================================
 vkFrameSync::vkFrameSync(vkFrameSync &&other) :
-    _in_flight_fence     { other._in_flight_fence },
-    _wait_sem { other._wait_sem },
-    _complete_sem   { other._complete_sem },
-    _cmd_pool            { std::move(other._cmd_pool) },
-    _cmd_buffer          { std::move(other._cmd_buffer) },
-    _device              { other._device }
+    _in_flight_fence { other._in_flight_fence },
+    _wait_sem        { other._wait_sem },
+    _complete_sem    { other._complete_sem },
+    _cmd_pool        { std::move(other._cmd_pool) },
+    _cmd_buffer      { std::move(other._cmd_buffer) },
+    _device          { other._device }
 {
-    other._in_flight_fence     = nullptr;
-    other._wait_sem = nullptr;
-    other._complete_sem   = nullptr;
-    other._device              = nullptr;
+    other._in_flight_fence = nullptr;
+    other._wait_sem        = nullptr;
+    other._complete_sem    = nullptr;
+    other._device          = nullptr;
 }
 
 // =============================================================================
