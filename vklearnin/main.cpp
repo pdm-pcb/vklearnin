@@ -257,7 +257,7 @@ int main() {
                 image_index,
                 frame_index
             );
-            break;
+            // break;
         }
 
         graphics_cmd_buffer.begin_one_time_submit();

@@ -81,7 +81,7 @@ void Log::critical(fmt::format_string<T...> fstring, T&& ...args) {
     auto const errmsg = fmt::format(fstring, std::forward<T>(args)...);
 
     _logger->critical(errmsg);
-    assert(false);
+    // assert(false);
 }
 
 } // namespace vkl
