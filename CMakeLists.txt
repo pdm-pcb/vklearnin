@@ -42,14 +42,12 @@ include("fetch_spdlog")
 include("fetch_glfw3")
 include("fetch_glm")
 include("fetch_spirv_reflect")
-include("fetch_cpptrace")
 
 fetch_fmt()
 fetch_spdlog()
 fetch_glfw3()
 fetch_glm()
 fetch_spirv_reflect()
-fetch_cpptrace()
 
 add_subdirectory(third_party)
 

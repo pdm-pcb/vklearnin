@@ -3,8 +3,6 @@
 
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
 
-#include <cpptrace/cpptrace.hpp>
-
 namespace vkl {
 
 // =============================================================================
@@ -53,8 +51,6 @@ bool vkShaderModule::create(std::string_view const filepath,
          _handle,
          shader_path.string()
     );
-
-    cpptrace::generate_trace().print();
 
     return true;
 }

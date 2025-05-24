@@ -24,7 +24,6 @@ vkImage::vkImage(vkImage &&other) :
     _mip_levels      { other._mip_levels },
     _size_bytes      { other._size_bytes },
     _raw_data        { other._raw_data }
-
 #ifdef VKL_DEBUG
     , _debug_name      { other._debug_name }
 #endif // VKL_DEBUG
