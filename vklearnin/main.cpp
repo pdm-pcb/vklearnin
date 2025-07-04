@@ -26,9 +26,9 @@
 #include "vklearnin/textures/Texture2D.hpp"
 
 #define RENDER_PASS
-#define COLOR_PASS
+// #define COLOR_PASS
 // #define DEPTH_PASS
-// #define MSAA_PASS
+#define MSAA_PASS
 
 // #define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
@@ -225,7 +225,7 @@ int main() {
         // begin graphics commands
 
 #ifdef RENDER_PASS
-        auto const &frame_buffer   = frame_buffers[frame_index];
+        auto const &frame_buffer = frame_buffers[frame_index];
 #endif // RENDER_PASS
 
 #ifdef DYNAMIC_RENDERING
@@ -257,7 +257,7 @@ int main() {
                 image_index,
                 frame_index
             );
-            // break;
+            break;
         }
 
         graphics_cmd_buffer.begin_one_time_submit();
