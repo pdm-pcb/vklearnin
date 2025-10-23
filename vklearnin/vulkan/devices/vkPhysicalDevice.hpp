@@ -29,7 +29,7 @@ public:
         // VK1.2 features
         // ...
 
-        // Extensions
+        // VK1.3 features
         bool sync2 = false;
         bool dynamic_rendering  = false;
     };
@@ -84,9 +84,7 @@ private:
     vk::PhysicalDeviceFeatures2        _features   { };
     vk::PhysicalDeviceVulkan11Features _features11 { };
     vk::PhysicalDeviceVulkan12Features _features12 { };
-
-    vk::PhysicalDeviceSynchronization2FeaturesKHR _sync2 { };
-    vk::PhysicalDeviceDynamicRenderingFeaturesKHR _dynamic_rendering { };
+    vk::PhysicalDeviceVulkan13Features _features13 { };
 
     std::vector<vk::ExtensionProperties> _extensions;
 

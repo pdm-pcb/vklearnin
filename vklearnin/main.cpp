@@ -25,15 +25,15 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#define RENDER_PASS
+// #define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
-#define MSAA_PASS
+// #define MSAA_PASS
 
-// #define DYNAMIC_RENDERING
+#define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
 // #define DEPTH_DYNAMIC
-// #define MSAA_DYNAMIC
+#define MSAA_DYNAMIC
 
 using namespace vkl;
 
@@ -59,13 +59,11 @@ static uint32_t frame_index = 0u;
 static auto const instance_config = vkInstance::Config {
     .extensions = {
         VK_KHR_SURFACE_EXTENSION_NAME,
-
-        #ifdef VKL_LINUX
-            VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
-        #elif VKL_WINDOWS
-            VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        #endif // VKL platform
-
+    #ifdef VKL_LINUX
+        VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
+    #elif VKL_WINDOWS
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+    #endif // VKL platform
     },
 #ifdef VKL_DEBUG
     .enable_validation = true,
@@ -74,9 +72,7 @@ static auto const instance_config = vkInstance::Config {
 
 static auto features = vkPhysicalDevice::Features {
     .sampler_anisotropy = true,
-
-    // .sync2 = true,
-
+    .sync2 = true,
 #ifdef DYNAMIC_RENDERING
     .dynamic_rendering  = true,
 #endif // DYNAMIC_RENDERING
@@ -84,7 +80,6 @@ static auto features = vkPhysicalDevice::Features {
 
 static std::vector<char const *> const physical_device_extensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    // VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
 #ifdef DYNAMIC_RENDERING
     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 #endif // DYNAMIC_RENDERING
@@ -332,19 +327,6 @@ int main() {
 
 #ifdef MSAA_DYNAMIC
 
-        msaa_dynamic.multisample_buffer().transition_layout(
-            graphics_cmd_buffer,
-            vkImage::TransitionDetails {
-                .old_layout = vk::ImageLayout::eUndefined,
-                .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
-                .aspect_flags = vk::ImageAspectFlagBits::eColor,
-                .src_stage = vk::PipelineStageFlagBits::eTopOfPipe,
-                .dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .src_access = vk::AccessFlagBits::eNone,
-                .dst_access = vk::AccessFlagBits::eColorAttachmentWrite,
-            }
-        );
-
         msaa_dynamic.depth_buffer().transition_layout(
             graphics_cmd_buffer,
             vkImage::TransitionDetails {
@@ -356,6 +338,19 @@ int main() {
                 .src_access = vk::AccessFlagBits::eDepthStencilAttachmentWrite,
                 .dst_access = vk::AccessFlagBits::eDepthStencilAttachmentRead
                               | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+            }
+        );
+
+        msaa_dynamic.multisample_buffer().transition_layout(
+            graphics_cmd_buffer,
+            vkImage::TransitionDetails {
+                .old_layout = vk::ImageLayout::eUndefined,
+                .new_layout = vk::ImageLayout::eColorAttachmentOptimal,
+                .aspect_flags = vk::ImageAspectFlagBits::eColor,
+                .src_stage = vk::PipelineStageFlagBits::eTopOfPipe,
+                .dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                .src_access = vk::AccessFlagBits::eNone,
+                .dst_access = vk::AccessFlagBits::eColorAttachmentWrite,
             }
         );
 

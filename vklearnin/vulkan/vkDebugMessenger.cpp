@@ -33,9 +33,6 @@ bool vkDebugMessenger::create(vkInstance const &instance) {
             vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
             | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
             | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
-#ifdef VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME
-            | vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding
-#endif // VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME
         ),
         .pfnUserCallback = vkDebugMessenger::messenger
     };

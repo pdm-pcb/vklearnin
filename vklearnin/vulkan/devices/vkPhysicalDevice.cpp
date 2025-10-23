@@ -77,10 +77,7 @@ bool vkPhysicalDevice::select_device(vk::PhysicalDeviceType const type) {
         }
     }
 
-    Log::error(
-        "Failed to select device of type {}",
-        vk::to_string(type)
-    );
+    Log::error("Failed to select device of type {}", vk::to_string(type));
     return false;
 }
 
@@ -325,8 +322,14 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
 // =============================================================================
 bool vkPhysicalDevice::_check_features(Features const &features) {
     // Copy over the requested features
-    _features12 = vk::PhysicalDeviceVulkan12Features {
+    _features13 = vk::PhysicalDeviceVulkan13Features {
         .pNext = nullptr,
+        .synchronization2 = features.sync2,
+        .dynamicRendering = features.dynamic_rendering
+    };
+
+    _features12 = vk::PhysicalDeviceVulkan12Features {
+        .pNext = &_features13,
     };
 
     _features11 = vk::PhysicalDeviceVulkan11Features {
@@ -335,29 +338,18 @@ bool vkPhysicalDevice::_check_features(Features const &features) {
 
     _features = vk::PhysicalDeviceFeatures2 {
         .pNext = &_features11,
-        .features {
+        .features = vk::PhysicalDeviceFeatures {
             .fillModeNonSolid = features.fill_mode_nonsolid,
             .samplerAnisotropy = features.sampler_anisotropy,
         }
     };
 
-    auto **next_feature = &_features12.pNext;
-
-    if(features.sync2) {
-        _sync2.synchronization2 = vk::True;
-        *next_feature = &_sync2;
-        next_feature = &_sync2.pNext;
-    }
-
-    if(features.dynamic_rendering) {
-        _dynamic_rendering.dynamicRendering = vk::True;
-        *next_feature = &_dynamic_rendering;
-        next_feature = &_dynamic_rendering.pNext;
-    }
-
     // Build the structure chain we'll use to query the device
-    vk::PhysicalDeviceVulkan12Features supported12 {
+    vk::PhysicalDeviceVulkan13Features supported13 {
         .pNext = nullptr,
+    };
+    vk::PhysicalDeviceVulkan12Features supported12 {
+        .pNext = &supported13,
     };
     vk::PhysicalDeviceVulkan11Features supported11 {
         .pNext = &supported12,
@@ -365,21 +357,6 @@ bool vkPhysicalDevice::_check_features(Features const &features) {
     vk::PhysicalDeviceFeatures2 supported {
         .pNext = &supported11,
     };
-
-    vk::PhysicalDeviceSynchronization2FeaturesKHR sync2_supported { };
-    vk::PhysicalDeviceDynamicRenderingFeaturesKHR dr_supported { };
-
-    auto **next_supported = &supported12.pNext;
-
-    if(features.sync2) {
-        *next_supported = &sync2_supported;
-        next_supported = &sync2_supported.pNext;
-    }
-
-    if(features.dynamic_rendering) {
-        *next_supported = &dr_supported;
-        next_supported = &dr_supported.pNext;
-    }
 
     // Ask the device what we're dealing with
     _handle.getFeatures2(&supported);
@@ -414,21 +391,19 @@ bool vkPhysicalDevice::_check_features(Features const &features) {
     // VK1.2 features ----------------------------------------------------------
     // ...
 
-    // Extensions --------------------------------------------------------------
-    if(_sync2.synchronization2 && sync2_supported.synchronization2) {
+    // VK1.3 features ----------------------------------------------------------
+    if(_features13.synchronization2 && supported13.synchronization2) {
         Log::trace("{} supports synchronization2.", _name);
     }
-    else if(_sync2.synchronization2) {
+    else if(_features13.synchronization2) {
         Log::warn("{} does not support synchronization2.", _name);
         all_features_supported = false;
     }
 
-    if(_dynamic_rendering.dynamicRendering
-        && dr_supported.dynamicRendering)
-    {
+    if(_features13.dynamicRendering && supported13.dynamicRendering) {
         Log::trace("{} supports dynamicRendering.", _name);
     }
-    else if(_dynamic_rendering.dynamicRendering) {
+    else if(_features13.dynamicRendering) {
         Log::warn("{} does not support dynamicRendering.", _name);
         all_features_supported = false;
     }
