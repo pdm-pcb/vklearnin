@@ -49,8 +49,7 @@ bool vkInstance::create(Config const &config,
     // structure assembled above.
     const vk::InstanceCreateInfo instance_info {
         .pNext = (config.enable_validation ?
-                  reinterpret_cast<void *>(&_vvl_features)
-                  : nullptr),
+                  reinterpret_cast<void *>(&_vvl_features) : nullptr),
         .flags = { },
         .pApplicationInfo = &_app_info,
         .enabledLayerCount =
@@ -69,8 +68,8 @@ bool vkInstance::create(Config const &config,
 
     // If this didn't work, we can go no further.
     if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create Vulkan instance: '{}'",
-                   vk::to_string(result));
+        Log::critical("Failed to create Vulkan instance: '{}'",
+                      vk::to_string(result));
         return false;
     }
 
@@ -164,7 +163,7 @@ void vkInstance::_init_validation() {
         vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
     };
 
-    // Perhaps this'll be useful some time?
+    // Not disabling any layers
     _vvl_disabled = { };
 
     // Build the final structure

@@ -17,6 +17,11 @@ bool vkSurface::create(TargetWindow const &target_window,
         return false;
     }
 
+    if(!target_window.initialized()) {
+        Log::error("Cannot create surface before initializing target window.");
+        return false;
+    }
+
     if(!instance.native()) {
         Log::error("Cannot create surface with invalid instance.");
         return false;
@@ -65,6 +70,8 @@ bool vkSurface::destroy() {
         return false;
     }
 
+    _reset();
+
     Log::trace("Destroying surface {}", _handle);
     _instance.destroy(_handle);
     _handle = nullptr;
@@ -74,20 +81,24 @@ bool vkSurface::destroy() {
 }
 
 // =============================================================================
-void vkSurface::get_details(vkPhysicalDevice const &device) {
-    _get_capabilities(device.native());
-    _get_formats(device.native());
-    _get_present_modes(device.native());
+bool vkSurface::check_details(vkPhysicalDevice const &device) {
+    return _check_capabilities(device.native())
+           && _check_formats(device.native())
+           && _check_present_modes(device.native());
 }
 
 // =============================================================================
-void vkSurface::_get_capabilities(vk::PhysicalDevice const &device) {
-    auto const [ result, caps ] = device.getSurfaceCapabilitiesKHR(_handle);
+bool vkSurface::_check_capabilities(vk::PhysicalDevice const &device) {
+    if(!_handle) {
+        Log::error("Cannot check surface capabilities without surface.");
+        return false;
+    }
 
+    auto const [ result, caps ] = device.getSurfaceCapabilitiesKHR(_handle);
     if(result != vk::Result::eSuccess) {
         Log::error("Failed to get surface {} capabilities: '{}'",
-                  _handle, vk::to_string(result));
-        return;
+                   _handle, vk::to_string(result));
+        return false;
     }
 
     Log::trace(
@@ -112,26 +123,30 @@ void vkSurface::_get_capabilities(vk::PhysicalDevice const &device) {
     _min_image_count = caps.minImageCount;
     _max_image_count = caps.maxImageCount;
 
-    if(_max_image_count == 0u) {
-        _max_image_count = std::numeric_limits<uint32_t>::max();
-    }
-
-    if(_min_image_count > _max_image_count) {
-        Log::error(
-            "Surface {} minimum image count {} exceeds maximum image count {}",
-            _handle,
-            _min_image_count,
-            _max_image_count
-        );
+    if(_max_image_count == 0u || _min_image_count > _max_image_count) {
+        Log::error("Surface {} has invalid image count requirements. Min of {} "
+                   "and max of {}.",
+                   _handle,
+                   _min_image_count,
+                   _max_image_count);
 
         _min_image_count = 0u;
         _max_image_count = 0u;
 
-        return;
+        return false;
     }
 
     // We intend to draw to the whole surface
     _extent = caps.currentExtent;
+
+    if(_extent.width == 0u || _extent.height == 0u) {
+        Log::error("Surface {} has invalid extent ({}, {}).",
+                   _handle,
+                   _extent.width,
+                   _extent.height);
+        _extent = vk::Extent2D { };
+        return false;
+    }
 
     if(_extent.width < caps.minImageExtent.width) {
         Log::warn("Surface width {} capped to minimum {}",
@@ -166,19 +181,25 @@ void vkSurface::_get_capabilities(vk::PhysicalDevice const &device) {
     // Update the aspect ratio
     _aspect_ratio = static_cast<float>(_extent.width) /
                     static_cast<float>(_extent.height);
+
+    return true;
 }
 
 // =============================================================================
-void vkSurface::_get_formats(vk::PhysicalDevice const &device) {
-    auto const [ result, formats ] = device.getSurfaceFormatsKHR(_handle);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to get surface {} formats: '{}'",
-                  _handle, vk::to_string(result));
-        return;
+bool vkSurface::_check_formats(vk::PhysicalDevice const &device) {
+    if(!_handle) {
+        Log::error("Cannot check surface formats without surface.");
+        return false;
     }
 
-    Log::trace("Found {} surface formats.", formats.size());
+    auto const [ result, formats ] = device.getSurfaceFormatsKHR(_handle);
+    if(result != vk::Result::eSuccess || formats.empty()) {
+        Log::error("Failed to get surface {} formats: '{}'",
+                  _handle, vk::to_string(result));
+        return false;
+    }
+
+    Log::trace("Surface {} has {} surface formats.", _handle, formats.size());
 
     // These format details were chosen to produce the most intuitive and/or
     // predictable results on the average desktop disaply
@@ -212,16 +233,28 @@ void vkSurface::_get_formats(vk::PhysicalDevice const &device) {
                  vk::to_string(_format.format),
                  vk::to_string(_format.colorSpace));
     }
+    else {
+        Log::trace("Surface {} selected format {} / {}.",
+                   _handle,
+                   vk::to_string(_format.format),
+                   vk::to_string(_format.colorSpace));
+    }
+
+    return true;
 }
 
 // =============================================================================
-void vkSurface::_get_present_modes(vk::PhysicalDevice const &device) {
-    auto const [ result, modes ] = device.getSurfacePresentModesKHR(_handle);
+bool vkSurface::_check_present_modes(vk::PhysicalDevice const &device) {
+    if(!_handle) {
+        Log::error("Cannot check surface present modes without surface.");
+        return false;
+    }
 
-    if(result != vk::Result::eSuccess) {
+    auto const [ result, modes ] = device.getSurfacePresentModesKHR(_handle);
+    if(result != vk::Result::eSuccess || modes.empty()) {
         Log::error("Failed to get surface {} present modes: '{}'",
                   _handle, vk::to_string(result));
-        return;
+        return false;
     }
 
     Log::trace("Found {} present modes.", modes.size());
@@ -246,23 +279,41 @@ void vkSurface::_get_present_modes(vk::PhysicalDevice const &device) {
 
     // Use a FIFO variant if they're available and V-Sync has been chosen by
     // the user
-    if(has_fifo_relaxed && _enable_vsync) {
-        _present_mode = vk::PresentModeKHR::eFifoRelaxed;
-    }
-    else if(has_fifo && _enable_vsync) {
-        _present_mode = vk::PresentModeKHR::eFifo;
-    }
-    else if(_enable_vsync) {
-        Log::warn("V-Sync requested but the available present modes don't "
-                 "support it.");
+    if(_enable_vsync) {
+        if(has_fifo_relaxed) {
+            _present_mode = vk::PresentModeKHR::eFifoRelaxed;
+        }
+        else if(has_fifo) {
+            _present_mode = vk::PresentModeKHR::eFifo;
+        }
+        else {
+            Log::warn("V-Sync requested but the available present modes don't "
+                      "support it.");
+        }
     }
     else if(has_immediate) {
         _present_mode = vk::PresentModeKHR::eImmediate;
     }
     else {
-        Log::critical("Neither immediate nor FIFO presentation modes are "
-                     "supported.");
+        Log::error("Surface {} has no supported present modes.", _handle);
+        return false;
     }
+
+    Log::trace("Surface {} selected present mode {}.",
+               _handle,
+               vk::to_string(_present_mode));
+    return true;
+}
+
+// =============================================================================
+void vkSurface::_reset() {
+    _enable_vsync    = false;
+    _extent          = vk::Extent2D { };
+    _aspect_ratio    = 0.0f;
+    _min_image_count = 0u;
+    _max_image_count = 0u;
+    _format          = vk::SurfaceFormatKHR { };
+    _present_mode    = vk::PresentModeKHR::eImmediate;
 }
 
 } // namespace vkl

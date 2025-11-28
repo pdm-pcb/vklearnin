@@ -5,9 +5,9 @@ function(fetch_spdlog)
     FetchContent_Declare(
         spdlog SYSTEM
         GIT_REPOSITORY https://github.com/gabime/spdlog
-        GIT_TAG f355b3d58f7067eee1706ff3c801c2361011f3d5 # 2025-02-01
+        GIT_TAG 486b55554f11c9cccc913e11a87085b2a91f706f # 2025-10-11
         # GIT_PROGRESS TRUE
-        FIND_PACKAGE_ARGS 1.15.1
+        FIND_PACKAGE_ARGS 1.16.0
     )
 
     # Use a different version of fmt from the one that ships with spdlog, but

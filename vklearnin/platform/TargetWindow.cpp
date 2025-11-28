@@ -11,7 +11,7 @@ bool TargetWindow::_initialized { false };
 bool TargetWindow::init() {
     if(_initialized) {
         Log::warn("GLFW already initialized.");
-        return false;
+        return true;
     }
 
     if(::glfwInit() == 0) {
@@ -70,7 +70,12 @@ bool TargetWindow::create(std::string_view const app_name) {
     ::glfwSetKeyCallback(_window, TargetWindow::_key_callback);
     ::glfwSetWindowIconifyCallback(_window, TargetWindow::_iconify_callback);
 
-    _get_resolution();
+    // Adjust the size of the target window relative to the display it's on,
+    // and center it
+    if(!_get_resolution()) {
+        destroy();
+        return false;
+    }
     _size_and_place();
 
     return true;
@@ -84,6 +89,7 @@ bool TargetWindow::destroy() {
     }
 
     ::glfwDestroyWindow(_window);
+
     return true;
 }
 
@@ -94,8 +100,13 @@ bool TargetWindow::poll_events() {
 }
 
 // =============================================================================
-void TargetWindow::_get_resolution() {
+bool TargetWindow::_get_resolution() {
     auto const *current_mode = ::glfwGetVideoMode(::glfwGetPrimaryMonitor());
+
+    if(current_mode == nullptr) {
+        Log::error("Could not get primary monitor's video modes.");
+        return false;
+    }
 
     auto const width = static_cast<float>(current_mode->width);
     auto const height = static_cast<float>(current_mode->height);
@@ -109,6 +120,8 @@ void TargetWindow::_get_resolution() {
         .x = static_cast<int32_t>(width * 0.5f),
         .y = static_cast<int32_t>(height * 0.5f)
     };
+
+    return true;
 }
 
 // =============================================================================

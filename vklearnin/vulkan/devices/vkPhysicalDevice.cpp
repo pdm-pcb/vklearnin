@@ -10,6 +10,50 @@ std::vector<vkPhysicalDevice *> vkPhysicalDevice::_available_devices;
 vkPhysicalDevice const * vkPhysicalDevice::_current_device { nullptr };
 
 // =============================================================================
+vkPhysicalDevice::vkPhysicalDevice(vk::PhysicalDevice const handle) :
+    _handle { handle }
+{
+    // Retrieve the basic properties of the card
+    auto const &device_props = _handle.getProperties();
+    _type = device_props.deviceType;
+    _name = std::string(device_props.deviceName.data());
+    _vkapi_version = fmt::format(
+        "{}.{}.{}",
+        VK_API_VERSION_MAJOR(device_props.apiVersion),
+        VK_API_VERSION_MINOR(device_props.apiVersion),
+        VK_API_VERSION_PATCH(device_props.apiVersion)
+    );
+
+    _max_aniso = device_props.limits.maxSamplerAnisotropy;
+
+    _msaa_samples = device_props.limits.framebufferColorSampleCounts
+                    & device_props.limits.framebufferDepthSampleCounts;
+
+    _get_max_msaa_samples();
+
+    // And grab some of the sneakier features we're interested in
+    _vram_bytes     = _get_vram_bytes();
+    _driver_version = _get_driver_version();
+
+    Log::trace(
+        "\n    Device Name:    {}"
+        "\n    Device Type:    {}"
+        "\n    VRAM:           {} MB"
+        "\n    Max aniso:      {}"
+        "\n    Max samples:    {}"
+        "\n    Driver Version: {}"
+        "\n    Vulkan Version: {}",
+        _name,
+        vk::to_string(_type),
+        _vram_bytes / 1000 / 1000,
+        _max_aniso,
+        vk::to_string(_max_msaa_samples),
+        _driver_version,
+        _vkapi_version
+    );
+}
+
+// =============================================================================
 bool vkPhysicalDevice::populate_device_list(
     vkInstance const &instance,
     vkSurface const &surface,
@@ -68,6 +112,15 @@ bool vkPhysicalDevice::populate_device_list(
 }
 
 // =============================================================================
+void vkPhysicalDevice::clear_device_list() {
+    for(auto *device : _available_devices) {
+        delete device;
+    }
+
+    _available_devices.clear();
+}
+
+// =============================================================================
 bool vkPhysicalDevice::select_device(vk::PhysicalDeviceType const type) {
     for(auto const *device : _available_devices) {
         if(device->_type == type) {
@@ -79,15 +132,6 @@ bool vkPhysicalDevice::select_device(vk::PhysicalDeviceType const type) {
 
     Log::error("Failed to select device of type {}", vk::to_string(type));
     return false;
-}
-
-// =============================================================================
-void vkPhysicalDevice::clear_device_list() {
-    for(auto *device : _available_devices) {
-        delete device;
-    }
-
-    _available_devices.clear();
 }
 
 // =============================================================================
@@ -108,61 +152,16 @@ const
         if(props.optimalTilingFeatures &
            vk::FormatFeatureFlagBits::eDepthStencilAttachment)
         {
-            Log::trace(
-                "{} selected depth format {}",
-                _name,
-                vk::to_string(format)
-            );
+            Log::trace("{} selected depth format {}",
+                       _name,
+                       vk::to_string(format));
+
             return format;
         }
     }
 
     Log::error("{} failed to find suitable depth format.", _name);
     return vk::Format::eUndefined;
-}
-
-// =============================================================================
-vkPhysicalDevice::vkPhysicalDevice(vk::PhysicalDevice const handle) :
-    _handle { handle }
-{
-    // Retrieve the basic properties of the card
-    auto const &device_props = _handle.getProperties();
-    _type = device_props.deviceType;
-    _name = std::string(device_props.deviceName.data());
-    _vkapi_version = fmt::format(
-        "{}.{}.{}",
-        VK_API_VERSION_MAJOR(device_props.apiVersion),
-        VK_API_VERSION_MINOR(device_props.apiVersion),
-        VK_API_VERSION_PATCH(device_props.apiVersion)
-    );
-
-    _max_aniso = device_props.limits.maxSamplerAnisotropy;
-
-    _samples = device_props.limits.framebufferColorSampleCounts
-               & device_props.limits.framebufferDepthSampleCounts;
-
-    _get_max_samples();
-
-    // And grab some of the sneakier features we're interested in
-    _vram_bytes     = _get_vram_bytes(_handle);
-    _driver_version = _get_driver_version(_handle);
-
-    Log::trace(
-        "\n    Device Name:    {}"
-        "\n    Device Type:    {}"
-        "\n    VRAM:           {} MB"
-        "\n    Max aniso:      {}"
-        "\n    Max samples:    {}"
-        "\n    Driver Version: {}"
-        "\n    Vulkan Version: {}",
-        _name,
-        vk::to_string(_type),
-        _vram_bytes / 1000 / 1000,
-        _max_aniso,
-        vk::to_string(_max_samples),
-        _driver_version,
-        _vkapi_version
-    );
 }
 
 // =============================================================================
@@ -187,8 +186,33 @@ void vkPhysicalDevice::_sort_devices() {
 }
 
 // =============================================================================
-uint64_t vkPhysicalDevice::_get_vram_bytes(vk::PhysicalDevice const &device) {
-    auto const &memory_props = device.getMemoryProperties();
+void vkPhysicalDevice::_get_max_msaa_samples() {
+    if(_msaa_samples & vk::SampleCountFlagBits::e64) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e64;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e32) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e32;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e16) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e16;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e8) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e8;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e4) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e4;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e2) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e2;
+    }
+    else if(_msaa_samples & vk::SampleCountFlagBits::e1) {
+        _max_msaa_samples = vk::SampleCountFlagBits::e1;
+    }
+}
+
+// =============================================================================
+uint64_t vkPhysicalDevice::_get_vram_bytes() {
+    auto const &memory_props = _handle.getMemoryProperties();
     size_t vram_bytes = 0u;
     for(uint32_t index = 0u; index < memory_props.memoryHeapCount; ++index) {
         auto const flags = memory_props.memoryHeaps[index].flags;
@@ -202,15 +226,161 @@ uint64_t vkPhysicalDevice::_get_vram_bytes(vk::PhysicalDevice const &device) {
 }
 
 // =============================================================================
-std::string
-vkPhysicalDevice::_get_driver_version(vk::PhysicalDevice const &device) {
+std::string vkPhysicalDevice::_get_driver_version() {
     vk::PhysicalDeviceDriverProperties driver_props { };
     vk::PhysicalDeviceProperties2 physical_props2 {
         .pNext = &driver_props
     };
-    device.getProperties2(&physical_props2);
+    _handle.getProperties2(&physical_props2);
 
     return std::string(driver_props.driverInfo.data());
+}
+
+// =============================================================================
+bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
+    auto const &families = _handle.getQueueFamilyProperties();
+
+    for(uint32_t i = 0u; i < families.size(); ++i) {
+        _print_family_flags(i, families[i].queueFlags);
+    }
+
+    for(uint32_t i = 0u; i < families.size(); ++i) {
+        // The first check is if this queue family supports graphics commands
+        if(families[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+            auto const [result, present_support] =
+                _handle.getSurfaceSupportKHR(i, surface.native());
+
+            if(result != vk::Result::eSuccess) {
+                Log::error("{} failed to get surface {} support for queue "
+                           "family index {}: '{}'",
+                           _name,
+                           surface.native(),
+                           i,
+                           vk::to_string(result));
+                continue;
+            }
+
+            _graphics_queue_index = i;
+            Log::trace("{} selecting queue family index {} for graphics.",
+                       _name,
+                       _graphics_queue_index);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// =============================================================================
+bool vkPhysicalDevice::_check_features(Features const &features) {
+    // Populate the local chain with the requested features
+    auto &features10 = _features.get<vk::PhysicalDeviceFeatures2>();
+    features10.features = vk::PhysicalDeviceFeatures {
+        .fillModeNonSolid = features.fill_mode_nonsolid,
+        .samplerAnisotropy = features.sampler_anisotropy,
+    };
+
+    auto &features13 = _features.get<vk::PhysicalDeviceVulkan13Features>();
+    features13 = vk::PhysicalDeviceVulkan13Features {
+        .synchronization2 = features.sync2,
+        .dynamicRendering = features.dynamic_rendering
+    };
+
+    // Ask the device if we can have what we want
+    vk::StructureChain<vk::PhysicalDeviceFeatures2,
+                       vk::PhysicalDeviceVulkan13Features> supported;
+    _handle.getFeatures2(&(supported.get<vk::PhysicalDeviceFeatures2>()));
+
+    // Run through and check what we care about
+    bool all_features_supported = true;
+
+    // VK1.0 features ----------------------------------------------------------
+    auto const &supported10 = supported.get<vk::PhysicalDeviceFeatures2>();
+    if(features.fill_mode_nonsolid) {
+        if(supported10.features.fillModeNonSolid) {
+            Log::trace("{} supports fillModeNonSolid.", _name);
+        }
+        else {
+            Log::warn("{} does not support fillModeNonSolid.", _name);
+            all_features_supported = false;
+        }
+    }
+
+    if(features.sampler_anisotropy) {
+        if(supported10.features.samplerAnisotropy) {
+            Log::trace("{} supports samplerAnisotropy.", _name);
+        }
+        else {
+            Log::warn("{} does not support samplerAnisotropy.", _name);
+            all_features_supported = false;
+        }
+    }
+
+    // VK1.3 features ----------------------------------------------------------
+    auto const &supported13 = supported.get<vk::PhysicalDeviceVulkan13Features>();
+    if(features.sync2) {
+        if(supported13.synchronization2) {
+            Log::trace("{} supports synchronization2.", _name);
+        }
+        else {
+            Log::warn("{} does not support synchronization2.", _name);
+            all_features_supported = false;
+        }
+    }
+
+    if(features.dynamic_rendering) {
+        if(supported13.dynamicRendering) {
+            Log::trace("{} supports dynamicRendering.", _name);
+        }
+        else {
+            Log::warn("{} does not support dynamicRendering.", _name);
+            all_features_supported = false;
+        }
+    }
+
+    return all_features_supported;
+}
+
+// =============================================================================
+bool
+vkPhysicalDevice::_check_extensions(std::span<char const * const> extensions) {
+    // Get the list of supported extensions
+    auto const [ result, supported_extensions ] =
+        _handle.enumerateDeviceExtensionProperties();
+
+    if(result != vk::Result::eSuccess) {
+        Log::error("{} failed to enumerate extensions: '{}'",
+                   _name,
+                   vk::to_string(result));
+        return false;
+    }
+
+    Log::trace("Found {} extensions for {}",
+               supported_extensions.size(),
+               _name);
+
+    // Run through the required list and the supported list to make sure the
+    // latter contains all of the former
+    bool all_extensions_supported = true;
+    for(char const * const required : extensions) {
+        bool extension_found = false;
+
+        for(auto const &supported : supported_extensions) {
+            if(::strcmp(required, supported.extensionName) == 0) {
+                _extensions.push_back(supported);
+                extension_found = true;
+                Log::trace("{} supports '{}'", _name, required);
+                break;
+            }
+        }
+
+        if(extension_found == false) {
+            Log::warn("{} does not support '{}'", _name, required);
+            all_extensions_supported = false;
+        }
+    }
+
+    return all_extensions_supported;
 }
 
 // =============================================================================
@@ -259,227 +429,6 @@ void vkPhysicalDevice::_print_family_flags(uint32_t const family,
     }
 
     Log::trace("  {}", flags_str);
-}
-
-// =============================================================================
-bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
-    auto const &families = _handle.getQueueFamilyProperties();
-
-    for(uint32_t i = 0u; i < families.size(); ++i) {
-        _print_family_flags(i, families[i].queueFlags);
-    }
-
-    bool found_unified_family = false;
-    for(uint32_t i = 0u; i < families.size(); ++i) {
-        // The first check is if this queue family supports graphics commands
-        if(families[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-            auto const [result, present_support] =
-                _handle.getSurfaceSupportKHR(i, surface.native());
-
-            if(result != vk::Result::eSuccess) {
-                Log::error(
-                    "{} failed to get surface {} support for queue family "
-                    "index {}: '{}'",
-                    _name,
-                    surface.native(),
-                    i,
-                    vk::to_string(result)
-                );
-                continue;
-            }
-
-            // And the second is if this device can present on the surface
-            // we've been given
-            if(present_support == vk::True) {
-                if(families[i].queueFlags & vk::QueueFlagBits::eCompute) {
-                    found_unified_family = true;
-                    _cmd_queue_index = i;
-                    _compute_queue_index = i;
-
-                    Log::trace(
-                        "{} queue family index {} supports graphics, present, "
-                        "and compute.",
-                        _name,
-                        _cmd_queue_index
-                    );
-
-                    break;
-                }
-            }
-        }
-    }
-
-    if(!found_unified_family) {
-        Log::warn(
-            "{} doesn't support a unified graphics and present queue.",
-            _name
-        );
-    }
-
-    return found_unified_family;
-}
-
-// =============================================================================
-bool vkPhysicalDevice::_check_features(Features const &features) {
-    // Copy over the requested features
-    _features13 = vk::PhysicalDeviceVulkan13Features {
-        .pNext = nullptr,
-        .synchronization2 = features.sync2,
-        .dynamicRendering = features.dynamic_rendering
-    };
-
-    _features12 = vk::PhysicalDeviceVulkan12Features {
-        .pNext = &_features13,
-    };
-
-    _features11 = vk::PhysicalDeviceVulkan11Features {
-        .pNext = &_features12,
-    };
-
-    _features = vk::PhysicalDeviceFeatures2 {
-        .pNext = &_features11,
-        .features = vk::PhysicalDeviceFeatures {
-            .fillModeNonSolid = features.fill_mode_nonsolid,
-            .samplerAnisotropy = features.sampler_anisotropy,
-        }
-    };
-
-    // Build the structure chain we'll use to query the device
-    vk::PhysicalDeviceVulkan13Features supported13 {
-        .pNext = nullptr,
-    };
-    vk::PhysicalDeviceVulkan12Features supported12 {
-        .pNext = &supported13,
-    };
-    vk::PhysicalDeviceVulkan11Features supported11 {
-        .pNext = &supported12,
-    };
-    vk::PhysicalDeviceFeatures2 supported {
-        .pNext = &supported11,
-    };
-
-    // Ask the device what we're dealing with
-    _handle.getFeatures2(&supported);
-
-    // Run through and check what we care about
-    bool all_features_supported = true;
-
-    // VK1.0 features ----------------------------------------------------------
-    if(_features.features.fillModeNonSolid
-       && supported.features.fillModeNonSolid)
-    {
-        Log::trace("{} supports fillModeNonSolid.", _name);
-    }
-    else if(_features.features.fillModeNonSolid) {
-        Log::warn("{} does not support fillModeNonSolid.", _name);
-        all_features_supported = false;
-    }
-
-    if(_features.features.samplerAnisotropy
-       && supported.features.samplerAnisotropy)
-    {
-        Log::trace("{} supports samplerAnisotropy.", _name);
-    }
-    else if(_features.features.samplerAnisotropy) {
-        Log::warn("{} does not samplerAnisotropy.", _name);
-        all_features_supported = false;
-    }
-
-    // VK1.1 features ----------------------------------------------------------
-    // ...
-
-    // VK1.2 features ----------------------------------------------------------
-    // ...
-
-    // VK1.3 features ----------------------------------------------------------
-    if(_features13.synchronization2 && supported13.synchronization2) {
-        Log::trace("{} supports synchronization2.", _name);
-    }
-    else if(_features13.synchronization2) {
-        Log::warn("{} does not support synchronization2.", _name);
-        all_features_supported = false;
-    }
-
-    if(_features13.dynamicRendering && supported13.dynamicRendering) {
-        Log::trace("{} supports dynamicRendering.", _name);
-    }
-    else if(_features13.dynamicRendering) {
-        Log::warn("{} does not support dynamicRendering.", _name);
-        all_features_supported = false;
-    }
-
-    return all_features_supported;
-}
-
-// =============================================================================
-bool
-vkPhysicalDevice::_check_extensions(std::span<char const * const> extensions) {
-    // Get the list of supported extensions
-    auto const [ result, supported_extensions ] =
-        _handle.enumerateDeviceExtensionProperties();
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "{} failed to enumerate extensions: '{}'",
-            _name,
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    Log::trace(
-        "Found {} extensions for {}",
-        supported_extensions.size(),
-        _name
-    );
-
-    // Run through the required list and the supported list to make sure the
-    // latter contains all of the former
-    bool all_extensions_supported = true;
-    for(char const * const required : extensions) {
-        bool extension_found = false;
-
-        for(auto const &supported : supported_extensions) {
-            if(::strcmp(required, supported.extensionName) == 0) {
-                _extensions.push_back(supported);
-                extension_found = true;
-                Log::trace("{} supports '{}'", _name, required);
-                break;
-            }
-        }
-
-        if(extension_found == false) {
-            Log::warn("{} does not support '{}'", _name, required);
-            all_extensions_supported = false;
-        }
-    }
-
-    return all_extensions_supported;
-}
-
-// =============================================================================
-void vkPhysicalDevice::_get_max_samples() {
-    if(_samples & vk::SampleCountFlagBits::e64) {
-        _max_samples = vk::SampleCountFlagBits::e64;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e32) {
-        _max_samples = vk::SampleCountFlagBits::e32;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e16) {
-        _max_samples = vk::SampleCountFlagBits::e16;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e8) {
-        _max_samples = vk::SampleCountFlagBits::e8;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e4) {
-        _max_samples = vk::SampleCountFlagBits::e4;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e2) {
-        _max_samples = vk::SampleCountFlagBits::e2;
-    }
-    else if(_samples & vk::SampleCountFlagBits::e1) {
-        _max_samples = vk::SampleCountFlagBits::e1;
-    }
 }
 
 } // namespace vkl

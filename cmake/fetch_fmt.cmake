@@ -5,9 +5,9 @@ function(fetch_fmt)
     FetchContent_Declare(
         fmt SYSTEM
         GIT_REPOSITORY https://github.com/fmtlib/fmt/
-        GIT_TAG 9cf9f38eded63e5e0fb95cd536ba51be601d7fa2 # 2025-01-25
+        GIT_TAG 407c905e45ad75fc29bf0f9bb7c5c2fd3475976f # 2025-10-29
         # GIT_PROGRESS TRUE
-        FIND_PACKAGE_ARGS 11.1.3
+        FIND_PACKAGE_ARGS 12.1.0
     )
 
     # Disable the install target as we'll be linking statically

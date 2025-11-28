@@ -25,12 +25,13 @@ public:
     vkInstance& operator=(vkInstance &&other) = delete;
     vkInstance& operator=(vkInstance const &other) = delete;
 
-    bool create(Config const &config,
-                std::string_view const app_name,
-                uint32_t app_version);
+    [[nodiscard]] bool create(Config const &config,
+                              std::string_view const app_name,
+                              uint32_t app_version);
+
     bool destroy();
 
-    inline vk::Instance const & native() const {
+    [[nodiscard]] inline vk::Instance const & native() const {
         if(!_handle) {
             Log::critical("Invalid Vulkan instance.");
         }
@@ -38,7 +39,7 @@ public:
         return _handle;
     }
 
-    inline auto const & loader() const { return _loader; }
+    [[nodiscard]] inline auto const & loader() const { return _loader; }
 
 private:
     vk::Instance _handle  { nullptr };

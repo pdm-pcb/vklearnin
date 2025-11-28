@@ -71,6 +71,7 @@ static auto const instance_config = vkInstance::Config {
 };
 
 static auto features = vkPhysicalDevice::Features {
+    .fill_mode_nonsolid = true,
     .sampler_anisotropy = true,
     .sync2 = true,
 #ifdef DYNAMIC_RENDERING
@@ -78,11 +79,11 @@ static auto features = vkPhysicalDevice::Features {
 #endif // DYNAMIC_RENDERING
 };
 
-static std::vector<char const *> const physical_device_extensions {
+static std::vector<char const *> const device_extensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#ifdef DYNAMIC_RENDERING
-    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-#endif // DYNAMIC_RENDERING
+// #ifdef DYNAMIC_RENDERING
+//     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+// #endif // DYNAMIC_RENDERING
 };
 
 // pipeline stuff --------------------------------------------------------------
@@ -159,12 +160,12 @@ static vkDescriptorSet wood_descriptor_set;
 
 // =============================================================================
 
-void vulkan_setup();
-void init_rendering();
-void create_swapchain();
-void create_draw_data();
-void create_descriptor_data();
-void create_graphics_pipeline();
+bool vulkan_setup();
+bool init_rendering();
+bool create_swapchain();
+bool create_draw_data();
+bool create_descriptor_data();
+bool create_graphics_pipeline();
 
 void destroy_graphics_pipeline();
 void destroy_descriptor_data();
@@ -179,19 +180,22 @@ void recreate_swapchain();
 
 // =============================================================================
 int main() {
-    vulkan_setup();
-    init_rendering();
-    create_swapchain();
+    if(!vulkan_setup()) { return 1; }
+    if(!init_rendering()) { return 1; }
+    if(!create_swapchain()) { return 1; }
 
-    descriptor_pool
+    if(!descriptor_pool
         .set_type_count(vk::DescriptorType::eUniformBuffer, 10u)
         .set_type_count(vk::DescriptorType::eCombinedImageSampler, 10u)
         .set_type_count(vk::DescriptorType::eStorageBuffer, 10u)
-        .create(100u, device);
+        .create(100u, device))
+    {
+        return 1;
+    }
 
-    create_draw_data();
-    create_descriptor_data();
-    create_graphics_pipeline();
+    if(!create_draw_data()) { return 1; }
+    if(!create_descriptor_data()) { return 1; }
+    if(!create_graphics_pipeline()) { return 1; }
 
     // -------------------------------------------------------------------------
     // main loop ---------------------------------------------------------------
@@ -429,35 +433,88 @@ int main() {
 }
 
 // =============================================================================
-void vulkan_setup() {
+bool vulkan_setup() {
     // instance ----------------------------------------------------------------
-    instance.create(instance_config, app_name, app_version);
+    if(!instance.create(instance_config, app_name, app_version)) {
+        Log::error("Failed to create Vulkan instance.");
+        return false;
+    }
 
-    // target window, surface, and physical device -----------------------------
-    TargetWindow::init();
-    target_window.create(app_name);
+    // target window, and surface ----------------------------------------------
+    if(!TargetWindow::init()) {
+        Log::error("Failed to initialize target window.");
+        instance.destroy();
+        return false;
+    }
+    if(!target_window.create(app_name)) {
+        Log::error("Failed to create target window.");
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
 
-    surface.create(target_window, instance, { .enable_vsync = true });
+    if(!surface.create(target_window, instance, { .enable_vsync = true })) {
+        Log::error("Failed to create surface.");
+        target_window.destroy();
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
 
-    vkPhysicalDevice::populate_device_list(
-        instance,
-        surface,
-        features,
-        physical_device_extensions
-    );
+    // physical device ---------------------------------------------------------
+    if(!vkPhysicalDevice::populate_device_list(instance,
+                                               surface,
+                                               features,
+                                               device_extensions))
+    {
+        Log::error("Failed to populate physical device list.");
+        surface.destroy();
+        target_window.destroy();
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
 
-    vkPhysicalDevice::select_device(
+    if(!vkPhysicalDevice::select_device(
         vk::PhysicalDeviceType::eDiscreteGpu
         // vk::PhysicalDeviceType::eIntegratedGpu
-    );
+       ))
+    {
+        Log::error("Failed to select physical device.");
+        vkPhysicalDevice::clear_device_list();
+        surface.destroy();
+        target_window.destroy();
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
 
-    surface.get_details(vkPhysicalDevice::current_device());
+    // surface details ---------------------------------------------------------
+    if(!surface.check_details(vkPhysicalDevice::current_device())) {
+        Log::error("Surface details check failed.");
+        vkPhysicalDevice::clear_device_list();
+        surface.destroy();
+        target_window.destroy();
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
 
     // logical device ----------------------------------------------------------
-    device.create(vkPhysicalDevice::current_device());
+    if(!device.create(vkPhysicalDevice::current_device())) {
+        Log::error("Failed to create logical dvice.");
+        vkPhysicalDevice::clear_device_list();
+        surface.destroy();
+        target_window.destroy();
+        TargetWindow::shutdown();
+        instance.destroy();
+        return false;
+    }
+
+    return true;
 }
 
-void init_rendering() {
+bool init_rendering() {
 #ifdef RENDER_PASS
 
 #ifdef COLOR_PASS
@@ -518,7 +575,7 @@ void init_rendering() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
-    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
+    msaa_sample_count = vkPhysicalDevice::current_device().max_msaa_samples();
 
     msaa_dynamic.init(
         surface,
@@ -532,9 +589,10 @@ void init_rendering() {
 
 #endif // DYNAMIC_RENDERING
 
+    return true;
 }
 
-void create_swapchain() {
+bool create_swapchain() {
     // swapchain  --------------------------------------------------------------
     swapchain.create(device, surface);
 
@@ -578,9 +636,11 @@ void create_swapchain() {
     for(auto &sync : graphics_syncs) {
         sync.create(device);
     }
+
+    return true;
 }
 
-void create_draw_data() {
+bool create_draw_data() {
     // models ------------------------------------------------------------------
     plane_a.create(
         vkPhysicalDevice::current_device(),
@@ -666,9 +726,10 @@ void create_draw_data() {
         device
     );
 
+    return true;
 }
 
-void create_descriptor_data() {
+bool create_descriptor_data() {
     // camera descriptor sets --------------------------------------------------
     camera_descriptor_set_layout
         .add_binding(
@@ -743,9 +804,11 @@ void create_descriptor_data() {
             vk::DescriptorType::eCombinedImageSampler
         )
         .update();
+
+    return true;
 }
 
-void create_graphics_pipeline() {
+bool create_graphics_pipeline() {
     // shaders and pipeline after descriptor sets ------------------------------
     vert_stage.create("shaders/04texture.vert", device);
     frag_stage.create("shaders/02texture.frag", device);
@@ -805,6 +868,7 @@ void create_graphics_pipeline() {
             device
         );
 
+    return true;
 }
 
 void destroy_graphics_pipeline() {
@@ -973,7 +1037,10 @@ void recreate_swapchain() {
 
     swapchain.destroy();
 
-    surface.get_details(vkPhysicalDevice::current_device());
+    if(!surface.check_details(vkPhysicalDevice::current_device())) {
+        Log::error("Failed to check surface details.");
+        return;
+    }
 
     graphics_pipeline.update_dimensions(surface.extent(), { });
 

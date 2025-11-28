@@ -13,7 +13,7 @@ bool vkDebugMessenger::create(vkInstance const &instance) {
     }
 
     if(!instance.native()) {
-        Log::error("Cannot create swapchain with invalid instance.");
+        Log::error("Cannot create debug messenger with invalid instance.");
         return false;
     }
 

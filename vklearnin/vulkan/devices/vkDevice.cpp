@@ -8,7 +8,7 @@ namespace vkl {
 // =============================================================================
 bool vkDevice::create(vkPhysicalDevice const &physical_device) {
     if(_handle) {
-        Log::error("Device already created.");
+        Log::error("Device {} already created.", _handle);
         return false;
     }
 
@@ -24,7 +24,7 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
     vk::DeviceQueueCreateInfo const queue_create_info[] {{
         .pNext = nullptr,
         .flags = { },
-        .queueFamilyIndex = physical_device.cmd_queue_index(),
+        .queueFamilyIndex = physical_device.graphics_queue_index(),
         .queueCount = static_cast<uint32_t>(std::size(queue_priorities)),
         .pQueuePriorities = queue_priorities,
     }};
@@ -63,17 +63,15 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
 
     // Check that we've got good results to work with
     if(result != vk::Result::eSuccess) {
-        Log::critical(
-            "Unable to create logical device: '{}'",
-            vk::to_string(result)
-        );
+        Log::critical("Unable to create logical device: '{}'",
+                      vk::to_string(result));
         return false;
     }
 
-    Log::trace("Created logical device {}", _handle);
+    Log::trace("Created logical device {}.", _handle);
 
     // Set up the queue abstraction
-    _cmd_queue.set(*this, physical_device.cmd_queue_index());
+    _cmd_queue.set(*this, physical_device.graphics_queue_index());
 
     // This is the final step in providing the dynamic loader with information
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_handle);

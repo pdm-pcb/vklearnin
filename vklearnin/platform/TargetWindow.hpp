@@ -25,10 +25,10 @@ public:
     TargetWindow & operator=(TargetWindow &&) = delete;
     TargetWindow & operator=(TargetWindow const &) = delete;
 
-    static bool init();
+    [[nodiscard]] static bool init();
     static bool shutdown();
 
-    bool create(std::string_view const app_name);
+    [[nodiscard]] bool create(std::string_view const app_name);
     bool destroy();
 
     inline void show() const { ::glfwShowWindow(_window); }
@@ -47,6 +47,8 @@ public:
     }
 #endif // VKL platform
 
+    static bool initialized() { return _initialized; }
+
 private:
     static bool _initialized;
 
@@ -56,7 +58,7 @@ private:
     vk::Extent2D _window_size     { };
     vk::Offset2D _window_position { };
 
-    void _get_resolution();
+    [[nodiscard]] bool _get_resolution();
     void _size_and_place();
 
     static void _error_callback(int code, char const *message);

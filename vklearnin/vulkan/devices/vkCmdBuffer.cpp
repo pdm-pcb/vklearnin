@@ -148,12 +148,12 @@ void vkCmdBuffer::end_render_pass() const {
 void
 vkCmdBuffer::begin_rendering(vk::RenderingInfoKHR const &rendering_info) const
 {
-    _handle.beginRenderingKHR(rendering_info);
+    _handle.beginRendering(rendering_info);
 }
 
 // =============================================================================
 void vkCmdBuffer::end_rendering() const {
-    _handle.endRenderingKHR();
+    _handle.endRendering();
 }
 
 // =============================================================================

@@ -24,19 +24,20 @@ public:
         bool enable_vsync = false;
     };
 
-    bool create(TargetWindow const &target_window, vkInstance const &instance,
-                Config const &config);
+    [[nodiscard]] bool create(TargetWindow const &target_window,
+                              vkInstance const &instance,
+                              Config const &config);
     bool destroy();
 
-    void get_details(vkPhysicalDevice const &device);
+    [[nodiscard]] bool check_details(vkPhysicalDevice const &device);
 
-    inline auto const & native()  const { return _handle; }
-    inline auto min_image_count() const { return _min_image_count; }
-    inline auto max_image_count() const { return _max_image_count; }
-    inline auto const & extent()  const { return _extent; }
-    inline auto const & format()  const { return _format; }
-    inline auto present_mode()    const { return _present_mode; }
-    inline auto aspect_ratio()    const { return _aspect_ratio; }
+    [[nodiscard]] inline auto const & native()  const { return _handle; }
+    [[nodiscard]] inline auto min_image_count() const { return _min_image_count; }
+    [[nodiscard]] inline auto max_image_count() const { return _max_image_count; }
+    [[nodiscard]] inline auto const & extent()  const { return _extent; }
+    [[nodiscard]] inline auto const & format()  const { return _format; }
+    [[nodiscard]] inline auto present_mode()    const { return _present_mode; }
+    [[nodiscard]] inline auto aspect_ratio()    const { return _aspect_ratio; }
 
 private:
     vk::SurfaceKHR _handle   { nullptr };
@@ -49,12 +50,14 @@ private:
     uint32_t     _min_image_count { 0u };
     uint32_t     _max_image_count { 0u };
 
-    vk::SurfaceFormatKHR _format       { vk::Format::eUndefined };
+    vk::SurfaceFormatKHR _format { };
     vk::PresentModeKHR   _present_mode { vk::PresentModeKHR::eImmediate };
 
-    void _get_capabilities(vk::PhysicalDevice const &device);
-    void _get_formats(vk::PhysicalDevice const &device);
-    void _get_present_modes(vk::PhysicalDevice const &device);
+    [[nodiscard]] bool _check_capabilities(vk::PhysicalDevice const &device);
+    [[nodiscard]] bool _check_formats(vk::PhysicalDevice const &device);
+    [[nodiscard]] bool _check_present_modes(vk::PhysicalDevice const &device);
+
+    void _reset();
 };
 
 } // namespace vkl

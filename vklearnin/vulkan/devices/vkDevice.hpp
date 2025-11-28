@@ -21,14 +21,14 @@ public:
     vkDevice & operator=(vkDevice &&) = delete;
     vkDevice & operator=(vkDevice const &) = delete;
 
-    bool create(vkPhysicalDevice const &physical_device);
+    [[nodiscard]] bool create(vkPhysicalDevice const &physical_device);
     bool destroy();
 
-    bool wait_idle() const;
+    [[nodiscard]] bool wait_idle() const;
 
-    inline auto const & native() const { return _handle; }
-    inline auto const & cmd_queue() const { return _cmd_queue; }
-    inline auto const & transient_pool() const { return _transient_pool; }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto const & cmd_queue() const { return _cmd_queue; }
+    [[nodiscard]] inline auto const & transient_pool() const { return _transient_pool; }
 
 private:
     vk::Device _handle { nullptr };
