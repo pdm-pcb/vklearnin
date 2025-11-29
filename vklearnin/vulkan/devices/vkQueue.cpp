@@ -45,17 +45,16 @@ bool vkQueue::clear() {
     return true;
 }
 
-bool vkQueue::submit(vk::SubmitInfo const &submit_info,
+// =============================================================================
+void vkQueue::submit(vk::SubmitInfo const &submit_info,
                      vk::Fence const &fence) const
 {
     _handle.submit(submit_info, fence);
-    return true;
 }
 
 // =============================================================================
-bool vkQueue::submit(vk::SubmitInfo const &submit_info) const {
+void vkQueue::submit(vk::SubmitInfo const &submit_info) const {
     _handle.submit(submit_info);
-    return true;
 }
 
 // =============================================================================

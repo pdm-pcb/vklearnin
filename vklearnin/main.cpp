@@ -31,8 +31,8 @@
 // #define MSAA_PASS
 
 #define DYNAMIC_RENDERING
-// #define COLOR_DYNAMIC
-#define DEPTH_DYNAMIC
+#define COLOR_DYNAMIC
+// #define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -81,9 +81,6 @@ static auto features = vkPhysicalDevice::Features {
 
 static std::vector<char const *> const device_extensions {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-// #ifdef DYNAMIC_RENDERING
-//     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-// #endif // DYNAMIC_RENDERING
 };
 
 // pipeline stuff --------------------------------------------------------------

@@ -483,7 +483,7 @@ bool vkImage::_send_to_device() {
 
     cmd_buffer.end_recording();
 
-    auto const submit_success = _device->graphics_queue().submit(
+    _device->graphics_queue().submit(
         vk::SubmitInfo {
             .pNext                = nullptr,
             .waitSemaphoreCount   = 0u,
@@ -505,7 +505,7 @@ bool vkImage::_send_to_device() {
     ::stbi_image_free(_raw_data);
     _raw_data = nullptr;
 
-    return submit_success;
+    return true;
 }
 
 // =============================================================================

@@ -23,10 +23,10 @@ public:
     bool set(vkDevice const &device, uint32_t const family_index);
     bool clear();
 
-    bool submit(vk::SubmitInfo const &submit_info,
+    void submit(vk::SubmitInfo const &submit_info,
                 vk::Fence const &fence) const;
 
-    bool submit(vk::SubmitInfo const &submit_info) const;
+    void submit(vk::SubmitInfo const &submit_info) const;
 
     bool present(vk::PresentInfoKHR const &present_info) const;
 

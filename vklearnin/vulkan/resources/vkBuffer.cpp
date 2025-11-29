@@ -158,24 +158,21 @@ bool vkBuffer::fill_buffer(void const *data) const {
         return false;
     }
 
-    void *mapped_memory_handle;
+    void *mapped_memory_handle = nullptr;
 
     auto const result = _device->native().mapMemory(
-        _memory_handle,
-        0,
-        VK_WHOLE_SIZE,
-        { },
-        &mapped_memory_handle
+        _memory_handle,         // location
+        0,                      // offset
+        VK_WHOLE_SIZE,          // size
+        { },                    // flags
+        &mapped_memory_handle   // destination
     );
 
     if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to map buffer {} memory {}: '{}'",
-            _handle,
-            _memory_handle,
-            vk::to_string(result)
-        );
-
+        Log::error("Unable to map buffer {} memory {}: '{}'",
+                   _handle,
+                   _memory_handle,
+                   vk::to_string(result));
         return false;
     }
 
@@ -204,29 +201,20 @@ bool vkBuffer::send_to_device(void const *data,
             *_device
     ))
     {
-        Log::error(
-            "Failed to create staging buffer for buffer {}",
-            _handle
-        );
+        Log::error("Failed to create staging buffer for buffer {}", _handle);
         return false;
     }
 
     if(!staging_buffer.allocate(vk::MemoryPropertyFlagBits::eHostVisible
                                 | vk::MemoryPropertyFlagBits::eHostCoherent))
     {
-        Log::error(
-            "Failed to allocate staging buffer for buffer {}",
-            _handle
-        );
+        Log::error("Failed to allocate staging buffer for buffer {}", _handle);
         staging_buffer.destroy();
         return false;
     }
 
     if(!staging_buffer.fill_buffer(data)) {
-        Log::error(
-            "Failed to fill staging buffer for buffer {}",
-            _handle
-        );
+        Log::error("Failed to fill staging buffer for buffer {}", _handle);
         staging_buffer.destroy();
         return false;
     }
@@ -239,33 +227,25 @@ bool vkBuffer::send_to_device(void const *data,
 
     vkCmdBuffer cmd_buffer;
     if(!cmd_buffer.allocate(*_device, cmd_pool, queue)) {
-        Log::error(
-            "Failed to allocate command buffer for buffer {}",
-            _handle
-        );
+        Log::error("Failed to allocate command buffer for buffer {}", _handle);
         staging_buffer.destroy();
         return false;
     }
 
     if(!cmd_buffer.begin_one_time_submit()) {
-        Log::error(
-            "Failed to begin one-time-submit for buffer {}",
-            _handle
-        );
+        Log::error("Failed to begin one-time-submit for buffer {}", _handle);
         staging_buffer.destroy();
         cmd_buffer.free();
         return false;
     }
 
-        cmd_buffer.native().copyBuffer(
-            staging_buffer.native(),
-            _handle,
-            copy_region
-        );
+    cmd_buffer.native().copyBuffer(staging_buffer.native(),
+                                   _handle,
+                                   copy_region);
 
     cmd_buffer.end_recording();
 
-    auto const submit_success = queue.submit(
+    queue.submit(
         vk::SubmitInfo {
             .pNext                = nullptr,
             .waitSemaphoreCount   = 0u,
@@ -283,7 +263,7 @@ bool vkBuffer::send_to_device(void const *data,
     cmd_buffer.free();
     staging_buffer.destroy();
 
-    return submit_success;
+    return true;
 }
 
 // =============================================================================
