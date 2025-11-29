@@ -1,3 +1,9 @@
+- ## 2025-11-29
+	- Did some more cleanup
+	- Reenabled Vulkan-Hpp exceptions
+	Next?
+	- Swapchain chapter
+	- Rendering chapter
 - ## 2025-11-28
 	- Shored up many old inconsistencies
 	- Got 1.3 and dynamic rendering enabling correctly

@@ -28,18 +28,12 @@ public:
                 uint32_t min_image_offset = 0u);
     bool destroy();
 
-    uint32_t acquire_next_image(vk::Semaphore const &signal_sem) const;
+    [[nodiscard]] uint32_t acquire_next_image(vk::Semaphore const &signal_sem) const;
 
-    inline auto const & native() const { return _handle; }
-    inline auto image_count() const { return _image_count; }
-
-    inline std::span<vkImage> const images() {
-        return _images;
-    }
-
-    inline std::span<vkImageView const> const image_views() const {
-        return _image_views;
-    }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto image_count() const { return _image_count; }
+    [[nodiscard]] inline std::span<vkImage> const images() { return _images; }
+    [[nodiscard]] inline std::span<vkImageView const> const image_views() const { return _image_views; }
 
 private:
     vk::SwapchainKHR _handle  { nullptr };

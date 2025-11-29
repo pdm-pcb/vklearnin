@@ -34,12 +34,10 @@ bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface,
     _image_count = _surface->min_image_count() + min_image_offset;
 
     if(_image_count > _surface->max_image_count()) {
-        Log::error(
-            "Requested swapchain image count {} exceeds maximum surface image "
-            "count {}.",
-            _image_count,
-            _surface->max_image_count()
-        );
+        Log::error("Requested swapchain image count {} exceeds maximum surface "
+                   "image count {}.",
+                   _image_count,
+                   _surface->max_image_count());
 
         _device = nullptr;
         _surface = nullptr;
@@ -91,35 +89,25 @@ bool vkSwapchain::destroy() {
 
 // =============================================================================
 uint32_t vkSwapchain::acquire_next_image(vk::Semaphore const &signal_sem) const {
-    uint32_t next_image_index;
-
     // Wait for no more than one second
     using namespace std::chrono_literals;
     static auto const wait_period =
         std::chrono::duration_cast<std::chrono::nanoseconds>(1.0s).count();
 
-    // https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkAcquireNextImageKHR.html
-    // Vulkan-HPP asserts when a function returns anything classified as an
-    // error. And according to the docs, returning out-of-date means the
-    // function failed. So to bypass as little of Vulkan-HPP as possible, I'm
-    // flipping between Vulkan-HPP and the C API for this function call.
+    auto const [ result, next_frame ] = _device->native().acquireNextImageKHR(
+        _handle,
+        wait_period,
+        signal_sem
+    );
 
-    auto const result = vk::Result(::vkAcquireNextImageKHR(
-        _device->native(), // Logical device, per usual
-        _handle,           // The swapchain we're trying to get an image from
-        wait_period,       // How long to wait for a new image
-        signal_sem,        // A semaphore to signal when an image is released
-        nullptr,           // A fence to signal when an image is released
-        &next_image_index  // The index of the next free image
-    ));
+    if(result != vk::Result::eSuccess) {
+        Log::warn("Failed to acquire next swapchain image: '{}'",
+                  vk::to_string(result));
 
-    if(result == vk::Result::eSuccess) {
-        return next_image_index;
+        return std::numeric_limits<uint32_t>::max();
     }
 
-    Log::warn("Failed to acquire next swapchain image: '{}'",
-             vk::to_string(result));
-    return std::numeric_limits<uint32_t>::max();
+    return next_frame;
 }
 
 // =============================================================================
@@ -132,8 +120,8 @@ void vkSwapchain::_populate_create_info() {
         .imageExtent     = _surface->extent(),
 
         // Image array layers will always be one, except in the case of a
-        // device with multiple displays interested in the same swapchain, like
-        // a VR headset
+        // device with multiple displays interested in the same swapchain,
+        // like a VR headset
         .imageArrayLayers = 1u,
 
         // Marking the images in this swapchain as color attachments means they
@@ -168,19 +156,17 @@ void vkSwapchain::_populate_create_info() {
         .oldSwapchain = nullptr,
     };
 
-    Log::trace(
-        "\nSwapchain Create Info:"
-        "\n    Extent:       {}x{}"
-        "\n    Image Count:  {}"
-        "\n    Format:       {}"
-        "\n    Color Space:  {}"
-        "\n    Present Mode: {}",
-        _create_info.imageExtent.width, _create_info.imageExtent.height,
-        _create_info.minImageCount,
-        vk::to_string(_create_info.imageFormat),
-        vk::to_string(_create_info.imageColorSpace),
-        vk::to_string(_create_info.presentMode)
-    );
+    Log::trace("\nSwapchain Create Info:"
+               "\n    Extent:       {}x{}"
+               "\n    Image Count:  {}"
+               "\n    Format:       {}"
+               "\n    Color Space:  {}"
+               "\n    Present Mode: {}",
+               _create_info.imageExtent.width, _create_info.imageExtent.height,
+               _create_info.minImageCount,
+               vk::to_string(_create_info.imageFormat),
+               vk::to_string(_create_info.imageColorSpace),
+               vk::to_string(_create_info.presentMode));
 }
 
 // =============================================================================

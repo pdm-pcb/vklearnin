@@ -608,7 +608,6 @@ bool create_swapchain() {
     swapchain.create(device, surface);
 
 #ifdef RENDER_PASS
-
     // frame buffers -----------------------------------------------------------
     frame_buffers.resize(swapchain.image_count());
     for(uint32_t i = 0u; i < swapchain.image_count(); ++i) {
@@ -640,7 +639,6 @@ bool create_swapchain() {
             device
         );
     }
-
 #endif // RENDER_PASS
 
     graphics_syncs.resize(swapchain.image_count());
