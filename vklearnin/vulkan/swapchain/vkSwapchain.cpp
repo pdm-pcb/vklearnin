@@ -54,14 +54,7 @@ bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface,
     _populate_create_info();
 
     // Finally, create the swapchain
-    auto const [ result, value ] = _device->native().createSwapchainKHR(_create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create swapchain: '{}'", vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device->native().createSwapchainKHR(_create_info);
     Log::trace(
         "Created swapchain {} with {} frames in flight",
         _handle,
@@ -192,19 +185,11 @@ void vkSwapchain::_populate_create_info() {
 
 // =============================================================================
 void vkSwapchain::_get_images() {
-    auto const [ result, value ] =
+    auto const swapchain_images =
         _device->native().getSwapchainImagesKHR(_handle);
 
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to get swapchain images: '{}'",
-                  vk::to_string(result));
-        return;
-    }
-
-    auto const swapchain_images = value;
-
     if(swapchain_images.size() != _images.size()) {
-        Log::error("Swapchain provided {} images, expected {}",
+        Log::error("Swapchain provided {} images; expected {}",
                   swapchain_images.size(), _image_count);
         return;
     }

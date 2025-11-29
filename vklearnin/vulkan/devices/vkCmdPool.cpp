@@ -37,16 +37,9 @@ bool vkCmdPool::create(vkDevice const &device,
     //     .queueFamilyIndex = queue_index,
     // };
 
-    auto const [ result, value ] = _device.createCommandPool(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create command pool: '{}'", vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
-
+    _handle = _device.createCommandPool(create_info);
     Log::trace("Created command pool {}", _handle);
+
     return true;
 }
 
@@ -65,19 +58,8 @@ bool vkCmdPool::destroy() {
 }
 
 // =============================================================================
-bool vkCmdPool::reset(vk::CommandPoolResetFlags const flags) const {
-    auto const result = _device.resetCommandPool(_handle, flags);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to reset command buffer {}: '{}'",
-             _handle,
-             vk::to_string(result)
-        );
-        return false;
-    }
-
-    return true;
+void vkCmdPool::reset(vk::CommandPoolResetFlags const flags) const {
+    _device.resetCommandPool(_handle, flags);
 }
 
 } // namespace vkl

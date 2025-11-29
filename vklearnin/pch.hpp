@@ -10,8 +10,6 @@
 #include <numbers>
 
 #define VULKAN_HPP_NO_CONSTRUCTORS           // Use designated initializers
-#define VULKAN_HPP_NO_SETTERS                // structs don't need setters
-#define VULKAN_HPP_NO_EXCEPTIONS             // Check the return values manually
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1 // Find function pointers for us
 
 #ifdef VKL_LINUX

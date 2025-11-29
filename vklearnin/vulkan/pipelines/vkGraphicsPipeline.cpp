@@ -108,10 +108,7 @@ bool vkGraphicsPipeline::create(Config const &config, vkDevice const &device) {
     _init_depth_stencil(config);
     _init_blend_states();
     _init_dynamic_states();
-
-    if(!_init_layout()) {
-        return false;
-    }
+    _init_layout();
 
     _create_info = vk::GraphicsPipelineCreateInfo {
         .pNext = config.rendering_create_info,
@@ -426,7 +423,7 @@ void vkGraphicsPipeline::_init_dynamic_states() {
 }
 
 // =============================================================================
-bool vkGraphicsPipeline::_init_layout() {
+void vkGraphicsPipeline::_init_layout() {
     vk::PipelineLayoutCreateInfo const layout_info {
         .setLayoutCount = static_cast<uint32_t>(_descriptor_set_layouts.size()),
         .pSetLayouts    = _descriptor_set_layouts.data(),
@@ -434,17 +431,8 @@ bool vkGraphicsPipeline::_init_layout() {
         .pPushConstantRanges    = _push_constants.data(),
     };
 
-    auto const [ result, value ] = _device.createPipelineLayout(layout_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create pipeline layout: '{}'",
-                  vk::to_string(result));
-        return false;
-    }
-
-    _layout = value;
-
+    _layout = _device.createPipelineLayout(layout_info);
     Log::trace("Created graphics pipeline layout {}", _layout);
-    return true;
 }
 
 } // namespace vkl

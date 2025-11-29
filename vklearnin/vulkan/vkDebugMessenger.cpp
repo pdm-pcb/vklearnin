@@ -38,17 +38,7 @@ bool vkDebugMessenger::create(vkInstance const &instance) {
     };
 
     // Give it a shot
-    auto const [ result, value ] =
-        _instance.createDebugUtilsMessengerEXT(messenger_info);
-
-    // React accordingly
-    if(result != vk::Result::eSuccess) {
-        Log::error("Unable to create Vulkan debug messenger: '{}'",
-                  vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
+    _handle = _instance.createDebugUtilsMessengerEXT(messenger_info);
     Log::trace("Created Vulkan debug messenger {}", _handle);
 
     return true;

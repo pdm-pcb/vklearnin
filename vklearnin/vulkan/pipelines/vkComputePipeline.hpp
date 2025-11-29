@@ -59,7 +59,7 @@ private:
     vk::PipelineLayout _layout { nullptr };
     vk::ComputePipelineCreateInfo _create_info { };
 
-    bool _init_layout();
+    void _init_layout();
 };
 
 } // namespace vkl;

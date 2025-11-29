@@ -59,28 +59,6 @@ bool vkImage::create(vk::Image const &handle,
     }
 
     _handle = handle;
-
-#ifdef VKL_DEBUG
-    _debug_name = debug_name;
-    auto const result = device.native().setDebugUtilsObjectNameEXT(
-        vk::DebugUtilsObjectNameInfoEXT {
-            .pNext        = nullptr,
-            .objectType   = _handle.objectType,
-            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
-            .pObjectName  = _debug_name.c_str(),
-        }
-    );
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to set image {} debug name: '{}'",
-            _handle,
-            vk::to_string(result)
-        );
-        return false;
-    }
-#endif // VKL_DEBUG
-
     _format = format;
     _extent = extent;
     _aspect_flags = vk::ImageAspectFlagBits::eColor;
@@ -121,15 +99,15 @@ bool vkImage::create(std::string_view const file_name,
         _calc_mip_levels();
     }
 
-    Log::trace(
-        "\nCreating image with"
-        "\n    Size:         {} bytes"
-        "\n    Extent:       {}x{}x{}"
-        "\n    Array Layers: {}",
-        _size_bytes,
-        _extent.width, _extent.height, _extent.depth,
-        _array_layers
-    );
+    Log::trace("\nCreating image with"
+               "\n    Size:         {} bytes"
+               "\n    Extent:       {}x{}x{}"
+               "\n    Array Layers: {}"
+               "\n    Mip Levels:   {}",
+               _size_bytes,
+               _extent.width, _extent.height, _extent.depth,
+               _array_layers,
+               _mip_levels);
 
     vk::ImageCreateInfo const create_info {
         .pNext                 = nullptr,
@@ -148,41 +126,8 @@ bool vkImage::create(std::string_view const file_name,
         .initialLayout         = vk::ImageLayout::eUndefined,
     };
 
-    auto const [ result, value ] = _device->native().createImage(create_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to create image from file '{:s}': '{}'",
-            file_name.data(),
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device->native().createImage(create_info);
     Log::trace("Created image {} from file '{}'.", _handle, file_name.data());
-
-#ifdef VKL_DEBUG
-    _debug_name = debug_name;
-    auto const debug_name_result = device.native().setDebugUtilsObjectNameEXT(
-        vk::DebugUtilsObjectNameInfoEXT {
-            .pNext        = nullptr,
-            .objectType   = _handle.objectType,
-            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
-            .pObjectName  = _debug_name.c_str(),
-        }
-    );
-
-    if(debug_name_result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to set image {} debug name: '{}'",
-            _handle,
-            vk::to_string(debug_name_result)
-        );
-        return false;
-    }
-#endif // VKL_DEBUG
-
-    Log::trace("Image {}: {} mip levels.", _handle, _mip_levels);
 
     if(!_allocate(details.memory_flags)) {
         destroy();
@@ -249,52 +194,11 @@ bool vkImage::create(vk::Extent2D const &extent,
         .initialLayout = vk::ImageLayout::eUndefined,
     };
 
-    auto const [ result, value ] = _device->native().createImage(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Unable to create image: '{}'", vk::to_string(result));
-
-        _physical_device = nullptr;
-        _device = nullptr;
-        _aspect_flags = { };
-        _array_layers = 0u;
-        _format = { };
-        _extent = vk::Extent3D { };
-
-        return false;
-    }
-
-    _handle = value;
-
-    Log::trace(
-        "Created image {} with extent {}x{}, samples {}",
-        _handle,
-        extent.width, extent.height,
-        vk::to_string(details.samples)
-    );
-
-#ifdef VKL_DEBUG
-    _debug_name = debug_name;
-    auto const debug_name_result = device.native().setDebugUtilsObjectNameEXT(
-        vk::DebugUtilsObjectNameInfoEXT {
-            .pNext        = nullptr,
-            .objectType   = _handle.objectType,
-            .objectHandle = reinterpret_cast<uint64_t>(VkImage(_handle)),
-            .pObjectName  = _debug_name.c_str(),
-        }
-    );
-
-    if(debug_name_result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to set image {} debug name: '{}'",
-            _handle,
-            vk::to_string(debug_name_result)
-        );
-
-        destroy();
-        return false;
-    }
-#endif // VKL_DEBUG
+    _handle = _device->native().createImage(create_info);
+    Log::trace("Created image {} with extent {}x{}, samples {}",
+               _handle,
+               extent.width, extent.height,
+               vk::to_string(details.samples));
 
     if(!_allocate(details.memory_flags)) {
         destroy();
@@ -321,11 +225,9 @@ bool vkImage::destroy() {
 #endif // VKL_DEBUG
 
     if(_memory_handle) {
-        Log::trace(
-            "Freeing memory {} for image {}.",
-            _memory_handle,
-            _handle
-        );
+        Log::trace("Freeing memory {} for image {}.",
+                   _memory_handle,
+                   _handle);
 
         _device->native().freeMemory(_memory_handle);
         _memory_handle = nullptr;
@@ -465,36 +367,15 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
         .memoryTypeIndex = type_index,
     };
 
-    auto [ result, value ] = _device->native().allocateMemory(alloc_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to allocate device memory for image {} - '{}'",
-            _handle,
-            vk::to_string(result)
-        );
-        return false;
-    }
+    _memory_handle = _device->native().allocateMemory(alloc_info);
+    Log::trace("Allocated {} bytes as {} for image {}",
+               mem_reqs.size,
+               _memory_handle,
+               _handle);
 
-    _memory_handle = value;
-    Log::trace(
-        "Allocated {} bytes as {} for image {}",
-        mem_reqs.size,
-        _memory_handle,
-        _handle
-    );
-
-    result = _device->native().bindImageMemory(_handle, _memory_handle, 0u);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to bind device memory {} for image {}",
-            _memory_handle,
-            _handle
-        );
-        return false;
-    }
-
+    _device->native().bindImageMemory(_handle, _memory_handle, 0u);
     Log::trace("Bound memory {} for image {}", _memory_handle, _handle);
+
     return true;
 }
 

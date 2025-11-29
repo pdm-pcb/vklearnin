@@ -73,9 +73,7 @@ bool vkComputePipeline::create(vkDevice const &device) {
 
     _device = device.native();
 
-    if(!_init_layout()) {
-        return false;
-    }
+    _init_layout();
 
     _create_info = vk::ComputePipelineCreateInfo {
         .pNext = nullptr,
@@ -180,7 +178,7 @@ bool vkComputePipeline::send_push_constants(vk::ShaderStageFlags stage_flags,
 }
 
 // =============================================================================
-bool vkComputePipeline::_init_layout() {
+void vkComputePipeline::_init_layout() {
     vk::PipelineLayoutCreateInfo const layout_info {
         .flags = { },
         .setLayoutCount = static_cast<uint32_t>(_descriptor_set_layouts.size()),
@@ -189,17 +187,8 @@ bool vkComputePipeline::_init_layout() {
         .pPushConstantRanges = _push_constants.data(),
     };
 
-    auto const [ result, value ] = _device.createPipelineLayout(layout_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create compute pipeline layout: '{}'",
-                  vk::to_string(result));
-        return false;
-    }
-
-    _layout = value;
-
+    _layout = _device.createPipelineLayout(layout_info);
     Log::trace("Created compute pipeline layout {}", _layout);
-    return true;
 }
 
 } // namespace vkl

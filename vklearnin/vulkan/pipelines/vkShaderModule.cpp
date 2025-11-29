@@ -35,22 +35,10 @@ bool vkShaderModule::create(std::string_view const filepath,
         .pCode = shader_binary.data(),
     };
 
-    auto const [ result, value ] = _device.createShaderModule(module_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to create shader module from path {}: '{}'",
-            shader_path.string(),
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
-    Log::trace(
-        "Created shader module {} from '{}'",
-         _handle,
-         shader_path.string()
-    );
+    _handle = _device.createShaderModule(module_info);
+    Log::trace("Created shader module {} from '{}'",
+               _handle,
+               shader_path.string());
 
     return true;
 }
@@ -119,10 +107,8 @@ void vkShaderModule::_reflect_shader(StringData const &shader_string) {
     );
 
     if(result != ::SPV_REFLECT_RESULT_SUCCESS) {
-        Log::error(
-            "SPIRV-Reflect failed to create module with error code: '{}'",
-            static_cast<uint32_t>(result)
-        );
+        Log::error("SPIRV-Reflect failed to create module: '{}'",
+                   static_cast<uint32_t>(result) );
         return;
     }
 
@@ -145,33 +131,24 @@ void vkShaderModule::_get_stage(::SpvReflectShaderModule const &module) {
         case ::SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
             _stage = vk::ShaderStageFlagBits::eVertex;
             break;
-
         case ::SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
             _stage = vk::ShaderStageFlagBits::eTessellationControl;
             break;
-
         case ::SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
             _stage = vk::ShaderStageFlagBits::eTessellationEvaluation;
             break;
-
         case ::SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT:
             _stage = vk::ShaderStageFlagBits::eGeometry;
             break;
-
         case ::SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
             _stage = vk::ShaderStageFlagBits::eFragment;
             break;
-
         case ::SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
             _stage = vk::ShaderStageFlagBits::eCompute;
             break;
-
         default:
-            Log::error(
-                "Unsupported SPIRV-reflect shader stage: {:#x}",
-                 static_cast<uint32_t>(module.shader_stage)
-            );
-
+            Log::error("Unsupported SPIRV-reflect shader stage: {:#x}",
+                       static_cast<uint32_t>(module.shader_stage));
             return;
     }
 
@@ -181,10 +158,8 @@ void vkShaderModule::_get_stage(::SpvReflectShaderModule const &module) {
 // =============================================================================
 void vkShaderModule::_get_entry_point(::SpvReflectShaderModule const &module) {
     if(module.entry_point_count != 1) {
-        Log::error(
-            "Shader module has {} entry points; must only have one.",
-            module.entry_point_count
-        );
+        Log::error("Shader module has {} entry points; must only have one.",
+                   module.entry_point_count);
         return;
     }
 
@@ -218,11 +193,8 @@ void vkShaderModule::_get_vertex_inputs(::SpvReflectShaderModule const &module)
     );
 
     if(result != ::SPV_REFLECT_RESULT_SUCCESS) {
-        Log::error(
-            "SPIRV-Reflect failed to get count of input variables with error "
-            "code: '{}'",
-            static_cast<uint32_t>(result)
-        );
+        Log::error("SPIRV-Reflect failed to get count of input variables: '{}'",
+                   static_cast<uint32_t>(result));
         return;
     }
 
@@ -236,11 +208,8 @@ void vkShaderModule::_get_vertex_inputs(::SpvReflectShaderModule const &module)
     );
 
     if(result != ::SPV_REFLECT_RESULT_SUCCESS) {
-        Log::error(
-            "SPIRV-Reflect failed to enumerate input variables with error "
-            "code: '{}'",
-            static_cast<uint32_t>(result)
-        );
+        Log::error("SPIRV-Reflect failed to enumerate input variables: '{}' ",
+                   static_cast<uint32_t>(result));
         return;
     }
 
@@ -346,11 +315,8 @@ void vkShaderModule::_get_descriptors(::SpvReflectShaderModule const &module) {
     );
 
     if(result != ::SPV_REFLECT_RESULT_SUCCESS) {
-        Log::error(
-            "SPIRV-Reflect failed to get count of descriptor sets with error "
-            "code: '{}'",
-            static_cast<uint32_t>(result)
-        );
+        Log::error("SPIRV-Reflect failed to get count of descriptor sets: '{}'",
+                   static_cast<uint32_t>(result));
         return;
     }
 
@@ -364,11 +330,8 @@ void vkShaderModule::_get_descriptors(::SpvReflectShaderModule const &module) {
     );
 
     if(result != ::SPV_REFLECT_RESULT_SUCCESS) {
-        Log::error(
-            "SPIRV-Reflect failed to enumerate descriptor sets with error "
-            "code: '{}'",
-            static_cast<uint32_t>(result)
-        );
+        Log::error("SPIRV-Reflect failed to enumerate descriptor sets: '{}' ",
+                   static_cast<uint32_t>(result));
         return;
     }
 

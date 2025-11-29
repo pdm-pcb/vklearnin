@@ -46,16 +46,9 @@ bool vkDescriptorSet::allocate(vkDescriptorSetLayout const &layout,
         .pSetLayouts = &_layout,
     };
 
-    auto const [ result, value] = _device.allocateDescriptorSets(alloc_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to allocate descriptor sets.");
-        return false;
-    }
-
-    _handle = value[0]; // lolwtf is this hacky bullshit
-
+    _handle = _device.allocateDescriptorSets(alloc_info)[0];
     Log::trace("Allocated descriptor set {}", _handle);
+
     return true;
 }
 

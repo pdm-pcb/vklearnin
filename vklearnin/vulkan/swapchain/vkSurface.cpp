@@ -39,7 +39,7 @@ bool vkSurface::create(TargetWindow const &target_window,
         .window = target_window.native(),
     };
 
-    auto const [ result, value ] = _instance.createXlibSurfaceKHR(create_info);
+    _handle = _instance.createXlibSurfaceKHR(create_info);
 #elif VKL_WINDOWS
     vk::Win32SurfaceCreateInfoKHR const create_info {
         .flags = { },
@@ -47,15 +47,9 @@ bool vkSurface::create(TargetWindow const &target_window,
         .hwnd = target_window.native(),
     };
 
-    auto const [ result, value ] = _instance.createWin32SurfaceKHR(create_info);
+    _handle = _instance.createWin32SurfaceKHR(create_info);
 #endif // VKL platform
 
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create surface.");
-        return false;
-    }
-
-    _handle = value;
     Log::trace("Created surface {}", _handle);
 
     return true;
@@ -92,13 +86,7 @@ bool vkSurface::_check_capabilities(vk::PhysicalDevice const &device) {
         return false;
     }
 
-    auto const [ result, caps ] = device.getSurfaceCapabilitiesKHR(_handle);
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to get surface {} capabilities: '{}'",
-                   _handle, vk::to_string(result));
-        return false;
-    }
-
+    auto const caps = device.getSurfaceCapabilitiesKHR(_handle);
     Log::trace(
         "\nSurface Capabilities:"
         "\n     Minimum Image Count: {}"
@@ -190,14 +178,13 @@ bool vkSurface::_check_formats(vk::PhysicalDevice const &device) {
         return false;
     }
 
-    auto const [ result, formats ] = device.getSurfaceFormatsKHR(_handle);
-    if(result != vk::Result::eSuccess || formats.empty()) {
-        Log::error("Failed to get surface {} formats: '{}'",
-                  _handle, vk::to_string(result));
+    auto const formats = device.getSurfaceFormatsKHR(_handle);
+    if(formats.empty()) {
+        Log::error("Surface {} failed to get formats.", _handle);
         return false;
     }
 
-    Log::trace("Surface {} has {} surface formats.", _handle, formats.size());
+    Log::trace("Surface {} found {} formats.", _handle, formats.size());
 
     // These format details were chosen to produce the most intuitive and/or
     // predictable results on the average desktop disaply
@@ -248,14 +235,13 @@ bool vkSurface::_check_present_modes(vk::PhysicalDevice const &device) {
         return false;
     }
 
-    auto const [ result, modes ] = device.getSurfacePresentModesKHR(_handle);
-    if(result != vk::Result::eSuccess || modes.empty()) {
-        Log::error("Failed to get surface {} present modes: '{}'",
-                  _handle, vk::to_string(result));
+    auto const modes = device.getSurfacePresentModesKHR(_handle);
+    if(modes.empty()) {
+        Log::error("Surface {} failed to get present modes.", _handle);
         return false;
     }
 
-    Log::trace("Found {} present modes.", modes.size());
+    Log::trace("Surface {} found {} present modes.", _handle, modes.size());
 
     // This is the order of preference for present modes:
     bool has_fifo_relaxed = false;  // V-Sync on, but with some latency tweaks

@@ -130,7 +130,7 @@ private:
     void _init_depth_stencil(Config const &config);
     void _init_blend_states();
     void _init_dynamic_states();
-    bool _init_layout();
+    void _init_layout();
 };
 
 } // namespace vkl;

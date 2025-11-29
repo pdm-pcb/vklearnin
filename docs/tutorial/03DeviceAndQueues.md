@@ -6,4 +6,4 @@ Since the device owns its queues, I've chosen to build `vkQueue` with a set/clea
 
 For unsynchronized submission, we can simply provide a [`vk::SubmitInfo`](https://docs.vulkan.org/refpages/latest/refpages/source/VkSubmitInfo.html) structure to `vkQueue::submit()`. An overload of this same function takes a submit info struct as well as a [`vk::Fence`](https://docs.vulkan.org/refpages/latest/refpages/source/VkFence.html) to coordinate the device queue's execution order relative to the host. We'll talk more on synchronization before too long.
 
-Presentation also requires synchronization, but as far as `vkQueue` is concerned, the user simply furnishes a [`vk::PresentInfoKHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentInfoKHR.html) structure.
+Presentation also requires synchronization, but as far as `vkQueue` is concerned, the user just furnishes a [`vk::PresentInfoKHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentInfoKHR.html) structure.

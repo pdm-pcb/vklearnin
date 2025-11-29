@@ -60,18 +60,9 @@ bool vkBuffer::create(vk::DeviceSize size_bytes,
         .pQueueFamilyIndices   = nullptr,
     };
 
-    auto const [ result, value ] = _device->native().createBuffer(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to create buffer: '{}'",
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device->native().createBuffer(create_info);
     Log::trace("Created buffer {}", _handle);
+
     return true;
 }
 
@@ -100,11 +91,9 @@ bool vkBuffer::destroy() {
 // =============================================================================
 bool vkBuffer::allocate(vk::MemoryPropertyFlags const flags) {
     if(_memory_handle) {
-        Log::error(
-            "Device memory {} for buffer {} already allocated",
-            _memory_handle,
-            _handle
-        );
+        Log::error("Device memory {} for buffer {} already allocated",
+                   _memory_handle,
+                   _handle);
         return false;
     }
 
@@ -137,35 +126,13 @@ bool vkBuffer::allocate(vk::MemoryPropertyFlags const flags) {
         .memoryTypeIndex = type_index,
     };
 
-    auto [ result, value ] = _device->native().allocateMemory(alloc_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to allocate memory for buffer {}: '{}'",
-            _handle,
-            vk::to_string(result)
-        );
+    _memory_handle = _device->native().allocateMemory(alloc_info);
+    Log::trace("Allocated {} bytes for buffer {}: Device memory {}",
+               _size_bytes,
+               _handle,
+               _memory_handle);
 
-        return false;
-    }
-
-    _memory_handle = value;
-    Log::trace(
-        "Allocated {} bytes for buffer {}: Device memory {}",
-        _size_bytes,
-        _handle,
-        _memory_handle
-    );
-
-    result = _device->native().bindBufferMemory(_handle, _memory_handle, 0u);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to bind buffer {} memory: '{}'",
-            _handle,
-            vk::to_string(result)
-        );
-
-        return false;
-    }
+    _device->native().bindBufferMemory(_handle, _memory_handle, 0u);
 
     return true;
 }

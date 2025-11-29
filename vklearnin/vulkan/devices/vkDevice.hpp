@@ -25,7 +25,7 @@ public:
 
     bool destroy();
 
-    bool wait_idle() const;
+    void wait_idle() const;
 
     [[nodiscard]] inline auto const & native() const { return _handle; }
     [[nodiscard]] inline auto const & graphics_queue() const { return _graphics_queue; }

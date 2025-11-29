@@ -58,18 +58,7 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
     };
 
     // And try to create it
-    auto const [ result, value ] =
-        physical_device.native().createDevice(device_info.get());
-
-    // Check that we've got good results to work with
-    if(result != vk::Result::eSuccess) {
-        Log::critical("Unable to create logical device: '{}'",
-                      vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
-
+    _handle = physical_device.native().createDevice(device_info.get());
     Log::trace("Created logical device {}.", _handle);
 
     // Set up the queue abstraction
@@ -98,18 +87,9 @@ bool vkDevice::destroy() {
 }
 
 // =============================================================================
-bool vkDevice::wait_idle() const {
+void vkDevice::wait_idle() const {
     Log::trace("Waiting for device idle...");
-    auto const result = _handle.waitIdle();
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to wait for device {} idle: '{}'",
-                   _handle,
-                   vk::to_string(result));
-        return false;
-    }
-
-    return true;
+    _handle.waitIdle();
 }
 
 } // namespace vkl

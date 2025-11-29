@@ -50,37 +50,9 @@ bool vkFrameSync::create(vkDevice const &device) {
         .flags = vk::FenceCreateFlagBits::eSignaled
     };
 
-    auto [ fence_result, in_flight_fence ] = _device.createFence(fence_info);
-
-    if(fence_result != vk::Result::eSuccess) {
-        Log::error("Failed to create queue fence: '{}'",
-                  vk::to_string(fence_result));
-        return false;
-    }
-
-    _in_flight_fence = in_flight_fence;
-
-    auto [ wait_sem_result, wait_sem ] =
-        _device.createSemaphore(vk::SemaphoreCreateInfo { });
-
-    if(wait_sem_result != vk::Result::eSuccess) {
-        Log::error("Failed to create present semaphore: '{}'",
-                  vk::to_string(wait_sem_result));
-        return false;
-    }
-
-    _wait_sem = wait_sem;
-
-    auto [ complete_sem_result, complete_sem ] =
-        _device.createSemaphore(vk::SemaphoreCreateInfo { });
-
-    if(complete_sem_result != vk::Result::eSuccess) {
-        Log::error("Failed to create queue semaphore: '{}'",
-                  vk::to_string(complete_sem_result));
-        return false;
-    }
-
-    _complete_sem = complete_sem;
+    _in_flight_fence = _device.createFence(fence_info);
+    _wait_sem        = _device.createSemaphore(vk::SemaphoreCreateInfo { });
+    _complete_sem    = _device.createSemaphore(vk::SemaphoreCreateInfo { });
 
     Log::trace("\nCreated frame sync primitives:"
               "\n    device queue fence         {}"
@@ -141,19 +113,8 @@ bool vkFrameSync::wait_and_reset() const {
         return false;
     }
 
-    auto const fence_reset_result = _device.resetFences(_in_flight_fence);
-    if(fence_reset_result != vk::Result::eSuccess) {
-        Log::error("Failed to reset in-flight fence: '{}'",
-                   vk::to_string(fence_reset_result));
-        return false;
-    }
-
-    auto const pool_reset_result = _device.resetCommandPool(_cmd_pool.native());
-    if(pool_reset_result != vk::Result::eSuccess) {
-        Log::error("Failed to reset command pool: '{}'",
-                   vk::to_string(pool_reset_result));
-        return false;
-    }
+    _device.resetFences(_in_flight_fence);
+    _device.resetCommandPool(_cmd_pool.native());
 
     return true;
 }

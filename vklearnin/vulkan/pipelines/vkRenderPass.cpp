@@ -34,17 +34,9 @@ bool vkRenderPass::create(Attachments const attachments,
         .pDependencies   = subpass_deps.data(),
     };
 
-    auto const [ result, value ] = _device.createRenderPass(create_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to create render pass: '{}'",
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device.createRenderPass(create_info);
     Log::trace("Created render pass {}", _handle);
+
     return true;
 }
 

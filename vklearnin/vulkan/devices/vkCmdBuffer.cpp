@@ -109,27 +109,14 @@ bool vkCmdBuffer::begin_one_time_submit() const {
         .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
     };
 
-    auto const result = _handle.begin(begin_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to begin recording to command buffer {}.",
-            _handle
-        );
-        return false;
-    }
+    _handle.begin(begin_info);
 
     return true;
 }
 
 // =============================================================================
 void vkCmdBuffer::end_recording() const {
-    auto const result = _handle.end();
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to end recording to command buffer {}.",
-            _handle
-        );
-    }
+    _handle.end();
 }
 
 // =============================================================================

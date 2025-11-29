@@ -48,41 +48,18 @@ bool vkQueue::clear() {
 bool vkQueue::submit(vk::SubmitInfo const &submit_info,
                      vk::Fence const &fence) const
 {
-    auto const result = _handle.submit(submit_info, fence);
-    if(result != vk::Result::eSuccess) {
-        Log::error("Submission to queue {} failed: '{}'",
-                   _handle,
-                   vk::to_string(result));
-        return false;
-    }
-
+    _handle.submit(submit_info, fence);
     return true;
 }
 
 // =============================================================================
 bool vkQueue::submit(vk::SubmitInfo const &submit_info) const {
-    auto const result = _handle.submit(submit_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error("Submission to queue {} failed: '{}'",
-                   _handle,
-                   vk::to_string(result));
-        return false;
-    }
-
+    _handle.submit(submit_info);
     return true;
 }
 
 // =============================================================================
 bool vkQueue::present(vk::PresentInfoKHR const &present_info) const {
-    // https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkQueuePresentKHR.html
-    // Vulkan-Hpp asserts when a function returns anything classified as an
-    // error. And according to the docs, returning out-of-date means the
-    // function failed. So to bypass as little of Vulkan-HPP as possible, I'm
-    // createing a present info struct that'll satisfy the Vulkan C API for the
-    // call to present.
-    // auto const present_info_c = ::VkPresentInfoKHR(present_info);
-    // auto const result = vk::Result(::vkQueuePresentKHR(_handle, &present_info_c));
-
     auto const result = _handle.presentKHR(present_info);
     if(result != vk::Result::eSuccess) {
         Log::warn("Queue {} failed to present swapchain image: '{}'",

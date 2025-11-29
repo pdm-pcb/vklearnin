@@ -23,7 +23,7 @@ public:
                 vk::CommandPoolCreateInfo const &create_info);
     bool destroy();
 
-    bool reset(vk::CommandPoolResetFlags const flags = { }) const;
+    void reset(vk::CommandPoolResetFlags const flags = { }) const;
 
     [[nodiscard]] inline auto const & native() const { return _handle; }
 

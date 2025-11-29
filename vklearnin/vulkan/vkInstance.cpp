@@ -60,16 +60,8 @@ bool vkInstance::create(Config const &config,
         _vvl_features
     };
 
-    auto const [ result, value ] = vk::createInstance(instance_info.get());
+    _handle = vk::createInstance(instance_info.get());
 
-    // If this didn't work, we can go no further.
-    if(result != vk::Result::eSuccess) {
-        Log::critical("Failed to create Vulkan instance: '{}'",
-                      vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
     Log::info(
         "Created Vulkan {}.{} instance {}",
         VKL_VK_TARGET_MAJOR,
@@ -178,13 +170,10 @@ void vkInstance::_init_validation() {
 
 // =============================================================================
 bool vkInstance::_check_layers() {
-    auto const [result, layers] = vk::enumerateInstanceLayerProperties();
+    auto const layers = vk::enumerateInstanceLayerProperties();
 
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to enumerate instance layer properties: '{}'.",
-            vk::to_string(result)
-        );
+    if(layers.empty()) {
+        Log::error("Failed to enumerate instance layer properties.");
         return false;
     }
 
@@ -213,13 +202,10 @@ bool vkInstance::_check_layers() {
 
 // =============================================================================
 bool vkInstance::_check_extensions() {
-    auto const [result, extensions] = vk::enumerateInstanceExtensionProperties();
+    auto const extensions = vk::enumerateInstanceExtensionProperties();
 
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to enumerate instance extension properties: '{}'.",
-            vk::to_string(result)
-        );
+    if(extensions.empty()) {
+        Log::error("Failed to enumerate instance extension properties.");
         return false;
     }
 

@@ -35,22 +35,20 @@ vkPhysicalDevice::vkPhysicalDevice(vk::PhysicalDevice const handle) :
     _vram_bytes     = _get_vram_bytes();
     _driver_version = _get_driver_version();
 
-    Log::trace(
-        "\n    Device Name:    {}"
-        "\n    Device Type:    {}"
-        "\n    VRAM:           {} MB"
-        "\n    Max aniso:      {}"
-        "\n    Max samples:    {}"
-        "\n    Driver Version: {}"
-        "\n    Vulkan Version: {}",
-        _name,
-        vk::to_string(_type),
-        _vram_bytes / 1000 / 1000,
-        _max_aniso,
-        vk::to_string(_max_msaa_samples),
-        _driver_version,
-        _vkapi_version
-    );
+    Log::trace("\n    Device Name:    {}"
+               "\n    Device Type:    {}"
+               "\n    VRAM:           {} MB"
+               "\n    Max aniso:      {}"
+               "\n    Max samples:    {}"
+               "\n    Driver Version: {}"
+               "\n    Vulkan Version: {}",
+               _name,
+               vk::to_string(_type),
+               _vram_bytes / 1000 / 1000,
+               _max_aniso,
+               vk::to_string(_max_msaa_samples),
+               _driver_version,
+               _vkapi_version);
 }
 
 // =============================================================================
@@ -61,22 +59,14 @@ bool vkPhysicalDevice::populate_device_list(
     std::span<char const * const> const extensions)
 {
     // Ask the instance for a list of devices
-    auto const [result, devices] =
-        instance.native().enumeratePhysicalDevices();
+    auto const devices = instance.native().enumeratePhysicalDevices();
 
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to enumerate physical devices: '{}'",
-             vk::to_string(result)
-        );
+    if(devices.empty()) {
+        Log::error("Failed to enumerate physical devices.");
         return false;
     }
 
-    Log::trace(
-        "Found {} {}",
-        devices.size(),
-        (devices.size() == 1 ? "device" : "devices")
-    );
+    Log::trace("Found {} devices", devices.size());
 
     // Run through the devices, and only store ones that have what we need
     for(auto const &device : devices) {
@@ -248,16 +238,15 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
     for(uint32_t i = 0u; i < families.size(); ++i) {
         // The first check is if this queue family supports graphics commands
         if(families[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-            auto const [result, present_support] =
+            auto const present_support =
                 _handle.getSurfaceSupportKHR(i, surface.native());
 
-            if(result != vk::Result::eSuccess) {
-                Log::error("{} failed to get surface {} support for queue "
-                           "family index {}: '{}'",
+            if(!present_support) {
+                Log::error("{} family index {} with surface {} does not "
+                           "support present.",
                            _name,
-                           surface.native(),
                            i,
-                           vk::to_string(result));
+                           surface.native());
                 continue;
             }
 
@@ -346,19 +335,15 @@ bool vkPhysicalDevice::_check_features(Features const &features) {
 bool
 vkPhysicalDevice::_check_extensions(std::span<char const * const> extensions) {
     // Get the list of supported extensions
-    auto const [ result, supported_extensions ] =
+    auto const supported_extensions =
         _handle.enumerateDeviceExtensionProperties();
 
-    if(result != vk::Result::eSuccess) {
-        Log::error("{} failed to enumerate extensions: '{}'",
-                   _name,
-                   vk::to_string(result));
+    if(supported_extensions.empty()) {
+        Log::error("{} failed to enumerate extensions.", _name);
         return false;
     }
 
-    Log::trace("Found {} extensions for {}",
-               supported_extensions.size(),
-               _name);
+    Log::trace("{} found {} extensions", _name, supported_extensions.size());
 
     // Run through the required list and the supported list to make sure the
     // latter contains all of the former
@@ -424,6 +409,12 @@ void vkPhysicalDevice::_print_family_flags(uint32_t const family,
         flags_str += "Optical Flow    ";
     }
 #endif // VK_NV_optical_flow
+
+#ifdef VK_ARM_data_graph
+    if(flags & vk::QueueFlagBits::eDataGraphARM) {
+        flags_str += "ARM Data Graph  ";
+    }
+#endif // VK_ARM_data_graph
 
     if(flags_str.size() < 16) {
         flags_str += "Present Only";

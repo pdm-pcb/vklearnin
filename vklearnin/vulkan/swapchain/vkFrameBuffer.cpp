@@ -44,16 +44,9 @@ bool vkFrameBuffer::create(vkRenderPass const &render_pass,
         .layers = 1u,
     };
 
-    auto const [ result, value ] = _device.createFramebuffer(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error("Failed to create frame buffer: '{}'",
-                  vk::to_string(result));
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device.createFramebuffer(create_info);
     Log::trace("Created frame buffer {}", _handle);
+
     return true;
 }
 

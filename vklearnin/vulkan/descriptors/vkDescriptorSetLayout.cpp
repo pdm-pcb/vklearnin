@@ -45,18 +45,9 @@ bool vkDescriptorSetLayout::create(vkDevice const &device) {
         .pBindings = _bindings.data(),
     };
 
-    auto [ result, value ] = _device.createDescriptorSetLayout(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to create descriptor set layout: '{}'",
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device.createDescriptorSetLayout(create_info);
     Log::trace("Created descriptor set layout {}", _handle);
+
     return true;
 }
 

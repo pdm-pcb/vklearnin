@@ -56,16 +56,7 @@ bool vkImageView::create(Details const &details, vkDevice const &device) {
         }
     };
 
-    auto const [ result, value ] = _device.createImageView(view_create_info);
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to create image view: '{}'",
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device.createImageView(view_create_info);
     Log::trace("Created view {} for image {}", _handle, details.image);
 
     return true;

@@ -45,18 +45,9 @@ bool vkDescriptorPool::create(uint32_t const max_sets, vkDevice const &device) {
         .pPoolSizes = pool_sizes.data(),
     };
 
-    auto const [ result, value ] = _device.createDescriptorPool(create_info);
-
-    if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Unable to create descriptor pool: '{}'",
-            vk::to_string(result)
-        );
-        return false;
-    }
-
-    _handle = value;
+    _handle = _device.createDescriptorPool(create_info);
     Log::trace("Created descriptor pool {}.", _handle);
+
     return true;
 }
 
