@@ -34,7 +34,6 @@ bool vkSurface::create(TargetWindow const &target_window,
     // Populate the create info struct for our current platform
 #ifdef VKL_LINUX
     vk::XlibSurfaceCreateInfoKHR const create_info {
-        .pNext = nullptr,
         .flags = { },
         .dpy = target_window.display(),
         .window = target_window.native(),
@@ -43,7 +42,6 @@ bool vkSurface::create(TargetWindow const &target_window,
     auto const [ result, value ] = _instance.createXlibSurfaceKHR(create_info);
 #elif VKL_WINDOWS
     vk::Win32SurfaceCreateInfoKHR const create_info {
-        .pNext = nullptr,
         .flags = { },
         .hinstance = nullptr,
         .hwnd = target_window.native(),

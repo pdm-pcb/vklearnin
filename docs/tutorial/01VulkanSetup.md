@@ -73,3 +73,6 @@ Defining characteristics like  image counts, resolution, and more can be found i
 Two more properties we care about are the surface's image format and display color space. Together, those two populate a [`vk::SurfaceFormatKHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkSurfaceFormatKHR.html). Surfaces commonly support several formats, so it is worth checking that the one you're interested in using is supported.
 ##### Present Modes
 The way the device and display adapter will handle image presentation is the final measure of compatibility we'll require of the surface we're working with. The list of options is defined in [`vk::PresentModeKHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html), and the surface will tell us which of those it can handle.
+
+## Logical Device
+With all of the above established, we can finally create the [`vk::Device`](https://docs.vulkan.org/refpages/latest/refpages/source/VkDevice.html), which is how Vulkan wraps up all of these concepts into a single handle. The logical device will want to know what features and extensions you want enabled, which will be the same features and extensions we queried the physical device for. It'll also want to know what queue family indices you want to use so it can furnish the appropriate queues when required.

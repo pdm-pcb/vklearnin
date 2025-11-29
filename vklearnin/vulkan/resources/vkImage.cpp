@@ -549,7 +549,7 @@ bool vkImage::_send_to_device() {
     if(!cmd_buffer.allocate(
         *_device,
         _device->transient_pool(),
-        _device->cmd_queue()
+        _device->graphics_queue()
     ))
     {
         Log::error("Failed to create command buffer for image {}", _handle);
@@ -594,7 +594,7 @@ bool vkImage::_send_to_device() {
     cmd_buffer.end_recording();
 
     auto const submit_success =
-        _device->cmd_queue().submit(cmd_buffer.native());
+        _device->graphics_queue().submit(cmd_buffer.native());
 
     _device->wait_idle();
 

@@ -54,7 +54,7 @@ public:
     [[nodiscard]] inline auto type()                   const { return _type; }
     [[nodiscard]] inline auto vram_bytes()             const { return _vram_bytes; }
     [[nodiscard]] inline auto graphics_queue_index()   const { return _graphics_queue_index; }
-    [[nodiscard]] inline auto const & features()       const { return _features.get<vk::PhysicalDeviceFeatures2>(); }
+    [[nodiscard]] inline auto const & features()       const { return _features.get(); }
     [[nodiscard]] inline auto const & extensions()     const { return _extensions; }
     [[nodiscard]] inline auto max_aniso()              const { return _max_aniso; }
     [[nodiscard]] inline auto max_msaa_samples()       const { return _max_msaa_samples; }

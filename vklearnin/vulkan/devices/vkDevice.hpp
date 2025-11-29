@@ -27,13 +27,13 @@ public:
     [[nodiscard]] bool wait_idle() const;
 
     [[nodiscard]] inline auto const & native() const { return _handle; }
-    [[nodiscard]] inline auto const & cmd_queue() const { return _cmd_queue; }
+    [[nodiscard]] inline auto const & graphics_queue() const { return _graphics_queue; }
     [[nodiscard]] inline auto const & transient_pool() const { return _transient_pool; }
 
 private:
     vk::Device _handle { nullptr };
     vkCmdPool  _transient_pool;
-    vkQueue    _cmd_queue;
+    vkQueue    _graphics_queue;
 };
 
 } // namespace vkl

@@ -22,7 +22,6 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
 
     // Populate the device queue create struct
     vk::DeviceQueueCreateInfo const queue_create_info[] {{
-        .pNext = nullptr,
         .flags = { },
         .queueFamilyIndex = physical_device.graphics_queue_index(),
         .queueCount = static_cast<uint32_t>(std::size(queue_priorities)),
@@ -42,24 +41,25 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
     }
 
     // Now populate the device's create struct
-    vk::DeviceCreateInfo const device_create_info {
-        .pNext = &features,
-        .flags = { },
-        .queueCreateInfoCount =
-            static_cast<uint32_t>(std::size(queue_create_info)),
-        .pQueueCreateInfos = queue_create_info,
-        .enabledExtensionCount =
-            static_cast<uint32_t>(extension_names.size()),
-        .ppEnabledExtensionNames = extension_names.data(),
-        .pEnabledFeatures = nullptr,
+    vk::StructureChain<vk::DeviceCreateInfo,
+                       vk::PhysicalDeviceFeatures2> device_info = {
+        vk::DeviceCreateInfo {
+            .flags = { },
+            .queueCreateInfoCount =
+                static_cast<uint32_t>(std::size(queue_create_info)),
+            .pQueueCreateInfos = queue_create_info,
+            .enabledExtensionCount =
+                static_cast<uint32_t>(extension_names.size()),
+            .ppEnabledExtensionNames = extension_names.data(),
+            // This is nullptr, since we're using PhysicalDeviceFeatures2
+            .pEnabledFeatures = nullptr,
+        },
+        features,
     };
 
     // And try to create it
-    auto const result = physical_device.native().createDevice(
-        &device_create_info, // Create info
-        nullptr,             // Allocator
-        &_handle             // Destination handle
-    );
+    auto const [ result, value ] =
+        physical_device.native().createDevice(device_info.get());
 
     // Check that we've got good results to work with
     if(result != vk::Result::eSuccess) {
@@ -68,17 +68,19 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
         return false;
     }
 
+    _handle = value;
+
     Log::trace("Created logical device {}.", _handle);
 
     // Set up the queue abstraction
-    _cmd_queue.set(*this, physical_device.graphics_queue_index());
+    _graphics_queue.set(*this, physical_device.graphics_queue_index());
 
     // This is the final step in providing the dynamic loader with information
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_handle);
 
     _transient_pool.create(
         *this,
-        _cmd_queue.family_index(),
+        _graphics_queue.family_index(),
         vk::CommandPoolCreateFlagBits::eTransient
     );
 
@@ -94,7 +96,7 @@ bool vkDevice::destroy() {
 
     _transient_pool.destroy();
 
-    _cmd_queue.clear();
+    _graphics_queue.clear();
 
     Log::trace("Destroying logical device {}", _handle);
     _handle.destroy();
@@ -109,11 +111,9 @@ bool vkDevice::wait_idle() const {
     auto const result = _handle.waitIdle();
 
     if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to wait for device {} idle: '{}'",
-            _handle,
-            vk::to_string(result)
-        );
+        Log::error("Failed to wait for device {} idle: '{}'",
+                   _handle,
+                   vk::to_string(result));
         return false;
     }
 

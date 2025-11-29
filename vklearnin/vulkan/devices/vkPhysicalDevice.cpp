@@ -227,11 +227,12 @@ uint64_t vkPhysicalDevice::_get_vram_bytes() {
 
 // =============================================================================
 std::string vkPhysicalDevice::_get_driver_version() {
-    vk::PhysicalDeviceDriverProperties driver_props { };
-    vk::PhysicalDeviceProperties2 physical_props2 {
-        .pNext = &driver_props
-    };
-    _handle.getProperties2(&physical_props2);
+    vk::StructureChain<vk::PhysicalDeviceProperties2,
+                       vk::PhysicalDeviceDriverProperties> props;
+
+    _handle.getProperties2(&props.get());
+
+    auto const & driver_props = props.get<vk::PhysicalDeviceDriverProperties>();
 
     return std::string(driver_props.driverInfo.data());
 }
@@ -274,7 +275,7 @@ bool vkPhysicalDevice::_check_queue_families(vkSurface const &surface) {
 // =============================================================================
 bool vkPhysicalDevice::_check_features(Features const &features) {
     // Populate the local chain with the requested features
-    auto &features10 = _features.get<vk::PhysicalDeviceFeatures2>();
+    auto &features10 = _features.get();
     features10.features = vk::PhysicalDeviceFeatures {
         .fillModeNonSolid = features.fill_mode_nonsolid,
         .samplerAnisotropy = features.sampler_anisotropy,
@@ -289,13 +290,13 @@ bool vkPhysicalDevice::_check_features(Features const &features) {
     // Ask the device if we can have what we want
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
                        vk::PhysicalDeviceVulkan13Features> supported;
-    _handle.getFeatures2(&(supported.get<vk::PhysicalDeviceFeatures2>()));
+    _handle.getFeatures2(&(supported.get()));
 
     // Run through and check what we care about
     bool all_features_supported = true;
 
     // VK1.0 features ----------------------------------------------------------
-    auto const &supported10 = supported.get<vk::PhysicalDeviceFeatures2>();
+    auto const &supported10 = supported.get();
     if(features.fill_mode_nonsolid) {
         if(supported10.features.fillModeNonSolid) {
             Log::trace("{} supports fillModeNonSolid.", _name);

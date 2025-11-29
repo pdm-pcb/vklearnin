@@ -389,7 +389,7 @@ int main() {
 
         // ---------------------------------------------------------------------
         // submit graphics commands
-        device.cmd_queue().submit(
+        device.graphics_queue().submit(
             graphics_cmd_buffer.native(),
             gfx_sync.wait_semaphore(),
             vk::PipelineStageFlagBits::eColorAttachmentOutput,
@@ -399,7 +399,7 @@ int main() {
 
         // ---------------------------------------------------------------------
         // present
-        if(!device.cmd_queue().present(
+        if(!device.graphics_queue().present(
             swapchain,
             gfx_sync.complete_semaphore(),
             frame_index))

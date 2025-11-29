@@ -64,7 +64,7 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     if(!_vertex_buffer.send_to_device(
         _vertices.data(),
         device.transient_pool(),
-        device.cmd_queue()
+        device.graphics_queue()
     ))
     {
         Log::error("Failed to send vertices to device.");
@@ -96,7 +96,7 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     if(!_index_buffer.send_to_device(
         _indices.data(),
         device.transient_pool(),
-        device.cmd_queue()
+        device.graphics_queue()
     ))
     {
         Log::error("Failed to send indices to device.");

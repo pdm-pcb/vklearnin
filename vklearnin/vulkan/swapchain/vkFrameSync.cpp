@@ -36,10 +36,10 @@ bool vkFrameSync::create(vkDevice const &device) {
     _device = device.native();
 
     _cmd_pool.create(device,
-                     device.cmd_queue().family_index(),
+                     device.graphics_queue().family_index(),
                      vk::CommandPoolCreateFlagBits::eTransient);
 
-    _cmd_buffer.allocate(device, _cmd_pool, device.cmd_queue());
+    _cmd_buffer.allocate(device, _cmd_pool, device.graphics_queue());
 
     vk::FenceCreateInfo const fence_info {
         .pNext = nullptr,

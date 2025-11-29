@@ -44,25 +44,25 @@ bool vkInstance::create(Config const &config,
         return false;
     }
 
-    // Bringing it all together. If we want validation layer functionality,
-    // the pNext member of vk::InstanceCreateInfo must point to the
-    // structure assembled above.
-    const vk::InstanceCreateInfo instance_info {
-        .pNext = (config.enable_validation ?
-                  reinterpret_cast<void *>(&_vvl_features) : nullptr),
-        .flags = { },
-        .pApplicationInfo = &_app_info,
-        .enabledLayerCount =
-            static_cast<uint32_t>(_enabled_layers.size()),
-        .ppEnabledLayerNames = _enabled_layers.data(),
-        .enabledExtensionCount =
-            static_cast<uint32_t>(_enabled_extensions.size()),
-        .ppEnabledExtensionNames = _enabled_extensions.data()
+    // Bringing it all together
+    vk::StructureChain<vk::InstanceCreateInfo,
+                       vk::ValidationFeaturesEXT> instance_info = {
+        vk::InstanceCreateInfo {
+            .flags = { },
+            .pApplicationInfo = &_app_info,
+            .enabledLayerCount =
+                static_cast<uint32_t>(_enabled_layers.size()),
+            .ppEnabledLayerNames = _enabled_layers.data(),
+            .enabledExtensionCount =
+                static_cast<uint32_t>(_enabled_extensions.size()),
+            .ppEnabledExtensionNames = _enabled_extensions.data(),
+        },
+        _vvl_features
     };
 
     auto const result = vk::createInstance(
-        &instance_info,
-        nullptr,
+        &instance_info.get(),
+        nullptr,    // Allocator
         &_handle
     );
 
