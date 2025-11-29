@@ -11,7 +11,7 @@ vkFrameSync::vkFrameSync(vkFrameSync &&other) :
     _in_flight_fence { other._in_flight_fence },
     _wait_sem        { other._wait_sem },
     _complete_sem    { other._complete_sem },
-    _cmd_pool        { std::move(other._cmd_pool) },
+    // _cmd_pool        { std::move(other._cmd_pool) },
     _cmd_buffer      { std::move(other._cmd_buffer) },
     _device          { other._device }
 {
@@ -35,9 +35,13 @@ bool vkFrameSync::create(vkDevice const &device) {
 
     _device = device.native();
 
-    _cmd_pool.create(device,
-                     device.graphics_queue().family_index(),
-                     vk::CommandPoolCreateFlagBits::eTransient);
+    _cmd_pool.create(
+        device,
+        vk::CommandPoolCreateInfo {
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
+            .queueFamilyIndex = device.graphics_queue().family_index(),
+        }
+    );
 
     _cmd_buffer.allocate(device, _cmd_pool, device.graphics_queue());
 
@@ -91,9 +95,6 @@ bool vkFrameSync::create(vkDevice const &device) {
 
 // =============================================================================
 bool vkFrameSync::destroy() {
-    _cmd_buffer.free();
-    _cmd_pool.destroy();
-
     Log::trace("\nDestroying frame sync primitives:"
               "\n    device queue fence         {}"
               "\n    present complete semaphore {}"
@@ -109,6 +110,9 @@ bool vkFrameSync::destroy() {
     _in_flight_fence = nullptr;
     _wait_sem = nullptr;
     _complete_sem   = nullptr;
+
+    _cmd_buffer.free();
+    _cmd_pool.destroy();
 
     return true;
 }
@@ -129,16 +133,27 @@ bool vkFrameSync::wait_and_reset() const {
         _in_flight_fence, // The fence(s) to wait on
         vk::True,         // Whether or not to wait on all provided fences
         wait_period       // How long to wait for these fences
-        // std::numeric_limits<uint64_t>::max()
     );
 
     if(result != vk::Result::eSuccess) {
         Log::error("Failed to wait on queue fence: '{}'",
-                  vk::to_string(result));
+                   vk::to_string(result));
+        return false;
     }
 
-    _device.resetFences(_in_flight_fence);
-    _device.resetCommandPool(_cmd_pool.native());
+    auto const fence_reset_result = _device.resetFences(_in_flight_fence);
+    if(fence_reset_result != vk::Result::eSuccess) {
+        Log::error("Failed to reset in-flight fence: '{}'",
+                   vk::to_string(fence_reset_result));
+        return false;
+    }
+
+    auto const pool_reset_result = _device.resetCommandPool(_cmd_pool.native());
+    if(pool_reset_result != vk::Result::eSuccess) {
+        Log::error("Failed to reset command pool: '{}'",
+                   vk::to_string(pool_reset_result));
+        return false;
+    }
 
     return true;
 }

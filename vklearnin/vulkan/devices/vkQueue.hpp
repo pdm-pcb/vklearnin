@@ -23,20 +23,15 @@ public:
     bool set(vkDevice const &device, uint32_t const family_index);
     bool clear();
 
-    bool submit(vk::CommandBuffer const &cmd_buffer,
-                vk::Semaphore const &wait_semaphore,
-                vk::PipelineStageFlags const wait_stage_flags,
-                vk::Semaphore const &signal_semaphore,
-                vk::Fence const &in_flight_fence) const;
+    bool submit(vk::SubmitInfo const &submit_info,
+                vk::Fence const &fence) const;
 
-    bool submit(vk::CommandBuffer const &cmd_buffer) const;
+    bool submit(vk::SubmitInfo const &submit_info) const;
 
-    [[nodiscard]] bool present(vkSwapchain const &swapchain,
-                               vk::Semaphore const &wait_sem,
-                               uint32_t const image_index) const;
+    bool present(vk::PresentInfoKHR const &present_info) const;
 
-    inline auto const & native() const { return _handle;}
-    inline auto family_index() const { return _family_index; }
+    [[nodiscard]] inline auto const & native() const { return _handle;}
+    [[nodiscard]] inline auto family_index() const { return _family_index; }
 
 private:
     vk::Queue _handle { nullptr };

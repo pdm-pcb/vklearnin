@@ -78,12 +78,6 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
     // This is the final step in providing the dynamic loader with information
     VULKAN_HPP_DEFAULT_DISPATCHER.init(_handle);
 
-    _transient_pool.create(
-        *this,
-        _graphics_queue.family_index(),
-        vk::CommandPoolCreateFlagBits::eTransient
-    );
-
     return true;
 }
 
@@ -93,8 +87,6 @@ bool vkDevice::destroy() {
         Log::error("Must create device before calling destroy.");
         return false;
     }
-
-    _transient_pool.destroy();
 
     _graphics_queue.clear();
 

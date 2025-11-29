@@ -56,18 +56,45 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     }
 
     if(!_vertex_buffer.allocate(vk::MemoryPropertyFlagBits::eDeviceLocal)) {
-        Log::error("Failed to allocate vertex buffer.");
+        Log::error("Failed to allocate vertex buffer {}.",
+                   _vertex_buffer.native());
+        _vertex_buffer.destroy();
+        return false;
+    }
+
+    vkCmdPool cmd_pool;
+    if(!cmd_pool.create(
+        device,
+        vk::CommandPoolCreateInfo {
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
+            .queueFamilyIndex = device.graphics_queue().family_index(),
+        })
+    )
+    {
+        Log::error("Failed to create command pool for vertex buffer {} upload",
+                   _vertex_buffer.native());
+        _vertex_buffer.destroy();
+        return false;
+    }
+
+    vkCmdBuffer cmd_buffer;
+    if(!cmd_buffer.allocate(device, cmd_pool, device.graphics_queue())) {
+        Log::error("Failed to create command buffer for vertex buffer {} upload",
+                   _vertex_buffer.native());
+        cmd_pool.destroy();
         _vertex_buffer.destroy();
         return false;
     }
 
     if(!_vertex_buffer.send_to_device(
         _vertices.data(),
-        device.transient_pool(),
+        cmd_pool,
         device.graphics_queue()
     ))
     {
         Log::error("Failed to send vertices to device.");
+        cmd_buffer.free();
+        cmd_pool.destroy();
         _vertex_buffer.destroy();
         return false;
     }
@@ -82,28 +109,37 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     ))
     {
         Log::error("Failed to create index buffer.");
+        cmd_buffer.free();
+        cmd_pool.destroy();
         _vertex_buffer.destroy();
         return false;
     }
 
     if(!_index_buffer.allocate(vk::MemoryPropertyFlagBits::eDeviceLocal)) {
         Log::error("Failed to allocate index buffer.");
-        _index_buffer.destroy();
+        cmd_buffer.free();
+        cmd_pool.destroy();
         _vertex_buffer.destroy();
+        _index_buffer.destroy();
         return false;
     }
 
     if(!_index_buffer.send_to_device(
         _indices.data(),
-        device.transient_pool(),
+        cmd_pool,
         device.graphics_queue()
     ))
     {
         Log::error("Failed to send indices to device.");
-        _index_buffer.destroy();
+        cmd_buffer.free();
+        cmd_pool.destroy();
         _vertex_buffer.destroy();
+        _index_buffer.destroy();
         return false;
     }
+
+    cmd_buffer.free();
+    cmd_pool.destroy();
 
     return true;
 }

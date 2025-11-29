@@ -60,11 +60,7 @@ bool vkInstance::create(Config const &config,
         _vvl_features
     };
 
-    auto const result = vk::createInstance(
-        &instance_info.get(),
-        nullptr,    // Allocator
-        &_handle
-    );
+    auto const [ result, value ] = vk::createInstance(instance_info.get());
 
     // If this didn't work, we can go no further.
     if(result != vk::Result::eSuccess) {
@@ -73,6 +69,7 @@ bool vkInstance::create(Config const &config,
         return false;
     }
 
+    _handle = value;
     Log::info(
         "Created Vulkan {}.{} instance {}",
         VKL_VK_TARGET_MAJOR,
@@ -85,7 +82,9 @@ bool vkInstance::create(Config const &config,
 
     // Now that the instance exists, it's safe to create the debug messenger.
     if(config.enable_validation) {
-        _debug_messenger.create(*this);
+        if(!_debug_messenger.create(*this)) {
+            return false;
+        }
     }
 
     return true;

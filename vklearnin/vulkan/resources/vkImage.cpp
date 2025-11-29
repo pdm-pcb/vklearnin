@@ -371,21 +371,21 @@ void vkImage::transition_layout(vkCmdBuffer const &cmd_buffer,
         }
     };
 
-    Log::trace(
-        "Image {} - {:s}->{:s} aspect {:s}"
-        "\n\tsrcStage  = {:s}"
-        "\n\tdstStage  = {:s}"
-        "\n\tsrcAccess = {:s}"
-        "\n\tdstAccess = {:s}",
-        _handle,
-        vk::to_string(details.old_layout),
-        vk::to_string(details.new_layout),
-        vk::to_string(details.aspect_flags),
-        vk::to_string(details.src_stage),
-        vk::to_string(details.dst_stage),
-        vk::to_string(barrier.srcAccessMask),
-        vk::to_string(barrier.dstAccessMask)
-    );
+    // Log::trace(
+    //     "Image {} - {:s}->{:s} aspect {:s}"
+    //     "\n\tsrcStage  = {:s}"
+    //     "\n\tdstStage  = {:s}"
+    //     "\n\tsrcAccess = {:s}"
+    //     "\n\tdstAccess = {:s}",
+    //     _handle,
+    //     vk::to_string(details.old_layout),
+    //     vk::to_string(details.new_layout),
+    //     vk::to_string(details.aspect_flags),
+    //     vk::to_string(details.src_stage),
+    //     vk::to_string(details.dst_stage),
+    //     vk::to_string(barrier.srcAccessMask),
+    //     vk::to_string(barrier.dstAccessMask)
+    // );
 
     cmd_buffer.native().pipelineBarrier(
         details.src_stage, // Source stage
@@ -544,23 +544,32 @@ bool vkImage::_send_to_device() {
         .imageExtent = _extent
     };
 
-    vkCmdBuffer cmd_buffer;
-
-    if(!cmd_buffer.allocate(
+    vkCmdPool cmd_pool;
+    if(!cmd_pool.create(
         *_device,
-        _device->transient_pool(),
-        _device->graphics_queue()
-    ))
+        vk::CommandPoolCreateInfo {
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
+            .queueFamilyIndex = _device->graphics_queue().family_index(),
+        })
+    )
     {
-        Log::error("Failed to create command buffer for image {}", _handle);
+        Log::error("Failed to create command pool for image {}", _handle);
         staging_buffer.destroy();
         return false;
     }
 
-    if(!cmd_buffer.begin_one_time_submit())
+    vkCmdBuffer cmd_buffer;
+    if(!cmd_buffer.allocate(*_device, cmd_pool, _device->graphics_queue())) {
+        Log::error("Failed to create command buffer for image {}", _handle);
+        cmd_pool.destroy();
+        staging_buffer.destroy();
+        return false;
+    }
 
-    {
+    if(!cmd_buffer.begin_one_time_submit()) {
         Log::error("Failed to begin one-time-submit for image {}", _handle);
+        cmd_buffer.free();
+        cmd_pool.destroy();
         staging_buffer.destroy();
         return false;
     }
@@ -593,13 +602,24 @@ bool vkImage::_send_to_device() {
 
     cmd_buffer.end_recording();
 
-    auto const submit_success =
-        _device->graphics_queue().submit(cmd_buffer.native());
+    auto const submit_success = _device->graphics_queue().submit(
+        vk::SubmitInfo {
+            .pNext                = nullptr,
+            .waitSemaphoreCount   = 0u,
+            .pWaitSemaphores      = nullptr,
+            .pWaitDstStageMask    = nullptr,
+            .commandBufferCount   = 1u,
+            .pCommandBuffers      = &cmd_buffer.native(),
+            .signalSemaphoreCount = 0u,
+            .pSignalSemaphores    = nullptr,
+        }
+    );
 
     _device->wait_idle();
 
-    staging_buffer.destroy();
     cmd_buffer.free();
+    cmd_pool.destroy();
+    staging_buffer.destroy();
 
     ::stbi_image_free(_raw_data);
     _raw_data = nullptr;

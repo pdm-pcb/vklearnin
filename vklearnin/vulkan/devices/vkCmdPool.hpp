@@ -20,13 +20,12 @@ public:
     vkCmdPool & operator=(vkCmdPool const &) = delete;
 
     bool create(vkDevice const &device,
-                uint32_t const queue_index,
-                vk::CommandPoolCreateFlags const flags = { });
+                vk::CommandPoolCreateInfo const &create_info);
     bool destroy();
 
     bool reset(vk::CommandPoolResetFlags const flags = { }) const;
 
-    inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
 
 private:
     vk::CommandPool _handle { nullptr };

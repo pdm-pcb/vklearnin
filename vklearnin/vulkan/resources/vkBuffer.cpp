@@ -298,7 +298,18 @@ bool vkBuffer::send_to_device(void const *data,
 
     cmd_buffer.end_recording();
 
-    auto const submit_success = queue.submit(cmd_buffer.native());
+    auto const submit_success = queue.submit(
+        vk::SubmitInfo {
+            .pNext                = nullptr,
+            .waitSemaphoreCount   = 0u,
+            .pWaitSemaphores      = nullptr,
+            .pWaitDstStageMask    = nullptr,
+            .commandBufferCount   = 1u,
+            .pCommandBuffers      = &cmd_buffer.native(),
+            .signalSemaphoreCount = 0u,
+            .pSignalSemaphores    = nullptr,
+        }
+    );
 
     _device->wait_idle();
 

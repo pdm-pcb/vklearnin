@@ -25,16 +25,16 @@ public:
     TargetWindow & operator=(TargetWindow &&) = delete;
     TargetWindow & operator=(TargetWindow const &) = delete;
 
-    [[nodiscard]] static bool init();
+    static bool init();
     static bool shutdown();
 
-    [[nodiscard]] bool create(std::string_view const app_name);
+    bool create(std::string_view const app_name);
     bool destroy();
 
     inline void show() const { ::glfwShowWindow(_window); }
     inline void hide() const { ::glfwHideWindow(_window); }
 
-    [[nodiscard]] bool poll_events();
+    bool poll_events();
 
 #ifdef VKL_LINUX
     [[nodiscard]] inline auto display() const { return ::glfwGetX11Display(); }
@@ -47,7 +47,7 @@ public:
     }
 #endif // VKL platform
 
-    static bool initialized() { return _initialized; }
+    [[nodiscard]] static bool initialized() { return _initialized; }
 
 private:
     static bool _initialized;

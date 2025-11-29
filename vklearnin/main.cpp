@@ -32,8 +32,8 @@
 
 #define DYNAMIC_RENDERING
 // #define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
-#define MSAA_DYNAMIC
+#define DEPTH_DYNAMIC
+// #define MSAA_DYNAMIC
 
 using namespace vkl;
 
@@ -389,21 +389,36 @@ int main() {
 
         // ---------------------------------------------------------------------
         // submit graphics commands
+        vk::PipelineStageFlags const wait_stage_flags =
+            vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
         device.graphics_queue().submit(
-            graphics_cmd_buffer.native(),
-            gfx_sync.wait_semaphore(),
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            gfx_sync.complete_semaphore(),
+            vk::SubmitInfo {
+                .pNext                = nullptr,
+                .waitSemaphoreCount   = 1u,
+                .pWaitSemaphores      = &gfx_sync.wait_semaphore(),
+                .pWaitDstStageMask    = &wait_stage_flags,
+                .commandBufferCount   = 1u,
+                .pCommandBuffers      = &graphics_cmd_buffer.native(),
+                .signalSemaphoreCount = 1u,
+                .pSignalSemaphores    = &gfx_sync.complete_semaphore(),
+            },
             gfx_sync.in_flight_fence()
         );
 
         // ---------------------------------------------------------------------
         // present
-        if(!device.graphics_queue().present(
-            swapchain,
-            gfx_sync.complete_semaphore(),
-            frame_index))
-        {
+        auto const present_result = device.graphics_queue().present(
+            vk::PresentInfoKHR {
+                .waitSemaphoreCount = 1u,
+                .pWaitSemaphores    = &gfx_sync.complete_semaphore(),
+                .swapchainCount     = 1u,
+                .pSwapchains        = &swapchain.native(),
+                .pImageIndices      = &frame_index,
+            }
+        );
+
+        if(!present_result) {
             device.wait_idle();
             recreate_swapchain();
             frame_index = 0u;
@@ -415,7 +430,6 @@ int main() {
     }
 
     target_window.hide();
-
     device.wait_idle();
 
     // destroy in reverse create order -----------------------------------------
@@ -538,7 +552,7 @@ bool init_rendering() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
-    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
+    msaa_sample_count = vkPhysicalDevice::current_device().max_msaa_samples();
 
     msaa_pass.create(
         surface,
@@ -1068,7 +1082,7 @@ void recreate_swapchain() {
     depth_format =
         vkPhysicalDevice::current_device().find_depth_format(depth_formats);
 
-    msaa_sample_count = vkPhysicalDevice::current_device().max_samples();
+    msaa_sample_count = vkPhysicalDevice::current_device().max_msaa_samples();
 
     msaa_pass.create_swapchain_resources(
         surface,

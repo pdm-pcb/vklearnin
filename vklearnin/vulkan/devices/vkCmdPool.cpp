@@ -17,8 +17,7 @@ vkCmdPool::vkCmdPool(vkCmdPool &&other) :
 
 // =============================================================================
 bool vkCmdPool::create(vkDevice const &device,
-                       uint32_t const queue_index,
-                       vk::CommandPoolCreateFlags const flags)
+                       vk::CommandPoolCreateInfo const &create_info)
 {
     if(_handle) {
         Log::error("Command pool {} already exists", _handle);
@@ -32,25 +31,20 @@ bool vkCmdPool::create(vkDevice const &device,
 
     _device = device.native();
 
-    vk::CommandPoolCreateInfo const pool_info {
-        .pNext = nullptr,
-        .flags = flags,
-        .queueFamilyIndex = queue_index,
-    };
+    // vk::CommandPoolCreateInfo const pool_info {
+    //     .pNext = nullptr,
+    //     .flags = flags,
+    //     .queueFamilyIndex = queue_index,
+    // };
 
-    auto const result = _device.createCommandPool(
-        &pool_info,
-        nullptr,
-        &_handle
-    );
+    auto const [ result, value ] = _device.createCommandPool(create_info);
 
     if(result != vk::Result::eSuccess) {
-        Log::error(
-            "Failed to create command pool: '{}'",
-            vk::to_string(result)
-        );
+        Log::error("Failed to create command pool: '{}'", vk::to_string(result));
         return false;
     }
+
+    _handle = value;
 
     Log::trace("Created command pool {}", _handle);
     return true;

@@ -26,10 +26,10 @@ class vkFrameSync final {
 
     bool wait_and_reset() const;
 
-    inline auto const & in_flight_fence() const { return _in_flight_fence; }
-    inline auto const & wait_semaphore() const { return _wait_sem; }
-    inline auto const & complete_semaphore() const { return _complete_sem; }
-    inline auto const & cmd_buffer() const { return _cmd_buffer; }
+    [[nodiscard]] inline auto const & in_flight_fence() const { return _in_flight_fence; }
+    [[nodiscard]] inline auto const & wait_semaphore() const { return _wait_sem; }
+    [[nodiscard]] inline auto const & complete_semaphore() const { return _complete_sem; }
+    [[nodiscard]] inline auto const & cmd_buffer() const { return _cmd_buffer; }
 
 private:
     vk::Fence     _in_flight_fence { nullptr };

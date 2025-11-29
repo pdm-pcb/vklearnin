@@ -24,12 +24,12 @@ public:
         bool enable_vsync = false;
     };
 
-    [[nodiscard]] bool create(TargetWindow const &target_window,
-                              vkInstance const &instance,
-                              Config const &config);
+    bool create(TargetWindow const &target_window,
+                vkInstance const &instance,
+                Config const &config);
     bool destroy();
 
-    [[nodiscard]] bool check_details(vkPhysicalDevice const &device);
+    bool check_details(vkPhysicalDevice const &device);
 
     [[nodiscard]] inline auto const & native()  const { return _handle; }
     [[nodiscard]] inline auto min_image_count() const { return _min_image_count; }
