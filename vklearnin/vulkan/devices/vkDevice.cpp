@@ -17,7 +17,7 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
         return false;
     }
 
-    _physical_device = physical_device.native();
+    _physical_device = &physical_device;
 
     // We only need one device queue, so only need to specify one priority
     float const queue_priorities[] = { 1.0f };

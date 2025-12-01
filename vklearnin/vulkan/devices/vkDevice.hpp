@@ -29,13 +29,13 @@ public:
 
     [[nodiscard]] inline auto const & native() const { return _handle; }
     [[nodiscard]] inline auto const & graphics_queue() const { return _graphics_queue; }
-    [[nodiscard]] inline auto const & physical_device() const { return _physical_device; }
+    [[nodiscard]] inline auto const & physical_device() const { return *_physical_device; }
 
 private:
     vk::Device _handle { nullptr };
     vkQueue    _graphics_queue;
 
-    vk::PhysicalDevice _physical_device { nullptr };
+    vkPhysicalDevice const *_physical_device { nullptr };
 };
 
 } // namespace vkl

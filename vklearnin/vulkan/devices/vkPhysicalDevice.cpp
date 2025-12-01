@@ -155,6 +155,39 @@ const
 }
 
 // =============================================================================
+uint32_t
+vkPhysicalDevice::memory_type_index(vk::MemoryPropertyFlags const flags,
+                                    vk::MemoryRequirements const &reqs) const
+{
+    auto const memory_props = _handle.getMemoryProperties();
+    auto const type_count = memory_props.memoryTypeCount;
+
+    // This bit-rithmetic bears some explanation. We're checking two bit fields
+    // against our requirements for the memory itself.
+
+    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
+        auto const type = memory_props.memoryTypes[type_index];
+
+        // Each type index is actually a field in memoryTypeBits. If the index
+        // we're currently on is enabled, that means we've found a matching
+        // memory type.
+
+        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
+            // The second check is against the memory properties. This can be
+            // any combination of local to the CPU, local to the GPU, visible
+            // to the CPU or not, and more.
+
+            if(type.propertyFlags & flags) {
+                return type_index;
+            }
+        }
+    }
+
+    Log::error("Could not find memory to match requirements.");
+    return std::numeric_limits<uint32_t>::max();
+}
+
+// =============================================================================
 void vkPhysicalDevice::_sort_devices() {
     // Sort the available devices by VRAM, favoring discrete GPUs
     std::sort(_available_devices.begin(), _available_devices.end(),

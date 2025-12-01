@@ -335,7 +335,8 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
 
     _device->native().getImageMemoryRequirements(_handle, &mem_reqs);
 
-    auto type_index = _memory_type_index(memory_flags, mem_reqs);
+    auto const type_index =
+        _device->physical_device().memory_type_index(memory_flags, mem_reqs);
 
     vk::MemoryAllocateInfo const alloc_info {
         .allocationSize  = mem_reqs.size,
@@ -582,38 +583,6 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
             }
         );
     }
-}
-
-// =============================================================================
-uint32_t vkImage::_memory_type_index(vk::MemoryPropertyFlags const flags,
-                                     vk::MemoryRequirements const &reqs)
-{
-    auto const memory_props = _device->physical_device().getMemoryProperties();
-    auto const type_count = memory_props.memoryTypeCount;
-
-    // This bit-rithmetic bears some explanation. We're checking two bit fields
-    // against our requirements for the memory itself.
-
-    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
-        auto const type = memory_props.memoryTypes[type_index];
-
-        // Each type index is actually a field in memoryTypeBits. If the index
-        // we're currently on is enabled, that means we've found a matching
-        // memory type.
-
-        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
-            // The second check is against the memory properties. This can be
-            // any combination of local to the CPU, local to the GPU, visible
-            // to the CPU or not, and more.
-
-            if(type.propertyFlags & flags) {
-                return type_index;
-            }
-        }
-    }
-
-    Log::error("Could not find memory to match image requirements.");
-    return std::numeric_limits<uint32_t>::max();
 }
 
 } // namespace vkl

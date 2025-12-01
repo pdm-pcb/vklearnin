@@ -41,9 +41,6 @@ private:
     vk::DeviceSize   _size_bytes    { 0u };
 
     vkDevice const *_device { nullptr };
-
-    uint32_t _memory_type_index(vk::MemoryPropertyFlags const flags,
-                                vk::MemoryRequirements const &reqs);
 };
 
 } // namespace vkl

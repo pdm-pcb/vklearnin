@@ -104,7 +104,8 @@ bool vkBuffer::allocate(vk::MemoryPropertyFlags const flags) {
     // This function call will check the joint requirements of ourselves and
     // the logical device against the types of memory offered by the physical
     // device.
-    auto const type_index = _memory_type_index(flags, mem_reqs);
+    auto const type_index =
+        _device->physical_device().memory_type_index(flags, mem_reqs);
 
     // Once a suitable memory type (and its index) is located, we're ready to
     // actually allocate the buffer.
@@ -248,38 +249,6 @@ bool vkBuffer::send_to_device(void const *data,
     staging_buffer.destroy();
 
     return true;
-}
-
-// =============================================================================
-uint32_t vkBuffer::_memory_type_index(vk::MemoryPropertyFlags const flags,
-                                      vk::MemoryRequirements const &reqs)
-{
-    auto const memory_props = _device->physical_device().getMemoryProperties();
-    auto const type_count = memory_props.memoryTypeCount;
-
-    // This bit-rithmetic bears some explanation. We're checking two bit fields
-    // against our requirements for the memory itself.
-
-    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
-        auto const type = memory_props.memoryTypes[type_index];
-
-        // Each type index is actually a field in memoryTypeBits. If the index
-        // we're currently on is enabled, that means we've found a matching
-        // memory type.
-
-        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
-            // The second check is against the memory properties. This can be
-            // any combination of local to the CPU, local to the GPU, visible
-            // to the CPU or not, and more.
-
-            if(type.propertyFlags & flags) {
-                return type_index;
-            }
-        }
-    }
-
-    Log::error("Could not find memory to match buffer requirements.");
-    return std::numeric_limits<uint32_t>::max();
 }
 
 } // namespace vkl

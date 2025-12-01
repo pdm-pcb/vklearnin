@@ -96,9 +96,6 @@ private:
     bool _send_to_device();
     void _generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                            vk::Filter const filter);
-
-    uint32_t _memory_type_index(vk::MemoryPropertyFlags const flags,
-                                vk::MemoryRequirements const &reqs);
 };
 
 } // namespace vkl

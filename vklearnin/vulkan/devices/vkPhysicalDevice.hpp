@@ -49,6 +49,10 @@ public:
     [[nodiscard]] vk::Format
     find_depth_format(std::span<vk::Format const> const formats) const;
 
+    [[nodiscard]]
+    uint32_t memory_type_index(vk::MemoryPropertyFlags const flags,
+                               vk::MemoryRequirements const &reqs) const;
+
     [[nodiscard]] inline auto const & native()         const { return _handle; }
     [[nodiscard]] inline std::string_view const name() const { return _name; }
     [[nodiscard]] inline auto type()                   const { return _type; }
