@@ -1,0 +1,1 @@
+In order to draw, we'll need vertex data on the device. We'll store both vertex and index data in a [`vk::Buffer`](https://docs.vulkan.org/refpages/latest/refpages/source/VkBuffer.html).

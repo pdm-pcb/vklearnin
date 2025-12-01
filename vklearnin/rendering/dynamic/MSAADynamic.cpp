@@ -2,7 +2,6 @@
 #include "vklearnin/rendering/dynamic/MSAADynamic.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
-#include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
 
 namespace vkl {
@@ -12,7 +11,6 @@ void MSAADynamic::init(vkSurface const &surface,
                        std::span<vk::ClearValue const> const clear_values,
                        vk::Format const depth_format,
                        vk::SampleCountFlagBits const msaa_sample_count,
-                       vkPhysicalDevice const &physical_device,
                        vkDevice const &device)
 {
     if(!surface.native()) {
@@ -30,13 +28,13 @@ void MSAADynamic::init(vkSurface const &surface,
 
     _msaa_sample_count = msaa_sample_count;
 
-    if(!_create_depth_buffer(surface, physical_device, device)) {
+    if(!_create_depth_buffer(surface, device)) {
         Log::error("Failed to create MSAA dynamic depth buffer.");
         _reset_object();
         return;
     }
 
-    if(!_create_multisample_buffer(surface, physical_device, device)) {
+    if(!_create_multisample_buffer(surface, device)) {
         Log::error("Failed to create MSAA dynamic multisample buffer.");
         _reset_object();
         return;
@@ -44,7 +42,6 @@ void MSAADynamic::init(vkSurface const &surface,
 
     _init_attachments(clear_values);
     _init_rendering_info(surface);
-    _init_pipeline_create_info();
 }
 
 // =============================================================================
@@ -53,7 +50,7 @@ void MSAADynamic::shutdown() {
 }
 
 // =============================================================================
-vk::RenderingInfoKHR const &
+vk::RenderingInfo const &
 MSAADynamic::rendering_info(vk::ImageView const &view,
                             vk::ImageLayout const &layout)
 {
@@ -90,15 +87,14 @@ void MSAADynamic::create_swapchain_resources(
     vkSurface const &surface,
     std::span<vk::ClearValue const> const clear_values,
     vk::Format const depth_format,
-    vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
     _color_attachment_formats = { surface.format().format };
     _depth_attachment_format    = depth_format;
 
     update_render_area(surface);
-    _create_depth_buffer(surface, physical_device, device);
-    _create_multisample_buffer(surface, physical_device, device);
+    _create_depth_buffer(surface, device);
+    _create_multisample_buffer(surface, device);
 
     _init_attachments(clear_values);
     _init_rendering_info(surface);
@@ -108,11 +104,11 @@ void MSAADynamic::create_swapchain_resources(
 void MSAADynamic::_init_attachments(
     std::span<vk::ClearValue const> const clear_values)
 {
-    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
+    _color_attachments = {{ vk::RenderingAttachmentInfo {
         .pNext = nullptr,
         .imageView = _multisample_view.native(),
         .imageLayout = { },
-        .resolveMode = vk::ResolveModeFlagBitsKHR::eAverage,
+        .resolveMode = vk::ResolveModeFlagBits::eAverage,
         .resolveImageView = { },
         .resolveImageLayout = { },
         .loadOp = vk::AttachmentLoadOp::eClear,
@@ -122,7 +118,7 @@ void MSAADynamic::_init_attachments(
         },
     }}};
 
-    _depth_attachment = vk::RenderingAttachmentInfoKHR {
+    _depth_attachment = vk::RenderingAttachmentInfo {
         .pNext = nullptr,
         .imageView = _depth_view.native(),
         .imageLayout = _depth_buffer.layout(),
@@ -139,7 +135,7 @@ void MSAADynamic::_init_attachments(
 
 // =============================================================================
 void MSAADynamic::_init_rendering_info(vkSurface const &surface) {
-    _rendering_info = vk::RenderingInfoKHR {
+    _rendering_info = vk::RenderingInfo {
         .pNext = nullptr,
         .flags = { },
         .renderArea = vk::Rect2D {
@@ -157,22 +153,8 @@ void MSAADynamic::_init_rendering_info(vkSurface const &surface) {
 }
 
 // =============================================================================
-void MSAADynamic::_init_pipeline_create_info() {
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
-        .pNext = nullptr,
-        .viewMask = { },
-        .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachment_formats.size()),
-        .pColorAttachmentFormats = _color_attachment_formats.data(),
-        .depthAttachmentFormat = _depth_attachment_format,
-        .stencilAttachmentFormat = _depth_attachment_format,
-    };
-}
-
-// =============================================================================
 bool
 MSAADynamic::_create_depth_buffer(vkSurface const &surface,
-                                  vkPhysicalDevice const &physical_device,
                                   vkDevice const &device)
 {
     vkImage::Details const details {
@@ -185,7 +167,6 @@ MSAADynamic::_create_depth_buffer(vkSurface const &surface,
     if(!_depth_buffer.create(surface.extent(),
                              _depth_attachment_format,
                              details,
-                             physical_device,
                              device))
     {
         Log::error("Failed to create MSAA dynamic depth buffer.");
@@ -199,8 +180,7 @@ MSAADynamic::_create_depth_buffer(vkSurface const &surface,
             .type         = vk::ImageViewType::e2D,
             .aspect_flags = vk::ImageAspectFlagBits::eDepth,
         },
-        device
-    ))
+        device))
     {
         Log::error("Failed to create MSAA dynamic depth view.");
         return false;
@@ -221,10 +201,8 @@ void MSAADynamic::_destroy_depth_buffer() {
 }
 
 // =============================================================================
-bool
-MSAADynamic::_create_multisample_buffer(vkSurface const &surface,
-                                        vkPhysicalDevice const &physical_device,
-                                        vkDevice const &device)
+bool MSAADynamic::_create_multisample_buffer(vkSurface const &surface,
+                                             vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
@@ -237,7 +215,6 @@ MSAADynamic::_create_multisample_buffer(vkSurface const &surface,
     if(!_multisample_buffer.create(surface.extent(),
                                    _color_attachment_formats[0],
                                    details,
-                                   physical_device,
                                    device))
     {
         Log::error("Failed to create MSAA dynamic multisample buffer.");
@@ -251,8 +228,7 @@ MSAADynamic::_create_multisample_buffer(vkSurface const &surface,
             .type         = vk::ImageViewType::e2D,
             .aspect_flags = vk::ImageAspectFlagBits::eColor,
         },
-        device
-    ))
+        device))
     {
         Log::error("Failed to create MSAA dynamic multisample view.");
         return false;
@@ -280,13 +256,12 @@ void MSAADynamic::_reset_object() {
     _depth_attachment_format       = vk::Format::eUndefined;
 
     _color_attachments.clear();
-    _depth_attachment = vk::RenderingAttachmentInfoKHR { };
+    _depth_attachment = vk::RenderingAttachmentInfo { };
 
     _destroy_depth_buffer();
     _destroy_multisample_buffer();
 
-    _rendering_info       = vk::RenderingInfoKHR { };
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR { };
+    _rendering_info       = vk::RenderingInfo { };
 }
 
 } // namespace vkl

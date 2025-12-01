@@ -14,16 +14,11 @@ bool Texture2D::create(std::string_view const file_name,
                        vk::ImageViewType const view_type,
                        vkSampler::Filters const &sampler_filters,
                        vkSampler::AddressMode const &sampler_address_mode,
-                       vkPhysicalDevice const &physical_device,
+                       float const sampler_max_aniso,
                        vkDevice const &device)
 {
     if(_image.native()) {
         Log::error("Texture2D image {} already exists.", _image.native());
-        return false;
-    }
-
-    if(!physical_device.native()) {
-        Log::error("Cannot create Texture2D with invalid physical device.");
         return false;
     }
 
@@ -32,38 +27,31 @@ bool Texture2D::create(std::string_view const file_name,
         return false;
     }
 
-    if(!_image.create(
-        file_name,
-        image_details,
-        physical_device,
-        device,
-        file_name
-    ))
+    if(!_image.create(file_name,
+                      image_details,
+                      device))
     {
         Log::error("Failed to create Texture2D image.");
         return false;
     }
 
     if(!_view.create(vkImageView::Details {
-            .image = _image.native(),
-            .format = _image.format(),
-            .type = view_type,
-            .aspect_flags = _image.aspect_flags()
-        },
-        device
-    ))
+                         .image = _image.native(),
+                         .format = _image.format(),
+                         .type = view_type,
+                         .aspect_flags = _image.aspect_flags()
+                     },
+                     device))
     {
         Log::error("Failed to create Texture2D view.");
         _image.destroy();
         return false;
     }
 
-    if(!_sampler.create(
-        sampler_filters,
-        sampler_address_mode,
-        physical_device,
-        device
-    ))
+    if(!_sampler.create(sampler_filters,
+                        sampler_address_mode,
+                        sampler_max_aniso,
+                        device))
     {
         Log::error("Failed to create Texture2D sampler.");
         _view.destroy();

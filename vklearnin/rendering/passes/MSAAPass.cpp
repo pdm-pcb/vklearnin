@@ -14,7 +14,6 @@ bool MSAAPass::create(vkSurface const &surface,
                       vk::Format const depth_format,
                       std::span<vk::ClearValue const> const clear_values,
                       vk::SampleCountFlagBits const msaa_sample_count,
-                      vkPhysicalDevice const &physical_device,
                       vkDevice const &device)
 {
     if(_render_pass.native()) {
@@ -49,13 +48,13 @@ bool MSAAPass::create(vkSurface const &surface,
         return false;
     }
 
-    if(!_create_multisample_buffer(surface, physical_device, device)) {
+    if(!_create_multisample_buffer(surface, device)) {
         Log::error("Failed to create MSAA multisample buffer.");
         _reset_object();
         return false;
     }
 
-    if(!_create_depth_buffer(surface, physical_device, device)) {
+    if(!_create_depth_buffer(surface, device)) {
         Log::error("Failed to create MSAA multisample view.");
         _reset_object();
         return false;
@@ -112,7 +111,6 @@ void MSAAPass::create_swapchain_resources(
     vkSurface const &surface,
     vk::Format const depth_format,
     vk::SampleCountFlagBits const msaa_sample_count,
-    vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
     _multisample_format = surface.format().format;
@@ -124,8 +122,8 @@ void MSAAPass::create_swapchain_resources(
     _init_attachments();
     _init_subpasses();
 
-    _create_multisample_buffer(surface, physical_device, device);
-    _create_depth_buffer(surface, physical_device, device);
+    _create_multisample_buffer(surface, device);
+    _create_depth_buffer(surface,  device);
 }
 
 // =============================================================================
@@ -227,10 +225,8 @@ void MSAAPass::_init_subpasses() {
 }
 
 // =============================================================================
-bool MSAAPass::_create_multisample_buffer(
-    vkSurface const &surface,
-    vkPhysicalDevice const &physical_device,
-    vkDevice const &device)
+bool MSAAPass::_create_multisample_buffer(vkSurface const &surface,
+                                          vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
@@ -243,7 +239,6 @@ bool MSAAPass::_create_multisample_buffer(
     if(!_multisample_buffer.create(surface.extent(),
                                    _multisample_format,
                                    details,
-                                   physical_device,
                                    device))
     {
         Log::error("Failed to create multisample buffer.");
@@ -257,8 +252,7 @@ bool MSAAPass::_create_multisample_buffer(
             .type         = vk::ImageViewType::e2D,
             .aspect_flags = vk::ImageAspectFlagBits::eColor
         },
-        device
-    ))
+        device))
     {
         Log::error("Failed to create multisample buffer view.");
         _multisample_buffer.destroy();
@@ -269,10 +263,8 @@ bool MSAAPass::_create_multisample_buffer(
 }
 
 // =============================================================================
-bool MSAAPass::_create_depth_buffer(
-    vkSurface const &surface,
-    vkPhysicalDevice const &physical_device,
-    vkDevice const &device)
+bool MSAAPass::_create_depth_buffer(vkSurface const &surface,
+                                    vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
@@ -286,7 +278,6 @@ bool MSAAPass::_create_depth_buffer(
     if(!_depth_buffer.create(surface.extent(),
                              _depth_format,
                              details,
-                             physical_device,
                              device))
     {
         Log::error("Failed to create depth buffer.");
@@ -300,8 +291,7 @@ bool MSAAPass::_create_depth_buffer(
             .type         = vk::ImageViewType::e2D,
             .aspect_flags = vk::ImageAspectFlagBits::eDepth,
         },
-        device
-    ))
+        device))
     {
         Log::error("Failed to create depth view.");
         _depth_buffer.destroy();

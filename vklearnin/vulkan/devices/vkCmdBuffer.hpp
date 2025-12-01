@@ -30,7 +30,7 @@ public:
     void begin_render_pass(vk::RenderPassBeginInfo const &begin_info) const;
     void end_render_pass() const;
 
-    void begin_rendering(vk::RenderingInfoKHR const &rendering_info) const;
+    void begin_rendering(vk::RenderingInfo const &rendering_info) const;
     void end_rendering() const;
 
     struct GroupCounts final {

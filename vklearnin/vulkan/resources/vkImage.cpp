@@ -14,8 +14,6 @@ namespace vkl {
 vkImage::vkImage(vkImage &&other) :
     _handle          { other._handle },
     _memory_handle   { other._memory_handle },
-    _physical_device { other._physical_device },
-    _device          { other._device },
     _format          { other._format },
     _extent          { other._extent },
     _aspect_flags    { other._aspect_flags },
@@ -23,15 +21,11 @@ vkImage::vkImage(vkImage &&other) :
     _array_layers    { other._array_layers },
     _mip_levels      { other._mip_levels },
     _size_bytes      { other._size_bytes },
-    _raw_data        { other._raw_data }
-#ifdef VKL_DEBUG
-    , _debug_name      { other._debug_name }
-#endif // VKL_DEBUG
+    _raw_data        { other._raw_data },
+    _device          { other._device }
 {
     other._handle          = nullptr;
     other._memory_handle   = nullptr;
-    other._physical_device = nullptr;
-    other._device          = nullptr;
     other._format          = vk::Format::eUndefined;
     other._extent          = vk::Extent3D { };
     other._aspect_flags    = { };
@@ -40,18 +34,14 @@ vkImage::vkImage(vkImage &&other) :
     other._mip_levels      = 0u;
     other._size_bytes      = 0u;
     other._raw_data        = nullptr;
-
-#ifdef VKL_DEBUG
-    other._debug_name.clear();
-#endif // VKL_DEBUG
+    other._device          = nullptr;
 }
 
 // =============================================================================
+// For swapchain images
 bool vkImage::create(vk::Image const &handle,
                      vk::Format const format,
-                     vk::Extent3D const &extent,
-                     [[maybe_unused]] vkDevice const &device,
-                     [[maybe_unused]] std::string_view const debug_name)
+                     vk::Extent3D const &extent)
 {
     if(_handle) {
         Log::error("Swapchain image {}", _handle);
@@ -67,19 +57,13 @@ bool vkImage::create(vk::Image const &handle,
 }
 
 // =============================================================================
+// For reading texture data from a file
 bool vkImage::create(std::string_view const file_name,
                      Details const &details,
-                     vkPhysicalDevice const &physical_device,
-                     vkDevice const &device,
-                     [[maybe_unused]] std::string_view const debug_name)
+                     vkDevice const &device)
 {
     if(_handle) {
         Log::error("Image  {} already exists", _handle);
-        return false;
-    }
-
-    if(!physical_device.native()) {
-        Log::error("Cannot create image with invalid physical device.");
         return false;
     }
 
@@ -88,12 +72,21 @@ bool vkImage::create(std::string_view const file_name,
         return false;
     }
 
-    _physical_device = &physical_device;
     _device = &device;
     _aspect_flags = details.aspect_flags;
     _array_layers = details.array_layers;
 
     _raw_data = _load_from_file(file_name);
+
+    if (_raw_data == nullptr) {
+        Log::error("Could not load file '{}'", file_name);
+
+        _device = nullptr;
+        _aspect_flags = { };
+        _array_layers = 1u;
+
+        return false;
+    }
 
     if(details.generate_mips) {
         _calc_mip_levels();
@@ -143,12 +136,11 @@ bool vkImage::create(std::string_view const file_name,
 }
 
 // =============================================================================
+// For render targets, eg color buffer
 bool vkImage::create(vk::Extent2D const &extent,
                      vk::Format const format,
                      Details const &details,
-                     vkPhysicalDevice const &physical_device,
-                     vkDevice const &device,
-                     [[maybe_unused]] std::string_view const debug_name)
+                     vkDevice const &device)
 {
     if(_handle) {
         Log::error("Image {} already exists", _handle);
@@ -160,12 +152,6 @@ bool vkImage::create(vk::Extent2D const &extent,
         return false;
     }
 
-    if(!physical_device.native()) {
-        Log::error("Cannot create image with invalid physical device.");
-        return false;
-    }
-
-    _physical_device = &physical_device;
     _device = &device;
     _aspect_flags = details.aspect_flags;
     _array_layers = details.array_layers;
@@ -220,10 +206,6 @@ bool vkImage::destroy() {
 
     _handle = nullptr;
 
-#ifdef VKL_DEBUG
-    _debug_name.clear();
-#endif // VKL_DEBUG
-
     if(_memory_handle) {
         Log::trace("Freeing memory {} for image {}.",
                    _memory_handle,
@@ -232,9 +214,6 @@ bool vkImage::destroy() {
         _device->native().freeMemory(_memory_handle);
         _memory_handle = nullptr;
     }
-
-    _physical_device = nullptr;
-    _device = nullptr;
 
     _format = vk::Format::eUndefined;
     _extent = vk::Extent3D { };
@@ -247,6 +226,8 @@ bool vkImage::destroy() {
 
     _size_bytes = 0u;
     _raw_data = nullptr;
+
+    _device = nullptr;
 
     return true;
 }
@@ -316,14 +297,12 @@ void * vkImage::_load_from_file(std::string_view const file_name) {
     );
 
     if(data == nullptr) {
-        Log::error(
-            "Failed to load image '{}'"
-            "\n    {}x{} @ {}bpc"
-            "\n    Error: '{}'",
-             file_path.string(),
-             width, height, channels,
-             ::stbi_failure_reason()
-        );
+        Log::error("Failed to load image '{}'"
+                   "\n    {}x{} @ {}bpc"
+                   "\n    Error: '{}'",
+                   file_path.string(),
+                   width, height, channels,
+                   ::stbi_failure_reason());
     }
     else {
         Log::trace("Loaded image {}", file_path.string());
@@ -356,11 +335,7 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
 
     _device->native().getImageMemoryRequirements(_handle, &mem_reqs);
 
-    auto type_index = _memory_type_index(
-        _physical_device->native().getMemoryProperties(),
-        memory_flags,
-        mem_reqs
-    );
+    auto type_index = _memory_type_index(memory_flags, mem_reqs);
 
     vk::MemoryAllocateInfo const alloc_info {
         .allocationSize  = mem_reqs.size,
@@ -382,12 +357,9 @@ bool vkImage::_allocate(vk::MemoryPropertyFlags const memory_flags) {
 // =============================================================================
 bool vkImage::_send_to_device() {
     vkBuffer staging_buffer;
-    if(!staging_buffer.create(
-        _size_bytes,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        *_physical_device,
-        *_device
-    ))
+    if(!staging_buffer.create(_size_bytes,
+                              vk::BufferUsageFlagBits::eTransferSrc,
+                              *_device))
     {
         Log::error("Failed to create staging buffer for image {}", _handle);
         return false;
@@ -613,28 +585,29 @@ void vkImage::_generate_mipmaps(vkCmdBuffer const &cmd_buffer,
 }
 
 // =============================================================================
-uint32_t vkImage::_memory_type_index(
-        vk::PhysicalDeviceMemoryProperties const &memory_props,
-        vk::MemoryPropertyFlags const flags,
-        vk::MemoryRequirements const reqs)
+uint32_t vkImage::_memory_type_index(vk::MemoryPropertyFlags const flags,
+                                     vk::MemoryRequirements const &reqs)
 {
+    auto const memory_props = _device->physical_device().getMemoryProperties();
+    auto const type_count = memory_props.memoryTypeCount;
+
     // This bit-rithmetic bears some explanation. We're checking two bit fields
     // against our requirements for the memory itself.
 
-    for(uint32_t i = 0u; i < memory_props.memoryTypeCount; ++i) {
-        auto const type = memory_props.memoryTypes[i];
+    for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
+        auto const type = memory_props.memoryTypes[type_index];
 
         // Each type index is actually a field in memoryTypeBits. If the index
         // we're currently on is enabled, that means we've found a matching
         // memory type.
 
-        if((reqs.memoryTypeBits & (1u << i)) != 0u) {
+        if((reqs.memoryTypeBits & (1u << type_index)) != 0u) {
             // The second check is against the memory properties. This can be
             // any combination of local to the CPU, local to the GPU, visible
             // to the CPU or not, and more.
 
             if(type.propertyFlags & flags) {
-                return i;
+                return type_index;
             }
         }
     }

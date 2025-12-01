@@ -24,11 +24,9 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
                    vkDevice const &device)
 {
     if(_vertex_buffer.native() || _index_buffer.native()) {
-        Log::error(
-            "Mesh with vertex buffer {} and index buffer {} alrady exists.",
-            _vertex_buffer.native(),
-            _index_buffer.native()
-        );
+        Log::error("Plane with vertex {} and index buffer {} alrady exists.",
+                   _vertex_buffer.native(),
+                   _index_buffer.native());
         return false;
     }
 
@@ -43,13 +41,10 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     }
 
     // vertex buffer -----------------------------------------------------------
-    if(!_vertex_buffer.create(
-        sizeof(Vertex) * _vertices.size(),
-        (vk::BufferUsageFlagBits::eVertexBuffer
-         | vk::BufferUsageFlagBits::eTransferDst),
-        physical_device,
-        device
-    ))
+    if(!_vertex_buffer.create(sizeof(Vertex) * _vertices.size(),
+                              (vk::BufferUsageFlagBits::eVertexBuffer
+                               | vk::BufferUsageFlagBits::eTransferDst),
+                              device))
     {
         Log::error("Failed to create vertex buffer.");
         return false;
@@ -86,11 +81,9 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
         return false;
     }
 
-    if(!_vertex_buffer.send_to_device(
-        _vertices.data(),
-        cmd_pool,
-        device.graphics_queue()
-    ))
+    if(!_vertex_buffer.send_to_device(_vertices.data(),
+                                      cmd_pool,
+                                      device.graphics_queue()))
     {
         Log::error("Failed to send vertices to device.");
         cmd_buffer.free();
@@ -100,13 +93,10 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
     }
 
     // index buffer -----------------------------------------------------------
-    if(!_index_buffer.create(
-        sizeof(Index::Type) * _indices.size(),
-        (vk::BufferUsageFlagBits::eIndexBuffer
-         | vk::BufferUsageFlagBits::eTransferDst),
-        physical_device,
-        device
-    ))
+    if(!_index_buffer.create(sizeof(Index::Type) * _indices.size(),
+                             (vk::BufferUsageFlagBits::eIndexBuffer
+                              | vk::BufferUsageFlagBits::eTransferDst),
+                             device))
     {
         Log::error("Failed to create index buffer.");
         cmd_buffer.free();
@@ -124,11 +114,9 @@ bool Plane::create(vkPhysicalDevice const &physical_device,
         return false;
     }
 
-    if(!_index_buffer.send_to_device(
-        _indices.data(),
-        cmd_pool,
-        device.graphics_queue()
-    ))
+    if(!_index_buffer.send_to_device(_indices.data(),
+                                     cmd_pool,
+                                     device.graphics_queue()))
     {
         Log::error("Failed to send indices to device.");
         cmd_buffer.free();

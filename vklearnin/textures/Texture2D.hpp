@@ -29,7 +29,7 @@ public:
                 vk::ImageViewType const view_type,
                 vkSampler::Filters const &sampler_filters,
                 vkSampler::AddressMode const &sampler_address_mode,
-                vkPhysicalDevice const &physical_device,
+                float const sampler_max_aniso,
                 vkDevice const &device);
 
     bool destroy();

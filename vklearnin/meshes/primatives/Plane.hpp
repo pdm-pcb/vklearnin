@@ -31,8 +31,8 @@ public:
     bool bind(vkCmdBuffer const &cmd_buffer);
     bool draw(vkCmdBuffer const &cmd_buffer);
 
-    inline auto const & vertex_buffer() const { return _vertex_buffer; }
-    inline auto const & index_buffer()  const { return _index_buffer; }
+    [[nodiscard]] inline auto const & vertex_buffer() const { return _vertex_buffer; }
+    [[nodiscard]] inline auto const & index_buffer()  const { return _index_buffer; }
 
 private:
     vkBuffer _vertex_buffer { };

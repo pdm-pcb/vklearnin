@@ -133,7 +133,7 @@ void vkCmdBuffer::end_render_pass() const {
 
 // =============================================================================
 void
-vkCmdBuffer::begin_rendering(vk::RenderingInfoKHR const &rendering_info) const
+vkCmdBuffer::begin_rendering(vk::RenderingInfo const &rendering_info) const
 {
     _handle.beginRendering(rendering_info);
 }

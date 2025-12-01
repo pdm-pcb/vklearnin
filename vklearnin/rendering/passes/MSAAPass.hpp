@@ -28,7 +28,6 @@ public:
                 vk::Format const depth_format,
                 std::span<vk::ClearValue const> const clear_values,
                 vk::SampleCountFlagBits const msaa_sample_count,
-                vkPhysicalDevice const &physical_device,
                 vkDevice const &device);
     bool destroy();
 
@@ -38,7 +37,6 @@ public:
     void create_swapchain_resources(vkSurface const &surface,
                                     vk::Format const depth_format,
                                     vk::SampleCountFlagBits const msaa_sample_count,
-                                    vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
     inline auto & begin_info() { return _begin_info; }
@@ -76,10 +74,8 @@ private:
     void _init_subpasses();
 
     bool _create_multisample_buffer(vkSurface const &surface,
-                                    vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
     bool _create_depth_buffer(vkSurface const &surface,
-                              vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
 
     void _destroy_multisample_buffer();

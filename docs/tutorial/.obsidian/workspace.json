@@ -8,45 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "43cc7af4ac54c389",
+            "id": "f4a9b4c04403c3b0",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01InstanceAndDebugger.md",
+                "file": "0nRendering.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "01InstanceAndDebugger"
-            }
-          },
-          {
-            "id": "eaf4ed6951cc3948",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "02WindowAndSurface.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "02WindowAndSurface"
-            }
-          },
-          {
-            "id": "982bd46262000f15",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "03DeviceAndQueues.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "03DeviceAndQueues"
+              "title": "0nRendering"
             }
           },
           {
@@ -63,8 +35,7 @@
               "title": "!log"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "vertical"
@@ -212,13 +183,16 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "5a58bfa3fbe094cf",
+  "active": "f4a9b4c04403c3b0",
   "lastOpenFiles": [
-    "04Swapchain.md",
+    "05VertexIndexAndUniformBuffers.md",
+    "04SwapchainAndImages.md",
+    "!log.md",
+    "0nRendering.md",
     "03DeviceAndQueues.md",
+    "04Swapchain.md",
     "01InstanceAndDebugger.md",
     "02WindowAndSurface.md",
-    "!log.md",
     "02DebugMessenger.md",
     "04PhysicalDevice.md",
     "03WindowAndSurface.md",

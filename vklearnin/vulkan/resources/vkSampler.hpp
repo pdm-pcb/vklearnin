@@ -32,7 +32,7 @@ public:
 
     bool create(Filters const filters,
                 AddressMode const address_mode,
-                vkPhysicalDevice const &physical_device,
+                float const max_aniso,
                 vkDevice const &device);
     bool destroy();
 

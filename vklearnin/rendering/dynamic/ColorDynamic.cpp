@@ -3,8 +3,6 @@
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
-#include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
-
 namespace vkl {
 
 // =============================================================================
@@ -18,7 +16,7 @@ void ColorDynamic::init(vkSurface const &surface,
 
     _color_attachment_formats = { surface.format().format };
 
-    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
+    _color_attachments = {{ vk::RenderingAttachmentInfo {
         .pNext = nullptr,
         .imageView = { },
         .imageLayout = { },
@@ -32,7 +30,7 @@ void ColorDynamic::init(vkSurface const &surface,
         },
     }}};
 
-    _rendering_info = vk::RenderingInfoKHR {
+    _rendering_info = vk::RenderingInfo {
         .pNext = nullptr,
         .flags = { },
         .renderArea = vk::Rect2D {
@@ -47,20 +45,10 @@ void ColorDynamic::init(vkSurface const &surface,
         .pDepthAttachment = { },
         .pStencilAttachment = { },
     };
-
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
-        .pNext = nullptr,
-        .viewMask = { },
-        .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachment_formats.size()),
-        .pColorAttachmentFormats = _color_attachment_formats.data(),
-        .depthAttachmentFormat = { },
-        .stencilAttachmentFormat = { },
-    };
 }
 
 // =============================================================================
-vk::RenderingInfoKHR const &
+vk::RenderingInfo const &
 ColorDynamic::rendering_info(vk::ImageView const &view,
                              vk::ImageLayout const &layout)
 {

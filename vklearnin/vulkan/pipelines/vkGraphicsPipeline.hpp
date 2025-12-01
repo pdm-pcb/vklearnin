@@ -44,7 +44,7 @@ public:
         float         depth_bias_constant { 0.0f };
         float         depth_bias_slope    { 0.0f };
 
-        vk::PipelineRenderingCreateInfoKHR const *rendering_create_info { nullptr };
+        vk::PipelineRenderingCreateInfo const rendering_create_info { };
     };
 
     using VertexBindings = std::span<vk::VertexInputBindingDescription const>;

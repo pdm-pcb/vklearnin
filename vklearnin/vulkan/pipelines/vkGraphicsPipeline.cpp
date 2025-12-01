@@ -110,8 +110,13 @@ bool vkGraphicsPipeline::create(Config const &config, vkDevice const &device) {
     _init_dynamic_states();
     _init_layout();
 
+    auto const *rendering_create_info = &config.rendering_create_info;
+    if(rendering_create_info->colorAttachmentCount == 0u) {
+        rendering_create_info = nullptr;
+    }
+
     _create_info = vk::GraphicsPipelineCreateInfo {
-        .pNext = config.rendering_create_info,
+        .pNext = rendering_create_info,
 
         // If we're in a debug build, don't optimize the shaders
         #ifdef VKL_DEBUG

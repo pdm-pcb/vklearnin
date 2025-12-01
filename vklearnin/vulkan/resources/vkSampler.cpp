@@ -9,16 +9,11 @@ namespace vkl {
 // =============================================================================
 bool vkSampler::create(Filters const filters,
                        AddressMode const address_mode,
-                       vkPhysicalDevice const &physical_device,
+                       float const max_aniso,
                        vkDevice const &device)
 {
     if(_handle) {
         Log::error("Sampler {} already exists", _handle);
-        return false;
-    }
-
-    if(!physical_device.native()) {
-        Log::error("Cannot create sampler with invalid physical device.");
         return false;
     }
 
@@ -37,7 +32,7 @@ bool vkSampler::create(Filters const filters,
         .addressModeV     = address_mode.v,
         .mipLodBias       = 0.0f,
         .anisotropyEnable = vk::True,
-        .maxAnisotropy    = physical_device.max_aniso(),
+        .maxAnisotropy    = max_aniso,
         .compareEnable    = vk::False,
         .compareOp        = vk::CompareOp::eAlways,
         .minLod           = 0.0f,
@@ -73,6 +68,7 @@ bool vkSampler::destroy() {
     }
 
     _device.destroySampler(_handle);
+
     _handle = nullptr;
     _device = nullptr;
 

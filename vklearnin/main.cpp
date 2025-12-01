@@ -540,7 +540,6 @@ bool init_rendering() {
         surface,
         clear_values,
         depth_format,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // DEPTH_PASS
@@ -556,7 +555,6 @@ bool init_rendering() {
         depth_format,
         clear_values,
         msaa_sample_count,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // MSAA_PASS
@@ -577,7 +575,6 @@ bool init_rendering() {
         surface,
         clear_values,
         depth_format,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // DEPTH_DYNAMIC
@@ -593,7 +590,6 @@ bool init_rendering() {
         clear_values,
         depth_format,
         msaa_sample_count,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // MSAA_DYNAMIC
@@ -665,12 +661,9 @@ bool create_draw_data() {
     camera_ubos.resize(swapchain.image_count());
 
     for(auto &ubo : camera_ubos) {
-        ubo.create(
-            sizeof(CameraMatrices),
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            vkPhysicalDevice::current_device(),
-            device
-        );
+        ubo.create(sizeof(CameraMatrices),
+                   vk::BufferUsageFlagBits::eUniformBuffer,
+                   device);
 
         ubo.allocate(vk::MemoryPropertyFlagBits::eHostVisible
                      | vk::MemoryPropertyFlagBits::eHostCoherent);
@@ -702,7 +695,7 @@ bool create_draw_data() {
             .u = vk::SamplerAddressMode::eRepeat,
             .v = vk::SamplerAddressMode::eRepeat
         },
-        vkPhysicalDevice::current_device(),
+        vkPhysicalDevice::current_device().max_aniso(),
         device
     );
 
@@ -731,7 +724,7 @@ bool create_draw_data() {
             .u = vk::SamplerAddressMode::eRepeat,
             .v = vk::SamplerAddressMode::eRepeat
         },
-        vkPhysicalDevice::current_device(),
+        vkPhysicalDevice::current_device().max_aniso(),
         device
     );
 
@@ -860,15 +853,39 @@ bool create_graphics_pipeline() {
 #ifdef DYNAMIC_RENDERING
 
 #ifdef COLOR_DYNAMIC
-                .rendering_create_info = &color_dynamic.pipeline_create_info(),
+                .rendering_create_info = vk::PipelineRenderingCreateInfo {
+                    .pNext = nullptr,
+                    .viewMask = { },
+                    .colorAttachmentCount =
+                        static_cast<uint32_t>(color_dynamic.color_attachment_formats().size()),
+                    .pColorAttachmentFormats = color_dynamic.color_attachment_formats().data(),
+                    .depthAttachmentFormat = { },
+                    .stencilAttachmentFormat = { },
+                },
 #endif // COLOR_DYNAMIC
 
 #ifdef DEPTH_DYNAMIC
-                .rendering_create_info = &depth_dynamic.pipeline_create_info(),
+                .rendering_create_info = vk::PipelineRenderingCreateInfo {
+                    .pNext = nullptr,
+                    .viewMask = { },
+                    .colorAttachmentCount =
+                        static_cast<uint32_t>(depth_dynamic.color_attachment_formats().size()),
+                    .pColorAttachmentFormats = depth_dynamic.color_attachment_formats().data(),
+                    .depthAttachmentFormat = depth_dynamic.depth_attachment_format(),
+                    .stencilAttachmentFormat = depth_dynamic.depth_attachment_format(),
+                },
 #endif // DEPTH_DYNAMIC
 
 #ifdef MSAA_DYNAMIC
-                .rendering_create_info = &msaa_dynamic.pipeline_create_info(),
+                .rendering_create_info = vk::PipelineRenderingCreateInfo {
+                    .pNext = nullptr,
+                    .viewMask = { },
+                    .colorAttachmentCount =
+                        static_cast<uint32_t>(msaa_dynamic.color_attachment_formats().size()),
+                    .pColorAttachmentFormats = msaa_dynamic.color_attachment_formats().data(),
+                    .depthAttachmentFormat = msaa_dynamic.depth_attachment_format(),
+                    .stencilAttachmentFormat = msaa_dynamic.depth_attachment_format(),
+                },
 #endif // DEPTH_DYNAMIC
 
 #endif // DYNAMIC_RENDERING
@@ -1068,7 +1085,6 @@ void recreate_swapchain() {
     depth_pass.create_swapchain_resources(
         surface,
         depth_format,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // DEPTH_PASS
@@ -1083,7 +1099,6 @@ void recreate_swapchain() {
         surface,
         depth_format,
         msaa_sample_count,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // MSAA_PASS
@@ -1132,7 +1147,6 @@ void recreate_swapchain() {
         surface,
         clear_values,
         depth_format,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // DEPTH_DYNAMIC
@@ -1142,7 +1156,6 @@ void recreate_swapchain() {
         surface,
         clear_values,
         depth_format,
-        vkPhysicalDevice::current_device(),
         device
     );
 #endif // MSAA_DYNAMIC

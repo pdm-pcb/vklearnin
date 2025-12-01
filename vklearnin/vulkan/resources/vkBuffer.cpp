@@ -9,32 +9,24 @@ namespace vkl {
 
 // =============================================================================
 vkBuffer::vkBuffer(vkBuffer &&other) :
-    _handle          { other._handle },
-    _memory_handle   { other._memory_handle },
-    _size_bytes      { other._size_bytes },
-    _physical_device { other._physical_device },
-    _device          { other._device }
+    _handle        { other._handle },
+    _memory_handle { other._memory_handle },
+    _size_bytes    { other._size_bytes },
+    _device        { other._device }
 {
-    other._handle          = nullptr;
-    other._memory_handle   = nullptr;
-    other._size_bytes      = 0u;
-    other._physical_device = nullptr;
-    other._device          = nullptr;
+    other._handle        = nullptr;
+    other._memory_handle = nullptr;
+    other._size_bytes    = 0u;
+    other._device        = nullptr;
 }
 
 // =============================================================================
 bool vkBuffer::create(vk::DeviceSize size_bytes,
                       vk::BufferUsageFlags const usage_flags,
-                      vkPhysicalDevice const &physical_device,
                       vkDevice const &device)
 {
     if(_handle) {
         Log::error("Buffer {} already exists", _handle);
-        return false;
-    }
-
-    if(!physical_device.native()) {
-        Log::error("Cannot create buffer with invalid physical device.");
         return false;
     }
 
@@ -44,7 +36,6 @@ bool vkBuffer::create(vk::DeviceSize size_bytes,
     }
 
     _device = &device;
-    _physical_device = &physical_device;
     _size_bytes = size_bytes;
 
     vk::BufferCreateInfo const create_info {
@@ -75,15 +66,15 @@ bool vkBuffer::destroy() {
 
     Log::trace("Destroying buffer {}", _handle);
     _device->native().destroyBuffer(_handle);
-    _handle = nullptr;
-    _size_bytes = 0u;
 
     if(_memory_handle) {
         this->free();
     }
 
+    _handle = nullptr;
+    _size_bytes = 0u;
+
     _device = nullptr;
-    _physical_device = nullptr;
 
     return true;
 }
@@ -113,11 +104,7 @@ bool vkBuffer::allocate(vk::MemoryPropertyFlags const flags) {
     // This function call will check the joint requirements of ourselves and
     // the logical device against the types of memory offered by the physical
     // device.
-    auto const type_index = _get_memory_type_index(
-        _physical_device->native().getMemoryProperties(),
-        flags,
-        mem_reqs
-    );
+    auto const type_index = _memory_type_index(flags, mem_reqs);
 
     // Once a suitable memory type (and its index) is located, we're ready to
     // actually allocate the buffer.
@@ -194,12 +181,9 @@ bool vkBuffer::send_to_device(void const *data,
     }
 
     vkBuffer staging_buffer;
-    if(!staging_buffer.create(
-            _size_bytes,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            *_physical_device,
-            *_device
-    ))
+    if(!staging_buffer.create(_size_bytes,
+                              vk::BufferUsageFlagBits::eTransferSrc,
+                              *_device))
     {
         Log::error("Failed to create staging buffer for buffer {}", _handle);
         return false;
@@ -267,18 +251,17 @@ bool vkBuffer::send_to_device(void const *data,
 }
 
 // =============================================================================
-uint32_t vkBuffer::_get_memory_type_index(
-    vk::PhysicalDeviceMemoryProperties const &properties,
-    vk::MemoryPropertyFlags const flags,
-    vk::MemoryRequirements const &reqs)
+uint32_t vkBuffer::_memory_type_index(vk::MemoryPropertyFlags const flags,
+                                      vk::MemoryRequirements const &reqs)
 {
-    auto const type_count = properties.memoryTypeCount;
+    auto const memory_props = _device->physical_device().getMemoryProperties();
+    auto const type_count = memory_props.memoryTypeCount;
 
     // This bit-rithmetic bears some explanation. We're checking two bit fields
     // against our requirements for the memory itself.
 
     for(uint32_t type_index = 0u; type_index < type_count; ++type_index) {
-        auto const type = properties.memoryTypes[type_index];
+        auto const type = memory_props.memoryTypes[type_index];
 
         // Each type index is actually a field in memoryTypeBits. If the index
         // we're currently on is enabled, that means we've found a matching

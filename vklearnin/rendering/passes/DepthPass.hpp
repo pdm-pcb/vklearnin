@@ -10,7 +10,6 @@
 namespace vkl {
 
 class vkSurface;
-class vkPhysicalDevice;
 class vkDevice;
 
 class DepthPass final {
@@ -27,7 +26,6 @@ public:
     bool create(vkSurface const &surface,
                 std::span<vk::ClearValue const> const clear_values,
                 vk::Format const depth_format,
-                vkPhysicalDevice const &physical_device,
                 vkDevice const &device);
     bool destroy();
 
@@ -36,7 +34,6 @@ public:
     void destroy_swapchain_resources();
     void create_swapchain_resources(vkSurface const &surface,
                                     vk::Format const depth_format,
-                                    vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
 
     inline auto & begin_info() { return _begin_info; }
@@ -67,7 +64,6 @@ private:
     void _init_subpasses();
 
     bool _create_depth_buffer(vkSurface const &surface,
-                              vkPhysicalDevice const &physical_device,
                               vkDevice const &device);
     void _destroy_depth_buffer();
 

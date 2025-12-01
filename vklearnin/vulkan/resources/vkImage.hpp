@@ -5,7 +5,6 @@
 
 namespace vkl {
 
-class vkPhysicalDevice;
 class vkDevice;
 class vkCmdBuffer;
 
@@ -33,24 +32,18 @@ public:
     // For swapchain images
     bool create(vk::Image const &handle,
                 vk::Format const format,
-                vk::Extent3D const &extent,
-                vkDevice const &device,
-                std::string_view const debug_name);
+                vk::Extent3D const &extent);
 
     // For reading texture data from a file
     bool create(std::string_view const file_name,
                 Details const &details,
-                vkPhysicalDevice const &physical_device,
-                vkDevice const &device,
-                std::string_view const debug_name);
+                vkDevice const &device);
 
     // For render targets, eg color buffer
     bool create(vk::Extent2D const &extent,
                 vk::Format const format,
                 Details const &details,
-                vkPhysicalDevice const &physical_device,
-                vkDevice const &device,
-                std::string_view const debug_name = "");
+                vkDevice const &device);
 
     bool destroy();
 
@@ -84,20 +77,18 @@ private:
     vk::Image        _handle        { nullptr };
     vk::DeviceMemory _memory_handle { nullptr };
 
-    vkPhysicalDevice const *_physical_device { nullptr };
-    vkDevice const *_device { nullptr };
-
-    vk::Format _format { vk::Format::eUndefined };
-    vk::Extent3D _extent { };
+    vk::Format           _format { vk::Format::eUndefined };
+    vk::Extent3D         _extent { };
     vk::ImageAspectFlags _aspect_flags { };
-
-    vk::ImageLayout _layout { vk::ImageLayout::eUndefined };
+    vk::ImageLayout      _layout { vk::ImageLayout::eUndefined };
 
     uint32_t _array_layers = 1u;
     uint32_t _mip_levels = 1u;
 
     vk::DeviceSize _size_bytes = 0u;
     void *_raw_data { nullptr };
+
+    vkDevice const *_device { nullptr };
 
     void * _load_from_file(std::string_view const file_name);
     void _calc_mip_levels();
@@ -106,15 +97,8 @@ private:
     void _generate_mipmaps(vkCmdBuffer const &cmd_buffer,
                            vk::Filter const filter);
 
-    static uint32_t _memory_type_index(
-        vk::PhysicalDeviceMemoryProperties const &memory_props,
-        vk::MemoryPropertyFlags const flags,
-        vk::MemoryRequirements const reqs
-    );
-
-#ifdef VKL_DEBUG
-    std::string _debug_name { "UNNAMED IMAGE" };
-#endif // VKL_DEBUG
+    uint32_t _memory_type_index(vk::MemoryPropertyFlags const flags,
+                                vk::MemoryRequirements const &reqs);
 };
 
 } // namespace vkl

@@ -1,0 +1,3 @@
+I've created a class that'll hold and manage an important struct that'll change each time we draw to a swapchain image: [`vk::RenderingInfo`](https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderingInfo.html). Whenever we begin a new sequence of draw commands, we'll have asked the swapchain for an image index, and we'll have matched that image index to an image view and layout for our local representations of the device memory.
+
+Additionally, this render class will keep track of any size changes that happen to our target surface.

@@ -25,19 +25,19 @@ public:
 
     void update_render_area(vkSurface const &surface);
 
-    vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,
-                                                vk::ImageLayout const &layout);
+    [[nodiscard]]
+    vk::RenderingInfo const & rendering_info(vk::ImageView const &view,
+                                             vk::ImageLayout const &layout);
 
-    inline auto const & pipeline_create_info() const {
-        return _pipeline_create_info;
+    [[nodiscard]] auto const & color_attachment_formats() const {
+        return _color_attachment_formats;
     }
 
 private:
     std::vector<vk::Format> _color_attachment_formats;
-    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
+    std::vector<vk::RenderingAttachmentInfo> _color_attachments;
 
-    vk::RenderingInfoKHR _rendering_info { };
-    vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
+    vk::RenderingInfo _rendering_info { };
 };
 
 } // namespace vkl

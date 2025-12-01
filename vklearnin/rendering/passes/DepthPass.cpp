@@ -2,7 +2,6 @@
 #include "vklearnin/rendering/passes/DepthPass.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
-#include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
 
 namespace vkl {
@@ -11,7 +10,6 @@ namespace vkl {
 bool DepthPass::create(vkSurface const &surface,
                        std::span<vk::ClearValue const> const clear_values,
                        vk::Format const depth_format,
-                       vkPhysicalDevice const &physical_device,
                        vkDevice const &device)
 {
     if(_render_pass.native()) {
@@ -50,7 +48,7 @@ bool DepthPass::create(vkSurface const &surface,
         return false;
     }
 
-    if(!_create_depth_buffer(surface, physical_device, device)) {
+    if(!_create_depth_buffer(surface, device)) {
         Log::error("Failed to create depth pass depth buffer.");
         _reset_object();
         return false;
@@ -105,7 +103,6 @@ void DepthPass::destroy_swapchain_resources() {
 void DepthPass::create_swapchain_resources(
     vkSurface const &surface,
     vk::Format const depth_format,
-    vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
     _color_format = surface.format().format;
@@ -116,7 +113,7 @@ void DepthPass::create_swapchain_resources(
     _init_attachments();
     _init_subpasses();
 
-    _create_depth_buffer(surface, physical_device, device);
+    _create_depth_buffer(surface, device);
 }
 
 // =============================================================================
@@ -205,10 +202,8 @@ void DepthPass::_init_subpasses() {
 }
 
 // =============================================================================
-bool
-DepthPass::_create_depth_buffer(vkSurface const &surface,
-                                vkPhysicalDevice const &physical_device,
-                                vkDevice const &device)
+bool DepthPass::_create_depth_buffer(vkSurface const &surface,
+                                     vkDevice const &device)
 {
     vkImage::Details const details {
         .type         = vk::ImageType::e2D,
@@ -220,22 +215,19 @@ DepthPass::_create_depth_buffer(vkSurface const &surface,
     if(!_depth_buffer.create(surface.extent(),
                              _depth_format,
                              details,
-                             physical_device,
                              device))
     {
         Log::error("Failed to create depth buffer.");
         return false;
     }
 
-    if(!_depth_view.create(
-        vkImageView::Details {
-            .image        = _depth_buffer.native(),
-            .format       = _depth_buffer.format(),
-            .type         = vk::ImageViewType::e2D,
-            .aspect_flags = vk::ImageAspectFlagBits::eDepth,
-        },
-        device
-    ))
+    if(!_depth_view.create(vkImageView::Details {
+                               .image        = _depth_buffer.native(),
+                               .format       = _depth_buffer.format(),
+                               .type         = vk::ImageViewType::e2D,
+                               .aspect_flags = vk::ImageAspectFlagBits::eDepth,
+                           },
+                           device))
     {
         Log::error("Failed to create depth view.");
         _depth_buffer.destroy();

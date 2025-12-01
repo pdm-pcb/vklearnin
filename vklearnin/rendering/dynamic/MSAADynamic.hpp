@@ -9,7 +9,6 @@
 namespace vkl {
 
 class vkSurface;
-class vkPhysicalDevice;
 class vkDevice;
 
 class MSAADynamic final {
@@ -27,7 +26,6 @@ public:
               std::span<vk::ClearValue const> const clear_values,
               vk::Format const depth_format,
               vk::SampleCountFlagBits const msaa_sample_count,
-              vkPhysicalDevice const &physical_device,
               vkDevice const &device);
 
     void shutdown();
@@ -39,25 +37,29 @@ public:
         vkSurface const &surface,
         std::span<vk::ClearValue const> const clear_values,
         vk::Format const depth_format,
-        vkPhysicalDevice const &physical_device,
         vkDevice const &device);
 
-    vk::RenderingInfoKHR const & rendering_info(vk::ImageView const &view,
-                                                vk::ImageLayout const &layout);
+    [[nodiscard]]
+    vk::RenderingInfo const & rendering_info(vk::ImageView const &view,
+                                             vk::ImageLayout const &layout);
 
-    inline auto & depth_buffer()       { return _depth_buffer; }
-    inline auto & multisample_buffer() { return _multisample_buffer; }
-
-    inline auto const & pipeline_create_info() const {
-        return _pipeline_create_info;
+    [[nodiscard]] auto const &color_attachment_formats() const {
+        return _color_attachment_formats;
     }
+
+    [[nodiscard]] inline auto & depth_buffer() { return _depth_buffer; }
+    [[nodiscard]] inline auto depth_attachment_format() const {
+        return _depth_attachment_format;
+    }
+
+    [[nodiscard]] inline auto & multisample_buffer() { return _multisample_buffer; }
 
 private:
     std::vector<vk::Format> _color_attachment_formats;
     vk::Format _depth_attachment_format { vk::Format::eUndefined };
 
-    std::vector<vk::RenderingAttachmentInfoKHR> _color_attachments;
-    vk::RenderingAttachmentInfoKHR _depth_attachment { };
+    std::vector<vk::RenderingAttachmentInfo> _color_attachments;
+    vk::RenderingAttachmentInfo _depth_attachment { };
 
     vkImage     _depth_buffer;
     vkImageView _depth_view;
@@ -67,20 +69,15 @@ private:
 
     vk::SampleCountFlagBits _msaa_sample_count { vk::SampleCountFlagBits::e1 };
 
-    vk::RenderingInfoKHR _rendering_info { };
-    vk::PipelineRenderingCreateInfoKHR _pipeline_create_info { };
+    vk::RenderingInfo _rendering_info { };
 
     void _init_attachments(std::span<vk::ClearValue const> const clear_values);
     void _init_rendering_info(vkSurface const &surface);
-    void _init_pipeline_create_info();
 
-    bool _create_depth_buffer(vkSurface const &surface,
-                              vkPhysicalDevice const &physical_device,
-                              vkDevice const &device);
+    bool _create_depth_buffer(vkSurface const &surface, vkDevice const &device);
     void _destroy_depth_buffer();
 
     bool _create_multisample_buffer(vkSurface const &surface,
-                                    vkPhysicalDevice const &physical_device,
                                     vkDevice const &device);
     void _destroy_multisample_buffer();
 

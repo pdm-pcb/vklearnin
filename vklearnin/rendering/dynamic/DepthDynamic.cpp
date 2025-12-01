@@ -2,7 +2,6 @@
 #include "vklearnin/rendering/dynamic/DepthDynamic.hpp"
 
 #include "vklearnin/vulkan/swapchain/vkSurface.hpp"
-#include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
 
 namespace vkl {
@@ -11,9 +10,13 @@ namespace vkl {
 void DepthDynamic::init(vkSurface const &surface,
                         std::span<vk::ClearValue const> const clear_values,
                         vk::Format const depth_format,
-                        vkPhysicalDevice const &physical_device,
                         vkDevice const &device)
 {
+    if(!device.native()) {
+        Log::error("Cannot create depth dynamic with invalid device.");
+        return;
+    }
+
     if(!surface.native()) {
         Log::error("Cannot create depth dynamic with invalid surface.");
         return;
@@ -27,7 +30,7 @@ void DepthDynamic::init(vkSurface const &surface,
     _color_attachment_formats = { surface.format().format };
     _depth_attachment_format = depth_format;
 
-    if(!_create_depth_buffer(surface, physical_device, device)) {
+    if(!_create_depth_buffer(surface, device)) {
         Log::error("Failed to create depth dynamic depth buffer.");
         _reset_object();
         return;
@@ -35,7 +38,6 @@ void DepthDynamic::init(vkSurface const &surface,
 
     _init_attachments(clear_values);
     _init_rendering_info(surface);
-    _init_pipeline_create_info();
 }
 
 // =============================================================================
@@ -44,7 +46,7 @@ void DepthDynamic::shutdown() {
 }
 
 // =============================================================================
-vk::RenderingInfoKHR const &
+vk::RenderingInfo const &
 DepthDynamic::rendering_info(vk::ImageView const &view,
                              vk::ImageLayout const &layout)
 {
@@ -79,14 +81,13 @@ void DepthDynamic::create_swapchain_resources(
     vkSurface const &surface,
     std::span<vk::ClearValue const> const clear_values,
     vk::Format const depth_format,
-    vkPhysicalDevice const &physical_device,
     vkDevice const &device)
 {
     _color_attachment_formats = { surface.format().format };
     _depth_attachment_format = depth_format;
 
     update_render_area(surface);
-    _create_depth_buffer(surface, physical_device, device);
+    _create_depth_buffer(surface, device);
 
     _init_attachments(clear_values);
     _init_rendering_info(surface);
@@ -96,7 +97,7 @@ void DepthDynamic::create_swapchain_resources(
 void DepthDynamic::_init_attachments(
     std::span<vk::ClearValue const> const clear_values)
 {
-    _color_attachments = {{ vk::RenderingAttachmentInfoKHR {
+    _color_attachments = {{ vk::RenderingAttachmentInfo {
         .pNext = nullptr,
         .imageView = { },
         .imageLayout = { },
@@ -110,7 +111,7 @@ void DepthDynamic::_init_attachments(
         },
     }}};
 
-    _depth_attachment = vk::RenderingAttachmentInfoKHR {
+    _depth_attachment = vk::RenderingAttachmentInfo {
         .pNext = nullptr,
         .imageView = _depth_view.native(),
         .imageLayout = _depth_buffer.layout(),
@@ -127,7 +128,7 @@ void DepthDynamic::_init_attachments(
 
 // =============================================================================
 void DepthDynamic::_init_rendering_info(vkSurface const &surface) {
-    _rendering_info = vk::RenderingInfoKHR {
+    _rendering_info = vk::RenderingInfo {
         .pNext = nullptr,
         .flags = { },
         .renderArea = vk::Rect2D {
@@ -145,22 +146,8 @@ void DepthDynamic::_init_rendering_info(vkSurface const &surface) {
 }
 
 // =============================================================================
-void DepthDynamic::_init_pipeline_create_info() {
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR {
-        .pNext = nullptr,
-        .viewMask = { },
-        .colorAttachmentCount =
-            static_cast<uint32_t>(_color_attachment_formats.size()),
-        .pColorAttachmentFormats = _color_attachment_formats.data(),
-        .depthAttachmentFormat = _depth_attachment_format,
-        .stencilAttachmentFormat = _depth_attachment_format,
-    };
-}
-
-// =============================================================================
 bool
 DepthDynamic::_create_depth_buffer(vkSurface const &surface,
-                                   vkPhysicalDevice const &physical_device,
                                    vkDevice const &device)
 {
     vkImage::Details const details {
@@ -173,7 +160,6 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
     if(!_depth_buffer.create(surface.extent(),
                              _depth_attachment_format,
                              details,
-                             physical_device,
                              device))
     {
         Log::error("Failed to create depth dynamic depth buffer.");
@@ -187,8 +173,7 @@ DepthDynamic::_create_depth_buffer(vkSurface const &surface,
             .type         = vk::ImageViewType::e2D,
             .aspect_flags = vk::ImageAspectFlagBits::eDepth,
         },
-        device
-    ))
+        device))
     {
         Log::error("Failed to create depth dynamic depth view.");
         return false;
@@ -214,12 +199,11 @@ void DepthDynamic::_reset_object() {
     _depth_attachment_format = vk::Format::eUndefined;
 
     _color_attachments.clear();
-    _depth_attachment = vk::RenderingAttachmentInfoKHR { };
+    _depth_attachment = vk::RenderingAttachmentInfo { };
 
     _destroy_depth_buffer();
 
-    _rendering_info = vk::RenderingInfoKHR { };
-    _pipeline_create_info = vk::PipelineRenderingCreateInfoKHR { };
+    _rendering_info = vk::RenderingInfo { };
 }
 
 } // namespace vkl

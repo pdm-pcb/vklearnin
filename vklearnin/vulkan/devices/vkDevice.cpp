@@ -17,6 +17,8 @@ bool vkDevice::create(vkPhysicalDevice const &physical_device) {
         return false;
     }
 
+    _physical_device = physical_device.native();
+
     // We only need one device queue, so only need to specify one priority
     float const queue_priorities[] = { 1.0f };
 
@@ -76,6 +78,8 @@ bool vkDevice::destroy() {
         Log::error("Must create device before calling destroy.");
         return false;
     }
+
+    _physical_device = nullptr;
 
     _graphics_queue.clear();
 

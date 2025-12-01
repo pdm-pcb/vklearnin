@@ -191,9 +191,7 @@ void vkSwapchain::_get_images() {
             vk::Extent3D {
                 .width = _surface->extent().width,
                 .height = _surface->extent().height,
-            },
-            *_device,
-            debug_name
+            }
         );
 
         _image_views[i].create(
