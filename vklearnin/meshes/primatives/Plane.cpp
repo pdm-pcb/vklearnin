@@ -20,18 +20,11 @@ std::vector<Index::Type> const Plane::_indices {
 };
 
 // =============================================================================
-bool Plane::create(vkPhysicalDevice const &physical_device,
-                   vkDevice const &device)
-{
+bool Plane::create(vkDevice const &device) {
     if(_vertex_buffer.native() || _index_buffer.native()) {
         Log::error("Plane with vertex {} and index buffer {} alrady exists.",
                    _vertex_buffer.native(),
                    _index_buffer.native());
-        return false;
-    }
-
-    if(!physical_device.native()) {
-        Log::error("Cannot create plane with invalid physical device.");
         return false;
     }
 
@@ -148,15 +141,15 @@ bool Plane::destroy() {
 // =============================================================================
 bool Plane::bind(vkCmdBuffer const &cmd_buffer) {
     cmd_buffer.native().bindVertexBuffers(
-        0u,
-        {{ _vertex_buffer.native() }},
-        { 0u }
+        0u,                             // first binding
+        {{ _vertex_buffer.native() }},  // buffers to bind
+        {{ 0u }}                        // offsets
     );
 
     cmd_buffer.native().bindIndexBuffer(
-        _index_buffer.native(),
-        0u,
-        Index::vulkan_type()
+        _index_buffer.native(), // buffer to bind
+        0u,                     // offset
+        Index::vulkan_type()    // underlying type
     );
 
     return true;

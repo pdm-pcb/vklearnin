@@ -24,8 +24,7 @@ public:
     Plane & operator=(Plane &&) = delete;
     Plane & operator=(Plane const &) = delete;
 
-    bool create(vkPhysicalDevice const &physical_device,
-                vkDevice const &device);
+    bool create(vkDevice const &device);
     bool destroy();
 
     bool bind(vkCmdBuffer const &cmd_buffer);

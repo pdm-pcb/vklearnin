@@ -647,15 +647,8 @@ bool create_swapchain() {
 
 bool create_draw_data() {
     // models ------------------------------------------------------------------
-    plane_a.create(
-        vkPhysicalDevice::current_device(),
-        device
-    );
-
-    plane_b.create(
-        vkPhysicalDevice::current_device(),
-        device
-    );
+    plane_a.create(device);
+    plane_b.create(device);
 
     // camera matrices and buffers ---------------------------------------------
     camera_ubos.resize(swapchain.image_count());
