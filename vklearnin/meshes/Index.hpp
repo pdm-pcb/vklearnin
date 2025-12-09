@@ -7,7 +7,7 @@ namespace vkl {
 
 struct Index final {
     using Type = uint32_t;
-    static inline auto vulkan_type() { return vk::IndexType::eUint32; }
+    [[nodiscard]] static inline auto vulkan_type() { return vk::IndexType::eUint32; }
 };
 
 }

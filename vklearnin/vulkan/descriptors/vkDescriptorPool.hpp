@@ -24,7 +24,7 @@ public:
     bool create(uint32_t const max_sets, vkDevice const &device);
     bool destroy();
 
-    inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
 
 private:
     vk::DescriptorPool _handle { nullptr };

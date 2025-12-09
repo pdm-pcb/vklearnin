@@ -32,8 +32,7 @@ bool vkDescriptorSetLayout::create(vkDevice const &device) {
     }
 
     if(!device.native()) {
-        Log::error("Cannot create descriptor set layout with invalid "
-                          "device.");
+        Log::error("Cannot create descriptor set layout with invalid device.");
         return false;
     }
 
@@ -54,8 +53,7 @@ bool vkDescriptorSetLayout::create(vkDevice const &device) {
 // =============================================================================
 bool vkDescriptorSetLayout::destroy() {
     if(!_handle) {
-        Log::error("Must create descriptor set layout before calling "
-                          "destroy.");
+        Log::error("Must create descriptor set layout before calling destroy.");
         return false;
     }
 

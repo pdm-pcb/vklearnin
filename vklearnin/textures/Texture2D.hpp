@@ -9,8 +9,6 @@
 
 namespace vkl {
 
-class vkDescriptorPool;
-class vkPhsyicalDevice;
 class vkDevice;
 
 class Texture2D final {
@@ -34,9 +32,9 @@ public:
 
     bool destroy();
 
-    inline auto const & image()   const { return _image; }
-    inline auto const & view()    const { return _view; }
-    inline auto const & sampler() const { return _sampler; }
+    [[nodiscard]] inline auto const & image()   const { return _image; }
+    [[nodiscard]] inline auto const & view()    const { return _view; }
+    [[nodiscard]] inline auto const & sampler() const { return _sampler; }
 
 private:
     vkImage     _image;

@@ -12,13 +12,15 @@ namespace vkl {
 
 // =============================================================================
 vkDescriptorSet::vkDescriptorSet(vkDescriptorSet &&other) :
-    _handle { other._handle },
-    _device { other._device },
-    _layout { other._layout }
+    _handle  { other._handle },
+    _device  { other._device },
+    _layout  { other._layout },
+    _updates { other._updates }
 {
     other._handle = nullptr;
     other._device = nullptr;
     other._layout = nullptr;
+    other._updates.clear();
 }
 
 // =============================================================================
@@ -53,10 +55,10 @@ bool vkDescriptorSet::allocate(vkDescriptorSetLayout const &layout,
 }
 
 // =============================================================================
-vkDescriptorSet & vkDescriptorSet::add_update(
-    vk::DescriptorBufferInfo const &update,
-    uint32_t const binding,
-    vk::DescriptorType const descriptor_type)
+vkDescriptorSet &
+vkDescriptorSet::add_update(vk::DescriptorBufferInfo const &update,
+                            uint32_t const binding,
+                            vk::DescriptorType const descriptor_type)
 {
     _updates.emplace_back(vk::WriteDescriptorSet {
         .dstSet = _handle,
@@ -73,10 +75,10 @@ vkDescriptorSet & vkDescriptorSet::add_update(
 }
 
 // =============================================================================
-vkDescriptorSet & vkDescriptorSet::add_update(
-    vk::DescriptorImageInfo const &update,
-    uint32_t const binding,
-    vk::DescriptorType const descriptor_type)
+vkDescriptorSet &
+vkDescriptorSet::add_update(vk::DescriptorImageInfo const &update,
+                            uint32_t const binding,
+                            vk::DescriptorType const descriptor_type)
 {
     _updates.emplace_back(vk::WriteDescriptorSet {
         .dstSet = _handle,
@@ -110,11 +112,9 @@ void vkDescriptorSet::bind(vkGraphicsPipeline const &pipeline,
                            vkCmdBuffer const &cmd_buffer) const
 {
     if(!_updates.empty()) {
-        Log::warn(
-            "Binding graphics descriptor set {} with {} unwritten updates.",
-            _handle,
-            _updates.size()
-        );
+        Log::warn("Binding graphics descriptor set {} with {} unwritten updates.",
+                  _handle,
+                  _updates.size());
     }
 
     cmd_buffer.native().bindDescriptorSets(
@@ -134,11 +134,9 @@ void vkDescriptorSet::bind(vkComputePipeline const &pipeline,
                            vkCmdBuffer const &cmd_buffer) const
 {
     if(!_updates.empty()) {
-        Log::warn(
-            "Binding compute descriptor set {} with {} unwritten updates.",
-            _handle,
-            _updates.size()
-        );
+        Log::warn("Binding compute descriptor set {} with {} unwritten updates.",
+                  _handle,
+                  _updates.size());
     }
 
     cmd_buffer.native().bindDescriptorSets(

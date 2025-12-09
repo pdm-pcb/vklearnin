@@ -31,8 +31,8 @@
 // #define MSAA_PASS
 
 #define DYNAMIC_RENDERING
-#define COLOR_DYNAMIC
-// #define DEPTH_DYNAMIC
+// #define COLOR_DYNAMIC
+#define DEPTH_DYNAMIC
 // #define MSAA_DYNAMIC
 
 using namespace vkl;
@@ -229,16 +229,15 @@ int main() {
         auto const &swapchain_image_view = swapchain.image_views()[frame_index];
 #endif // DYNAMIC_RENDERING
 
-        auto const &gfx_sync = graphics_syncs[frame_index];
-        auto const &graphics_cmd_buffer = gfx_sync.cmd_buffer();
+        auto const &graphics_sync = graphics_syncs[frame_index];
+        auto const &graphics_cmd_buffer = graphics_sync.cmd_buffer();
 
         // wait on queue fence, reset fence and command pool
-        gfx_sync.wait_and_reset();
+        graphics_sync.wait_and_reset();
 
         // get next image index
-        auto const image_index = swapchain.acquire_next_image(
-            gfx_sync.wait_semaphore()
-        );
+        auto const image_index =
+            swapchain.acquire_next_image(graphics_sync.wait_semaphore());
 
         if(image_index == std::numeric_limits<uint32_t>::max()) {
             device.wait_idle();
@@ -248,11 +247,9 @@ int main() {
         }
 
         if(image_index != frame_index) {
-            Log::critical(
-                "Got image index {} with frame index {}.",
-                image_index,
-                frame_index
-            );
+            Log::critical("Got image index {} with frame index {}.",
+                          image_index,
+                          frame_index);
             break;
         }
 
@@ -393,14 +390,14 @@ int main() {
             vk::SubmitInfo {
                 .pNext                = nullptr,
                 .waitSemaphoreCount   = 1u,
-                .pWaitSemaphores      = &gfx_sync.wait_semaphore(),
+                .pWaitSemaphores      = &graphics_sync.wait_semaphore(),
                 .pWaitDstStageMask    = &wait_stage_flags,
                 .commandBufferCount   = 1u,
                 .pCommandBuffers      = &graphics_cmd_buffer.native(),
                 .signalSemaphoreCount = 1u,
-                .pSignalSemaphores    = &gfx_sync.complete_semaphore(),
+                .pSignalSemaphores    = &graphics_sync.complete_semaphore(),
             },
-            gfx_sync.in_flight_fence()
+            graphics_sync.in_flight_fence()
         );
 
         // ---------------------------------------------------------------------
@@ -408,7 +405,7 @@ int main() {
         auto const present_result = device.graphics_queue().present(
             vk::PresentInfoKHR {
                 .waitSemaphoreCount = 1u,
-                .pWaitSemaphores    = &gfx_sync.complete_semaphore(),
+                .pWaitSemaphores    = &graphics_sync.complete_semaphore(),
                 .swapchainCount     = 1u,
                 .pSwapchains        = &swapchain.native(),
                 .pImageIndices      = &frame_index,
@@ -728,10 +725,10 @@ bool create_descriptor_data() {
     // camera descriptor sets --------------------------------------------------
     camera_descriptor_set_layout
         .add_binding(
-            0u,
-            vk::DescriptorType::eUniformBuffer,
-            1u,
-            vk::ShaderStageFlagBits::eVertex)
+            0u,                                 // binding
+            vk::DescriptorType::eUniformBuffer, // type
+            1u,                                 // descriptor count
+            vk::ShaderStageFlagBits::eVertex)   // stage flags
         .create(device);
 
     camera_descriptor_sets.resize(swapchain.image_count());
@@ -758,10 +755,10 @@ bool create_descriptor_data() {
     // texture descriptor sets -------------------------------------------------
     texture_descriptor_set_layout
         .add_binding(
-            0u,
-            vk::DescriptorType::eCombinedImageSampler,
-            1u,
-            vk::ShaderStageFlagBits::eFragment)
+            0u,                                        // binding
+            vk::DescriptorType::eCombinedImageSampler, // type
+            1u,                                        // descriptor count
+            vk::ShaderStageFlagBits::eFragment)        // stage flags
         .create(device);
 
     brick_descriptor_set.allocate(

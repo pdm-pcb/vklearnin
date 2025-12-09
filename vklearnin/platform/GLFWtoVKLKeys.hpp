@@ -2,7 +2,6 @@
 #define VKLEARNIN_PLATFORM_GLFWTOVKLKEYS_HPP
 
 #include "vklearnin/pch.hpp"
-#include "vklearnin/tools/Log.hpp"
 #include "vklearnin/platform/vkl_keycodes.hpp"
 
 namespace vkl {

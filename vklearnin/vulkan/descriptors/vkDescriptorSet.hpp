@@ -45,7 +45,7 @@ public:
               uint32_t const set_number,
               vkCmdBuffer const &cmd_buffer) const;
 
-    inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
 
 private:
     vk::DescriptorSet _handle { nullptr };

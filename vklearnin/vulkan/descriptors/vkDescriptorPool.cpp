@@ -54,8 +54,7 @@ bool vkDescriptorPool::create(uint32_t const max_sets, vkDevice const &device) {
 // =============================================================================
 bool vkDescriptorPool::destroy() {
     if(!_handle) {
-        Log::error("Must create descriptor pool before calling "
-                          "destroy.");
+        Log::error("Must create descriptor pool before calling destroy.");
         return false;
     }
 

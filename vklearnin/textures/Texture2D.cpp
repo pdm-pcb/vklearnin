@@ -1,10 +1,7 @@
 #include "vklearnin/vklearnin.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
-#include "vklearnin/vulkan/descriptors/vkDescriptorPool.hpp"
-#include "vklearnin/vulkan/devices/vkPhysicalDevice.hpp"
 #include "vklearnin/vulkan/devices/vkDevice.hpp"
-#include "vklearnin/vulkan/devices/vkCmdBuffer.hpp"
 
 namespace vkl {
 

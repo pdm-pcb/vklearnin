@@ -28,7 +28,7 @@ public:
     bool create(vkDevice const &device);
     bool destroy();
 
-    inline auto const & native() const { return _handle; }
+    [[nodiscard]] inline auto const & native() const { return _handle; }
 
 private:
     vk::DescriptorSetLayout _handle { nullptr };
