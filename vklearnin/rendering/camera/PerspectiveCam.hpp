@@ -10,6 +10,9 @@ namespace vkl {
 
 class vkDevice;
 class vkBuffer;
+class vkDescriptorPool;
+class vkGraphicsPipeline;
+class vkCmdBuffer;
 
 class PerspectiveCam final {
 public:
@@ -22,16 +25,37 @@ public:
     PerspectiveCam  & operator=(PerspectiveCam &&) = delete;
     PerspectiveCam  & operator=(PerspectiveCam const &) = delete;
 
-    bool create();
-    bool destroy();
+    void create_ubos(std::size_t const swapchain_image_count,
+                     vkDevice const &device);
+
+    void create_descriptors(std::size_t const swapchain_image_count,
+                            vkDescriptorPool const &descriptor_pool,
+                            vkDevice const &device);
+
+    void destroy_descriptors();
+    void destroy_ubos();
+
+    void set_view_matrix(glm::mat4 const &in_mat) { _persp_mats.view = in_mat; }
+    void set_proj_matrix(glm::mat4 const &in_mat) { _persp_mats.proj = in_mat; }
+
+    auto const & descriptor_set_layout() const { return _descriptor_set_layout; }
+
+    void update_camera_ubos(uint32_t const frame_index);
+
+    void bind_descriptor_set(uint32_t const frame_index,
+                             vkGraphicsPipeline const &pipeline,
+                             uint32_t const descriptor_set_number,
+                             vkCmdBuffer const &cmd_buffer);
 
 private:
-    glm::mat4 _view_matrix { };
-    glm::mat4 _projection_matrix { };
+    struct PerspectiveMats {
+        glm::mat4 view { };
+        glm::mat4 proj { };
+    } _persp_mats;
 
     std::vector<vkBuffer> _ubos;
-    vkDescriptorSetLayout camera_descriptor_set_layout;
-    std::vector<vkDescriptorSet> camera_descriptor_sets;
+    vkDescriptorSetLayout _descriptor_set_layout;
+    std::vector<vkDescriptorSet> _descriptor_sets;
 };
 
 } // namespace vkl

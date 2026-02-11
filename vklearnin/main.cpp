@@ -25,6 +25,8 @@
 #include "vklearnin/meshes/primatives/Plane.hpp"
 #include "vklearnin/textures/Texture2D.hpp"
 
+#include "vklearnin/rendering/camera/PerspectiveCam.hpp"
+
 // #define RENDER_PASS
 // #define COLOR_PASS
 // #define DEPTH_PASS
@@ -132,16 +134,17 @@ static std::array<vk::Format const, 2> const depth_formats {
 static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 
 // drawing stuff ---------------------------------------------------------------
-static struct CameraMatrices {
-    glm::mat4 view { };
-    glm::mat4 proj { };
-} camera_mats;
+vkl::PerspectiveCam camera;
+// static struct CameraMatrices {
+//     glm::mat4 view { };
+//     glm::mat4 proj { };
+// } camera_mats;
 
-static std::vector<vkBuffer> camera_ubos;
+// static std::vector<vkBuffer> camera_ubos;
 
 static vkDescriptorPool descriptor_pool;
-static vkDescriptorSetLayout camera_descriptor_set_layout;
-static std::vector<vkDescriptorSet> camera_descriptor_sets;
+// static vkDescriptorSetLayout camera_descriptor_set_layout;
+// static std::vector<vkDescriptorSet> camera_descriptor_sets;
 
 static Plane plane_a;
 static glm::mat4 model_mat_a;
@@ -648,16 +651,13 @@ bool create_draw_data() {
     plane_b.create(device);
 
     // camera matrices and buffers ---------------------------------------------
-    camera_ubos.resize(swapchain.image_count());
+    camera.create_ubos(swapchain.image_count(), device);
 
-    for(auto &ubo : camera_ubos) {
-        ubo.create(sizeof(CameraMatrices),
-                   vk::BufferUsageFlagBits::eUniformBuffer,
-                   device);
-
-        ubo.allocate(vk::MemoryPropertyFlagBits::eHostVisible
-                     | vk::MemoryPropertyFlagBits::eHostCoherent);
-    }
+    camera.set_proj_matrix(glm::infinitePerspectiveRH_ZO(
+        glm::radians(45.0f),
+        surface.aspect_ratio(),
+        0.1f
+    ));
 
     // textures ----------------------------------------------------------------
     brick_texture.create(
@@ -723,34 +723,9 @@ bool create_draw_data() {
 
 bool create_descriptor_data() {
     // camera descriptor sets --------------------------------------------------
-    camera_descriptor_set_layout
-        .add_binding(
-            0u,                                 // binding
-            vk::DescriptorType::eUniformBuffer, // type
-            1u,                                 // descriptor count
-            vk::ShaderStageFlagBits::eVertex)   // stage flags
-        .create(device);
-
-    camera_descriptor_sets.resize(swapchain.image_count());
-    for(uint32_t i = 0u; i < camera_descriptor_sets.size(); ++i) {
-        camera_descriptor_sets[i].allocate(
-            camera_descriptor_set_layout,
-            descriptor_pool,
-            device
-        );
-
-        camera_descriptor_sets[i]
-            .add_update(
-                vk::DescriptorBufferInfo {
-                    .buffer = camera_ubos[i].native(),
-                    .offset = 0u,
-                    .range = VK_WHOLE_SIZE,
-                },
-                0u,
-                vk::DescriptorType::eUniformBuffer
-            )
-            .update();
-    }
+    camera.create_descriptors(swapchain.image_count(),
+                              descriptor_pool,
+                              device);
 
     // texture descriptor sets -------------------------------------------------
     texture_descriptor_set_layout
@@ -812,7 +787,7 @@ bool create_graphics_pipeline() {
             vk::ShaderStageFlagBits::eVertex,
             sizeof(glm::mat4)
         )
-        .add_descriptor_set_layout(camera_descriptor_set_layout.native())
+        .add_descriptor_set_layout(camera.descriptor_set_layout().native())
         .add_descriptor_set_layout(texture_descriptor_set_layout.native())
 
 #ifdef RENDER_PASS
@@ -896,16 +871,14 @@ void destroy_graphics_pipeline() {
 
 void destroy_descriptor_data() {
     texture_descriptor_set_layout.destroy();
-    camera_descriptor_set_layout.destroy();
+    camera.destroy_descriptors();
 }
 
 void destroy_draw_data() {
     wood_texture.destroy();
     brick_texture.destroy();
 
-    for(auto &ubo : camera_ubos) {
-        ubo.destroy();
-    }
+    camera.destroy_ubos();
 
     plane_b.destroy();
     plane_a.destroy();
@@ -961,25 +934,20 @@ void vulkan_shutdown() {
 }
 
 void draw(vkCmdBuffer const &cmd_buffer, float run_time_s) {
-    camera_descriptor_sets[frame_index].bind(
+    camera.set_view_matrix(glm::lookAtRH(
+        glm::vec3{ 0.0f,  -1.75f,  1.5f }, // camera position
+        glm::vec3{ 0.0f,  0.0f,  0.0f },   // camera target
+        glm::vec3{ 0.0f,  1.0f,  0.0f }    // camera "up"
+    ));
+
+    camera.update_camera_ubos(frame_index);
+
+    camera.bind_descriptor_set(
+        frame_index,
         graphics_pipeline,
         0u,
         cmd_buffer
     );
-
-    camera_mats.view = glm::lookAtRH(
-        glm::vec3{ 0.0f,  -1.75f,  1.5f }, // camera position
-        glm::vec3{ 0.0f,  0.0f,  0.0f }, // camera target
-        glm::vec3{ 0.0f,  1.0f,  0.0f }  // camera "up"
-    );
-
-    camera_mats.proj = glm::infinitePerspectiveRH_ZO(
-        glm::radians(45.0f),
-        surface.aspect_ratio(),
-        0.1f
-    );
-
-    camera_ubos[frame_index].fill_buffer(&camera_mats);
 
     // ---------- bind brick texture  ----------
     brick_descriptor_set.bind(graphics_pipeline, 1u, cmd_buffer);
@@ -1157,10 +1125,10 @@ void recreate_swapchain() {
         sync.create(device);
     }
 
-    camera_mats.proj = glm::infinitePerspectiveRH_ZO(
+    camera.set_proj_matrix(glm::infinitePerspectiveRH_ZO(
         glm::radians(45.0f),
         surface.aspect_ratio(),
         0.1f
-    );
+    ));
 }
 

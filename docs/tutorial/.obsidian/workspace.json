@@ -92,7 +92,7 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -240,7 +240,7 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "5f18b2668d6cd747",
+  "active": "5a58bfa3fbe094cf",
   "lastOpenFiles": [
     "08Pipelines.md",
     "09DynamicRendering.md",
