@@ -5,6 +5,7 @@
 
 #include "vklearnin/vulkan/descriptors/vkDescriptorSetLayout.hpp"
 #include "vklearnin/vulkan/descriptors/vkDescriptorSet.hpp"
+#include "vklearnin/platform/TargetWindow.hpp"
 
 namespace vkl {
 
@@ -40,7 +41,8 @@ public:
 
     auto const & descriptor_set_layout() const { return _descriptor_set_layout; }
 
-    void update_camera_ubos(uint32_t const frame_index);
+    void update_view_matrix(TargetWindow::InputStates const &input_states);
+    void update_ubos(uint32_t const frame_index);
 
     void bind_descriptor_set(uint32_t const frame_index,
                              vkGraphicsPipeline const &pipeline,
@@ -48,7 +50,7 @@ public:
                              vkCmdBuffer const &cmd_buffer);
 
 private:
-    struct PerspectiveMats {
+    struct PerspectiveMats final {
         glm::mat4 view { };
         glm::mat4 proj { };
     } _persp_mats;

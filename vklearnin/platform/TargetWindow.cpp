@@ -6,6 +6,7 @@
 namespace vkl {
 
 bool TargetWindow::_initialized { false };
+TargetWindow::InputStates TargetWindow::_input_states { };
 
 // =============================================================================
 bool TargetWindow::init() {
@@ -94,8 +95,9 @@ bool TargetWindow::destroy() {
 }
 
 // =============================================================================
-bool TargetWindow::poll_events() {
+bool TargetWindow::poll_events(InputStates &input_states) {
     ::glfwPollEvents();
+    input_states = _input_states;
     return static_cast<bool>(::glfwWindowShouldClose(_window));
 }
 
@@ -158,6 +160,19 @@ void TargetWindow::_key_callback(GLFWwindow *window,
     if(key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
         ::glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
+
+    if(key == GLFW_KEY_W) _input_states.w_pressed = action;
+    if(key == GLFW_KEY_A) _input_states.a_pressed = action;
+    if(key == GLFW_KEY_S) _input_states.s_pressed = action;
+    if(key == GLFW_KEY_D) _input_states.d_pressed = action;
+
+    if(key == GLFW_KEY_SPACE)        _input_states.space_pressed = action;
+    if(key == GLFW_KEY_LEFT_CONTROL) _input_states.lctrl_pressed = action;
+
+    if(key == GLFW_KEY_UP)    _input_states.up_pressed    = action;
+    if(key == GLFW_KEY_DOWN)  _input_states.down_pressed  = action;
+    if(key == GLFW_KEY_LEFT)  _input_states.left_pressed  = action;
+    if(key == GLFW_KEY_RIGHT) _input_states.right_pressed = action;
 }
 
 // =============================================================================

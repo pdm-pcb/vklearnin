@@ -134,17 +134,10 @@ static std::array<vk::Format const, 2> const depth_formats {
 static vk::SampleCountFlagBits msaa_sample_count = vk::SampleCountFlagBits::e1;
 
 // drawing stuff ---------------------------------------------------------------
-vkl::PerspectiveCam camera;
-// static struct CameraMatrices {
-//     glm::mat4 view { };
-//     glm::mat4 proj { };
-// } camera_mats;
-
-// static std::vector<vkBuffer> camera_ubos;
-
 static vkDescriptorPool descriptor_pool;
-// static vkDescriptorSetLayout camera_descriptor_set_layout;
-// static std::vector<vkDescriptorSet> camera_descriptor_sets;
+
+static vkl::PerspectiveCam camera;
+static vkl::TargetWindow::InputStates input_states;
 
 static Plane plane_a;
 static glm::mat4 model_mat_a;
@@ -207,7 +200,7 @@ int main() {
 
     uint64_t frame_count = 0u;
 
-    while(!target_window.poll_events()) {
+    while(!target_window.poll_events(input_states)) {
         auto const frame_time = loop_end - loop_start;
         auto const frame_time_s =
             static_cast<float>(frame_time.count()) / 1'000'000'000.0f;
@@ -940,7 +933,7 @@ void draw(vkCmdBuffer const &cmd_buffer, float run_time_s) {
         glm::vec3{ 0.0f,  1.0f,  0.0f }    // camera "up"
     ));
 
-    camera.update_camera_ubos(frame_index);
+    camera.update_ubos(frame_index);
 
     camera.bind_descriptor_set(
         frame_index,

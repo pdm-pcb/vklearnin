@@ -66,7 +66,12 @@ void PerspectiveCam::destroy_ubos() {
 }
 
 // =============================================================================
-void PerspectiveCam::update_camera_ubos(uint32_t const frame_index) {
+void PerspectiveCam::update_view_matrix(TargetWindow::InputStates const &input_states) {
+
+}
+
+// =============================================================================
+void PerspectiveCam::update_ubos(uint32_t const frame_index) {
     _ubos[frame_index].fill_buffer(&_persp_mats);
 }
 

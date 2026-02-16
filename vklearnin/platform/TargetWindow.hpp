@@ -34,7 +34,22 @@ public:
     inline void show() const { ::glfwShowWindow(_window); }
     inline void hide() const { ::glfwHideWindow(_window); }
 
-    bool poll_events();
+    struct InputStates final {
+        bool w_pressed     { false };
+        bool a_pressed     { false };
+        bool s_pressed     { false };
+        bool d_pressed     { false };
+
+        bool space_pressed { false };
+        bool lctrl_pressed { false };
+
+        bool up_pressed    { false };
+        bool down_pressed  { false };
+        bool left_pressed  { false };
+        bool right_pressed { false };
+    };
+
+    bool poll_events(InputStates &input_states);
 
 #ifdef VKL_LINUX
     [[nodiscard]] inline auto display() const { return ::glfwGetX11Display(); }
@@ -51,6 +66,7 @@ public:
 
 private:
     static bool _initialized;
+    static InputStates _input_states;
 
     GLFWwindow *_window { nullptr };
 
