@@ -46,11 +46,6 @@ public:
         bool lctrl_pressed  { false };
         bool lshift_pressed { false };
 
-        bool up_pressed    { false };
-        bool down_pressed  { false };
-        bool left_pressed  { false };
-        bool right_pressed { false };
-
         float delta_x { 0.0f };
         float delta_y { 0.0f };
     };

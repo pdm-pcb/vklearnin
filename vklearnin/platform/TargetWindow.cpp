@@ -192,11 +192,6 @@ void TargetWindow::_key_callback(GLFWwindow *window,
     if(key == GLFW_KEY_SPACE)        target_window->_input_states.space_pressed  = action;
     if(key == GLFW_KEY_LEFT_CONTROL) target_window->_input_states.lctrl_pressed  = action;
     if(key == GLFW_KEY_LEFT_SHIFT)   target_window->_input_states.lshift_pressed = action;
-
-    if(key == GLFW_KEY_UP)    target_window->_input_states.up_pressed    = action;
-    if(key == GLFW_KEY_DOWN)  target_window->_input_states.down_pressed  = action;
-    if(key == GLFW_KEY_LEFT)  target_window->_input_states.left_pressed  = action;
-    if(key == GLFW_KEY_RIGHT) target_window->_input_states.right_pressed = action;
 }
 
 // =============================================================================
