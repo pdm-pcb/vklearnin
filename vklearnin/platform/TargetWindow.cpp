@@ -48,7 +48,7 @@ bool TargetWindow::shutdown() {
 // =============================================================================
 bool TargetWindow::create(std::string_view const app_name) {
     ::glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    // ::glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    ::glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
     _window = ::glfwCreateWindow(
         320, 240,        // Default size that'll change immediately
@@ -73,6 +73,10 @@ bool TargetWindow::create(std::string_view const app_name) {
     ::glfwSetKeyCallback(_window, TargetWindow::_key_callback);
     ::glfwSetCursorPosCallback(_window, TargetWindow::_mouse_move_callback);
     ::glfwSetWindowIconifyCallback(_window, TargetWindow::_iconify_callback);
+
+    // Raw mouse input, then capture and hide the cursor
+    ::glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    ::glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Adjust the size of the target window relative to the display it's on,
     // and center it
@@ -101,17 +105,10 @@ bool TargetWindow::destroy() {
 bool TargetWindow::poll_events(InputStates &input_states) {
     ::glfwPollEvents();
 
-    if(_cursor_pos.x != _last_cursor_pos.x || _cursor_pos.y != _last_cursor_pos.y) {
-        _input_states.delta_x = static_cast<float>(_last_cursor_pos.x - _cursor_pos.x);
-        _input_states.delta_y = static_cast<float>(_last_cursor_pos.y - _cursor_pos.y);
-        _last_cursor_pos = _cursor_pos;
-
-        Log::trace("{}x{}", _input_states.delta_x, _input_states.delta_y);
-    }
-    else {
-        _input_states.delta_x = 0.0f;
-        _input_states.delta_y = 0.0f;
-    }
+    // If there's no change since last frame, the delta is zero
+    _input_states.delta_x = static_cast<float>(_last_cursor_pos.x - _cursor_pos.x);
+    _input_states.delta_y = static_cast<float>(_last_cursor_pos.y - _cursor_pos.y);
+    _last_cursor_pos = _cursor_pos;
 
     input_states = _input_states;
     return static_cast<bool>(::glfwWindowShouldClose(_window));
@@ -162,10 +159,7 @@ void TargetWindow::_size_and_place() {
                        static_cast<int32_t>(_window_position.x),
                        static_cast<int32_t>(_window_position.y));
 
-    // Capture, hide, and center the cursor
-    ::glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Set initial cursor position
+    // Record initial cursor position
     ::glfwGetCursorPos(_window, &_cursor_pos.x, &_cursor_pos.y);
     ::glfwGetCursorPos(_window, &_last_cursor_pos.x, &_last_cursor_pos.y);
 }

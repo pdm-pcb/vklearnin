@@ -51,12 +51,12 @@ public:
                              vkCmdBuffer const &cmd_buffer);
 
 public:
-    glm::vec3 _position = { 0.0f, 0.0f, 1.5f };
+    glm::vec3 _position = { 0.0f, 0.0f, 2.0f };
     glm::quat _orientation { };
 
     float const _move_speed       { 1.0f };
     float const _run_multiplier   { 2.0f };
-    float const _mouse_sensitivty { 0.0025f };
+    float const _mouse_sensitivty { 0.002f };
     float const _roll_speed       { 1.0f };
 
     struct PerspectiveMats final {
