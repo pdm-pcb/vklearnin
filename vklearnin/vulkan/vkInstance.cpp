@@ -150,8 +150,8 @@ void vkInstance::_init_validation() {
         vk::ValidationFeatureEnableEXT::eBestPractices,
         vk::ValidationFeatureEnableEXT::eSynchronizationValidation,
         vk::ValidationFeatureEnableEXT::eDebugPrintf,
-        vk::ValidationFeatureEnableEXT::eGpuAssisted,
-        vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
+        //vk::ValidationFeatureEnableEXT::eGpuAssisted,
+        //vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
     };
 
     // Not disabling any layers
