@@ -7,6 +7,8 @@ namespace vkl {
 
 bool TargetWindow::_initialized { false };
 TargetWindow::InputStates TargetWindow::_input_states { };
+TargetWindow::CursorPos TargetWindow::_cursor_pos { };
+TargetWindow::CursorPos TargetWindow::_last_cursor_pos { };
 
 // =============================================================================
 bool TargetWindow::init() {
@@ -69,6 +71,7 @@ bool TargetWindow::create(std::string_view const app_name) {
     );
 
     ::glfwSetKeyCallback(_window, TargetWindow::_key_callback);
+    ::glfwSetCursorPosCallback(_window, TargetWindow::_mouse_move_callback);
     ::glfwSetWindowIconifyCallback(_window, TargetWindow::_iconify_callback);
 
     // Adjust the size of the target window relative to the display it's on,
@@ -97,6 +100,19 @@ bool TargetWindow::destroy() {
 // =============================================================================
 bool TargetWindow::poll_events(InputStates &input_states) {
     ::glfwPollEvents();
+
+    if(_cursor_pos.x != _last_cursor_pos.x || _cursor_pos.y != _last_cursor_pos.y) {
+        _input_states.delta_x = static_cast<float>(_last_cursor_pos.x - _cursor_pos.x);
+        _input_states.delta_y = static_cast<float>(_last_cursor_pos.y - _cursor_pos.y);
+        _last_cursor_pos = _cursor_pos;
+
+        Log::trace("{}x{}", _input_states.delta_x, _input_states.delta_y);
+    }
+    else {
+        _input_states.delta_x = 0.0f;
+        _input_states.delta_y = 0.0f;
+    }
+
     input_states = _input_states;
     return static_cast<bool>(::glfwWindowShouldClose(_window));
 }
@@ -145,6 +161,13 @@ void TargetWindow::_size_and_place() {
     ::glfwSetWindowPos(_window,
                        static_cast<int32_t>(_window_position.x),
                        static_cast<int32_t>(_window_position.y));
+
+    // Capture, hide, and center the cursor
+    ::glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Set initial cursor position
+    ::glfwGetCursorPos(_window, &_cursor_pos.x, &_cursor_pos.y);
+    ::glfwGetCursorPos(_window, &_last_cursor_pos.x, &_last_cursor_pos.y);
 }
 
 // =============================================================================
@@ -165,9 +188,12 @@ void TargetWindow::_key_callback(GLFWwindow *window,
     if(key == GLFW_KEY_A) _input_states.a_pressed = action;
     if(key == GLFW_KEY_S) _input_states.s_pressed = action;
     if(key == GLFW_KEY_D) _input_states.d_pressed = action;
+    if(key == GLFW_KEY_Q) _input_states.q_pressed = action;
+    if(key == GLFW_KEY_E) _input_states.e_pressed = action;
 
-    if(key == GLFW_KEY_SPACE)        _input_states.space_pressed = action;
-    if(key == GLFW_KEY_LEFT_CONTROL) _input_states.lctrl_pressed = action;
+    if(key == GLFW_KEY_SPACE)        _input_states.space_pressed  = action;
+    if(key == GLFW_KEY_LEFT_CONTROL) _input_states.lctrl_pressed  = action;
+    if(key == GLFW_KEY_LEFT_SHIFT)   _input_states.lshift_pressed = action;
 
     if(key == GLFW_KEY_UP)    _input_states.up_pressed    = action;
     if(key == GLFW_KEY_DOWN)  _input_states.down_pressed  = action;
@@ -179,7 +205,10 @@ void TargetWindow::_key_callback(GLFWwindow *window,
 void TargetWindow::_mouse_move_callback([[maybe_unused]] GLFWwindow* window,
                                         [[maybe_unused]] double x,
                                         [[maybe_unused]] double y)
-{ }
+{
+    _cursor_pos.x = x;
+    _cursor_pos.y = y;
+}
 
 // =============================================================================
 void TargetWindow::_mouse_button_callback([[maybe_unused]] GLFWwindow* window,

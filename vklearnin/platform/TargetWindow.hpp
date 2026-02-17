@@ -39,14 +39,20 @@ public:
         bool a_pressed     { false };
         bool s_pressed     { false };
         bool d_pressed     { false };
+        bool q_pressed     { false };
+        bool e_pressed     { false };
 
-        bool space_pressed { false };
-        bool lctrl_pressed { false };
+        bool space_pressed  { false };
+        bool lctrl_pressed  { false };
+        bool lshift_pressed { false };
 
         bool up_pressed    { false };
         bool down_pressed  { false };
         bool left_pressed  { false };
         bool right_pressed { false };
+
+        float delta_x { 0.0f };
+        float delta_y { 0.0f };
     };
 
     bool poll_events(InputStates &input_states);
@@ -66,13 +72,21 @@ public:
 
 private:
     static bool _initialized;
-    static InputStates _input_states;
 
     GLFWwindow *_window { nullptr };
 
     vk::Offset2D _screen_center   { };
     vk::Extent2D _window_size     { };
     vk::Offset2D _window_position { };
+
+    static InputStates _input_states;
+
+    struct CursorPos final {
+        double x { 0.0 };
+        double y { 0.0 };
+    };
+    static CursorPos _cursor_pos;
+    static CursorPos _last_cursor_pos;
 
     [[nodiscard]] bool _get_resolution();
     void _size_and_place();

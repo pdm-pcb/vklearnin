@@ -167,7 +167,9 @@ void destroy_swapchain();
 void destroy_render_pass();
 void vulkan_shutdown();
 
-void draw(vkCmdBuffer const &cmd_buffer, float run_time_s);
+void draw(vkCmdBuffer const &cmd_buffer,
+          float const frame_time_s,
+          float const run_time_s);
 
 void recreate_swapchain();
 
@@ -211,7 +213,7 @@ int main() {
 
         loop_start = loop_end;
 
-        Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
+        // Log::trace("{}: {:.06f}", ++frame_count, frame_time_s);
 
         // ---------------------------------------------------------------------
         // begin graphics commands
@@ -356,7 +358,7 @@ int main() {
 
         graphics_cmd_buffer.begin_rendering(rendering_info);
             graphics_pipeline.bind(graphics_cmd_buffer);
-            draw(graphics_cmd_buffer, run_time_s);
+            draw(graphics_cmd_buffer, frame_time_s, run_time_s);
         graphics_cmd_buffer.end_rendering();
 
         // transition swapchain image for present
@@ -926,15 +928,12 @@ void vulkan_shutdown() {
     instance.destroy();
 }
 
-void draw(vkCmdBuffer const &cmd_buffer, float run_time_s) {
-    camera.set_view_matrix(glm::lookAtRH(
-        glm::vec3{ 0.0f,  -1.75f,  1.5f }, // camera position
-        glm::vec3{ 0.0f,  0.0f,  0.0f },   // camera target
-        glm::vec3{ 0.0f,  1.0f,  0.0f }    // camera "up"
-    ));
-
-    camera.update_ubos(frame_index);
-
+void draw(vkCmdBuffer const &cmd_buffer,
+          float const frame_time_s,
+          float const run_time_s)
+{
+    // ---------- update camera matrices ----------
+    camera.update_ubos(input_states, frame_time_s, frame_index);
     camera.bind_descriptor_set(
         frame_index,
         graphics_pipeline,

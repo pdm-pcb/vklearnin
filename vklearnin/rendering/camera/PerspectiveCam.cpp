@@ -66,12 +66,55 @@ void PerspectiveCam::destroy_ubos() {
 }
 
 // =============================================================================
-void PerspectiveCam::update_view_matrix(TargetWindow::InputStates const &input_states) {
+void PerspectiveCam::update_ubos(TargetWindow::InputStates const &input_states,
+                                 float const frame_delta,
+                                 uint32_t const frame_index)
+{
+    glm::vec3 velocity { 0.0f, 0.0f, 0.0f };
 
-}
+    if(input_states.w_pressed)     { velocity += _forward(); }
+    if(input_states.s_pressed)     { velocity -= _forward(); }
+    if(input_states.d_pressed)     { velocity += _right(); }
+    if(input_states.a_pressed)     { velocity -= _right(); }
+    if(input_states.space_pressed) { velocity += _up(); }
+    if(input_states.lctrl_pressed) { velocity -= _up(); }
 
-// =============================================================================
-void PerspectiveCam::update_ubos(uint32_t const frame_index) {
+    if(glm::length2(velocity) > 0.0f) {
+        velocity = glm::normalize(velocity);
+
+        auto offset_vector = velocity * frame_delta * _move_speed;
+        if(input_states.lshift_pressed) { offset_vector *= _run_multiplier; }
+
+        _position += offset_vector;
+    }
+
+    float yaw   = input_states.delta_x * _mouse_sensitivty;
+    float pitch = input_states.delta_y * _mouse_sensitivty;
+    float roll  = 0.0f;
+
+    if(input_states.q_pressed) { roll -= _roll_speed * frame_delta; }
+    if(input_states.e_pressed) { roll += _roll_speed * frame_delta; }
+
+    if(yaw != 0.0f) {
+        glm::quat q = glm::angleAxis(yaw, _up());
+        _orientation = glm::normalize(q * _orientation);
+    }
+
+    if(pitch != 0.0f) {
+        glm::quat q = glm::angleAxis(pitch, _right());
+        _orientation = glm::normalize(q * _orientation);
+    }
+
+    if(roll != 0.0f) {
+        glm::quat q = glm::angleAxis(roll, _forward());
+        _orientation = glm::normalize(q * _orientation);
+    }
+
+    auto const rotation = glm::toMat4(glm::conjugate(_orientation));
+    auto const translation = glm::translate(glm::mat4(1.0f), -_position);
+
+    _persp_mats.view = rotation * translation;
+
     _ubos[frame_index].fill_buffer(&_persp_mats);
 }
 
