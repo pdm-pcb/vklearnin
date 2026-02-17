@@ -5,14 +5,11 @@
 
 namespace vkl {
 
-bool TargetWindow::_initialized { false };
-TargetWindow::InputStates TargetWindow::_input_states { };
-TargetWindow::CursorPos TargetWindow::_cursor_pos { };
-TargetWindow::CursorPos TargetWindow::_last_cursor_pos { };
+bool TargetWindow::_glfw_initialized { false };
 
 // =============================================================================
 bool TargetWindow::init() {
-    if(_initialized) {
+    if(_glfw_initialized) {
         Log::warn("GLFW already initialized.");
         return true;
     }
@@ -22,7 +19,7 @@ bool TargetWindow::init() {
         return false;
     }
 
-    _initialized = true;
+    _glfw_initialized = true;
     Log::info("Initialized GLFW {:s}", ::glfwGetVersionString());
 
     ::glfwSetErrorCallback(TargetWindow::_error_callback);
@@ -35,7 +32,7 @@ bool TargetWindow::init() {
 
 // =============================================================================
 bool TargetWindow::shutdown() {
-    if(!_initialized) {
+    if(!_glfw_initialized) {
         Log::error("Cannot shut down GLFW before initializing it.");
         return false;
     }
@@ -70,6 +67,10 @@ bool TargetWindow::create(std::string_view const app_name) {
         GLFW_DONT_CARE  // maximum height
     );
 
+    // For getting back to the window that triggered a given callback
+    ::glfwSetWindowUserPointer(_window, this);
+
+    // Input callbacks
     ::glfwSetKeyCallback(_window, TargetWindow::_key_callback);
     ::glfwSetCursorPosCallback(_window, TargetWindow::_mouse_move_callback);
     ::glfwSetWindowIconifyCallback(_window, TargetWindow::_iconify_callback);
@@ -178,30 +179,34 @@ void TargetWindow::_key_callback(GLFWwindow *window,
         ::glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
-    if(key == GLFW_KEY_W) _input_states.w_pressed = action;
-    if(key == GLFW_KEY_A) _input_states.a_pressed = action;
-    if(key == GLFW_KEY_S) _input_states.s_pressed = action;
-    if(key == GLFW_KEY_D) _input_states.d_pressed = action;
-    if(key == GLFW_KEY_Q) _input_states.q_pressed = action;
-    if(key == GLFW_KEY_E) _input_states.e_pressed = action;
+    auto *target_window =
+        static_cast<TargetWindow *>(::glfwGetWindowUserPointer(window));
 
-    if(key == GLFW_KEY_SPACE)        _input_states.space_pressed  = action;
-    if(key == GLFW_KEY_LEFT_CONTROL) _input_states.lctrl_pressed  = action;
-    if(key == GLFW_KEY_LEFT_SHIFT)   _input_states.lshift_pressed = action;
+    if(key == GLFW_KEY_W) target_window->_input_states.w_pressed = action;
+    if(key == GLFW_KEY_A) target_window->_input_states.a_pressed = action;
+    if(key == GLFW_KEY_S) target_window->_input_states.s_pressed = action;
+    if(key == GLFW_KEY_D) target_window->_input_states.d_pressed = action;
+    if(key == GLFW_KEY_Q) target_window->_input_states.q_pressed = action;
+    if(key == GLFW_KEY_E) target_window->_input_states.e_pressed = action;
 
-    if(key == GLFW_KEY_UP)    _input_states.up_pressed    = action;
-    if(key == GLFW_KEY_DOWN)  _input_states.down_pressed  = action;
-    if(key == GLFW_KEY_LEFT)  _input_states.left_pressed  = action;
-    if(key == GLFW_KEY_RIGHT) _input_states.right_pressed = action;
+    if(key == GLFW_KEY_SPACE)        target_window->_input_states.space_pressed  = action;
+    if(key == GLFW_KEY_LEFT_CONTROL) target_window->_input_states.lctrl_pressed  = action;
+    if(key == GLFW_KEY_LEFT_SHIFT)   target_window->_input_states.lshift_pressed = action;
+
+    if(key == GLFW_KEY_UP)    target_window->_input_states.up_pressed    = action;
+    if(key == GLFW_KEY_DOWN)  target_window->_input_states.down_pressed  = action;
+    if(key == GLFW_KEY_LEFT)  target_window->_input_states.left_pressed  = action;
+    if(key == GLFW_KEY_RIGHT) target_window->_input_states.right_pressed = action;
 }
 
 // =============================================================================
-void TargetWindow::_mouse_move_callback([[maybe_unused]] GLFWwindow* window,
-                                        [[maybe_unused]] double x,
-                                        [[maybe_unused]] double y)
+void TargetWindow::_mouse_move_callback(GLFWwindow* window, double x, double y)
 {
-    _cursor_pos.x = x;
-    _cursor_pos.y = y;
+    auto *target_window =
+        static_cast<TargetWindow *>(::glfwGetWindowUserPointer(window));
+
+    target_window->_cursor_pos.x = x;
+    target_window->_cursor_pos.y = y;
 }
 
 // =============================================================================

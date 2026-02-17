@@ -68,10 +68,10 @@ public:
     }
 #endif // VKL platform
 
-    [[nodiscard]] static bool initialized() { return _initialized; }
+    [[nodiscard]] static bool glfw_initialized() { return _glfw_initialized; }
 
 private:
-    static bool _initialized;
+    static bool _glfw_initialized;
 
     GLFWwindow *_window { nullptr };
 
@@ -79,14 +79,14 @@ private:
     vk::Extent2D _window_size     { };
     vk::Offset2D _window_position { };
 
-    static InputStates _input_states;
+    InputStates _input_states { };
 
     struct CursorPos final {
         double x { 0.0 };
         double y { 0.0 };
     };
-    static CursorPos _cursor_pos;
-    static CursorPos _last_cursor_pos;
+    CursorPos _cursor_pos { };
+    CursorPos _last_cursor_pos { };
 
     [[nodiscard]] bool _get_resolution();
     void _size_and_place();

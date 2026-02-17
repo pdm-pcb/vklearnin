@@ -17,7 +17,7 @@ bool vkSurface::create(TargetWindow const &target_window,
         return false;
     }
 
-    if(!target_window.initialized()) {
+    if(!target_window.glfw_initialized()) {
         Log::error("Cannot create surface before initializing target window.");
         return false;
     }
