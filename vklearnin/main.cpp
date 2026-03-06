@@ -234,8 +234,7 @@ int main() {
         graphics_sync.wait_and_reset();
 
         // get next image index
-        auto const image_index =
-            swapchain.acquire_next_image(graphics_sync.wait_semaphore());
+        auto const image_index = swapchain.acquire_next_image();
 
         if(image_index == std::numeric_limits<uint32_t>::max()) {
             device.wait_idle();

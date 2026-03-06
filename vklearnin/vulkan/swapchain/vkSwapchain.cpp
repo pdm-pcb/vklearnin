@@ -62,6 +62,8 @@ bool vkSwapchain::create(vkDevice const &device, vkSurface const &surface,
     // Now that we've got the swapchain itself, we'll need its images
     _get_images();
 
+    _create_semaphores();
+
     return true;
 }
 
@@ -79,6 +81,12 @@ bool vkSwapchain::destroy() {
     }
     _image_views.clear();
 
+    for(auto &sem : _present_sems) {
+        Log::trace("Destroying swapchain present semaphore {}", sem);
+        _device->native().destroySemaphore(sem);
+    }
+    _present_sems.clear();
+
     Log::trace("Destroying swapchain {}", _handle);
     _device->native().destroy(_handle);
     _handle = nullptr;
@@ -88,7 +96,7 @@ bool vkSwapchain::destroy() {
 }
 
 // =============================================================================
-uint32_t vkSwapchain::acquire_next_image(vk::Semaphore const &signal_sem) const {
+uint32_t vkSwapchain::acquire_next_image() {
     // Wait for no more than one second
     using namespace std::chrono_literals;
     static auto const wait_period =
@@ -203,6 +211,16 @@ void vkSwapchain::_get_images() {
             },
             *_device
         );
+    }
+}
+
+// =============================================================================
+void vkSwapchain::_create_semaphores() {
+    _present_sems.resize(_image_count);
+
+    for(auto &sem : _present_sems) {
+        sem = _device->native().createSemaphore(vk::SemaphoreCreateInfo { });
+        Log::trace("Created swapchain present semaphore {}", sem);
     }
 }
 

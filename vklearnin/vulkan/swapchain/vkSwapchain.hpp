@@ -28,12 +28,12 @@ public:
                 uint32_t min_image_offset = 0u);
     bool destroy();
 
-    [[nodiscard]] uint32_t acquire_next_image(vk::Semaphore const &signal_sem) const;
+    [[nodiscard]] uint32_t acquire_next_image();
 
-    [[nodiscard]] inline auto const & native() const { return _handle; }
-    [[nodiscard]] inline auto image_count() const { return _image_count; }
-    [[nodiscard]] inline std::span<vkImage> const images() { return _images; }
-    [[nodiscard]] inline std::span<vkImageView const> const image_views() const { return _image_views; }
+    [[nodiscard]] auto const & native() const { return _handle; }
+    [[nodiscard]] auto image_count() const { return _image_count; }
+    [[nodiscard]] std::span<vkImage> const images() { return _images; }
+    [[nodiscard]] std::span<vkImageView const> const image_views() const { return _image_views; }
 
 private:
     vk::SwapchainKHR _handle  { nullptr };
@@ -47,8 +47,12 @@ private:
 
     vk::SwapchainCreateInfoKHR _create_info { };
 
+    size_t _current_present_index { 0u };
+    std::vector<vk::Semaphore> _present_sems;
+
     void _populate_create_info();
     void _get_images();
+    void _create_semaphores();
 };
 
 } // namespace vkl
