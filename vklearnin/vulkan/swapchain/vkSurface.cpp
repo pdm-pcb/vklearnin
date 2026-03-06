@@ -109,7 +109,7 @@ bool vkSurface::_check_capabilities(vk::PhysicalDevice const &device) {
     _min_image_count = caps.minImageCount;
     _max_image_count = caps.maxImageCount;
 
-    if(_max_image_count == 0u || _min_image_count > _max_image_count) {
+    if(_max_image_count != 0u && _min_image_count > _max_image_count) {
         Log::error("Surface {} has invalid image count requirements. Min of {} "
                    "and max of {}.",
                    _handle,
@@ -120,6 +120,10 @@ bool vkSurface::_check_capabilities(vk::PhysicalDevice const &device) {
         _max_image_count = 0u;
 
         return false;
+    }
+
+    if(_max_image_count == 0u) {
+        _max_image_count = std::numeric_limits<uint32_t>::max();
     }
 
     // We intend to draw to the whole surface
