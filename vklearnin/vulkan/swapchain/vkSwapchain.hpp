@@ -28,7 +28,7 @@ public:
                 uint32_t min_image_offset = 0u);
     bool destroy();
 
-    [[nodiscard]] uint32_t acquire_next_image();
+    [[nodiscard]] uint32_t acquire_next_image(vk::Semaphore const &signal_sem) const;
 
     [[nodiscard]] auto const & native() const { return _handle; }
     [[nodiscard]] auto image_count() const { return _image_count; }
